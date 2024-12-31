@@ -21,7 +21,6 @@ struct render_target {
   int width = 1280;
   int height = 720;
 
-    if (!window) {
   std::expected<bool, std::string> init();
   void start_loop();
 };
