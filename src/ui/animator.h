@@ -28,6 +28,7 @@ struct animated_float {
   float var() const;
   // progress, if have any
   float prog() const;
+  float dest() const;
 
 private:
   float duration = 200.f;

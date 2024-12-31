@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "bgfx/bgfx.h"
+#include "bgfx/platform.h"
 #include "widget.h"
 namespace ui {
 std::atomic_int render_target::view_cnt = 0;
@@ -24,6 +25,16 @@ void render_target::start_loop() {
     int window_x, window_y;
     glfwGetWindowPos(window, &window_x, &window_y);
 
+    int fb_width, fb_height;
+    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+
+    if (fb_width != width || fb_height != height) {
+      width = fb_width;
+      height = fb_height;
+      bgfx::reset(width, height, BGFX_RESET_VSYNC);
+      nvg = nvgCreate(1, view_id);
+    }
+
     UpdateContext ctx{
         .delta_t = delta_t,
         .mouse_x = mouse_x,
@@ -31,7 +42,7 @@ void render_target::start_loop() {
         .mouse_down =
             glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
     };
-    ctx.mouse_clicked = ctx.mouse_down && !mouse_down;
+    ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
     ctx.mouse_up = !ctx.mouse_down && mouse_down;
     mouse_down = ctx.mouse_down;
 

@@ -25,3 +25,4 @@ void ui::animated_float::reset_to(float destination) {
   this->destination = destination;
   progress = 1.f;
 }
+float ui::animated_float::dest() const { return destination; }

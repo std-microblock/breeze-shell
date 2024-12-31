@@ -28,10 +28,26 @@ struct test_widget : public ui::widget {
     ui::widget::update(ctx);
     if (ctx.mouse_down_on(this)) {
       color_transition->animate_to(255);
+      width->animate_to(200);
+      height->animate_to(200);
     } else if (ctx.hovered(this)) {
       color_transition->animate_to(0);
+      width->animate_to(150);
+      height->animate_to(150);
     } else {
       color_transition->animate_to(128);
+      width->animate_to(100);
+      height->animate_to(100);
+    }
+
+    if (ctx.mouse_clicked_on(this)) {
+      if (x->dest() == 100) {
+        x->animate_to(200);
+        y->animate_to(200);
+      } else {
+        x->animate_to(100);
+        y->animate_to(100);
+      }
     }
   }
 };
@@ -48,10 +64,8 @@ int main() {
     std::println("Failed to initialize render target: {}", res.error());
     return 1;
   }
-
   rt.root->emplace_child<test_widget>();
-  rt.start_loop();
-  return 0;
 
+  rt.start_loop();
   return 0;
 }
