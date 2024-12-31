@@ -4,6 +4,7 @@
 #include "widget.h"
 #include <iostream>
 #include <print>
+#include <thread>
 
 struct test_widget : public ui::widget {
   test_widget() : ui::widget() {
@@ -15,11 +16,11 @@ struct test_widget : public ui::widget {
 
   ui::sp_anim_float color_transition = anim_float(256, 3000);
   void render(bgfx::ViewId view, ui::nanovg_context ctx) override {
-
     ctx.text(1, 1, "Hello, World!", nullptr);
     ctx.beginPath();
     ctx.rect(*x, *y, *width, *height);
-    ctx.fillColor(nvgRGBA(*color_transition, 255 - (*color_transition), 0, 255));
+    ctx.fillColor(
+        nvgRGBA(*color_transition, 255 - (*color_transition), 0, 255));
     ctx.fill();
   }
 
@@ -36,7 +37,13 @@ struct test_widget : public ui::widget {
 };
 
 int main() {
+  if (auto res = ui::render_target::init_global(); !res) {
+    std::println("Failed to initialize global render target: {}", res.error());
+    return 1;
+  }
+
   ui::render_target rt;
+
   if (auto res = rt.init(); !res) {
     std::println("Failed to initialize render target: {}", res.error());
     return 1;
@@ -44,6 +51,7 @@ int main() {
 
   rt.root->emplace_child<test_widget>();
   rt.start_loop();
+  return 0;
 
   return 0;
 }

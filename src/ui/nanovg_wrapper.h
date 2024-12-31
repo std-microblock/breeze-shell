@@ -7,160 +7,160 @@ struct nanovg_context {
   /*
   Codegen:
 nanovgSource.matchAll(/nvg(\S+)\(NVGcontext\* ctx,?(.*)\);/g)].map(v=>{
-    return `auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
+    return `inline auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
         ['ctx',...v[2].split(',').filter(Boolean)].map(v=>v.trim().split(' ').pop()).join(',')
     }); }`
 }).join('\n'))
    */
-  auto beginFrame(float windowWidth, float windowHeight,
+  inline auto beginFrame(float windowWidth, float windowHeight,
                   float devicePixelRatio) {
     return nvgBeginFrame(ctx, windowWidth, windowHeight, devicePixelRatio);
   }
-  auto cancelFrame() { return nvgCancelFrame(ctx); }
-  auto endFrame() { return nvgEndFrame(ctx); }
-  auto globalCompositeOperation(int op) {
+  inline auto cancelFrame() { return nvgCancelFrame(ctx); }
+  inline auto endFrame() { return nvgEndFrame(ctx); }
+  inline auto globalCompositeOperation(int op) {
     return nvgGlobalCompositeOperation(ctx, op);
   }
-  auto globalCompositeBlendFunc(int sfactor, int dfactor) {
+  inline auto globalCompositeBlendFunc(int sfactor, int dfactor) {
     return nvgGlobalCompositeBlendFunc(ctx, sfactor, dfactor);
   }
-  auto globalCompositeBlendFuncSeparate(int srcRGB, int dstRGB, int srcAlpha,
+  inline auto globalCompositeBlendFuncSeparate(int srcRGB, int dstRGB, int srcAlpha,
                                         int dstAlpha) {
     return nvgGlobalCompositeBlendFuncSeparate(ctx, srcRGB, dstRGB, srcAlpha,
                                                dstAlpha);
   }
-  auto save() { return nvgSave(ctx); }
-  auto restore() { return nvgRestore(ctx); }
-  auto reset() { return nvgReset(ctx); }
-  auto shapeAntiAlias(int enabled) { return nvgShapeAntiAlias(ctx, enabled); }
-  auto strokeColor(NVGcolor color) { return nvgStrokeColor(ctx, color); }
-  auto strokePaint(NVGpaint paint) { return nvgStrokePaint(ctx, paint); }
-  auto fillColor(NVGcolor color) { return nvgFillColor(ctx, color); }
-  auto fillPaint(NVGpaint paint) { return nvgFillPaint(ctx, paint); }
-  auto miterLimit(float limit) { return nvgMiterLimit(ctx, limit); }
-  auto strokeWidth(float size) { return nvgStrokeWidth(ctx, size); }
-  auto lineCap(int cap) { return nvgLineCap(ctx, cap); }
-  auto lineJoin(int join) { return nvgLineJoin(ctx, join); }
-  auto globalAlpha(float alpha) { return nvgGlobalAlpha(ctx, alpha); }
-  auto resetTransform() { return nvgResetTransform(ctx); }
-  auto transform(float a, float b, float c, float d, float e, float f) {
+  inline auto save() { return nvgSave(ctx); }
+  inline auto restore() { return nvgRestore(ctx); }
+  inline auto reset() { return nvgReset(ctx); }
+  inline auto shapeAntiAlias(int enabled) { return nvgShapeAntiAlias(ctx, enabled); }
+  inline auto strokeColor(NVGcolor color) { return nvgStrokeColor(ctx, color); }
+  inline auto strokePaint(NVGpaint paint) { return nvgStrokePaint(ctx, paint); }
+  inline auto fillColor(NVGcolor color) { return nvgFillColor(ctx, color); }
+  inline auto fillPaint(NVGpaint paint) { return nvgFillPaint(ctx, paint); }
+  inline auto miterLimit(float limit) { return nvgMiterLimit(ctx, limit); }
+  inline auto strokeWidth(float size) { return nvgStrokeWidth(ctx, size); }
+  inline auto lineCap(int cap) { return nvgLineCap(ctx, cap); }
+  inline auto lineJoin(int join) { return nvgLineJoin(ctx, join); }
+  inline auto globalAlpha(float alpha) { return nvgGlobalAlpha(ctx, alpha); }
+  inline auto resetTransform() { return nvgResetTransform(ctx); }
+  inline auto transform(float a, float b, float c, float d, float e, float f) {
     return nvgTransform(ctx, a, b, c, d, e, f);
   }
-  auto translate(float x, float y) { return nvgTranslate(ctx, x, y); }
-  auto rotate(float angle) { return nvgRotate(ctx, angle); }
-  auto skewX(float angle) { return nvgSkewX(ctx, angle); }
-  auto skewY(float angle) { return nvgSkewY(ctx, angle); }
-  auto scale(float x, float y) { return nvgScale(ctx, x, y); }
-  auto currentTransform(float *xform) {
+  inline auto translate(float x, float y) { return nvgTranslate(ctx, x, y); }
+  inline auto rotate(float angle) { return nvgRotate(ctx, angle); }
+  inline auto skewX(float angle) { return nvgSkewX(ctx, angle); }
+  inline auto skewY(float angle) { return nvgSkewY(ctx, angle); }
+  inline auto scale(float x, float y) { return nvgScale(ctx, x, y); }
+  inline auto currentTransform(float *xform) {
     return nvgCurrentTransform(ctx, xform);
   }
-  auto createImageRGBA(int w, int h, int imageFlags,
+  inline auto createImageRGBA(int w, int h, int imageFlags,
                        const unsigned char *data) {
     return nvgCreateImageRGBA(ctx, w, h, imageFlags, data);
   }
-  auto updateImage(int image, const unsigned char *data) {
+  inline auto updateImage(int image, const unsigned char *data) {
     return nvgUpdateImage(ctx, image, data);
   }
-  auto imageSize(int image, int *w, int *h) {
+  inline auto imageSize(int image, int *w, int *h) {
     return nvgImageSize(ctx, image, w, h);
   }
-  auto deleteImage(int image) { return nvgDeleteImage(ctx, image); }
-  auto scissor(float x, float y, float w, float h) {
+  inline auto deleteImage(int image) { return nvgDeleteImage(ctx, image); }
+  inline auto scissor(float x, float y, float w, float h) {
     return nvgScissor(ctx, x, y, w, h);
   }
-  auto intersectScissor(float x, float y, float w, float h) {
+  inline auto intersectScissor(float x, float y, float w, float h) {
     return nvgIntersectScissor(ctx, x, y, w, h);
   }
-  auto resetScissor() { return nvgResetScissor(ctx); }
-  auto beginPath() { return nvgBeginPath(ctx); }
-  auto moveTo(float x, float y) { return nvgMoveTo(ctx, x, y); }
-  auto lineTo(float x, float y) { return nvgLineTo(ctx, x, y); }
-  auto bezierTo(float c1x, float c1y, float c2x, float c2y, float x, float y) {
+  inline auto resetScissor() { return nvgResetScissor(ctx); }
+  inline auto beginPath() { return nvgBeginPath(ctx); }
+  inline auto moveTo(float x, float y) { return nvgMoveTo(ctx, x, y); }
+  inline auto lineTo(float x, float y) { return nvgLineTo(ctx, x, y); }
+  inline auto bezierTo(float c1x, float c1y, float c2x, float c2y, float x, float y) {
     return nvgBezierTo(ctx, c1x, c1y, c2x, c2y, x, y);
   }
-  auto quadTo(float cx, float cy, float x, float y) {
+  inline auto quadTo(float cx, float cy, float x, float y) {
     return nvgQuadTo(ctx, cx, cy, x, y);
   }
-  auto arcTo(float x1, float y1, float x2, float y2, float radius) {
+  inline auto arcTo(float x1, float y1, float x2, float y2, float radius) {
     return nvgArcTo(ctx, x1, y1, x2, y2, radius);
   }
-  auto closePath() { return nvgClosePath(ctx); }
-  auto pathWinding(int dir) { return nvgPathWinding(ctx, dir); }
-  auto arc(float cx, float cy, float r, float a0, float a1, int dir) {
+  inline auto closePath() { return nvgClosePath(ctx); }
+  inline auto pathWinding(int dir) { return nvgPathWinding(ctx, dir); }
+  inline auto arc(float cx, float cy, float r, float a0, float a1, int dir) {
     return nvgArc(ctx, cx, cy, r, a0, a1, dir);
   }
-  auto rect(float x, float y, float w, float h) {
+  inline auto rect(float x, float y, float w, float h) {
     return nvgRect(ctx, x, y, w, h);
   }
-  auto roundedRect(float x, float y, float w, float h, float r) {
+  inline auto roundedRect(float x, float y, float w, float h, float r) {
     return nvgRoundedRect(ctx, x, y, w, h, r);
   }
-  auto roundedRectVarying(float x, float y, float w, float h, float radTopLeft,
+  inline auto roundedRectVarying(float x, float y, float w, float h, float radTopLeft,
                           float radTopRight, float radBottomRight,
                           float radBottomLeft) {
     return nvgRoundedRectVarying(ctx, x, y, w, h, radTopLeft, radTopRight,
                                  radBottomRight, radBottomLeft);
   }
-  auto ellipse(float cx, float cy, float rx, float ry) {
+  inline auto ellipse(float cx, float cy, float rx, float ry) {
     return nvgEllipse(ctx, cx, cy, rx, ry);
   }
-  auto circle(float cx, float cy, float r) { return nvgCircle(ctx, cx, cy, r); }
-  auto fill() { return nvgFill(ctx); }
-  auto stroke() { return nvgStroke(ctx); }
-  auto createFont(const char *name, const char *filename) {
+  inline auto circle(float cx, float cy, float r) { return nvgCircle(ctx, cx, cy, r); }
+  inline auto fill() { return nvgFill(ctx); }
+  inline auto stroke() { return nvgStroke(ctx); }
+  inline auto createFont(const char *name, const char *filename) {
     return nvgCreateFont(ctx, name, filename);
   }
-  auto createFontMem(const char *name, unsigned char *data, int ndata,
+  inline auto createFontMem(const char *name, unsigned char *data, int ndata,
                      int freeData) {
     return nvgCreateFontMem(ctx, name, data, ndata, freeData);
   }
-  auto findFont(const char *name) { return nvgFindFont(ctx, name); }
-  auto addFallbackFontId(int baseFont, int fallbackFont) {
+  inline auto findFont(const char *name) { return nvgFindFont(ctx, name); }
+  inline auto addFallbackFontId(int baseFont, int fallbackFont) {
     return nvgAddFallbackFontId(ctx, baseFont, fallbackFont);
   }
-  auto addFallbackFont(const char *baseFont, const char *fallbackFont) {
+  inline auto addFallbackFont(const char *baseFont, const char *fallbackFont) {
     return nvgAddFallbackFont(ctx, baseFont, fallbackFont);
   }
-  auto fontSize(float size) { return nvgFontSize(ctx, size); }
-  auto fontBlur(float blur) { return nvgFontBlur(ctx, blur); }
-  auto textLetterSpacing(float spacing) {
+  inline auto fontSize(float size) { return nvgFontSize(ctx, size); }
+  inline auto fontBlur(float blur) { return nvgFontBlur(ctx, blur); }
+  inline auto textLetterSpacing(float spacing) {
     return nvgTextLetterSpacing(ctx, spacing);
   }
-  auto textLineHeight(float lineHeight) {
+  inline auto textLineHeight(float lineHeight) {
     return nvgTextLineHeight(ctx, lineHeight);
   }
-  auto textAlign(int align) { return nvgTextAlign(ctx, align); }
-  auto fontFaceId(int font) { return nvgFontFaceId(ctx, font); }
-  auto fontFace(const char *font) { return nvgFontFace(ctx, font); }
-  auto text(float x, float y, const char *string, const char *end) {
+  inline auto textAlign(int align) { return nvgTextAlign(ctx, align); }
+  inline auto fontFaceId(int font) { return nvgFontFaceId(ctx, font); }
+  inline auto fontFace(const char *font) { return nvgFontFace(ctx, font); }
+  inline auto text(float x, float y, const char *string, const char *end) {
     return nvgText(ctx, x, y, string, end);
   }
-  auto textBox(float x, float y, float breakRowWidth, const char *string,
+  inline auto textBox(float x, float y, float breakRowWidth, const char *string,
                const char *end) {
     return nvgTextBox(ctx, x, y, breakRowWidth, string, end);
   }
-  auto textBounds(float x, float y, const char *string, const char *end,
+  inline auto textBounds(float x, float y, const char *string, const char *end,
                   float *bounds) {
     return nvgTextBounds(ctx, x, y, string, end, bounds);
   }
-  auto textBoxBounds(float x, float y, float breakRowWidth, const char *string,
+  inline auto textBoxBounds(float x, float y, float breakRowWidth, const char *string,
                      const char *end, float *bounds) {
     return nvgTextBoxBounds(ctx, x, y, breakRowWidth, string, end, bounds);
   }
-  auto textGlyphPositions(float x, float y, const char *string, const char *end,
+  inline auto textGlyphPositions(float x, float y, const char *string, const char *end,
                           NVGglyphPosition *positions, int maxPositions) {
     return nvgTextGlyphPositions(ctx, x, y, string, end, positions,
                                  maxPositions);
   }
-  auto textMetrics(float *ascender, float *descender, float *lineh) {
+  inline auto textMetrics(float *ascender, float *descender, float *lineh) {
     return nvgTextMetrics(ctx, ascender, descender, lineh);
   }
-  auto textBreakLines(const char *string, const char *end, float breakRowWidth,
+  inline auto textBreakLines(const char *string, const char *end, float breakRowWidth,
                       NVGtextRow *rows, int maxRows) {
     return nvgTextBreakLines(ctx, string, end, breakRowWidth, rows, maxRows);
   }
-  auto deleteInternal() { return nvgDeleteInternal(ctx); }
-  auto internalParams() { return nvgInternalParams(ctx); }
-  auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
+  inline auto deleteInternal() { return nvgDeleteInternal(ctx); }
+  inline auto internalParams() { return nvgInternalParams(ctx); }
+  inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
 };
 } // namespace ui
