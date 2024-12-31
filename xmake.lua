@@ -9,7 +9,7 @@ add_rules("mode.debug", "mode.release")
 includes("blook.lua")
 add_requires("blook", "glfw", "bgfx", "stb")
 set_runtimes("MT")
-
+add_rules("mode.releasedbg")
 target("ui")
     set_kind("static")
     add_packages("glfw", "bgfx", "stb", {
