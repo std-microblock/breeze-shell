@@ -1,22 +1,36 @@
 #include "widget.h"
 void ui::widget_parent::render(nanovg_context ctx) {
+  widget::render(ctx);
+  float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
+    ctx.offset_x = *x;
+    ctx.offset_y = *y;
     ctx.save();
     child->render(ctx);
     ctx.restore();
   }
+
+  ctx.offset_x = orig_offset_x;
+  ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::update(const UpdateContext &ctx) {
+void ui::widget_parent::update(UpdateContext &ctx) {
   widget::update(ctx);
+  float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
+
   for (auto &child : children) {
+    ctx.offset_x = *x;
+    ctx.offset_y = *y;
     child->update(ctx);
   }
+
+  ctx.offset_x = orig_offset_x;
+  ctx.offset_y = orig_offset_y;
 }
 void ui::widget_parent::add_child(std::unique_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
-void ui::widget::update(const UpdateContext &ctx) {
+void ui::widget::update(UpdateContext &ctx) {
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
   }

@@ -29,6 +29,7 @@ struct animated_float {
   void reset_to(float destination);
   void set_duration(float duration);
   void set_easing(easing_type easing);
+  void set_delay(float delay);
   // current value
   float var() const;
   // progress, if have any
@@ -41,7 +42,7 @@ private:
   float value = 0.f;
   float destination = value;
   float progress = 0.f;
-  bool _updated = false;
+  bool _updated = true;
   easing_type easing = easing_type::ease_in_out;
 };
 

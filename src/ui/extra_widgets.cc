@@ -13,9 +13,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+static auto pSetWindowCompositionAttribute =
+    (PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)GetProcAddress(
+        GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
+
 namespace ui {
-void acrylic_background_widget::update(const UpdateContext &ctx) {
+void acrylic_background_widget::update(UpdateContext &ctx) {
   widget::update(ctx);
+
+  if (radius->updated()) {
+    auto rgn = CreateRoundRectRgn(0, 0, *width, *height, *radius, *radius);
+    SetWindowRgn((HWND)hwnd, rgn, 0);
+
+    if (rgn) {
+      DeleteObject(rgn);
+    }
+  }
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
@@ -26,13 +39,15 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   int winx, winy;
   glfwGetWindowPos(win, &winx, &winy);
 
-  SetWindowPos((HWND)hwnd, handle, winx + *x, winy + *y, *width, *height,
+  SetWindowPos((HWND)hwnd, handle, winx + *x + ctx.offset_x,
+               winy + *y + ctx.offset_y, *width, *height,
                SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
                    SWP_NOCOPYBITS);
   SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
   if (width->updated() || height->updated() || radius->updated()) {
-    auto rgn = CreateRoundRectRgn(0, 0, *width, *height, *radius, *radius);
+    auto rgn =
+        CreateRoundRectRgn(0, 0, *width, *height, *radius * 2, *radius * 2);
     SetWindowRgn((HWND)hwnd, rgn, 0);
 
     if (rgn) {
@@ -65,18 +80,26 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
 
   SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
-  auto pSetWindowCompositionAttribute =
-      (PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)GetProcAddress(
-          GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
-
   ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                          Flags::AllowSetWindowRgn, 0, 0};
+                          Flags::AllowSetWindowRgn, 0x01000000, 0};
   WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                       sizeof(accent)};
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
+
   ShowWindow((HWND)hwnd, SW_SHOW);
 }
 acrylic_background_widget::~acrylic_background_widget() {
   DestroyWindow((HWND)hwnd);
+}
+void acrylic_background_widget::update_color() {
+  ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                          Flags::AllowSetWindowRgn | Flags::AllBorder,
+                          RGB(acrylic_bg_color.r * 255,
+                              acrylic_bg_color.g * 255,
+                              acrylic_bg_color.b * 255),
+                          0};
+  WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
+                                      sizeof(accent)};
+  pSetWindowCompositionAttribute((HWND)hwnd, &data);
 }
 } // namespace ui

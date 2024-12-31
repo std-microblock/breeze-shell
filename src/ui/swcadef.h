@@ -49,7 +49,7 @@ enum Flags : UINT {
 // Data           :   this+0xC, Member, Type: long, AnimationId
 struct ACCENT_POLICY {      // Determines how a window's background is rendered.
   ACCENT_STATE AccentState; // Background effect.
-  Flags AccentFlags; // Flags. Set to 2 to tell GradientColor is used, rest is
+  UINT AccentFlags; // Flags. Set to 2 to tell GradientColor is used, rest is
                      // unknown.
   COLORREF GradientColor; // Background color.
   LONG AnimationId;       // Unknown

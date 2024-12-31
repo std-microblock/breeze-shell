@@ -39,6 +39,8 @@ std::expected<bool, std::string> render_target::init() {
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
+  // add WS_EX_NOACTIVATE to prevent the window from being activated
+  SetWindowLongPtr(h, GWL_EXSTYLE, GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_NOACTIVATE);
 
   if (!window) {
     return std::unexpected("Failed to create window");
@@ -117,6 +119,7 @@ void render_target::render() {
       .mouse_y = mouse_y,
       .mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
+      .rt = *this,
   };
   ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
   ctx.mouse_up = !ctx.mouse_down && mouse_down;

@@ -10,10 +10,12 @@ struct acrylic_background_widget : public widget {
   ~acrylic_background_widget();
   sp_anim_float opacity = anim_float(0, 200);
   sp_anim_float radius = anim_float(0, 200);
-  NVGcolor color = nvgRGBAf(0, 0, 0, 0);
+  NVGcolor acrylic_bg_color = nvgRGBAf(0, 0, 0, 0);
+
+  void update_color();
 
   void render(nanovg_context ctx) override;
 
-  void update(const UpdateContext &ctx) override;
+  void update(UpdateContext &ctx) override;
 };
 } // namespace ui

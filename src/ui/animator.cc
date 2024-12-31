@@ -14,6 +14,11 @@ void ui::animated_float::update(float delta_t) {
 
   progress += delta_t / duration;
 
+  if (progress < 0.f) {
+    _updated = false;
+    return;
+  }
+
   if (easing == easing_type::linear) {
     value = std::lerp(value, destination, progress);
   } else if (easing == easing_type::ease_in) {
@@ -47,6 +52,7 @@ void ui::animated_float::reset_to(float destination) {
   value = destination;
   this->destination = destination;
   progress = 1.f;
+  _updated = true;
 }
 float ui::animated_float::dest() const { return destination; }
 void ui::animated_float::set_easing(easing_type easing) {
@@ -56,3 +62,6 @@ void ui::animated_float::set_duration(float duration) {
   this->duration = duration;
 }
 bool ui::animated_float::updated() const { return _updated; }
+void ui::animated_float::set_delay(float delay) {
+  progress -= delay / duration;
+}
