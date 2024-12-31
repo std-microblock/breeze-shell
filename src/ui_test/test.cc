@@ -7,10 +7,10 @@
 #include <thread>
 
 struct test_widget : public ui::acrylic_background_widget {
-  using super = ui::acrylic_background_widget;  
-  test_widget() : super() {
-    x->animate_to(100);
-    y->animate_to(100);
+  using super = ui::acrylic_background_widget;
+  test_widget(float x_off) : super() {
+    x->animate_to(100 + x_off);
+    y->animate_to(100 + x_off);
     width->animate_to(100);
     height->animate_to(100);
   }
@@ -22,7 +22,7 @@ struct test_widget : public ui::acrylic_background_widget {
     ctx.beginPath();
     ctx.rect(*x, *y, *width, *height);
     ctx.fillColor(
-        nvgRGBA(*color_transition, 255 - (*color_transition), 0, 255));
+        nvgRGBA(*color_transition, 255 - (*color_transition), 0, 100));
     ctx.fill();
   }
 
@@ -67,7 +67,8 @@ int main() {
     std::println("Failed to initialize render target: {}", res.error());
     return 1;
   }
-  rt.root->emplace_child<test_widget>();
+  rt.root->emplace_child<test_widget>(0);
+  rt.root->emplace_child<test_widget>(200);
   // rt.root->emplace_child<ui::acrylic_background_widget>();
 
   rt.start_loop();

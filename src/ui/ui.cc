@@ -30,8 +30,7 @@ std::expected<bool, std::string> render_target::init() {
   }
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_DECORATED, 0);
+  // glfwWindowHint(GLFW_DECORATED, 0);
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
@@ -92,7 +91,7 @@ void render_target::render() {
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
-  glClearColor(0, 0, 0, 0);
+  glClearColor(0, 0, 0, 0.1);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   if (fb_width != width || fb_height != height) {

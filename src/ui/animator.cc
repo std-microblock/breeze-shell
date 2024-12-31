@@ -2,16 +2,19 @@
 #include <numbers>
 #include <print>
 void ui::animated_float::update(float delta_t) {
-  progress += delta_t / duration;
-  if (progress >= 1.f) {
-    progress = 1.f;
-    _updated = false;
+  if (easing == easing_type::mutation) {
+    if (destination != value) {
+      value = destination;
+      _updated = true;
+    } else {
+      _updated = false;
+    }
     return;
   }
-  
-  if (easing == easing_type::mutation) {
-    value = destination;
-  } else if (easing == easing_type::linear) {
+
+  progress += delta_t / duration;
+
+  if (easing == easing_type::linear) {
     value = std::lerp(value, destination, progress);
   } else if (easing == easing_type::ease_in) {
     value = std::lerp(value, destination, progress * progress);
@@ -22,6 +25,12 @@ void ui::animated_float::update(float delta_t) {
         value, destination,
         (0.5f * std::sin(progress * std::numbers::pi - std::numbers::pi / 2) +
          0.5f));
+  }
+
+  if (progress >= 1.f) {
+    progress = 1.f;
+    _updated = false;
+    return;
   }
 
   _updated = true;

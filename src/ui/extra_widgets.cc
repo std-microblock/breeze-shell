@@ -27,13 +27,12 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   glfwGetWindowPos(win, &winx, &winy);
 
   SetWindowPos((HWND)hwnd, handle, winx + *x, winy + *y, *width, *height,
-               SWP_NOACTIVATE | SWP_NOREDRAW |
-                   SWP_NOOWNERZORDER | SWP_NOCOPYBITS);
+               SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
+                   SWP_NOCOPYBITS);
   SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-  if (width->updated() || height->updated() || x->updated() || y->updated()) {
-    std::println("Updating window size");
-    auto rgn = CreateRoundRectRgn(*x, *y, *width, *height, 10, 10);
+  if (width->updated() || height->updated() || radius->updated()) {
+    auto rgn = CreateRoundRectRgn(0, 0, *width, *height, *radius, *radius);
     SetWindowRgn((HWND)hwnd, rgn, 0);
 
     if (rgn) {
@@ -44,9 +43,6 @@ void acrylic_background_widget::render(nanovg_context ctx) {
 
 acrylic_background_widget::acrylic_background_widget() : widget() {
   static bool registered = false;
-
-  opacity->animate_to(255);
-
   if (!registered) {
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = WndProc;
@@ -56,10 +52,12 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
     registered = true;
   }
 
-  hwnd =
-      CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED,
-                      L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, *width,
-                      *height, nullptr, NULL, GetModuleHandleW(nullptr), NULL);
+  opacity->reset_to(255);
+
+  hwnd = CreateWindowExW(
+      WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED,
+      L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, *width, *height, nullptr, NULL,
+      GetModuleHandleW(nullptr), NULL);
 
   if (!hwnd) {
     std::println("Failed to create window: {}", GetLastError());
@@ -71,16 +69,11 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
       (PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)GetProcAddress(
           GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
 
-  ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND, 0, 0, 0};
+  ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                          Flags::AllowSetWindowRgn, 0, 0};
   WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                       sizeof(accent)};
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
-
-//   auto round_value = DWMWCP_ROUND;
-//   DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
-//                         &round_value, sizeof(round_value));
-    
-
   ShowWindow((HWND)hwnd, SW_SHOW);
 }
 acrylic_background_widget::~acrylic_background_widget() {
