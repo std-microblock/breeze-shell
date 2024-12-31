@@ -4,6 +4,7 @@
 #include <expected>
 #include <memory>
 #include <string>
+#include <utility>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3.h"
@@ -32,6 +33,11 @@ struct render_target {
   std::expected<bool, std::string> init();
   static std::expected<bool, std::string> init_global();
   void start_loop();
+  void render();
+
+  std::chrono::high_resolution_clock clock{};
+  decltype(clock.now()) last_time = clock.now();
+  bool mouse_down = false;
 
   ~render_target();
 };
