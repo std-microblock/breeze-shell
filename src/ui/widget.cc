@@ -1,8 +1,8 @@
 #include "widget.h"
-void ui::widget_parent::render(bgfx::ViewId view, nanovg_context ctx) {
+void ui::widget_parent::render(nanovg_context ctx) {
   for (auto &child : children) {
     ctx.save();
-    child->render(view, ctx);
+    child->render(ctx);
     ctx.restore();
   }
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include "animator.h"
-#include "bgfx/bgfx.h"
 #include "nanovg_wrapper.h"
 #include <memory>
 #include <vector>
@@ -31,14 +30,14 @@ struct widget {
 
   sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
                 height = anim_float();
-  virtual void render(bgfx::ViewId view, nanovg_context ctx) {}
+  virtual void render(nanovg_context ctx) {}
   virtual void update(const UpdateContext &ctx);
   virtual ~widget() = default;
 };
 
 struct widget_parent : public widget {
   std::vector<std::unique_ptr<widget>> children;
-  void render(bgfx::ViewId view, nanovg_context ctx) override;
+  void render(nanovg_context ctx) override;
   void update(const UpdateContext &ctx) override;
   void add_child(std::unique_ptr<widget> child);
   template <typename T, typename... Args>

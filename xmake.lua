@@ -7,16 +7,17 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.debug", "mode.release")
 
 includes("blook.lua")
-add_requires("blook", "glfw", "bgfx", "stb")
+add_requires("blook", "glfw", "nanovg", "glad")
 set_runtimes("MT")
 add_rules("mode.releasedbg")
 add_rules("mode.minsizerel")
 
 target("ui")
     set_kind("static")
-    add_packages("glfw", "bgfx", "stb", {
+    add_packages("glfw", "glad", "nanovg", {
         public = true
     })
+    add_syslinks("dwmapi")
     add_files("src/ui/*.cc", "src/ui/nanovg/*.cpp")
     add_headerfiles("src/ui/*.h")
     add_includedirs("src/ui", {

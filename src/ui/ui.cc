@@ -1,10 +1,17 @@
-#include "ui.h"
+#include "glad/glad.h"
+#include <dwmapi.h>
+#define GLFW_INCLUDE_GLEXT
 #include "GLFW/glfw3.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "GLFW/glfw3native.h"
 
-#include "bgfx/bgfx.h"
-#include "bgfx/platform.h"
-#include "gl/GL.h"
+#include "ui.h"
+
 #include "widget.h"
+
+#include "nanovg.h"
+#define NANOVG_GL3_IMPLEMENTATION
+#include "nanovg_gl.h"
 
 namespace ui {
 std::atomic_int render_target::view_cnt = 0;
@@ -23,30 +30,32 @@ std::expected<bool, std::string> render_target::init() {
   }
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  // glfwWindowHint(GLFW_DECORATED, 0);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_DECORATED, 0);
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
+  glfwMakeContextCurrent(window);
+  glfwSwapInterval(0);
+
+  auto h = glfwGetWin32Window(window);
+  DwmEnableBlurBehindWindow(h, nullptr);
+
   if (!window) {
     return std::unexpected("Failed to create window");
   }
 
-  bgfx::Init init;
+  int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+  if (version == 0) {
+    return std::unexpected("Failed to load OpenGL");
+  }
 
-  init.type = bgfx::RendererType::Count;
-  init.resolution.width = width;
-  init.resolution.height = height;
-  init.resolution.reset = BGFX_RESET_VSYNC | BGFX_RESET_TRANSPARENT_BACKBUFFER;
-  init.platformData.nwh = glfwGetWin32Window(window);
-  init.platformData.type = bgfx::NativeWindowHandleType::Default;
-  bgfx::init(init);
+  if (!window) {
+    return std::unexpected("Failed to create window");
+  }
 
-  bgfx::setViewClear(view_id, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000,
-                     1.0f, 0);
+  nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 
-  bgfx::setViewMode(view_id, bgfx::ViewMode::Sequential);
-
-  nvg = nvgCreate(1, view_id);
   if (!nvg) {
     return std::unexpected("Failed to create NanoVG context");
   }
@@ -64,7 +73,6 @@ std::expected<bool, std::string> render_target::init() {
 }
 
 render_target::~render_target() {
-  bgfx::shutdown();
   glfwDestroyWindow(window);
   glfwTerminate();
 }
@@ -73,26 +81,26 @@ std::expected<bool, std::string> render_target::init_global() {
   if (initialized.exchange(true)) {
     return true;
   }
+
   if (!glfwInit()) {
     return std::unexpected("Failed to initialize GLFW");
   }
-
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   return true;
 }
 void render_target::render() {
+
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
+  glViewport(0, 0, fb_width, fb_height);
+  glClearColor(0, 0, 0, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   if (fb_width != width || fb_height != height) {
     width = fb_width;
     height = fb_height;
-    bgfx::reset(width, height,
-                BGFX_RESET_VSYNC | BGFX_RESET_TRANSPARENT_BACKBUFFER);
-    nvg = nvgCreate(1, view_id);
+    nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
   }
 
-  bgfx::setViewRect(view_id, 0, 0, width, height);
   nanovg_context vg{nvg};
 
   vg.beginFrame(width, height, 1);
@@ -116,8 +124,8 @@ void render_target::render() {
   mouse_down = ctx.mouse_down;
 
   root->update(ctx);
-  root->render(view_id, vg);
+  root->render(vg);
   vg.endFrame();
-  bgfx::frame();
+  glfwSwapBuffers(window);
 }
 } // namespace ui

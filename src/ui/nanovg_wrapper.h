@@ -1,4 +1,4 @@
-#include "nanovg/nanovg.h"
+#include "nanovg.h"
 #include <utility>
 
 namespace ui {

@@ -1,13 +1,14 @@
 #include "animator.h"
-#include "bgfx/bgfx.h"
 #include "ui.h"
 #include "widget.h"
+#include "extra_widgets.h"
 #include <iostream>
 #include <print>
 #include <thread>
 
-struct test_widget : public ui::widget {
-  test_widget() : ui::widget() {
+struct test_widget : public ui::acrylic_background_widget {
+  using super = ui::acrylic_background_widget;  
+  test_widget() : super() {
     x->animate_to(100);
     y->animate_to(100);
     width->animate_to(100);
@@ -15,7 +16,8 @@ struct test_widget : public ui::widget {
   }
 
   ui::sp_anim_float color_transition = anim_float(256, 3000);
-  void render(bgfx::ViewId view, ui::nanovg_context ctx) override {
+  void render(ui::nanovg_context ctx) override {
+    super::render(ctx);
     ctx.text(1, 1, "Hello, World!", nullptr);
     ctx.beginPath();
     ctx.rect(*x, *y, *width, *height);
@@ -25,7 +27,7 @@ struct test_widget : public ui::widget {
   }
 
   void update(const ui::UpdateContext &ctx) override {
-    ui::widget::update(ctx);
+    super::update(ctx);
     if (ctx.mouse_down_on(this)) {
       color_transition->animate_to(255);
       width->animate_to(200);
@@ -66,6 +68,7 @@ int main() {
     return 1;
   }
   rt.root->emplace_child<test_widget>();
+  // rt.root->emplace_child<ui::acrylic_background_widget>();
 
   rt.start_loop();
   return 0;
