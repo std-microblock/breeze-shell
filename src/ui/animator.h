@@ -6,6 +6,9 @@ namespace ui {
 enum class easing_type {
   mutation,
   linear,
+  ease_in,
+  ease_out,
+  ease_in_out,
 };
 struct animated_float {
   animated_float() = default;
@@ -15,7 +18,7 @@ struct animated_float {
   animated_float &operator=(const animated_float &) = delete;
 
   animated_float(float destination, float duration = 200.f,
-                 easing_type easing = easing_type::linear)
+                 easing_type easing = easing_type::ease_in_out)
       : duration(duration), destination(destination), easing(easing) {}
 
   operator float() const { return var(); }
@@ -36,7 +39,7 @@ private:
   float destination = value;
   float progress = 0.f;
 
-  easing_type easing = easing_type::linear;
+  easing_type easing = easing_type::ease_in_out;
 };
 
 using sp_anim_float = std::shared_ptr<animated_float>;

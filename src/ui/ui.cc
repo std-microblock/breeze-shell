@@ -21,9 +21,11 @@ std::expected<bool, std::string> render_target::init() {
   if (auto res = init_global(); !res) {
     return res;
   }
-  // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  // glfwWindowHint(GLFW_DECORATED, 0);
+  glfwWindowHint(GLFW_RESIZABLE, 1);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
   if (!window) {
     return std::unexpected("Failed to create window");
@@ -34,13 +36,13 @@ std::expected<bool, std::string> render_target::init() {
   init.type = bgfx::RendererType::Count;
   init.resolution.width = width;
   init.resolution.height = height;
-  init.resolution.reset = BGFX_RESET_VSYNC;
+  init.resolution.reset = BGFX_RESET_VSYNC | BGFX_RESET_TRANSPARENT_BACKBUFFER;
   init.platformData.nwh = glfwGetWin32Window(window);
   init.platformData.type = bgfx::NativeWindowHandleType::Default;
   bgfx::init(init);
 
-  bgfx::setViewClear(view_id, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000, 1.0f,
-                     0);
+  bgfx::setViewClear(view_id, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000,
+                     1.0f, 0);
 
   bgfx::setViewMode(view_id, bgfx::ViewMode::Sequential);
 
@@ -85,13 +87,12 @@ void render_target::render() {
   if (fb_width != width || fb_height != height) {
     width = fb_width;
     height = fb_height;
-    bgfx::reset(width, height, BGFX_RESET_VSYNC);
+    bgfx::reset(width, height,
+                BGFX_RESET_VSYNC | BGFX_RESET_TRANSPARENT_BACKBUFFER);
     nvg = nvgCreate(1, view_id);
   }
 
   bgfx::setViewRect(view_id, 0, 0, width, height);
-  bgfx::touch(view_id);
-
   nanovg_context vg{nvg};
 
   vg.beginFrame(width, height, 1);

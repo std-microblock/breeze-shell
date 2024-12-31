@@ -1,4 +1,5 @@
 #include "animator.h"
+#include <numbers>
 #include <print>
 void ui::animated_float::update(float delta_t) {
   if (easing == easing_type::mutation) {
@@ -10,6 +11,30 @@ void ui::animated_float::update(float delta_t) {
     }
 
     value = std::lerp(value, destination, progress);
+  } else if (easing == easing_type::ease_in) {
+    progress += delta_t / duration;
+    if (progress > 1.f) {
+      progress = 1.f;
+    }
+
+    value = std::lerp(value, destination, progress * progress);
+  } else if (easing == easing_type::ease_out) {
+    progress += delta_t / duration;
+    if (progress > 1.f) {
+      progress = 1.f;
+    }
+
+    value = std::lerp(value, destination, 1 - std::sqrt(1 - progress));
+  } else if (easing == easing_type::ease_in_out) {
+    progress += delta_t / duration;
+    if (progress > 1.f) {
+      progress = 1.f;
+    }
+
+    value = std::lerp(
+        value, destination,
+        (0.5f * std::sin(progress * std::numbers::pi - std::numbers::pi / 2) +
+         0.5f));
   }
 }
 void ui::animated_float::animate_to(float destination) {

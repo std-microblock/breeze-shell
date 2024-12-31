@@ -53,6 +53,7 @@ struct test_widget : public ui::widget {
 };
 
 int main() {
+  
   if (auto res = ui::render_target::init_global(); !res) {
     std::println("Failed to initialize global render target: {}", res.error());
     return 1;
