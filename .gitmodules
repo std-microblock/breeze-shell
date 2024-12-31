@@ -1,0 +1,3 @@
+[submodule "blook"]
+	path = blook
+	url = https://github.com/std-microblock/blook
