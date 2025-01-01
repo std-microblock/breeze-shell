@@ -22,13 +22,27 @@ struct UpdateContext {
   bool mouse_down_on(widget *w) const { return mouse_down && hovered(w); }
 
   float offset_x = 0, offset_y = 0;
-  render_target& rt;
+  render_target &rt;
+  nanovg_context vg;
+
+  UpdateContext with_offset(float x, float y) {
+    auto copy = *this;
+    copy.offset_x = x;
+    copy.offset_y = y;
+    return copy;
+  }
 };
 
+/*
+All the widgets in the tree should be owned by the tree.
+If you want to use a widget in multiple places, you should create a new instance
+for each place.
+*/
 struct widget {
   std::vector<sp_anim_float> anim_floats{};
   sp_anim_float anim_float(auto &&...args) {
-    auto anim = std::make_shared<animated_float>(std::forward<decltype(args)>(args)...);
+    auto anim =
+        std::make_shared<animated_float>(std::forward<decltype(args)>(args)...);
     anim_floats.push_back(anim);
     return anim;
   }
@@ -38,8 +52,17 @@ struct widget {
   virtual void render(nanovg_context ctx) {}
   virtual void update(UpdateContext &ctx);
   virtual ~widget() = default;
+  virtual float measure_height(UpdateContext &ctx);
+  virtual float measure_width(UpdateContext &ctx);
+
+  template <typename T> inline T *downcast() { return dynamic_cast<T *>(this); }
 };
 
+// A widget that renders its children
+// It is responsible for updating and rendering its children
+// It also sets the offset for the children
+// It's like `posision: relative` in CSS
+// While all other widgets are like `position: absolute`
 struct widget_parent : public widget {
   std::vector<std::unique_ptr<widget>> children;
   void render(nanovg_context ctx) override;
@@ -50,4 +73,43 @@ struct widget_parent : public widget {
     children.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
   }
 };
+
+// A widget with child which lays out children in a row or column
+struct widget_parent_flex : public widget_parent {
+  float gap = 0;
+  bool horizontal = false;
+  bool auto_size = true;
+
+  void update(UpdateContext &ctx) override;
+};
+
+// A widget with padding and margin
+struct widget_padding : public widget {
+  float padding_left = 0, padding_right = 0, padding_top = 0,
+        padding_bottom = 0;
+  float margin_left = 0, margin_right = 0, margin_top = 0, margin_bottom = 0;
+  inline void set_padding(float padding) {
+    padding_left = padding_right = padding_top = padding_bottom = padding;
+  }
+
+  inline void set_margin(float margin) {
+    margin_left = margin_right = margin_top = margin_bottom = margin;
+  }
+
+  inline void set_padding(float vertical, float horizontal) {
+    padding_top = padding_bottom = vertical;
+    padding_left = padding_right = horizontal;
+  }
+
+  inline void set_margin(float vertical, float horizontal) {
+    margin_top = margin_bottom = vertical;
+    margin_left = margin_right = horizontal;
+  }
+
+  std::unique_ptr<widget> child;
+  void update(UpdateContext &ctx) override;
+
+  void render(nanovg_context ctx) override;
+};
+
 } // namespace ui

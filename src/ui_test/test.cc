@@ -4,6 +4,7 @@
 #include "widget.h"
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <print>
 #include <thread>
@@ -72,26 +73,31 @@ struct menu_item {
 };
 
 std::vector<menu_item> items{
-    {.type = menu_item::type::button, .name = "终端(I)"},
-    {.type = menu_item::type::button, .name = "桌面"},
+    {.type = menu_item::type::button, .name = "层叠窗口(D)"},
+    {.type = menu_item::type::button, .name = "堆叠显示窗口(E)"},
+    {.type = menu_item::type::button, .name = "并排显示窗口(I)"},
     {.type = menu_item::type::spacer},
-    {.type = menu_item::type::button, .name = "Button 3"},
-    {.type = menu_item::type::button, .name = "Button 4"},
+    {.type = menu_item::type::button, .name = "最小化所有窗口(M)"},
+    {.type = menu_item::type::button, .name = "还原所有窗口(R)"},
 };
 
 struct menu_item_widget : public ui::widget {
   using super = ui::widget;
   menu_item item;
   ui::sp_anim_float opacity = anim_float(0, 200);
-  menu_item_widget(menu_item item, float y, size_t index) : super() {
+  float text_padding = 13;
+  float margin = 5;
+  menu_item_widget(menu_item item, size_t index) : super() {
     opacity->reset_to(0);
 
-    this->y->animate_to(y);
+    this->y->before_animate = [this, index](float dest) {
+      this->y->from = std::max(0.f, dest - 40 - index * 10);
+    };
     opacity->animate_to(255);
-    width->animate_to(100);
 
-    this->y->set_delay(index * 50);
-    opacity->set_delay(index * 50);
+    auto delay = std::min(index * 10.f, 100.f);
+    this->y->set_delay(delay);
+    opacity->set_delay(delay);
     if (item.type == menu_item::type::spacer) {
       height->animate_to(1);
     } else {
@@ -100,73 +106,99 @@ struct menu_item_widget : public ui::widget {
     this->item = item;
   }
 
-  float measure_height() {
-    if (item.type == menu_item::type::spacer) {
-      return 1;
-    }
-    return 20;
-  }
-
-  ui::sp_anim_float hover = anim_float(0, 200);
+  ui::sp_anim_float bg_opacity = anim_float(0, 200);
   void render(ui::nanovg_context ctx) override {
     super::render(ctx);
     if (item.type == menu_item::type::spacer) {
-      ctx.fillColor(nvgRGBAf(1, 1, 1, 0.4));
+      ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
       ctx.fillRect(*x, *y, *width, *height);
       return;
     }
 
-    ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
+    ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
+    ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
 
+    ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
     ctx.fontFace("Segui");
-    ctx.fontSize(13);
-    ctx.text(floor(*x + 10), floor(*y + 2 + 14), item.name->c_str(), nullptr);
+    ctx.fontSize(14);
+    ctx.text(floor(*x + text_padding), floor(*y + 2 + 14), item.name->c_str(),
+             nullptr);
   }
 
   void update(ui::UpdateContext &ctx) override {
     super::update(ctx);
-    if (ctx.hovered(this)) {
-      hover->animate_to(255);
+    if (ctx.mouse_down_on(this)) {
+      bg_opacity->animate_to(30);
+    } else if (ctx.hovered(this)) {
+      bg_opacity->animate_to(20);
     } else {
-      hover->animate_to(0);
+      bg_opacity->animate_to(0);
     }
+  }
+
+  float measure_width(ui::UpdateContext &ctx) override {
+    if (item.type == menu_item::type::spacer) {
+      return 1;
+    }
+    return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
+           margin * 2;
   }
 };
 
-struct menu_widget : public ui::widget_parent {
-  using super = ui::widget_parent;
-
-  menu_widget(std::vector<menu_item> init_items, float wid_x, float wid_y) : super() {
-    width->reset_to(1000);
-    height->reset_to(1000);
+struct menu_widget : public ui::widget_parent_flex {
+  using super = ui::widget_parent_flex;
+  float bg_padding_vertical = 6;
+  float anchor_x = 0, anchor_y = 0;
+  std::unique_ptr<ui::acrylic_background_widget> bg;
+  menu_widget(std::vector<menu_item> init_items, float wid_x, float wid_y)
+      : super() {
+    gap = 5;
+    anchor_x = wid_x;
+    anchor_y = wid_y;
     this->x->reset_to(wid_x);
     this->y->reset_to(wid_y);
 
-    auto bg = new ui::acrylic_background_widget();
-    children.push_back(std::unique_ptr<ui::acrylic_background_widget>(bg));
+    bg = std::make_unique<ui::acrylic_background_widget>();
+    bg->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    bg->update_color();
+    bg->radius->reset_to(6);
 
-    bg->width->animate_to(100);
-    bg->radius->reset_to(10);
+    bg->x->reset_to(wid_x);
+    bg->y->reset_to(wid_y);
+    bg->height->set_duration(200);
+    bg->y->set_duration(200);
+    bg->opacity->reset_to(0);
+    bg->opacity->animate_to(255);
+    bg->width->reset_to(100);
 
-    constexpr float margin = 3;
-    float y = margin;
     for (size_t i = 0; i < init_items.size(); i++) {
       auto &item = init_items[i];
-      auto mi = new menu_item_widget(item, y, i);
+      auto mi = new menu_item_widget(item, i);
       children.push_back(std::unique_ptr<menu_item_widget>(mi));
-      y += mi->measure_height() + margin;
     }
-
-    bg->height->animate_to(y);
   }
 
   void update(ui::UpdateContext &ctx) override {
     super::update(ctx);
+
+    y->animate_to(anchor_y - height->dest() - 10);
+
+    bg->width->animate_to(width->dest());
+    bg->height->animate_to(height->dest() + bg_padding_vertical * 2);
+    bg->x->animate_to(x->dest());
+    bg->y->animate_to(y->dest() - bg_padding_vertical);
+    bg->update(ctx);
+
     if (ctx.mouse_clicked) {
       std::println("Clicked on menu");
       ctx.rt.root->children.clear();
       ctx.rt.root->emplace_child<menu_widget>(items, ctx.mouse_x, ctx.mouse_y);
     }
+  }
+
+  void render(ui::nanovg_context ctx) override {
+    bg->render(ctx);
+    super::render(ctx);
   }
 };
 

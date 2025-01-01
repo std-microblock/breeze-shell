@@ -51,6 +51,10 @@ void ui::animated_float::animate_to(float destination) {
   this->from = value;
   this->destination = destination;
   progress = 0.f;
+
+  if (before_animate) {
+    before_animate.value()(destination);
+  }
 }
 float ui::animated_float::var() const { return value; }
 float ui::animated_float::prog() const { return progress; }

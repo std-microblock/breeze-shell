@@ -58,7 +58,7 @@ std::expected<bool, std::string> render_target::init() {
     return std::unexpected("Failed to create window");
   }
 
-  nvg = nvgCreateGL3(NVG_STENCIL_STROKES);
+  nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
 
   if (!nvg) {
     return std::unexpected("Failed to create NanoVG context");
@@ -103,19 +103,21 @@ void render_target::render() {
   auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
   last_time = now;
 
-  static float counter = 0, time_ctr = 0;
-  counter++;
-  time_ctr += delta_t;
-  if (time_ctr > 1000) {
-    time_ctr = 0;
-    std::println("FPS: {}", counter);
-    counter = 0;
+  if constexpr (false) {
+    static float counter = 0, time_ctr = 0;
+    counter++;
+    time_ctr += delta_t;
+    if (time_ctr > 1000) {
+      time_ctr = 0;
+      std::println("FPS: {}", counter);
+      counter = 0;
+    }
   }
 
   if (fb_width != width || fb_height != height) {
     width = fb_width;
     height = fb_height;
-    nvg = nvgCreateGL3(NVG_STENCIL_STROKES);
+    nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
   }
 
   nanovg_context vg{nvg};
@@ -134,6 +136,7 @@ void render_target::render() {
       .mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .rt = *this,
+      .vg = vg,
   };
   ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
   ctx.mouse_up = !ctx.mouse_down && mouse_down;

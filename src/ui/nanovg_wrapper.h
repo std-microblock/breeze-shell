@@ -150,5 +150,18 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     roundedRect(x, y, w, h, r);
     stroke();
   }
+
+  inline auto measureText(const char *string) {
+    float bounds[4];
+    textBounds(0, 0, string, nullptr, bounds);
+    return std::make_pair(bounds[2] - bounds[0], bounds[3] - bounds[1]);
+  }
+
+  inline nanovg_context with_offset(float x, float y) {
+    auto copy = *this;
+    copy.offset_x = x;
+    copy.offset_y = y;
+    return copy;
+  }
 };
 } // namespace ui

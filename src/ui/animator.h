@@ -1,5 +1,7 @@
 #pragma once
 #include <cmath>
+#include <functional>
+#include <optional>
 #include <print>
 
 namespace ui {
@@ -21,6 +23,8 @@ struct animated_float {
                  easing_type easing = easing_type::ease_in_out)
       : duration(duration), destination(destination), easing(easing) {}
 
+  std::optional<std::function<void(float)>> before_animate = {};
+
   operator float() const { return var(); }
   float operator*() const { return var(); }
   void update(float delta_t);
@@ -37,7 +41,6 @@ struct animated_float {
   float dest() const;
   bool updated() const;
 
-private:
   float duration = 200.f;
   float value = 0.f;
   float from = 0.f;

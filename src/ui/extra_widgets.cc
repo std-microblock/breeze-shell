@@ -21,7 +21,7 @@ namespace ui {
 void acrylic_background_widget::update(UpdateContext &ctx) {
   widget::update(ctx);
 
-  if (radius->updated()) {
+  if (radius->updated() || !use_dwm) {
     auto rgn = CreateRoundRectRgn(0, 0, *width, *height, *radius, *radius);
     SetWindowRgn((HWND)hwnd, rgn, 0);
 
@@ -45,7 +45,8 @@ void acrylic_background_widget::render(nanovg_context ctx) {
                    SWP_NOCOPYBITS);
   SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-  if (width->updated() || height->updated() || radius->updated()) {
+  if ((width->updated() || height->updated() || radius->updated()) &&
+      !use_dwm) {
     auto rgn =
         CreateRoundRectRgn(0, 0, *width, *height, *radius * 2, *radius * 2);
     SetWindowRgn((HWND)hwnd, rgn, 0);
@@ -85,6 +86,13 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
   WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                       sizeof(accent)};
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
+
+  if (use_dwm) {
+    // dwm round corners
+    auto round_value = DWMWCP_ROUND;
+    DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
+                          &round_value, sizeof(round_value));
+  }
 
   ShowWindow((HWND)hwnd, SW_SHOW);
 }

@@ -10,6 +10,7 @@ struct acrylic_background_widget : public widget {
   ~acrylic_background_widget();
   sp_anim_float opacity = anim_float(0, 200);
   sp_anim_float radius = anim_float(0, 200);
+  bool use_dwm = true;
   NVGcolor acrylic_bg_color = nvgRGBAf(0, 0, 0, 0);
 
   void update_color();
