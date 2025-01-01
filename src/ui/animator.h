@@ -40,6 +40,7 @@ struct animated_float {
 private:
   float duration = 200.f;
   float value = 0.f;
+  float from = 0.f;
   float destination = value;
   float progress = 0.f;
   bool _updated = true;

@@ -33,14 +33,17 @@ std::expected<bool, std::string> render_target::init() {
   // glfwWindowHint(GLFW_DECORATED, 0);
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
+  glfwWindowHint(GLFW_FLOATING, 1);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(0);
+  glfwSwapInterval(1);
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
   // add WS_EX_NOACTIVATE to prevent the window from being activated
-  SetWindowLongPtr(h, GWL_EXSTYLE, GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_NOACTIVATE);
+  SetWindowLongPtr(h, GWL_EXSTYLE,
+                   GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
+                       WS_EX_NOACTIVATE);
 
   if (!window) {
     return std::unexpected("Failed to create window");
@@ -55,7 +58,7 @@ std::expected<bool, std::string> render_target::init() {
     return std::unexpected("Failed to create window");
   }
 
-  nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+  nvg = nvgCreateGL3(NVG_STENCIL_STROKES);
 
   if (!nvg) {
     return std::unexpected("Failed to create NanoVG context");
@@ -93,21 +96,32 @@ void render_target::render() {
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
-  glClearColor(0, 0, 0, 0.1);
+  glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+  auto now = clock.now();
+  auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
+  last_time = now;
+
+  static float counter = 0, time_ctr = 0;
+  counter++;
+  time_ctr += delta_t;
+  if (time_ctr > 1000) {
+    time_ctr = 0;
+    std::println("FPS: {}", counter);
+    counter = 0;
+  }
 
   if (fb_width != width || fb_height != height) {
     width = fb_width;
     height = fb_height;
-    nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    nvg = nvgCreateGL3(NVG_STENCIL_STROKES);
   }
 
   nanovg_context vg{nvg};
 
   vg.beginFrame(width, height, 1);
-  auto now = clock.now();
-  auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
-  last_time = now;
+
   double mouse_x, mouse_y;
   glfwGetCursorPos(window, &mouse_x, &mouse_y);
   int window_x, window_y;

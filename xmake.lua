@@ -18,7 +18,7 @@ target("ui")
         public = true
     })
     add_syslinks("dwmapi")
-    add_files("src/ui/*.cc", "src/ui/nanovg/*.cpp")
+    add_files("src/ui/*.cc")
     add_headerfiles("src/ui/*.h")
     add_includedirs("src/ui", {
         public = true

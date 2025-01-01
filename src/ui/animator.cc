@@ -19,23 +19,28 @@ void ui::animated_float::update(float delta_t) {
     return;
   }
 
-  if (easing == easing_type::linear) {
-    value = std::lerp(value, destination, progress);
-  } else if (easing == easing_type::ease_in) {
-    value = std::lerp(value, destination, progress * progress);
-  } else if (easing == easing_type::ease_out) {
-    value = std::lerp(value, destination, 1 - std::sqrt(1 - progress));
-  } else if (easing == easing_type::ease_in_out) {
-    value = std::lerp(
-        value, destination,
-        (0.5f * std::sin(progress * std::numbers::pi - std::numbers::pi / 2) +
-         0.5f));
-  }
-
   if (progress >= 1.f) {
     progress = 1.f;
-    _updated = false;
+    if (value != destination) {
+      value = destination;
+      _updated = true;
+    } else {
+      _updated = false;
+    }
     return;
+  }
+
+  if (easing == easing_type::linear) {
+    value = std::lerp(from, destination, progress);
+  } else if (easing == easing_type::ease_in) {
+    value = std::lerp(from, destination, progress * progress);
+  } else if (easing == easing_type::ease_out) {
+    value = std::lerp(from, destination, 1 - std::sqrt(1 - progress));
+  } else if (easing == easing_type::ease_in_out) {
+    value = std::lerp(
+        from, destination,
+        (0.5f * std::sin(progress * std::numbers::pi - std::numbers::pi / 2) +
+         0.5f));
   }
 
   _updated = true;
@@ -43,6 +48,7 @@ void ui::animated_float::update(float delta_t) {
 void ui::animated_float::animate_to(float destination) {
   if (this->destination == destination)
     return;
+  this->from = value;
   this->destination = destination;
   progress = 0.f;
 }
@@ -50,6 +56,7 @@ float ui::animated_float::var() const { return value; }
 float ui::animated_float::prog() const { return progress; }
 void ui::animated_float::reset_to(float destination) {
   value = destination;
+  this->from = destination;
   this->destination = destination;
   progress = 1.f;
   _updated = true;
