@@ -20,41 +20,12 @@ static auto pSetWindowCompositionAttribute =
 namespace ui {
 void acrylic_background_widget::update(UpdateContext &ctx) {
   widget::update(ctx);
-
-  if (radius->updated() || !use_dwm) {
-    auto rgn = CreateRoundRectRgn(0, 0, *width, *height, *radius, *radius);
-    SetWindowRgn((HWND)hwnd, rgn, 0);
-
-    if (rgn) {
-      DeleteObject(rgn);
-    }
-  }
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
-
-  auto win = glfwGetCurrentContext();
-  auto handle = glfwGetWin32Window(win);
-
-  int winx, winy;
-  glfwGetWindowPos(win, &winx, &winy);
-
-  SetWindowPos((HWND)hwnd, handle, winx + *x + ctx.offset_x,
-               winy + *y + ctx.offset_y, *width, *height,
-               SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
-                   SWP_NOCOPYBITS);
-  SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
-
-  if ((width->updated() || height->updated() || radius->updated()) &&
-      !use_dwm) {
-    auto rgn =
-        CreateRoundRectRgn(0, 0, *width, *height, *radius * 2, *radius * 2);
-    SetWindowRgn((HWND)hwnd, rgn, 0);
-
-    if (rgn) {
-      DeleteObject(rgn);
-    }
-  }
+  offset_x = ctx.offset_x;
+  offset_y = ctx.offset_y;
+  cv.notify_all();
 }
 
 acrylic_background_widget::acrylic_background_widget() : widget() {
@@ -69,35 +40,72 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
   }
 
   opacity->reset_to(255);
+  auto win = glfwGetCurrentContext();
+  auto handle = glfwGetWin32Window(win);
+  render_thread = std::thread([=, this]() {
+    hwnd = CreateWindowExW(
+        WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED,
+        L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, *width, *height, nullptr,
+        NULL, GetModuleHandleW(nullptr), NULL);
 
-  hwnd = CreateWindowExW(
-      WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED,
-      L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, *width, *height, nullptr, NULL,
-      GetModuleHandleW(nullptr), NULL);
+    if (!hwnd) {
+      std::println("Failed to create window: {}", GetLastError());
+    }
 
-  if (!hwnd) {
-    std::println("Failed to create window: {}", GetLastError());
-  }
+    SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
-  SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+    ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                            Flags::AllowSetWindowRgn, 0x01000000, 0};
+    WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
+                                        sizeof(accent)};
+    pSetWindowCompositionAttribute((HWND)hwnd, &data);
 
-  ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                          Flags::AllowSetWindowRgn, 0x01000000, 0};
-  WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
-                                      sizeof(accent)};
-  pSetWindowCompositionAttribute((HWND)hwnd, &data);
+    if (use_dwm) {
+      // dwm round corners
+      auto round_value = DWMWCP_ROUND;
+      DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
+                            &round_value, sizeof(round_value));
+    }
 
-  if (use_dwm) {
-    // dwm round corners
-    auto round_value = DWMWCP_ROUND;
-    DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
-                          &round_value, sizeof(round_value));
-  }
+    ShowWindow((HWND)hwnd, SW_SHOW);
+    while (true) {
+      std::unique_lock<std::mutex> lk(cv_m);
+      cv.wait(lk);
 
-  ShowWindow((HWND)hwnd, SW_SHOW);
+      if (to_close) {
+        DestroyWindow((HWND)hwnd);
+        break;
+      }
+
+      int winx, winy;
+      RECT rect;
+      GetWindowRect(handle, &rect);
+      winx = rect.left;
+      winy = rect.top;
+
+      SetWindowPos((HWND)hwnd, handle, winx + *x + offset_x,
+                   winy + *y + offset_y, *width, *height,
+                   SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
+                       SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
+      SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
+
+      if ((width->updated() || height->updated() || radius->updated()) &&
+          !use_dwm) {
+        auto rgn =
+            CreateRoundRectRgn(0, 0, *width, *height, *radius * 2, *radius * 2);
+        SetWindowRgn((HWND)hwnd, rgn, 0);
+
+        if (rgn) {
+          DeleteObject(rgn);
+        }
+      }
+    }
+  });
 }
 acrylic_background_widget::~acrylic_background_widget() {
-  DestroyWindow((HWND)hwnd);
+  to_close = true;
+  cv.notify_all();
+  render_thread.join();
 }
 void acrylic_background_widget::update_color() {
   ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,

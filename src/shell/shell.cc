@@ -3,12 +3,12 @@
 #include "menu.h"
 #include "ui.h"
 #include <codecvt>
+#include <consoleapi.h>
 #include <debugapi.h>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <winuser.h>
-
 
 std::string wstring_to_utf8(std::wstring const &str) {
   std::wstring_convert<
@@ -32,7 +32,10 @@ std::string ws2s(const std::wstring &ws) { return wstring_to_utf8(ws); }
 
 void main() {
   auto proc = blook::Process::self();
-  // MessageBoxW(NULL, L"Injected", L"Info", MB_ICONINFORMATION);
+  AllocConsole();
+  freopen("CONOUT$", "w", stdout);
+  freopen("CONOUT$", "w", stderr);
+  freopen("CONIN$", "r", stdin);
 
   auto win32u = proc->module("win32u.dll");
   // hook NtUserTrackPopupMenu
@@ -94,7 +97,8 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
     menu_item item;
     wchar_t buffer[256];
     MENUITEMINFOW info = {sizeof(MENUITEMINFO)};
-    info.fMask = MIIM_STRING | MIIM_SUBMENU | MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_BITMAP;
+    info.fMask = MIIM_STRING | MIIM_SUBMENU | MIIM_ID | MIIM_FTYPE |
+                 MIIM_STATE | MIIM_BITMAP;
     info.dwTypeData = buffer;
     info.cch = 256;
     GetMenuItemInfoW(hMenu, i, TRUE, &info);

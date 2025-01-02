@@ -103,7 +103,7 @@ void render_target::render() {
   auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
   last_time = now;
 
-  if constexpr (false) {
+  if constexpr (true) {
     static float counter = 0, time_ctr = 0;
     counter++;
     time_ctr += delta_t;

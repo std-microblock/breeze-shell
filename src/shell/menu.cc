@@ -123,14 +123,10 @@ mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
   bg->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
   bg->update_color();
   bg->radius->reset_to(6);
+  bg->use_dwm = false;
 
-  bg->x->reset_to(wid_x);
-  bg->y->reset_to(wid_y);
-  bg->height->set_duration(200);
-  bg->y->set_duration(200);
   bg->opacity->reset_to(0);
   bg->opacity->animate_to(255);
-  bg->width->reset_to(100);
 
   auto init_items = menu_data.items;
   for (size_t i = 0; i < init_items.size(); i++) {
@@ -143,12 +139,12 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
 
   //   y->animate_to(anchor_y - height->dest() - 10);
-  bg->y->animate_to(y->dest() - bg_padding_vertical);
+  bg->y->reset_to(y->dest() - bg_padding_vertical);
 
-  bg->width->animate_to(width->dest());
-  bg->height->animate_to(height->dest() + bg_padding_vertical * 2);
-  bg->x->animate_to(x->dest());
-  bg->update(ctx);
+  bg->width->reset_to(width->dest());
+  bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
+  bg->x->reset_to(x->dest());
+  // bg->update(ctx);
 
   if (ctx.mouse_clicked) {
     std::println("Clicked on menu");

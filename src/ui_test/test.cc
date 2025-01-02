@@ -163,13 +163,8 @@ struct menu_widget : public ui::widget_parent_flex {
     bg->update_color();
     bg->radius->reset_to(6);
 
-    bg->x->reset_to(wid_x);
-    bg->y->reset_to(wid_y);
-    bg->height->set_duration(200);
-    bg->y->set_duration(200);
     bg->opacity->reset_to(0);
     bg->opacity->animate_to(255);
-    bg->width->reset_to(100);
 
     for (size_t i = 0; i < init_items.size(); i++) {
       auto &item = init_items[i];
@@ -182,17 +177,17 @@ struct menu_widget : public ui::widget_parent_flex {
     super::update(ctx);
 
     y->animate_to(anchor_y - height->dest() - 10);
-
-    bg->width->animate_to(width->dest());
-    bg->height->animate_to(height->dest() + bg_padding_vertical * 2);
-    bg->x->animate_to(x->dest());
-    bg->y->animate_to(y->dest() - bg_padding_vertical);
+    bg->width->reset_to(width->dest());
+    bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
+    bg->x->reset_to(x->dest());
+    bg->y->reset_to(y->dest() - bg_padding_vertical);
     bg->update(ctx);
 
     if (ctx.mouse_clicked) {
       std::println("Clicked on menu");
+      auto i = items;
       ctx.rt.root->children.clear();
-      ctx.rt.root->emplace_child<menu_widget>(items, ctx.mouse_x, ctx.mouse_y);
+      ctx.rt.root->emplace_child<menu_widget>(i, ctx.mouse_x, ctx.mouse_y);
     }
   }
 
@@ -218,9 +213,7 @@ int main() {
 
   rt.root->emplace_child<menu_widget>(items, 20, 20);
 
-  nvgCreateFont(rt.nvg, "Segui",
-                "C:\\Users\\MicroBlock\\Downloads\\Noto_Sans_"
-                "SC\\static\\NotoSansSC-Regular.ttf");
+  nvgCreateFont(rt.nvg, "Segui", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
   rt.start_loop();
   return 0;
