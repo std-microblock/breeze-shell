@@ -39,7 +39,7 @@ void main() {
   NtUserTrackHook->install([=](HMENU hMenu, uint32_t uFlags, int x, int y,
                                HWND hWnd, LPTPMPARAMS lptpm, int tfunc) {
     constexpr int l_pad = 100, t_pad = 100, width = 1200, height = 1200;
-    auto menu = menu::construct_with_hmenu(hMenu);
+    auto menu = menu::construct_with_hmenu(hMenu, hWnd);
 
     std::cout << menu.to_string() << std::endl;
 
@@ -66,9 +66,9 @@ void main() {
       rt.start_loop();
     }).detach();
 
+    return NtUserTrackHook->call_trampoline<bool>(hMenu, uFlags, x, y, hWnd,
+                                                  lptpm, tfunc);
     return false;
-    // return NtUserTrackHook->call_trampoline<bool>(hMenu, uFlags, x, y, hWnd,
-    //                                               lptpm, tfunc);
   });
 }
 } // namespace mb_shell

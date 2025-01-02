@@ -11,7 +11,6 @@
 #include <type_traits>
 #include <winuser.h>
 
-
 namespace mb_shell {
 std::string menu_item::to_string() {
   if (type == type::spacer) {
@@ -33,7 +32,7 @@ std::string menu::to_string() {
   }
   return str;
 }
-menu menu::construct_with_hmenu(HMENU hMenu) {
+menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
   menu m;
 
   for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
@@ -47,7 +46,7 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
     GetMenuItemInfoW(hMenu, i, TRUE, &info);
 
     if (info.hSubMenu) {
-      item.submenu = construct_with_hmenu(info.hSubMenu);
+      item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
     }
 
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||
@@ -60,6 +59,12 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
     if (info.fType & MFT_BITMAP) {
       item.icon = info.hbmpItem;
     }
+
+    item.action = [=]() mutable {
+      std::cout << "Clicked " << item.to_string() << std::endl;
+      PostMessageW(hWnd, WM_COMMAND, MAKELONG(info.wID, 0),
+                   reinterpret_cast<LPARAM>(hWnd));
+    };
 
     m.items.push_back(item);
   }

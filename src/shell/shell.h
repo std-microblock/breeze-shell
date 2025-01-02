@@ -15,7 +15,7 @@ struct menu {
   std::vector<menu_item> items;
   std::string to_string();
 
-  static menu construct_with_hmenu(HMENU hMenu);
+  static menu construct_with_hmenu(HMENU hMenu, HWND hWnd);
 };
 
 struct menu_item {
