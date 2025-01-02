@@ -21,10 +21,17 @@ struct render_target {
   int height = 720;
   static std::atomic_int view_cnt;
   int view_id = view_cnt++;
+  float dpi_scale = 1;
   std::expected<bool, std::string> init();
   static std::expected<bool, std::string> init_global();
   void start_loop();
   void render();
+  void resize(int width, int height) {
+    this->width = width;
+    this->height = height;
+  }
+
+  void reset_view();
 
   std::chrono::high_resolution_clock clock{};
   decltype(clock.now()) last_time = clock.now();

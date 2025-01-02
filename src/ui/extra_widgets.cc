@@ -83,8 +83,9 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
       winx = rect.left;
       winy = rect.top;
 
-      SetWindowPos((HWND)hwnd, handle, winx + *x + offset_x,
-                   winy + *y + offset_y, *width, *height,
+      SetWindowPos((HWND)hwnd, handle, winx + (*x + offset_x) * dpi_scale,
+                   winy + (*y + offset_y) * dpi_scale, *width * dpi_scale,
+                   *height * dpi_scale,
                    SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
                        SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);

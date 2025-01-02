@@ -1,5 +1,6 @@
 #include "glad/glad.h"
 #include <dwmapi.h>
+#include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
 #include "GLFW/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -58,12 +59,6 @@ std::expected<bool, std::string> render_target::init() {
     return std::unexpected("Failed to create window");
   }
 
-  nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
-
-  if (!nvg) {
-    return std::unexpected("Failed to create NanoVG context");
-  }
-
   glfwSetWindowUserPointer(window, this);
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width,
                                             int height) {
@@ -72,6 +67,12 @@ std::expected<bool, std::string> render_target::init() {
     rt->height = height;
     rt->render();
   });
+
+  reset_view();
+
+  if (!nvg) {
+    return std::unexpected("Failed to create NanoVG context");
+  }
 
   return true;
 }
@@ -117,12 +118,13 @@ void render_target::render() {
   if (fb_width != width || fb_height != height) {
     width = fb_width;
     height = fb_height;
-    nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
+    reset_view();
   }
 
   nanovg_context vg{nvg};
 
-  vg.beginFrame(width, height, 1);
+  vg.beginFrame(width, height, dpi_scale);
+  vg.scale(dpi_scale, dpi_scale);
 
   double mouse_x, mouse_y;
   glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -131,8 +133,8 @@ void render_target::render() {
 
   UpdateContext ctx{
       .delta_t = delta_t,
-      .mouse_x = mouse_x,
-      .mouse_y = mouse_y,
+      .mouse_x = mouse_x / dpi_scale,
+      .mouse_y = mouse_y / dpi_scale,
       .mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .rt = *this,
@@ -146,5 +148,11 @@ void render_target::render() {
   root->render(vg);
   vg.endFrame();
   glfwSwapBuffers(window);
+}
+void render_target::reset_view() {
+  nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
+  glfwGetWindowContentScale(window, &this->dpi_scale, nullptr);
+  // std::println("DPI scale: {}", dpi_scale);
+  glfwSetWindowSize(window, width, height);
 }
 } // namespace ui

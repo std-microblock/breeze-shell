@@ -121,6 +121,11 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
     m.items.push_back(item);
   }
 
+  POINT pt;
+  GetCursorPos(&pt);
+  m.anchor_x = pt.x;
+  m.anchor_y = pt.y;
+
   return m;
 }
 } // namespace mb_shell

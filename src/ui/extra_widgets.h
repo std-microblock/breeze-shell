@@ -19,7 +19,7 @@ struct acrylic_background_widget : public widget {
   std::condition_variable cv;
   std::mutex cv_m;
   bool to_close = false;
-  float offset_x = 0, offset_y = 0;
+  float offset_x = 0, offset_y = 0, dpi_scale = 1;
 
   void update_color();
 
