@@ -26,12 +26,10 @@ struct render_target {
   static std::expected<bool, std::string> init_global();
   void start_loop();
   void render();
-  void resize(int width, int height) {
-    this->width = width;
-    this->height = height;
-  }
-
+  void resize(int width, int height);
+  void set_position(int x, int y);
   void reset_view();
+  void close();
 
   std::chrono::high_resolution_clock clock{};
   decltype(clock.now()) last_time = clock.now();

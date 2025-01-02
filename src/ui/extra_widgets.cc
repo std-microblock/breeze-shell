@@ -8,7 +8,7 @@
 #include <dwmapi.h>
 
 #include "swcadef.h"
-
+#include "ui.h"
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
@@ -20,11 +20,14 @@ static auto pSetWindowCompositionAttribute =
 namespace ui {
 void acrylic_background_widget::update(UpdateContext &ctx) {
   widget::update(ctx);
+
+  dpi_scale = ctx.rt.dpi_scale;
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
+
   cv.notify_all();
 }
 

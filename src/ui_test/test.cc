@@ -155,9 +155,6 @@ struct menu_widget : public ui::widget_parent_flex {
     gap = 5;
     anchor_x = wid_x;
     anchor_y = wid_y;
-    this->x->reset_to(wid_x);
-    this->y->reset_to(wid_y);
-
     bg = std::make_unique<ui::acrylic_background_widget>();
     bg->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     bg->update_color();
@@ -175,6 +172,9 @@ struct menu_widget : public ui::widget_parent_flex {
 
   void update(ui::UpdateContext &ctx) override {
     super::update(ctx);
+
+    x->reset_to(anchor_x / ctx.rt.dpi_scale);
+    y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
     y->animate_to(anchor_y - height->dest() - 10);
     bg->width->reset_to(width->dest());

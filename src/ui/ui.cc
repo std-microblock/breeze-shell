@@ -155,4 +155,13 @@ void render_target::reset_view() {
   // std::println("DPI scale: {}", dpi_scale);
   glfwSetWindowSize(window, width, height);
 }
+void render_target::set_position(int x, int y) {
+  glfwSetWindowPos(window, x, y);
+}
+void render_target::resize(int width, int height) {
+  this->width = width;
+  this->height = height;
+  reset_view();
+}
+void render_target::close() { glfwSetWindowShouldClose(window, true); }
 } // namespace ui

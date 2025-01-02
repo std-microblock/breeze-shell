@@ -13,7 +13,6 @@ namespace mb_shell {
 struct menu_item;
 struct menu {
   std::vector<menu_item> items;
-  int anchor_x = 0, anchor_y = 0;
   std::string to_string();
 
   static menu construct_with_hmenu(HMENU hMenu);

@@ -1,7 +1,8 @@
 
 #include "shell.h"
-#include "menu.h"
+#include "menu_widget.h"
 #include "ui.h"
+#include "utils.h"
 #include <codecvt>
 #include <consoleapi.h>
 #include <debugapi.h>
@@ -10,66 +11,8 @@
 #include <type_traits>
 #include <winuser.h>
 
-std::string wstring_to_utf8(std::wstring const &str) {
-  std::wstring_convert<
-      std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
-                         std::codecvt_utf8_utf16<wchar_t>>>
-      converter;
-  return converter.to_bytes(str);
-}
-
-std::wstring utf8_to_wstring(std::string const &str) {
-  std::wstring_convert<
-      std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
-                         std::codecvt_utf8_utf16<wchar_t>>>
-      converter;
-  return converter.from_bytes(str);
-}
 
 namespace mb_shell {
-
-std::string ws2s(const std::wstring &ws) { return wstring_to_utf8(ws); }
-
-void main() {
-  auto proc = blook::Process::self();
-  AllocConsole();
-  freopen("CONOUT$", "w", stdout);
-  freopen("CONOUT$", "w", stderr);
-  freopen("CONIN$", "r", stdin);
-
-  auto win32u = proc->module("win32u.dll");
-  // hook NtUserTrackPopupMenu
-  auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
-  auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
-
-  NtUserTrackHook->install([=](HMENU hMenu, uint32_t uFlags, int x, int y,
-                               HWND hWnd, LPTPMPARAMS lptpm, int tfunc) {
-    std::thread([=]() {
-      if (auto res = ui::render_target::init_global(); !res) {
-        MessageBoxW(NULL, L"Failed to initialize global render target",
-                    L"Error", MB_ICONERROR);
-        return;
-      }
-      auto menu = menu::construct_with_hmenu(hMenu);
-
-      ui::render_target rt;
-
-      if (auto res = rt.init(); !res) {
-        MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
-                    MB_ICONERROR);
-      }
-
-      rt.root->emplace_child<menu_widget>(menu, 20, 20);
-
-      nvgCreateFont(rt.nvg, "Segui", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
-      rt.start_loop();
-    }).detach();
-
-    return NtUserTrackHook->call_trampoline<bool>(hMenu, uFlags, x, y, hWnd,
-                                                  lptpm, tfunc);
-  });
-}
 std::string menu_item::to_string() {
   if (type == type::spacer) {
     return "spacer";
@@ -111,7 +54,7 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
         info.fType & MFT_MENUBREAK) {
       item.type = menu_item::type::spacer;
     } else {
-      item.name = ws2s(buffer);
+      item.name = wstring_to_utf8(buffer);
     }
 
     if (info.fType & MFT_BITMAP) {
@@ -121,27 +64,6 @@ menu menu::construct_with_hmenu(HMENU hMenu) {
     m.items.push_back(item);
   }
 
-  POINT pt;
-  GetCursorPos(&pt);
-  m.anchor_x = pt.x;
-  m.anchor_y = pt.y;
-
   return m;
 }
 } // namespace mb_shell
-
-int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
-  switch (fdwReason) {
-  case DLL_PROCESS_ATTACH: {
-    auto cmdline = std::string(GetCommandLineA());
-
-    std::ranges::transform(cmdline, cmdline.begin(), tolower);
-
-    if (cmdline.contains("explorer")) {
-      mb_shell::main();
-    }
-    break;
-  }
-  }
-  return 1;
-}

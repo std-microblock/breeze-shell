@@ -1,4 +1,4 @@
-#include "menu.h"
+#include "menu_widget.h"
 #include "nanovg.h"
 #include "shell.h"
 #include <vector>
@@ -97,11 +97,17 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 void mb_shell::menu_item_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
   if (ctx.mouse_down_on(this)) {
-    bg_opacity->animate_to(30);
+    bg_opacity->animate_to(40);
   } else if (ctx.hovered(this)) {
     bg_opacity->animate_to(20);
   } else {
     bg_opacity->animate_to(0);
+  }
+
+  if (ctx.mouse_clicked_on(this)) {
+    if (item.action) {
+      item.action.value()();
+    }
   }
 }
 float mb_shell::menu_item_widget::measure_width(ui::UpdateContext &ctx) {
@@ -138,20 +144,14 @@ mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
 void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
 
-  //   y->animate_to(anchor_y - height->dest() - 10);
-  bg->y->reset_to(anchor_y - bg_padding_vertical);
+  x->reset_to(anchor_x / ctx.rt.dpi_scale);
+  y->reset_to(anchor_y / ctx.rt.dpi_scale);
+  bg->x->reset_to(anchor_x / ctx.rt.dpi_scale);
+  bg->y->reset_to(anchor_y / ctx.rt.dpi_scale - bg_padding_vertical);
 
   bg->width->reset_to(width->dest());
   bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
-  bg->x->reset_to(x->dest());
   bg->update(ctx);
-
-  if (ctx.mouse_clicked) {
-    std::println("Clicked on menu");
-    ctx.rt.root->emplace_child<menu_widget>(menu_data, ctx.mouse_x,
-                                            ctx.mouse_y);
-    ctx.rt.root->children.erase(ctx.rt.root->children.begin());
-  }
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   bg->render(ctx);
