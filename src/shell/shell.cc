@@ -43,11 +43,15 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
                  MIIM_STATE | MIIM_BITMAP;
     info.dwTypeData = buffer;
     info.cch = 256;
-    GetMenuItemInfoW(hMenu, i, TRUE, &info);
-
-    if (info.hSubMenu) {
-      item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
+    if(!GetMenuItemInfoW(hMenu, i, TRUE, &info)) {
+      std::cout << "Failed to get menu item info: " << GetLastError() << std::endl;
+      continue;
     }
+    if (info.hSubMenu) {
+    //  item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
+    }
+
+    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, 256, NULL, NULL);
 
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||
         info.fType & MFT_MENUBREAK) {
@@ -62,8 +66,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
 
     item.action = [=]() mutable {
       std::cout << "Clicked " << item.to_string() << std::endl;
-      PostMessageW(hWnd, WM_COMMAND, MAKELONG(info.wID, 0),
-                   reinterpret_cast<LPARAM>(hWnd));
+      PostMessageW(hWnd, WM_COMMAND, info.wID, 0);
     };
 
     m.items.push_back(item);
