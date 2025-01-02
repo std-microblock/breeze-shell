@@ -139,12 +139,12 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
 
   //   y->animate_to(anchor_y - height->dest() - 10);
-  bg->y->reset_to(y->dest() - bg_padding_vertical);
+  bg->y->reset_to(anchor_y - bg_padding_vertical);
 
   bg->width->reset_to(width->dest());
   bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
   bg->x->reset_to(x->dest());
-  // bg->update(ctx);
+  bg->update(ctx);
 
   if (ctx.mouse_clicked) {
     std::println("Clicked on menu");

@@ -30,7 +30,7 @@ std::expected<bool, std::string> render_target::init() {
   }
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  // glfwWindowHint(GLFW_DECORATED, 0);
+  glfwWindowHint(GLFW_DECORATED, 0);
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   glfwWindowHint(GLFW_FLOATING, 1);
