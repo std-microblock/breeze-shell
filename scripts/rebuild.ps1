@@ -3,6 +3,6 @@ foreach ($pidx in $pids) {
     Stop-Process -Id $pidx -Force
 }
 
-xmake b shell
 xmake b inject
+xmake b shell
 xmake r inject

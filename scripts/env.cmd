@@ -1,1 +1,2 @@
 set LLDB_USE_NATIVE_PDB_READER=1
+cmd

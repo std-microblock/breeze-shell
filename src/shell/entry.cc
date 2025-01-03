@@ -5,6 +5,7 @@
 #include "blook/function.h"
 #include "entry.h"
 #include "menu_widget.h"
+#include "script/script.h"
 #include "shell.h"
 #include "ui.h"
 #include "utils.h"
@@ -42,13 +43,18 @@ std::optional<track_menu_args> track_menu_args_opt;
 bool track_menu_open = false;
 
 void main() {
-  auto proc = blook::Process::self();
-  AllocConsole();
-  SetConsoleCP(CP_UTF8);
-  freopen("CONOUT$", "w", stdout);
-  freopen("CONOUT$", "w", stderr);
-  freopen("CONIN$", "r", stdin);
+  // AllocConsole();
+  // SetConsoleCP(CP_UTF8);
+  // freopen("CONOUT$", "w", stdout);
+  // freopen("CONOUT$", "w", stderr);
+  // freopen("CONIN$", "r", stdin);
 
+  std::println("Hello from mb-shell!");
+
+  script_context ctx;
+  ctx.watch_file("D:/Shell/test.js");
+
+  auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");
   auto user32 = proc->module("user32.dll");
   // hook NtUserTrackPopupMenu
@@ -136,4 +142,9 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
   }
   }
   return 1;
+}
+
+int main() {
+  mb_shell::main();
+  return 0;
 }
