@@ -68,6 +68,13 @@ std::expected<bool, std::string> render_target::init() {
     rt->render();
   });
 
+  glfwSetWindowFocusCallback(window, [](GLFWwindow *window, int focused) {
+    auto thiz = static_cast<render_target *>(glfwGetWindowUserPointer(window));
+    if (thiz->on_focus_changed) {
+      thiz->on_focus_changed.value()(focused);
+    }
+  });
+
   reset_view();
 
   if (!nvg) {

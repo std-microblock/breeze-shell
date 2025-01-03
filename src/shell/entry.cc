@@ -1,4 +1,5 @@
 
+#include "GLFW/glfw3.h"
 #include "blook/blook.h"
 
 #include "blook/function.h"
@@ -87,6 +88,12 @@ void main() {
         rt.set_position(x - l_pad, y - t_pad + 5);
         rt.resize(width, height);
         rt.root->emplace_child<menu_widget>(menu, l_pad, t_pad);
+
+        rt.on_focus_changed = [](bool focused) {
+          if (!focused) {
+            glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+          }
+        };
 
         nvgCreateFont(rt.nvg, "Segui", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 

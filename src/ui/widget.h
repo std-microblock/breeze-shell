@@ -2,6 +2,7 @@
 #include "animator.h"
 #include "nanovg_wrapper.h"
 
+#include <functional>
 #include <memory>
 #include <vector>
 
