@@ -11,6 +11,7 @@
     "esbuild-register": "^3.6.0"
   },
   "scripts": {
-    "gen": "node -r esbuild-register index.ts"
+    "gen": "node -r esbuild-register index.ts",
+    "typegen": "node -r esbuild-register typegen.ts"
   }
 }
