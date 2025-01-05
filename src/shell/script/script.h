@@ -8,18 +8,6 @@
 #include <thread>
 
 namespace mb_shell {
-
-struct example_struct_jni {
-  int a;
-  int b;
-
-  int add();
-
-  ~example_struct_jni();
-
-  example_struct_jni();
-};
-
 struct script_context {
   std::unique_ptr<qjs::Runtime> rt;
   std::unique_ptr<qjs::Context> js;

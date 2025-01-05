@@ -1,7 +1,8 @@
 #include "script.h"
 #include "../shell.h"
 #include <print>
-
+#include "binding_qjs.h"
+#include "binding_types.h"
 namespace mb_shell {
 
 void script_context::eval(const std::string &script) {
@@ -51,12 +52,10 @@ void println(qjs::rest<std::string> args) {
 
 void script_context::bind() {
   auto &module = js->addModule("mshell");
-  module.function<&println>("println");
-  module.class_<example_struct_jni>("example_struct_jni")
-      .constructor<>()
-      .fun<&example_struct_jni::add>("add")
-      .fun<&example_struct_jni::a>("a")
-      .fun<&example_struct_jni::b>("b");
+
+  module.function("println", println);
+
+  js->global()["xx"] = js->newValue(example_struct_jni{});
 }
 script_context::script_context()
     : rt{
@@ -64,13 +63,4 @@ script_context::script_context()
     }, js{std::make_unique<qjs::Context>(*rt)} {
   bind();
 }
-example_struct_jni::example_struct_jni() {
-  a = 1;
-  b = 2;
-  std::println("example_struct_jni created");
-}
-example_struct_jni::~example_struct_jni() {
-  std::println("example_struct_jni destroyed");
-}
-int example_struct_jni::add() { return a + b; }
 } // namespace mb_shell

@@ -52,7 +52,7 @@ void main() {
   std::println("Hello from mb-shell!");
 
   script_context ctx;
-  ctx.watch_file("D:/Shell/test.js");
+  ctx.watch_file("J:\\Projects\\b-shell\\test.js");
 
   auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");
