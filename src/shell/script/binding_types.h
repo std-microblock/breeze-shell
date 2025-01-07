@@ -1,8 +1,10 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <variant>
+#include "../menu_widget.h"
 
-namespace mb_shell {
+namespace mb_shell_js {
 struct example_struct_jni {
   int a;
   int b;
@@ -15,6 +17,7 @@ struct example_struct_jni {
 };
 
 struct menu_controller {
-  static void test();
+  std::shared_ptr<mb_shell::menu_widget> menu;
+  
 };
 } // namespace mb_shell
