@@ -23,26 +23,31 @@ target("ui")
     add_includedirs("src/ui", {
         public = true
     })
+    set_encodings("utf-8")
 
 target("ui_test")
     set_kind("binary")
     add_deps("ui")
     add_files("src/ui_test/*.cc")
+    set_encodings("utf-8")
 
 target("shell")
     set_kind("shared")
     add_packages("blook", "quickjs-ng")
     add_deps("ui")
     add_files("src/shell/**/*.cc", "src/shell/*.cc")
+    set_encodings("utf-8")
 
 target("shell_test")
     set_kind("binary")
     add_packages("blook", "quickjs-ng")
     add_deps("ui")
     add_files("src/shell/**/*.cc", "src/shell/*.cc")
+    set_encodings("utf-8")
 
 target("inject")
     set_kind("binary")
     add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32")
     add_files("src/inject/*.cc")
     add_syslinks("psapi")
+    set_encodings("utf-8")
