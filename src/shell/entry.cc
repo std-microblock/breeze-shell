@@ -140,6 +140,10 @@ void main() {
 
     return open;
   });
+
+  while (true) {
+    std::this_thread::yield();
+  }
 }
 } // namespace mb_shell
 

@@ -225,16 +225,12 @@ template <> struct qjs::js_traits<mb_shell::js::menu_controller> {
     static mb_shell::js::menu_controller unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::menu_controller obj;
     
-        obj.menu = js_traits<std::weak_ptr<mb_shell::menu_widget>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "menu"));
-        
         return obj;
     }
 
     static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_controller &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     
-        JS_SetPropertyStr(ctx, obj, "menu", js_traits<std::weak_ptr<mb_shell::menu_widget>>::wrap(ctx, val.menu));
-        
         JS_SetPropertyStr(
             ctx, obj, "valid",
             JS_NewCFunction(
@@ -392,7 +388,6 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
                 .fun<&mb_shell::js::menu_controller::get_menu_items>("get_menu_items")
                 .fun<&mb_shell::js::menu_controller::get_menu_item>("get_menu_item")
                 .fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
-                .fun<&mb_shell::js::menu_controller::menu>("menu")
             ;
     }
 

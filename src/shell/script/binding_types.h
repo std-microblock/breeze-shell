@@ -53,7 +53,7 @@ struct menu_info_basic_js {
 };
 
 struct menu_controller {
-  std::weak_ptr<mb_shell::menu_widget> menu;
+  std::weak_ptr<mb_shell::menu_widget> $menu;
 
   bool valid();
   bool add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);

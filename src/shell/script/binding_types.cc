@@ -4,12 +4,12 @@
 namespace mb_shell {
 std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
     menu_callbacks;
-bool js::menu_controller::valid() { return !menu.expired(); }
+bool js::menu_controller::valid() { return !$menu.expired(); }
 bool js::menu_controller::add_menu_item_after(js_menu_data data,
                                               int after_index) {
   if (!valid())
     return false;
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return false;
 
@@ -48,7 +48,7 @@ bool js::menu_controller::set_menu_item(int index,
                                         mb_shell::js::js_menu_data data) {
   if (!valid())
     return false;
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return false;
 
@@ -79,7 +79,7 @@ bool js::menu_controller::set_menu_item(int index,
 bool js::menu_controller::set_menu_item_position(int index, int new_index) {
   if (!valid())
     return false;
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return false;
 
@@ -95,7 +95,7 @@ bool js::menu_controller::set_menu_item_position(int index, int new_index) {
 bool js::menu_controller::remove_menu_item(int index) {
   if (!valid())
     return false;
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return false;
 
@@ -109,7 +109,7 @@ std::vector<std::shared_ptr<mb_shell::js::menu_item_data>>
 js::menu_controller::get_menu_items() {
   if (!valid())
     return {};
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return {};
 
@@ -139,7 +139,7 @@ js::menu_controller::get_menu_item(int index) {
   if (!valid())
     return nullptr;
 
-  auto m = menu.lock();
+  auto m = $menu.lock();
   if (!m)
     return nullptr;
 
