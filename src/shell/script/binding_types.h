@@ -14,5 +14,7 @@ struct example_struct_jni {
   std::string c;
 };
 
-struct a2 {};
+struct menu_controller {
+  static void test();
+};
 } // namespace mb_shell

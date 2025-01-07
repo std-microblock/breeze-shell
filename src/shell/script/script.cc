@@ -55,7 +55,7 @@ void script_context::bind() {
 
   module.function("println", println);
 
-  js->global()["xx"] = js->newValue(example_struct_jni{});
+  bindAll(module);
 }
 script_context::script_context()
     : rt{
