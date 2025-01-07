@@ -157,7 +157,7 @@ template <> struct qjs::js_traits<${currentNamespace}::${structName}> {
 template<> struct js_bind<${currentNamespace}::${structName}> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<${currentNamespace}::${structName}>("${structName}")
-    `;
+            .constructor<>()`;
     for (const method of methods) {
         if (method.static) {
             binding += `

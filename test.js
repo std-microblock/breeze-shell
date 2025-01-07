@@ -1,16 +1,12 @@
 import * as shell from "mshell"
 
-shell.println("Hello, world!")
-
-let testObj = xx
-testObj.a = 42;
-testObj.b = 123;
-testObj.c = "hello";
-shell.println(JSON.stringify(testObj));
-// Test add1 method
-let sum = testObj.add1(10, 20);
-shell.println("add1 result: " + sum);
-
-// Test add2 method
-let result = testObj.add2("test", "string");
-shell.println("add2 result: " + result);
+try {
+    shell.println("Hello, world!")
+    shell.println(Object.keys(shell))
+    shell.menu_controller.test()
+} catch (e) {
+    shell.println("Error: " + e);
+    if (e.stack) {
+        shell.println("Stack: " + e.stack);
+    }
+}

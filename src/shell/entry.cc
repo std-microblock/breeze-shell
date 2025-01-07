@@ -12,6 +12,7 @@
 
 #include <codecvt>
 #include <condition_variable>
+#include <filesystem>
 #include <functional>
 #include <future>
 #include <string>
@@ -52,7 +53,9 @@ void main() {
   std::println("Hello from mb-shell!");
 
   script_context ctx;
+  if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
   ctx.watch_file("J:\\Projects\\b-shell\\test.js");
+  else ctx.watch_file("D:\\shell\\test.js");
 
   auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");

@@ -118,7 +118,7 @@ template <> struct qjs::js_traits<mb_shell::menu_controller> {
 template<> struct js_bind<mb_shell::menu_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::menu_controller>("menu_controller")
-    
+                .constructor<>()
                 .static_fun<&mb_shell::menu_controller::test>("test")
             ;
     }
@@ -127,7 +127,7 @@ template<> struct js_bind<mb_shell::menu_controller> {
     
 inline void bindAll(qjs::Context::Module &mod) {
 
-    js_bind<mb_shell::example_struct_jni>::bind(mod);
+    // js_bind<mb_shell::example_struct_jni>::bind(mod);
 
     js_bind<mb_shell::menu_controller>::bind(mod);
 
