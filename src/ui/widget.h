@@ -65,10 +65,10 @@ struct widget {
 // It's like `posision: relative` in CSS
 // While all other widgets are like `position: absolute`
 struct widget_parent : public widget {
-  std::vector<std::unique_ptr<widget>> children;
+  std::vector<std::shared_ptr<widget>> children;
   void render(nanovg_context ctx) override;
   void update(UpdateContext &ctx) override;
-  void add_child(std::unique_ptr<widget> child);
+  void add_child(std::shared_ptr<widget> child);
   template <typename T, typename... Args>
   inline void emplace_child(Args &&...args) {
     children.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
@@ -107,7 +107,7 @@ struct widget_padding : public widget {
     margin_left = margin_right = horizontal;
   }
 
-  std::unique_ptr<widget> child;
+  std::shared_ptr<widget> child;
   void update(UpdateContext &ctx) override;
 
   void render(nanovg_context ctx) override;

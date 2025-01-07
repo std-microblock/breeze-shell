@@ -29,7 +29,7 @@ void ui::widget_parent::update(UpdateContext &ctx) {
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::add_child(std::unique_ptr<widget> child) {
+void ui::widget_parent::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
