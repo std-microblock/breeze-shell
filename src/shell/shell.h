@@ -1,10 +1,9 @@
 #pragma once
 
-#include <ranges>
+#include <functional>
+#include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
-#include "blook/blook.h"
 
 #define NOMINMAX
 #include <Windows.h>

@@ -21,5 +21,6 @@ struct script_context {
   void eval_file(const std::filesystem::path &path);
 
   void watch_file(const std::filesystem::path &path);
+
 };
 } // namespace mb_shell

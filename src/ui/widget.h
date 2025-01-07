@@ -71,7 +71,7 @@ struct widget_parent : public widget {
   void add_child(std::shared_ptr<widget> child);
   template <typename T, typename... Args>
   inline void emplace_child(Args &&...args) {
-    children.emplace_back(std::make_unique<T>(std::forward<Args>(args)...));
+    children.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
   }
 };
 

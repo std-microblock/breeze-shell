@@ -1,6 +1,5 @@
 #pragma once
 #include "shell.h"
-#include "ui.h"
 #include "widget.h"
 #include "extra_widgets.h"
 
@@ -13,7 +12,7 @@ struct menu_item_widget : public ui::widget {
   float margin = 5;
   float icon_width = 16;
   float icon_padding = 5;
-  menu_item_widget(menu_item item, size_t index);
+  menu_item_widget(menu_item item);
 
   int icon_img_id = -1;
 

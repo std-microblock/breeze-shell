@@ -1,20 +1,23 @@
 #include "menu_widget.h"
 #include "nanovg.h"
 #include "shell.h"
+#include "ui.h"
 #include <vector>
 
-mb_shell::menu_item_widget::menu_item_widget(menu_item item, size_t index)
+mb_shell::menu_item_widget::menu_item_widget(menu_item item)
     : super() {
   opacity->reset_to(0);
 
-  this->y->before_animate = [this, index](float dest) {
-    this->y->from = std::max(0.f, dest - 40 - index * 10);
-  };
+  // this->y->before_animate = [this, index](float dest) {
+  //   this->y->from = std::max(0.f, dest - 40 - index * 10);
+  // };
+  // auto delay = std::min(index * 10.f, 100.f);
+  // this->y->set_delay(delay);
+  // opacity->set_delay(delay);
+
   opacity->animate_to(255);
 
-  auto delay = std::min(index * 10.f, 100.f);
-  this->y->set_delay(delay);
-  opacity->set_delay(delay);
+
   if (item.type == menu_item::type::spacer) {
     height->animate_to(1);
   } else {
@@ -137,8 +140,8 @@ mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
   auto init_items = menu_data.items;
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
-    auto mi = new menu_item_widget(item, i);
-    children.push_back(std::unique_ptr<menu_item_widget>(mi));
+    auto mi = std::make_shared<menu_item_widget>(item);
+    children.push_back(mi);
   }
 }
 void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {

@@ -11,9 +11,9 @@ struct js_bind {
     static void bind(qjs::Context::Module &mod) {}
 };
 
-template <> struct qjs::js_traits<mb_shell_js::example_struct_jni> {
-    static mb_shell_js::example_struct_jni unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell_js::example_struct_jni obj;
+template <> struct qjs::js_traits<mb_shell::js::example_struct_jni> {
+    static mb_shell::js::example_struct_jni unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::example_struct_jni obj;
     
         obj.a = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "a"));
         
@@ -24,7 +24,7 @@ template <> struct qjs::js_traits<mb_shell_js::example_struct_jni> {
         return obj;
     }
 
-    static JSValue wrap(JSContext *ctx, const mb_shell_js::example_struct_jni &val) noexcept {
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     
         JS_SetPropertyStr(ctx, obj, "a", js_traits<int>::wrap(ctx, val.a));
@@ -38,7 +38,7 @@ template <> struct qjs::js_traits<mb_shell_js::example_struct_jni> {
             JS_NewCFunction(
                 ctx,
                 [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell_js::example_struct_jni>::unwrap(ctx, this_val);
+                    auto obj = js_traits<mb_shell::js::example_struct_jni>::unwrap(ctx, this_val);
                     if (argc == 2) {
                         return js_traits<int>::wrap(
                             ctx,
@@ -57,7 +57,7 @@ template <> struct qjs::js_traits<mb_shell_js::example_struct_jni> {
             JS_NewCFunction(
                 ctx,
                 [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell_js::example_struct_jni>::unwrap(ctx, this_val);
+                    auto obj = js_traits<mb_shell::js::example_struct_jni>::unwrap(ctx, this_val);
                     if (argc == 2) {
                         return js_traits<std::variant<int, std::string>>::wrap(
                             ctx,
@@ -74,42 +74,325 @@ template <> struct qjs::js_traits<mb_shell_js::example_struct_jni> {
         return obj;
     }
 };
-template<> struct js_bind<mb_shell_js::example_struct_jni> {
+template<> struct js_bind<mb_shell::js::example_struct_jni> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell_js::example_struct_jni>("example_struct_jni")
+        mod.class_<mb_shell::js::example_struct_jni>("example_struct_jni")
             .constructor<>()
-                .fun<&mb_shell_js::example_struct_jni::add1>("add1")
-                .fun<&mb_shell_js::example_struct_jni::add2>("add2")
-                .fun<&mb_shell_js::example_struct_jni::a>("a")
-                .fun<&mb_shell_js::example_struct_jni::b>("b")
-                .fun<&mb_shell_js::example_struct_jni::c>("c")
+                .fun<&mb_shell::js::example_struct_jni::add1>("add1")
+                .fun<&mb_shell::js::example_struct_jni::add2>("add2")
+                .fun<&mb_shell::js::example_struct_jni::a>("a")
+                .fun<&mb_shell::js::example_struct_jni::b>("b")
+                .fun<&mb_shell::js::example_struct_jni::c>("c")
             ;
     }
 
 };
     
-template <> struct qjs::js_traits<mb_shell_js::menu_controller> {
-    static mb_shell_js::menu_controller unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell_js::menu_controller obj;
+template <> struct qjs::js_traits<mb_shell::js::js_menu_action_event_data> {
+    static mb_shell::js::js_menu_action_event_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::js_menu_action_event_data obj;
     
-        obj.menu = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "menu"));
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::js_menu_action_event_data &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::js_menu_action_event_data> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::js_menu_action_event_data>("js_menu_action_event_data")
+            .constructor<>()
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
+    static mb_shell::js::js_menu_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::js_menu_data obj;
+    
+        obj.type = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "type"));
+        
+        obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
+        
+        obj.submenu = js_traits<std::optional<std::vector<std::shared_ptr<mb_shell::js::js_menu_data>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
+        
+        obj.action = js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
+        
+        obj.icon_path = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_path"));
         
         return obj;
     }
 
-    static JSValue wrap(JSContext *ctx, const mb_shell_js::menu_controller &val) noexcept {
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::js_menu_data &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     
-        JS_SetPropertyStr(ctx, obj, "menu", js_traits<int>::wrap(ctx, val.menu));
+        JS_SetPropertyStr(ctx, obj, "type", js_traits<std::optional<std::string>>::wrap(ctx, val.type));
+        
+        JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
+        
+        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::vector<std::shared_ptr<mb_shell::js::js_menu_data>>>>::wrap(ctx, val.submenu));
+        
+        JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::wrap(ctx, val.action));
+        
+        JS_SetPropertyStr(ctx, obj, "icon_path", js_traits<std::optional<std::string>>::wrap(ctx, val.icon_path));
         
         return obj;
     }
 };
-template<> struct js_bind<mb_shell_js::menu_controller> {
+template<> struct js_bind<mb_shell::js::js_menu_data> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell_js::menu_controller>("menu_controller")
+        mod.class_<mb_shell::js::js_menu_data>("js_menu_data")
             .constructor<>()
-                .fun<&mb_shell_js::menu_controller::menu>("menu")
+                .fun<&mb_shell::js::js_menu_data::type>("type")
+                .fun<&mb_shell::js::js_menu_data::name>("name")
+                .fun<&mb_shell::js::js_menu_data::submenu>("submenu")
+                .fun<&mb_shell::js::js_menu_data::action>("action")
+                .fun<&mb_shell::js::js_menu_data::icon_path>("icon_path")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::menu_item_data> {
+    static mb_shell::js::menu_item_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::menu_item_data obj;
+    
+        obj.type = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "type"));
+        
+        obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_item_data &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "type", js_traits<std::string>::wrap(ctx, val.type));
+        
+        JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::menu_item_data> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::menu_item_data>("menu_item_data")
+            .constructor<>()
+                .fun<&mb_shell::js::menu_item_data::type>("type")
+                .fun<&mb_shell::js::menu_item_data::name>("name")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::menu_info_basic_js> {
+    static mb_shell::js::menu_info_basic_js unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::menu_info_basic_js obj;
+    
+        obj.from = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "from"));
+        
+        obj.menu = js_traits<std::shared_ptr<mb_shell::js::menu_controller>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "menu"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_info_basic_js &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "from", js_traits<std::string>::wrap(ctx, val.from));
+        
+        JS_SetPropertyStr(ctx, obj, "menu", js_traits<std::shared_ptr<mb_shell::js::menu_controller>>::wrap(ctx, val.menu));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::menu_info_basic_js> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::menu_info_basic_js>("menu_info_basic_js")
+            .constructor<>()
+                .fun<&mb_shell::js::menu_info_basic_js::from>("from")
+                .fun<&mb_shell::js::menu_info_basic_js::menu>("menu")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::menu_controller> {
+    static mb_shell::js::menu_controller unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::menu_controller obj;
+    
+        obj.menu = js_traits<std::weak_ptr<mb_shell::menu_widget>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "menu"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_controller &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "menu", js_traits<std::weak_ptr<mb_shell::menu_widget>>::wrap(ctx, val.menu));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "valid",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 0) {
+                        obj.valid(); return JS_UNDEFINED;
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 0 arguments");
+                    }
+                },
+                "valid", 0));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "add_menu_item_after",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 2) {
+                        return js_traits<bool>::wrap(
+                            ctx,
+                            obj.add_menu_item_after(
+                                js_traits<mb_shell::js::js_menu_data>::unwrap(ctx, argv[0]), js_traits<int>::unwrap(ctx, argv[1])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
+                    }
+                },
+                "add_menu_item_after", 2));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "set_menu_item",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 2) {
+                        return js_traits<bool>::wrap(
+                            ctx,
+                            obj.set_menu_item(
+                                js_traits<int>::unwrap(ctx, argv[0]), js_traits<mb_shell::js::js_menu_data>::unwrap(ctx, argv[1])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
+                    }
+                },
+                "set_menu_item", 2));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "set_menu_item_position",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 2) {
+                        return js_traits<bool>::wrap(
+                            ctx,
+                            obj.set_menu_item_position(
+                                js_traits<int>::unwrap(ctx, argv[0]), js_traits<int>::unwrap(ctx, argv[1])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
+                    }
+                },
+                "set_menu_item_position", 2));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "remove_menu_item",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 1) {
+                        return js_traits<bool>::wrap(
+                            ctx,
+                            obj.remove_menu_item(
+                                js_traits<int>::unwrap(ctx, argv[0])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
+                    }
+                },
+                "remove_menu_item", 1));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "get_menu_items",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 0) {
+                        obj.get_menu_items(); return JS_UNDEFINED;
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 0 arguments");
+                    }
+                },
+                "get_menu_items", 0));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "get_menu_item",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 1) {
+                        return js_traits<std::shared_ptr<mb_shell::js::menu_item_data>>::wrap(
+                            ctx,
+                            obj.get_menu_item(
+                                js_traits<int>::unwrap(ctx, argv[0])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
+                    }
+                },
+                "get_menu_item", 1));
+        
+        JS_SetPropertyStr(
+            ctx, obj, "add_menu_listener",
+            JS_NewCFunction(
+                ctx,
+                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
+                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
+                    if (argc == 1) {
+                        return js_traits<std::function<void ()>>::wrap(
+                            ctx,
+                            obj.add_menu_listener(
+                                js_traits<std::function<void (mb_shell::js::menu_info_basic_js)>>::unwrap(ctx, argv[0])
+                            )
+                        );
+                    } else {
+                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
+                    }
+                },
+                "add_menu_listener", 1));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::menu_controller> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::menu_controller>("menu_controller")
+            .constructor<>()
+                .fun<&mb_shell::js::menu_controller::valid>("valid")
+                .fun<&mb_shell::js::menu_controller::add_menu_item_after>("add_menu_item_after")
+                .fun<&mb_shell::js::menu_controller::set_menu_item>("set_menu_item")
+                .fun<&mb_shell::js::menu_controller::set_menu_item_position>("set_menu_item_position")
+                .fun<&mb_shell::js::menu_controller::remove_menu_item>("remove_menu_item")
+                .fun<&mb_shell::js::menu_controller::get_menu_items>("get_menu_items")
+                .fun<&mb_shell::js::menu_controller::get_menu_item>("get_menu_item")
+                .fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
+                .fun<&mb_shell::js::menu_controller::menu>("menu")
             ;
     }
 
@@ -117,8 +400,16 @@ template<> struct js_bind<mb_shell_js::menu_controller> {
     
 inline void bindAll(qjs::Context::Module &mod) {
 
-    js_bind<mb_shell_js::example_struct_jni>::bind(mod);
+    js_bind<mb_shell::js::example_struct_jni>::bind(mod);
 
-    js_bind<mb_shell_js::menu_controller>::bind(mod);
+    js_bind<mb_shell::js::js_menu_action_event_data>::bind(mod);
+
+    js_bind<mb_shell::js::js_menu_data>::bind(mod);
+
+    js_bind<mb_shell::js::menu_item_data>::bind(mod);
+
+    js_bind<mb_shell::js::menu_info_basic_js>::bind(mod);
+
+    js_bind<mb_shell::js::menu_controller>::bind(mod);
 
 }

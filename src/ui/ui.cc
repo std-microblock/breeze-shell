@@ -24,7 +24,7 @@ void render_target::start_loop() {
   }
 }
 std::expected<bool, std::string> render_target::init() {
-  root = std::make_unique<widget_parent>();
+  root = std::make_shared<widget_parent>();
 
   if (auto res = init_global(); !res) {
     return res;

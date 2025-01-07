@@ -4,8 +4,10 @@
 #include "ui.h"
 #include "utils.h"
 #include <codecvt>
+
 #include <consoleapi.h>
 #include <debugapi.h>
+#include <iostream>
 #include <string>
 #include <thread>
 #include <type_traits>

@@ -2,13 +2,14 @@
 #include "GLFW/glfw3.h"
 #include "blook/blook.h"
 
-#include "blook/function.h"
 #include "entry.h"
 #include "menu_widget.h"
+#include "script/binding_types.h"
 #include "script/script.h"
 #include "shell.h"
 #include "ui.h"
 #include "utils.h"
+
 
 #include <codecvt>
 #include <condition_variable>
@@ -52,10 +53,14 @@ void main() {
 
   std::println("Hello from mb-shell!");
 
-  script_context ctx;
-  if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
-  ctx.watch_file("J:\\Projects\\b-shell\\test.js");
-  else ctx.watch_file("D:\\shell\\test.js");
+  std::thread([]() {
+    script_context ctx;
+
+    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
+      ctx.watch_file("J:\\Projects\\b-shell\\test.js");
+    else
+      ctx.watch_file("D:\\shell\\test.js");
+  }).detach();
 
   auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");
@@ -96,7 +101,14 @@ void main() {
 
         rt.set_position(x - l_pad, y - t_pad + 5);
         rt.resize(width, height);
-        rt.root->emplace_child<menu_widget>(menu, l_pad, t_pad);
+
+        auto menu_wid = std::make_shared<menu_widget>(menu, width, height);
+        rt.root->children.push_back(menu_wid);
+
+        for (auto &listener : menu_callbacks) {
+          listener->operator()(
+              {menu_info_basic{.from = "menu", .menu = menu_wid}});
+        }
 
         rt.on_focus_changed = [](bool focused) {
           if (!focused) {

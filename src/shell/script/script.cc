@@ -1,8 +1,9 @@
 #include "script.h"
 #include "../shell.h"
+#include <iostream>
 #include <print>
 #include "binding_qjs.h"
-#include "binding_types.h"
+
 namespace mb_shell {
 
 void script_context::eval(const std::string &script) {

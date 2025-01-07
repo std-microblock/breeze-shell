@@ -25,14 +25,67 @@ struct js_bind {
 
 const parseFunctionQualType = (type: string) => {
     // std::variant<int, std::string> (std::string, std::string)
-    const match = type.match(/^(.*?)\s*\((.*?)\)$/);
-    if (!match) {
-        throw new Error(`Invalid function type: ${type}`);
+    // std::function<void(int, std::string)> (int, std::string)
+    
+    enum State {
+        ReturnType,
+        Args,
+        Done
     }
-    const [, returnType, args] = match;
+
+    let state = State.ReturnType;
+    let returnType = '';
+    let currentArg = '';
+    let args: string[] = [];
+    let depth = 0;
+    let angleBracketDepth = 0;
+
+    for (let i = 0; i < type.length; i++) {
+        const char = type[i];
+
+        if (char === '<') {
+            angleBracketDepth++;
+        } else if (char === '>') {
+            angleBracketDepth--;
+        }
+
+        switch (state) {
+            case State.ReturnType:
+                if (char === '(' && angleBracketDepth === 0) {
+                    state = State.Args;
+                    returnType = returnType.trim();
+                } else {
+                    returnType += char;
+                }
+                break;
+
+            case State.Args:
+                if (char === '(') depth++;
+                if (char === ')') {
+                    if (depth === 0 && angleBracketDepth === 0) {
+                        if (currentArg.trim()) args.push(currentArg.trim());
+                        state = State.Done;
+                        break;
+                    }
+                    depth--;
+                }
+                if (char === ',' && depth === 0 && angleBracketDepth === 0) {
+                    args.push(currentArg.trim());
+                    currentArg = '';
+                } else {
+                    currentArg += char;
+                }
+                break;
+        }
+    }
+
+    if (state !== State.Done) {
+        throw new Error('Invalid function type');
+    }
+
     return {
-        returnType: returnType.trim(),
-        args: args.split(',').map(arg => arg.trim()).filter(Boolean)
+        returnType,
+        args
     };
 }
 
@@ -40,14 +93,14 @@ if (ast.kind !== 'NamespaceDecl') {
     throw new Error('Root node is not a NamespaceDecl');
 }
 
-let currentNamespace = ast.name;
+let currentNamespace = 'mb_shell::js'
 
-const generateForRecordDecl = (node2: ClangASTD) => {
-    if (node2.kind !== 'CXXRecordDecl') {
+const generateForRecordDecl = (node_struct: ClangASTD) => {
+    if (node_struct.kind !== 'CXXRecordDecl') {
         throw new Error('Node is not a RecordDecl');
     }
 
-    const structName = node2.name;
+    const structName = node_struct.name;
 
     const fields: {
         name: string;
@@ -61,7 +114,11 @@ const generateForRecordDecl = (node2: ClangASTD) => {
         static: boolean;
     }[] = [];
 
-    for (const node of node2.inner!) {
+    if (!node_struct.inner) return;
+
+    for (const node of node_struct.inner) {
+        if (node.name?.startsWith('$')) continue;
+
         if (node.kind === 'FieldDecl') {
             fields.push({
                 name: node.name!,
@@ -185,7 +242,7 @@ const structNames: string[] = []
 for (const node of ast.inner!) {
     if (node.kind === 'CXXRecordDecl') {
         generateForRecordDecl(node);
-        if (node.name)
+        if (node.name && node.inner)
             structNames.push(node.name);
     }
 }
