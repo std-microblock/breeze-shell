@@ -181,10 +181,18 @@ int main() {
   ctx.watch_file(path, []() {
     if (rt)
       rt->close();
-
+    using namespace mb_shell;
     std::thread([]() {
-      mb_shell::menu m{.items = {}};
-      rt = mb_shell::show_menu(0, 0, m);
+      mb_shell::menu m{
+          .items = {
+              {.type = menu_item::type::button, .name = "层叠窗口(D)"},
+              {.type = menu_item::type::button, .name = "堆叠显示窗口(E)"},
+              {.type = menu_item::type::button, .name = "并排显示窗口(I)"},
+              {.type = menu_item::type::spacer},
+              {.type = menu_item::type::button, .name = "最小化所有窗口(M)"},
+              {.type = menu_item::type::button, .name = "还原所有窗口(R)"},
+          }};
+      rt = mb_shell::show_menu(400, 400, m);
       rt->start_loop();
     }).detach();
   });
