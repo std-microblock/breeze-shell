@@ -33,44 +33,6 @@ template <> struct qjs::js_traits<mb_shell::js::example_struct_jni> {
         
         JS_SetPropertyStr(ctx, obj, "c", js_traits<std::string>::wrap(ctx, val.c));
         
-        JS_SetPropertyStr(
-            ctx, obj, "add1",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::example_struct_jni>::unwrap(ctx, this_val);
-                    if (argc == 2) {
-                        return js_traits<int>::wrap(
-                            ctx,
-                            obj.add1(
-                                js_traits<int>::unwrap(ctx, argv[0]), js_traits<int>::unwrap(ctx, argv[1])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
-                    }
-                },
-                "add1", 2));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "add2",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::example_struct_jni>::unwrap(ctx, this_val);
-                    if (argc == 2) {
-                        return js_traits<std::variant<int, std::string>>::wrap(
-                            ctx,
-                            obj.add2(
-                                js_traits<std::string>::unwrap(ctx, argv[0]), js_traits<std::string>::unwrap(ctx, argv[1])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
-                    }
-                },
-                "add2", 2));
-        
         return obj;
     }
 };
@@ -231,148 +193,6 @@ template <> struct qjs::js_traits<mb_shell::js::menu_controller> {
     static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_controller &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     
-        JS_SetPropertyStr(
-            ctx, obj, "valid",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 0) {
-                        obj.valid(); return JS_UNDEFINED;
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 0 arguments");
-                    }
-                },
-                "valid", 0));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "add_menu_item_after",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 2) {
-                        return js_traits<bool>::wrap(
-                            ctx,
-                            obj.add_menu_item_after(
-                                js_traits<mb_shell::js::js_menu_data>::unwrap(ctx, argv[0]), js_traits<int>::unwrap(ctx, argv[1])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
-                    }
-                },
-                "add_menu_item_after", 2));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "set_menu_item",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 2) {
-                        return js_traits<bool>::wrap(
-                            ctx,
-                            obj.set_menu_item(
-                                js_traits<int>::unwrap(ctx, argv[0]), js_traits<mb_shell::js::js_menu_data>::unwrap(ctx, argv[1])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
-                    }
-                },
-                "set_menu_item", 2));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "set_menu_item_position",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 2) {
-                        return js_traits<bool>::wrap(
-                            ctx,
-                            obj.set_menu_item_position(
-                                js_traits<int>::unwrap(ctx, argv[0]), js_traits<int>::unwrap(ctx, argv[1])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 2 arguments");
-                    }
-                },
-                "set_menu_item_position", 2));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "remove_menu_item",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 1) {
-                        return js_traits<bool>::wrap(
-                            ctx,
-                            obj.remove_menu_item(
-                                js_traits<int>::unwrap(ctx, argv[0])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
-                    }
-                },
-                "remove_menu_item", 1));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "get_menu_items",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 0) {
-                        obj.get_menu_items(); return JS_UNDEFINED;
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 0 arguments");
-                    }
-                },
-                "get_menu_items", 0));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "get_menu_item",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 1) {
-                        return js_traits<std::shared_ptr<mb_shell::js::menu_item_data>>::wrap(
-                            ctx,
-                            obj.get_menu_item(
-                                js_traits<int>::unwrap(ctx, argv[0])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
-                    }
-                },
-                "get_menu_item", 1));
-        
-        JS_SetPropertyStr(
-            ctx, obj, "add_menu_listener",
-            JS_NewCFunction(
-                ctx,
-                [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-                    auto obj = js_traits<mb_shell::js::menu_controller>::unwrap(ctx, this_val);
-                    if (argc == 1) {
-                        return js_traits<std::function<void ()>>::wrap(
-                            ctx,
-                            obj.add_menu_listener(
-                                js_traits<std::function<void (mb_shell::js::menu_info_basic_js)>>::unwrap(ctx, argv[0])
-                            )
-                        );
-                    } else {
-                        return JS_ThrowTypeError(ctx, "Expected 1 arguments");
-                    }
-                },
-                "add_menu_listener", 1));
-        
         return obj;
     }
 };
@@ -387,7 +207,7 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
                 .fun<&mb_shell::js::menu_controller::remove_menu_item>("remove_menu_item")
                 .fun<&mb_shell::js::menu_controller::get_menu_items>("get_menu_items")
                 .fun<&mb_shell::js::menu_controller::get_menu_item>("get_menu_item")
-                .fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
+                .static_fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
             ;
     }
 

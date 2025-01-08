@@ -74,9 +74,8 @@ struct menu_controller {
   std::vector<std::shared_ptr<mb_shell::js::menu_item_data>> get_menu_items();
   std::shared_ptr<mb_shell::js::menu_item_data> get_menu_item(int index);
 
-  std::function<void()>
+  static std::function<void()>
   add_menu_listener(std::function<void(mb_shell::js::menu_info_basic_js)> listener);
-  std::unordered_set<void *> $listeners_to_dispose;
   ~menu_controller();
 };
 } // namespace mb_shell::js

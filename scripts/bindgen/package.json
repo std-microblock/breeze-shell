@@ -12,6 +12,7 @@
   },
   "scripts": {
     "gen": "node -r esbuild-register index.ts",
-    "typegen": "node -r esbuild-register typegen.ts"
+    "typegen": "node -r esbuild-register typegen.ts",
+    "parser-test": "node -r esbuild-register c-type-parser.ts"
   }
 }

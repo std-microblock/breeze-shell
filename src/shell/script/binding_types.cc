@@ -172,20 +172,20 @@ std::function<void()> js::menu_controller::add_menu_listener(
   auto ptr =
       std::make_shared<std::function<void(menu_info_basic)>>(listener_cvt);
   menu_callbacks.insert(ptr);
-  $listeners_to_dispose.insert(ptr.get());
-  return [ptr, this]() {
+//   $listeners_to_dispose.insert(ptr.get());
+  return [ptr]() {
     menu_callbacks.erase(ptr);
-    $listeners_to_dispose.erase(ptr.get());
+    // $listeners_to_dispose.erase(ptr.get());
   };
 }
 js::menu_controller::~menu_controller() {
-  for (auto &listener : $listeners_to_dispose) {
-    for (auto it = menu_callbacks.begin(); it != menu_callbacks.end(); ++it) {
-      if (it->get() == listener) {
-        menu_callbacks.erase(it);
-        break;
-      }
-    }
-  }
+//   for (auto &listener : $listeners_to_dispose) {
+//     for (auto it = menu_callbacks.begin(); it != menu_callbacks.end(); ++it) {
+//       if (it->get() == listener) {
+//         menu_callbacks.erase(it);
+//         break;
+//       }
+//     }
+//   }
 }
 } // namespace mb_shell
