@@ -247,10 +247,10 @@ template<> struct js_bind<${currentNamespace}::${structName}> {
 
     typescriptDef += `
 interface ${structName} {
-    ${fields.map(field => `${field.name}: ${cTypeToTypeScript(field.type)}`).join('\n')}
-    ${methods.map(method => {
-        return `${method.name}: ((${method.args.map(arg => cTypeToTypeScript(arg)).join(', ')}) => ${cTypeToTypeScript(method.returnType)})`
-    }).join('\n')}
+\t${fields.map(field => `${field.name}: ${cTypeToTypeScript(field.type)}`).join('\n\t')}
+\t${methods.map(method => {
+    return `${method.name}: ${cTypeToTypeScript(`${method.returnType}(${method.args.join(', ')})`)}`
+}).join('\n\t')}
 }
     `;
 

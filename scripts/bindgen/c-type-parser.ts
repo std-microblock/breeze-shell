@@ -65,7 +65,6 @@ export class CTypeParser {
                     parseCommaList()
                 this.eat('>', true)
             } else {
-                console.log(type, this.tokens[this.cursor])
                 type.type = this.tokens[this.cursor]
                 this.cursor++;
                 if (this.next('(') || this.next('<')) {
@@ -109,22 +108,27 @@ export class CTypeParser {
     }
 
     formatToTypeScript(node: CTypeNode) {
+        node.type = node.type.split('::').pop() ?? node.type
         const typeMap = {
             'int': 'number',
             'float': 'number',
             'double': 'number',
-            'std::string': 'string',
-            'std::function': '',
+            'string': 'string',
+            'vector': 'Array',
+            'bool': 'boolean',
         }
 
-        if (node.type === 'std::variant') {
+        const ignoreTypes = ['variant', 'shared_ptr', 'function']
+        if (
+            ignoreTypes.includes(node.type)
+        ) {
             return node.args.map(a => this.formatToTypeScript(a)).join(' | ')
-        } else if (node.type === 'std::function') {
-            return this.formatToTypeScript(node.args[0])
+        } else if (node.type === 'optional') {
+            return `${this.formatToTypeScript(node.args[0])} | undefined`
         }
 
         if (node.function) {
-            return `(${node.args.map(a => this.formatToTypeScript(a)).join(', ')}) => ${typeMap[node.type] || node.type}`
+            return `(${node.args.map(a => this.formatToTypeScript(a)).map((v, i) => `arg${i + 1}: ${v}`).join(', ')}) => ${typeMap[node.type] || node.type}`
         }
 
         return (typeMap[node.type] ?? node.type) + (node.template ? '<' + node.args.map(a => this.formatToTypeScript(a)).join(', ') + '>' : '')
@@ -138,6 +142,6 @@ export const cTypeToTypeScript = (str: string) => {
     return parser.formatToTypeScript(res);
 }
 
-const parser = new CTypeParser();
-parser.lex('int')
-console.log(parser.parse())
+// const parser = new CTypeParser();
+// parser.lex('int')
+// console.log(parser.parse())

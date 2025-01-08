@@ -5,49 +5,49 @@ declare module 'mshell' {
 
 
 interface example_struct_jni {
-    a: undefined
-b: undefined
-c: undefined
-    add1: ((undefined, undefined) => undefined)
-add2: ((undefined, undefined) => number | string)
+	a: number
+	b: number
+	c: string
+	add1: (arg1: number, arg2: number) => number
+	add2: number | string
 }
     
 interface js_menu_action_event_data {
-    
-    
+	
+	
 }
     
 interface js_menu_data {
-    type: std::optional<string>
-name: std::optional<string>
-submenu: std::optional<std::vector<std::shared_ptr<mb_shell::js::js_menu_data>>>
-action: std::optional<(mb_shell::js::js_menu_action_event_data) => void>
-icon_path: std::optional<string>
-    
+	type: string | undefined
+	name: string | undefined
+	submenu: Array<js_menu_data> | undefined
+	action: (arg1: js_menu_action_event_data) => void | undefined
+	icon_path: string | undefined
+	
 }
     
 interface menu_item_data {
-    type: undefined
-name: std::optional<string>
-    
+	type: string
+	name: string | undefined
+	
 }
     
 interface menu_info_basic_js {
-    from: undefined
-menu: std::shared_ptr<mb_shell::js::menu_controller>
-    
+	from: string
+	menu: menu_controller
+	
 }
     
 interface menu_controller {
-    
-    valid: (() => undefined)
-add_menu_item_after: ((undefined, undefined) => undefined)
-set_menu_item: ((undefined, undefined) => undefined)
-set_menu_item_position: ((undefined, undefined) => undefined)
-remove_menu_item: ((undefined) => undefined)
-get_menu_items: (() => std::vector<std::shared_ptr<mb_shell::js::menu_item_data>>)
-get_menu_item: ((undefined) => std::shared_ptr<mb_shell::js::menu_item_data>)
-add_menu_listener: (((mb_shell::js::menu_info_basic_js) => void) => () => void)
+	
+	valid: () => boolean
+	add_menu_item_after: (arg1: js_menu_data, arg2: number) => boolean
+	set_menu_item: (arg1: number, arg2: js_menu_data) => boolean
+	set_menu_item_position: (arg1: number, arg2: number) => boolean
+	remove_menu_item: (arg1: number) => boolean
+	get_menu_items: Array<menu_item_data>
+	get_menu_item: menu_item_data
+	add_menu_listener: () => void
 }
     
 }
