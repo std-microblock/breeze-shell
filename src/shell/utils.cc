@@ -1,4 +1,5 @@
 #include "utils.h"
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
   std::wstring_convert<

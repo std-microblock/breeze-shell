@@ -1780,6 +1780,7 @@ struct js_traits<std::function<R(Args...)>, int> {
       return [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}]() -> R {
         JSValue result =
             JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
+        
         if (JS_IsException(result))
           throw exception{jsfun_obj.ctx};
         return detail::unwrap_free<R>(jsfun_obj.ctx, result);

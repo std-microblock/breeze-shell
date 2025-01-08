@@ -3,7 +3,8 @@ export interface CTypeNode {
     function: boolean;
     template: boolean;
     type: string;
-    args: CTypeNode[];
+    argsTemplate: CTypeNode[];
+    argsFunc: CTypeNode[];
 }
 
 export class CTypeParser {
@@ -36,40 +37,46 @@ export class CTypeParser {
         }
     }
 
-    parse() {
+    parse(str: string | null = null) {
+        if (str) {
+            this.lex(str)
+            this.cursor = 0
+        }
 
         const type: CTypeNode = {
-            args: [],
+            argsFunc: [],
+            argsTemplate: [],
             function: false,
             template: false,
             type: '',
         }
 
         do {
-            const parseCommaList = () => {
+            const parseCommaList = (arr) => {
                 do {
                     const res = this.parse();
                     if (res)
-                        type.args.push(res)
+                        arr.push(res)
                 } while (this.eat(','));
             }
 
             if (this.eat('(')) {
                 type.function = true;
                 if (!this.next(')'))
-                    parseCommaList();
+                    parseCommaList(type.argsFunc);
                 this.eat(')', true)
             } else if (this.eat('<')) {
                 type.template = true;
                 if (!this.next('>'))
-                    parseCommaList()
+                    parseCommaList(type.argsTemplate)
                 this.eat('>', true)
             } else {
                 type.type = this.tokens[this.cursor]
                 this.cursor++;
-                if (this.next('(') || this.next('<')) {
-                    continue;
-                }
+            }
+
+            if (this.next('(') || this.next('<')) {
+                continue;
             }
 
             break;
@@ -99,10 +106,10 @@ export class CTypeParser {
     formatToC(node: CTypeNode) {
         let str = node.type;
         if (node.template) {
-            str += '<' + node.args.map(a => this.formatToC(a)).join(', ') + '>'
+            str += '<' + node.argsTemplate.map(a => this.formatToC(a)).join(', ') + '>'
         }
         if (node.function) {
-            str += '(' + node.args.map(a => this.formatToC(a)).join(', ') + ')'
+            str += '(' + node.argsFunc.map(a => this.formatToC(a)).join(', ') + ')'
         }
         return str
     }
@@ -118,20 +125,22 @@ export class CTypeParser {
             'bool': 'boolean',
         }
 
+        let tsBasicType = (typeMap[node.type] ?? node.type) + (node.template ? '<' + node.argsTemplate.map(a => this.formatToTypeScript(a)).join(', ') + '>' : '')
+
         const ignoreTypes = ['variant', 'shared_ptr', 'function']
         if (
             ignoreTypes.includes(node.type)
         ) {
-            return node.args.map(a => this.formatToTypeScript(a)).join(' | ')
+            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a)).join(' | ')
         } else if (node.type === 'optional') {
-            return `${this.formatToTypeScript(node.args[0])} | undefined`
+            tsBasicType = `${this.formatToTypeScript(node.argsTemplate[0])} | undefined`
         }
 
         if (node.function) {
-            return `(${node.args.map(a => this.formatToTypeScript(a)).map((v, i) => `arg${i + 1}: ${v}`).join(', ')}) => ${typeMap[node.type] || node.type}`
+            return `((${node.argsFunc.map(a => this.formatToTypeScript(a)).map((v, i) => `arg${i + 1}: ${v}`).join(', ')}) => ${tsBasicType})`
         }
 
-        return (typeMap[node.type] ?? node.type) + (node.template ? '<' + node.args.map(a => this.formatToTypeScript(a)).join(', ') + '>' : '')
+        return tsBasicType;
     }
 }
 
@@ -142,6 +151,7 @@ export const cTypeToTypeScript = (str: string) => {
     return parser.formatToTypeScript(res);
 }
 
-// const parser = new CTypeParser();
-// parser.lex('int')
-// console.log(parser.parse())
+const parser = new CTypeParser();
+
+const res = parser.parse('std::function<void()>(std::function<void(mb_shell::js::menu_info_basic_js)>)')
+console.log(JSON.stringify(res, null, 2), parser.formatToTypeScript(res))

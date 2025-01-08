@@ -30,9 +30,10 @@ void script_context::eval_file(const std::filesystem::path &path) {
       std::cerr << (std::string)exc["stack"] << std::endl;
   }
 }
-void script_context::watch_file(const std::filesystem::path &path) {
+void script_context::watch_file(const std::filesystem::path &path, std::function<void()> on_reload ) {
   auto last_mod = std::filesystem::last_write_time(path);
   eval_file(path);
+  on_reload();
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto new_mod = std::filesystem::last_write_time(path);
@@ -42,6 +43,7 @@ void script_context::watch_file(const std::filesystem::path &path) {
       js = std::make_unique<qjs::Context>(*rt);
       bind();
       eval_file(path);
+      on_reload();
     }
   }
 }

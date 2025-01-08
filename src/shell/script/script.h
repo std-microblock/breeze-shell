@@ -20,7 +20,7 @@ struct script_context {
 
   void eval_file(const std::filesystem::path &path);
 
-  void watch_file(const std::filesystem::path &path);
+  void watch_file(const std::filesystem::path &path, std::function<void()> on_reload = [](){});
 
 };
 } // namespace mb_shell

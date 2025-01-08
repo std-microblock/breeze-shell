@@ -4,50 +4,50 @@
 declare module 'mshell' {
 
 
-interface example_struct_jni {
+export class example_struct_jni {
 	a: number
 	b: number
 	c: string
-	add1: (arg1: number, arg2: number) => number
-	add2: number | string
+	add1: ((arg1: number, arg2: number) => number)
+	add2: ((arg1: string, arg2: string) => number | string)
 }
     
-interface js_menu_action_event_data {
+export class js_menu_action_event_data {
 	
 	
 }
     
-interface js_menu_data {
+export class js_menu_data {
 	type: string | undefined
 	name: string | undefined
 	submenu: Array<js_menu_data> | undefined
-	action: (arg1: js_menu_action_event_data) => void | undefined
+	action: ((arg1: js_menu_action_event_data) => void) | undefined
 	icon_path: string | undefined
 	
 }
     
-interface menu_item_data {
+export class menu_item_data {
 	type: string
 	name: string | undefined
 	
 }
     
-interface menu_info_basic_js {
+export class menu_info_basic_js {
 	from: string
 	menu: menu_controller
 	
 }
     
-interface menu_controller {
+export class menu_controller {
 	
-	valid: () => boolean
-	add_menu_item_after: (arg1: js_menu_data, arg2: number) => boolean
-	set_menu_item: (arg1: number, arg2: js_menu_data) => boolean
-	set_menu_item_position: (arg1: number, arg2: number) => boolean
-	remove_menu_item: (arg1: number) => boolean
-	get_menu_items: Array<menu_item_data>
-	get_menu_item: menu_item_data
-	add_menu_listener: () => void
+	valid: (() => boolean)
+	add_menu_item_after: ((arg1: js_menu_data, arg2: number) => boolean)
+	set_menu_item: ((arg1: number, arg2: js_menu_data) => boolean)
+	set_menu_item_position: ((arg1: number, arg2: number) => boolean)
+	remove_menu_item: ((arg1: number) => boolean)
+	get_menu_items: (() => Array<menu_item_data>)
+	get_menu_item: ((arg1: number) => menu_item_data)
+	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
 }
     
 }

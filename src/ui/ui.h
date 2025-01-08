@@ -35,6 +35,11 @@ struct render_target {
   decltype(clock.now()) last_time = clock.now();
   bool mouse_down = false;
 
+  render_target() = default;
   ~render_target();
+  render_target operator=(const render_target &) = delete;
+  render_target(const render_target &) = delete;
+  render_target(render_target &&) = default;
+  render_target &operator=(render_target &&) = default;
 };
 } // namespace ui

@@ -75,7 +75,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
 
   ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
-  ctx.fontFace("Segui");
+  ctx.fontFace("Yahei");
   ctx.fontSize(14);
 
   if (item.icon) {
