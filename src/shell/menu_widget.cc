@@ -141,6 +141,7 @@ mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
     auto mi = std::make_shared<menu_item_widget>(item);
+    mi->set_index_for_animation(i);
     children.push_back(mi);
   }
 }
@@ -159,4 +160,12 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   bg->render(ctx);
   super::render(ctx);
+}
+void mb_shell::menu_item_widget::set_index_for_animation(int index) {
+  this->y->before_animate = [this, index](float dest) {
+    this->y->from = std::max(0.f, dest - 40 - index * 10);
+  };
+  auto delay = std::min(index * 10.f, 100.f);
+  this->y->set_delay(delay);
+  opacity->set_delay(delay);
 }

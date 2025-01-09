@@ -1,10 +1,11 @@
 #pragma once
+#include "extra_widgets.h"
 #include "shell.h"
 #include "ui.h"
 #include "widget.h"
-#include "extra_widgets.h"
 #include <memory>
 #include <optional>
+
 
 namespace mb_shell {
 struct menu_item_widget : public ui::widget {
@@ -16,6 +17,7 @@ struct menu_item_widget : public ui::widget {
   float icon_width = 16;
   float icon_padding = 5;
   menu_item_widget(menu_item item);
+  void set_index_for_animation(int index);
 
   int icon_img_id = -1;
 
