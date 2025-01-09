@@ -65,7 +65,7 @@ menu_render show_menu(int x, int y, menu menu) {
   rt->set_position(x - l_pad, y - t_pad + 5);
   rt->resize(width, height);
 
-  auto menu_wid = std::make_shared<menu_widget>(menu, l_pad, t_pad);
+  auto menu_wid = std::make_shared<mouse_menu_widget_main>(menu, l_pad, t_pad);
   rt->root->children.push_back(menu_wid);
 
   for (auto &listener : menu_callbacks) {

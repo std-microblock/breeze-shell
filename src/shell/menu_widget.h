@@ -6,7 +6,6 @@
 #include <memory>
 #include <optional>
 
-
 namespace mb_shell {
 struct menu_item_widget : public ui::widget {
   using super = ui::widget;
@@ -32,13 +31,22 @@ struct menu_item_widget : public ui::widget {
 struct menu_widget : public ui::widget_parent_flex {
   using super = ui::widget_parent_flex;
   float bg_padding_vertical = 6;
-  float anchor_x = 0, anchor_y = 0;
   std::unique_ptr<ui::acrylic_background_widget> bg;
   menu menu_data;
-  menu_widget(menu menu_data, float wid_x, float wid_y);
+  menu_widget(menu menu_data);
 
   void update(ui::UpdateContext &ctx) override;
 
   void render(ui::nanovg_context ctx) override;
 };
+
+struct mouse_menu_widget_main : public ui::widget_parent {
+  float anchor_x = 0, anchor_y = 0;
+  mouse_menu_widget_main(menu menu_data, float x, float y);
+
+  void update(ui::UpdateContext &ctx);
+
+  void render(ui::nanovg_context ctx);
+};
+
 } // namespace mb_shell

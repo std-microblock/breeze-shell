@@ -48,7 +48,7 @@ All the widgets in the tree should be owned by the tree.
 If you want to use a widget in multiple places, you should create a new instance
 for each place.
 */
-struct widget: std::enable_shared_from_this<widget> {
+struct widget : std::enable_shared_from_this<widget> {
   std::vector<sp_anim_float> anim_floats{};
   sp_anim_float anim_float(auto &&...args) {
     auto anim =
@@ -81,6 +81,25 @@ struct widget_parent : public widget {
   template <typename T, typename... Args>
   inline void emplace_child(Args &&...args) {
     children.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
+  }
+
+  template <typename T> inline T *get_child() {
+    for (auto &child : children) {
+      if (auto c = child->downcast<T>()) {
+        return c;
+      }
+    }
+    return nullptr;
+  }
+
+  template <typename T> inline std::vector<T *> get_children() {
+    std::vector<T *> res;
+    for (auto &child : children) {
+      if (auto c = child->downcast<T>()) {
+        res.push_back(c);
+      }
+    }
+    return res;
   }
 };
 

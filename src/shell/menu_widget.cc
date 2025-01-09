@@ -5,8 +5,7 @@
 #include "ui.h"
 #include <vector>
 
-mb_shell::menu_item_widget::menu_item_widget(menu_item item)
-    : super() {
+mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
   opacity->reset_to(0);
 
   // this->y->before_animate = [this, index](float dest) {
@@ -17,7 +16,6 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item)
   // opacity->set_delay(delay);
 
   opacity->animate_to(255);
-
 
   if (item.type == menu_item::type::spacer) {
     height->animate_to(1);
@@ -121,13 +119,8 @@ float mb_shell::menu_item_widget::measure_width(ui::UpdateContext &ctx) {
   return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
          margin * 2 + icon_width + icon_padding * 2;
 }
-mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
-    : super(), menu_data(menu) {
+mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   gap = 5;
-  anchor_x = wid_x;
-  anchor_y = wid_y;
-  this->x->reset_to(wid_x);
-  this->y->reset_to(wid_y);
 
   bg = std::make_unique<ui::acrylic_background_widget>();
   bg->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
@@ -148,12 +141,8 @@ mb_shell::menu_widget::menu_widget(menu menu, float wid_x, float wid_y)
 }
 void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
-
-  x->reset_to(anchor_x / ctx.rt.dpi_scale);
-  y->reset_to(anchor_y / ctx.rt.dpi_scale);
-  bg->x->reset_to(anchor_x / ctx.rt.dpi_scale);
-  bg->y->reset_to(anchor_y / ctx.rt.dpi_scale - bg_padding_vertical);
-
+  bg->x->reset_to(x->dest());
+  bg->y->reset_to(y->dest() - bg_padding_vertical);
   bg->width->reset_to(width->dest());
   bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
   bg->update(ctx);
@@ -174,4 +163,18 @@ void mb_shell::menu_item_widget::set_index_for_animation(int index) {
   this->x->set_duration(200);
   this->x->reset_to(-20);
   this->x->animate_to(0);
+}
+mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
+                                                         float x, float y) {
+  children.push_back(std::make_shared<menu_widget>(menu_data));
+  anchor_x = x;
+  anchor_y = y;
+}
+void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
+  ui::widget_parent::update(ctx);
+  x->reset_to(anchor_x / ctx.rt.dpi_scale);
+  y->reset_to(anchor_y / ctx.rt.dpi_scale);
+}
+void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
+  ui::widget_parent::render(ctx);
 }

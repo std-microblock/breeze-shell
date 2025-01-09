@@ -8,10 +8,10 @@
 #include <vector>
 
 namespace mb_shell {
-struct menu_widget;
+struct mouse_menu_widget_main;
 struct menu_info_basic {
   std::string from;
-  std::shared_ptr<mb_shell::menu_widget> menu;
+  std::shared_ptr<mb_shell::mouse_menu_widget_main> menu;
 };
 extern std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
     menu_callbacks;
@@ -53,7 +53,7 @@ struct menu_info_basic_js {
 };
 
 struct menu_controller {
-  std::weak_ptr<mb_shell::menu_widget> $menu;
+  std::weak_ptr<mb_shell::mouse_menu_widget_main> $menu;
 
   bool valid();
   bool add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
