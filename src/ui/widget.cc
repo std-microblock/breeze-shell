@@ -87,3 +87,30 @@ void ui::widget_parent_flex::update(UpdateContext &ctx) {
     }
   }
 }
+void ui::UpdateContext::set_hit_hovered(widget *w) {
+  hovered_widgets.push_back(w->shared_from_this());
+}
+bool ui::UpdateContext::mouse_clicked_on(widget *w) const {
+  return mouse_clicked && hovered(w);
+}
+bool ui::UpdateContext::mouse_down_on(widget *w) const {
+  return mouse_down && hovered(w);
+}
+void ui::UpdateContext::set_hit_clicked(widget *w) {
+  clicked_widgets.push_back(w->shared_from_this());
+}
+bool ui::UpdateContext::mouse_clicked_on_hit(widget *w) {
+  if (mouse_clicked_on(w)) {
+    set_hit_clicked(w);
+    return true;
+  }
+  return false;
+}
+bool ui::UpdateContext::hovered_hit(widget *w) {
+  if (hovered(w)) {
+    set_hit_hovered(w);
+    return true;
+  } else {
+    return false;
+  }
+}

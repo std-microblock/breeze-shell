@@ -53,7 +53,7 @@ menu_render show_menu(int x, int y, menu menu) {
     return {nullptr, std::nullopt};
   }
 
-  constexpr int l_pad = 100, t_pad = 100, width = 1200, height = 1200;
+  constexpr int l_pad = 100, t_pad = 100, width = 1200, height = 2400;
 
   auto rt = std::make_unique<ui::render_target>();
 

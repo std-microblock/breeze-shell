@@ -18,9 +18,18 @@ struct UpdateContext {
   bool mouse_clicked;
   bool mouse_up;
 
+  // hit test
+  std::vector<std::shared_ptr<widget>> hovered_widgets;
+  std::vector<std::shared_ptr<widget>> clicked_widgets;
+  void set_hit_hovered(widget *w);
+  void set_hit_clicked(widget *w);
+
   bool hovered(widget *w) const;
-  bool mouse_clicked_on(widget *w) const { return mouse_clicked && hovered(w); }
-  bool mouse_down_on(widget *w) const { return mouse_down && hovered(w); }
+  bool mouse_clicked_on(widget *w) const;
+  bool mouse_down_on(widget *w) const;
+
+  bool mouse_clicked_on_hit(widget *w);
+  bool hovered_hit(widget *w);
 
   float offset_x = 0, offset_y = 0;
   render_target &rt;
@@ -39,7 +48,7 @@ All the widgets in the tree should be owned by the tree.
 If you want to use a widget in multiple places, you should create a new instance
 for each place.
 */
-struct widget {
+struct widget: std::enable_shared_from_this<widget> {
   std::vector<sp_anim_float> anim_floats{};
   sp_anim_float anim_float(auto &&...args) {
     auto anim =
