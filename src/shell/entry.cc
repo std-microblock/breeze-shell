@@ -45,7 +45,14 @@ struct track_menu_args {
 std::optional<track_menu_args> track_menu_args_opt;
 bool track_menu_open = false;
 
-std::unique_ptr<ui::render_target> show_menu(int x, int y, menu menu) {
+menu_render show_menu(int x, int y, menu menu) {
+    std::println("Hello from mb-shell!");
+  if (auto res = ui::render_target::init_global(); !res) {
+    MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
+                MB_ICONERROR);
+    return {nullptr, std::nullopt};
+  }
+
   constexpr int l_pad = 100, t_pad = 100, width = 1200, height = 1200;
 
   auto rt = std::make_unique<ui::render_target>();
@@ -58,7 +65,7 @@ std::unique_ptr<ui::render_target> show_menu(int x, int y, menu menu) {
   rt->set_position(x - l_pad, y - t_pad + 5);
   rt->resize(width, height);
 
-  auto menu_wid = std::make_shared<menu_widget>(menu, width, height);
+  auto menu_wid = std::make_shared<menu_widget>(menu, l_pad, t_pad);
   rt->root->children.push_back(menu_wid);
 
   for (auto &listener : menu_callbacks) {
@@ -73,7 +80,7 @@ std::unique_ptr<ui::render_target> show_menu(int x, int y, menu menu) {
 
   nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
-  return rt;
+  return {std::move(rt), std::nullopt};
 }
 
 void main() {
@@ -82,13 +89,6 @@ void main() {
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);
-
-  std::println("Hello from mb-shell!");
-  if (auto res = ui::render_target::init_global(); !res) {
-    MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
-                MB_ICONERROR);
-    return;
-  }
 
   std::thread([]() {
     script_context ctx;
@@ -107,43 +107,27 @@ void main() {
   auto NtUserTrackPopupMenu = user32.value()->exports("TrackPopupMenu");
   auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
-  std::thread([&]() {
-    while (true) {
-      if (!track_menu_open) {
-        std::this_thread::yield();
-        continue;
-      }
-
-      if (!track_menu_args_opt) {
-        continue;
-      }
-
-      auto [hMenu, uFlags, x, y, hWnd, lptpm, tfunc] = *track_menu_args_opt;
-      track_menu_args_opt.reset();
-      track_menu_open = false;
-      menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-      std::thread([=]() { show_menu(x, y, menu)->start_loop(); }).detach();
-    }
-  }).detach();
-
   // We have to post the message to another thread for execution as
   // any winapi call in the hook routine will cause the menu to behave
   // incorrectly for some reason
   NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
                                int nReserved, HWND hWnd, const RECT *prcRect) {
-    track_menu_args_opt =
-        track_menu_args{hMenu, uFlags, x, y, hWnd, nullptr, nullptr};
-    track_menu_open = true;
-    while (track_menu_open) {
-      std::this_thread::yield();
-    }
+    // auto open = NtUserTrackHook->call_trampoline<int>(
+    //     hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
 
-    auto open = NtUserTrackHook->call_trampoline<bool>(
-        hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
+    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
+    auto menu_render = show_menu(x, y, menu);
+    menu_render.rt->start_loop();
 
-    return open;
+    return menu_render.selected_menu.value_or(0);
   });
 }
+menu_render::menu_render(std::unique_ptr<ui::render_target> rt,
+                         std::optional<int> selected_menu)
+    : rt(std::move(rt)), selected_menu(selected_menu) {
+  current = this;
+}
+menu_render::~menu_render() { current = std::nullopt; }
 } // namespace mb_shell
 
 int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
@@ -177,10 +161,10 @@ int main() {
     return "D:\\shell\\test.js";
   }();
 
-  static std::unique_ptr<ui::render_target> rt;
+  static std::optional<mb_shell::menu_render> menu_render;
   ctx.watch_file(path, []() {
-    if (rt)
-      rt->close();
+    if (menu_render)
+      menu_render->rt->close();
     using namespace mb_shell;
     std::thread([]() {
       mb_shell::menu m{
@@ -192,8 +176,8 @@ int main() {
               {.type = menu_item::type::button, .name = "最小化所有窗口(M)"},
               {.type = menu_item::type::button, .name = "还原所有窗口(R)"},
           }};
-      rt = mb_shell::show_menu(400, 400, m);
-      rt->start_loop();
+      // menu_render = mb_shell::show_menu(0, 0, m);
+      menu_render->rt->start_loop();
     }).detach();
   });
   return 0;

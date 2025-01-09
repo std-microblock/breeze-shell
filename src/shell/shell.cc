@@ -5,6 +5,8 @@
 #include "utils.h"
 #include <codecvt>
 
+#include "entry.h"
+
 #include <consoleapi.h>
 #include <debugapi.h>
 #include <iostream>
@@ -68,7 +70,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
 
     item.action = [=]() mutable {
       std::cout << "Clicked " << item.to_string() << std::endl;
-      PostMessageW(hWnd, WM_COMMAND, info.wID, 0);
+      menu_render::current.value()->selected_menu = info.wID;
+      menu_render::current.value()->rt->close();
     };
 
     m.items.push_back(item);

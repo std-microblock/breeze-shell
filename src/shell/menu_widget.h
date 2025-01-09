@@ -1,7 +1,10 @@
 #pragma once
 #include "shell.h"
+#include "ui.h"
 #include "widget.h"
 #include "extra_widgets.h"
+#include <memory>
+#include <optional>
 
 namespace mb_shell {
 struct menu_item_widget : public ui::widget {
