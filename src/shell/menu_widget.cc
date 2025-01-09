@@ -1,4 +1,5 @@
 #include "menu_widget.h"
+#include "animator.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
@@ -162,10 +163,15 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
 }
 void mb_shell::menu_item_widget::set_index_for_animation(int index) {
-  this->y->before_animate = [this, index](float dest) {
-    this->y->from = std::max(0.f, dest - 40 - index * 10);
-  };
-  auto delay = std::min(index * 10.f, 100.f);
-  this->y->set_delay(delay);
+  // this->y->before_animate = [this, index](float dest) {
+  //   this->y->from = std::max(0.f, dest - 40 - index * 10);
+  // };
+  auto delay = index * 10.f; // std::min(index * 10.f, 100.f);
+  // this->y->set_delay(delay);
   opacity->set_delay(delay);
+  this->y->set_easing(ui::easing_type::mutation);
+  this->x->set_delay(delay);
+  this->x->set_duration(200);
+  this->x->reset_to(-20);
+  this->x->animate_to(0);
 }

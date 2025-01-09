@@ -55,8 +55,6 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
     //  item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
     }
 
-    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, 256, NULL, NULL);
-
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||
         info.fType & MFT_MENUBREAK) {
       item.type = menu_item::type::spacer;
@@ -69,9 +67,9 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
     }
 
     item.action = [=]() mutable {
-      std::cout << "Clicked " << item.to_string() << std::endl;
       menu_render::current.value()->selected_menu = info.wID;
       menu_render::current.value()->rt->close();
+      std::cout << "Clicked " << info.wID << std::endl;
     };
 
     m.items.push_back(item);
