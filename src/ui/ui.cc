@@ -152,8 +152,10 @@ void render_target::render() {
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
       .mouse_y = mouse_y / dpi_scale,
-      .mouse_down = !!(GetAsyncKeyState(VK_LBUTTON) & 0x8000),
-      .right_mouse_down = !!(GetAsyncKeyState(VK_RBUTTON) & 0x8000),
+      .mouse_down =
+          glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
+      .right_mouse_down =
+          glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS,
       .rt = *this,
       .vg = vg,
   };

@@ -197,7 +197,8 @@ void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
-  if (ctx.clicked_widgets.size() == 0 && ctx.mouse_clicked) {
+  if (ctx.clicked_widgets.size() == 0 && ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) || 
+    (GetAsyncKeyState(VK_RBUTTON) & 0x8000))) {
     ctx.rt.close();
   }
 
