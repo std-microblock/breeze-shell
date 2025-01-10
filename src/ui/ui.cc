@@ -85,8 +85,11 @@ std::expected<bool, std::string> render_target::init() {
 }
 
 render_target::~render_target() {
+  if (nvg) {
+    nvgDeleteGL3(nvg);
+  }
+
   glfwDestroyWindow(window);
-  glfwTerminate();
 }
 std::expected<bool, std::string> render_target::init_global() {
   std::atomic_bool initialized = false;

@@ -70,7 +70,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   if (menu_render::current.value()->style ==
       menu_render::menu_style::materialyou) {
-    roundcorner = 10;
+    roundcorner = height->dest() / 2;
   }
 
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
@@ -125,19 +125,23 @@ float mb_shell::menu_item_widget::measure_width(ui::UpdateContext &ctx) {
 mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   gap = 5;
 
-  if (menu_render::current.value()->style == menu_render::menu_style::fluentui) {
+  if (menu_render::current.value()->style ==
+      menu_render::menu_style::fluentui) {
     auto acrylic = std::make_shared<ui::acrylic_background_widget>();
     acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     acrylic->update_color();
-    acrylic->use_dwm = false;
     bg = acrylic;
   } else {
-    bg = std::make_shared<ui::rect_widget>();
-    bg->bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    // bg = std::make_shared<ui::rect_widget>();
+    // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
+    auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
+    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    acrylic->update_color();
+    bg = acrylic;
   }
   if (menu_render::current.value()->style ==
       menu_render::menu_style::materialyou) {
-    bg->radius->reset_to(15);
+    bg->radius->reset_to(18);
   } else {
     bg->radius->reset_to(6);
   }

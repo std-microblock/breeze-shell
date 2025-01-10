@@ -96,8 +96,11 @@ void main() {
 
     if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
       ctx.watch_file("J:\\Projects\\b-shell\\test.js");
-    else
+    else if (std::filesystem::exists("D:\\shell\\test.js"))
       ctx.watch_file("D:\\shell\\test.js");
+    else if (std::filesystem::exists(
+                 (std::filesystem::current_path() / "test.js")))
+      ctx.watch_file((std::filesystem::current_path() / "test.js"));
   }).detach();
 
   auto proc = blook::Process::self();

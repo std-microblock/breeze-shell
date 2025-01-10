@@ -32,7 +32,8 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   cv.notify_all();
 }
 
-acrylic_background_widget::acrylic_background_widget() : rect_widget() {
+acrylic_background_widget::acrylic_background_widget(bool use_dwm)
+    : rect_widget(), use_dwm(use_dwm) {
   static bool registered = false;
   if (!registered) {
     WNDCLASSW wc = {0};
@@ -97,8 +98,9 @@ acrylic_background_widget::acrylic_background_widget() : rect_widget() {
 
       if ((width->updated() || height->updated() || radius->updated()) &&
           !use_dwm) {
-        auto rgn =
-            CreateRoundRectRgn(0, 0, *width, *height, *radius * 2, *radius * 2);
+        auto rgn = CreateRoundRectRgn(
+            0, 0, *width * dpi_scale, *height * dpi_scale,
+            *radius * 2 * dpi_scale, *radius * 2 * dpi_scale);
         SetWindowRgn((HWND)hwnd, rgn, 0);
 
         if (rgn) {
@@ -128,6 +130,6 @@ void rect_widget::render(nanovg_context ctx) {
   ctx.fillColor(bg_color);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
 }
-rect_widget::rect_widget(): widget() {}
+rect_widget::rect_widget() : widget() {}
 rect_widget::~rect_widget() {}
 } // namespace ui
