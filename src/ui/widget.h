@@ -65,7 +65,9 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual float measure_height(UpdateContext &ctx);
   virtual float measure_width(UpdateContext &ctx);
 
-  template <typename T> inline T *downcast() { return dynamic_cast<T *>(this); }
+  template <typename T> inline auto downcast() { 
+    return std::dynamic_pointer_cast<T>(this->shared_from_this());
+   }
 };
 
 // A widget that renders its children
@@ -83,7 +85,7 @@ struct widget_parent : public widget {
     children.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
   }
 
-  template <typename T> inline T *get_child() {
+  template <typename T> inline std::shared_ptr<T> get_child() {
     for (auto &child : children) {
       if (auto c = child->downcast<T>()) {
         return c;
@@ -92,8 +94,8 @@ struct widget_parent : public widget {
     return nullptr;
   }
 
-  template <typename T> inline std::vector<T *> get_children() {
-    std::vector<T *> res;
+  template <typename T> inline std::vector<std::shared_ptr<T>> get_children() {
+    std::vector<std::shared_ptr<T>> res;
     for (auto &child : children) {
       if (auto c = child->downcast<T>()) {
         res.push_back(c);

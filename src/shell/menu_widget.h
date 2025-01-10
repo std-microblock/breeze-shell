@@ -22,9 +22,7 @@ struct menu_item_widget : public ui::widget {
 
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
   void render(ui::nanovg_context ctx) override;
-
   void update(ui::UpdateContext &ctx) override;
-
   float measure_width(ui::UpdateContext &ctx) override;
 };
 
@@ -34,6 +32,8 @@ struct menu_widget : public ui::widget_parent_flex {
   std::shared_ptr<ui::rect_widget> bg;
   menu menu_data;
   menu_widget(menu menu_data);
+
+  std::mutex data_lock;
 
   void update(ui::UpdateContext &ctx) override;
 

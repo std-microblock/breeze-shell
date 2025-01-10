@@ -158,6 +158,7 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   }
 }
 void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
+  std::lock_guard lock(data_lock);
   super::update(ctx);
   bg->x->reset_to(x->dest());
   bg->y->reset_to(y->dest() - bg_padding_vertical);
@@ -168,6 +169,7 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   ctx.mouse_clicked_on_hit(bg.get());
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
+  std::lock_guard lock(data_lock);
   bg->render(ctx);
   super::render(ctx);
 }
