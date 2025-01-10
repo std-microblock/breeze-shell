@@ -1,20 +1,14 @@
 #include "menu_widget.h"
 #include "animator.h"
+#include "entry.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
+#include <print>
 #include <vector>
 
 mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
   opacity->reset_to(0);
-
-  // this->y->before_animate = [this, index](float dest) {
-  //   this->y->from = std::max(0.f, dest - 40 - index * 10);
-  // };
-  // auto delay = std::min(index * 10.f, 100.f);
-  // this->y->set_delay(delay);
-  // opacity->set_delay(delay);
-
   opacity->animate_to(255);
 
   if (item.type == menu_item::type::spacer) {
@@ -71,13 +65,22 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   }
 
   ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
-  ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
+
+  float roundcorner = 4;
+
+  if (menu_render::current.value()->style ==
+      menu_render::menu_style::materialyou) {
+    roundcorner = 10;
+  }
+
+  ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
+                      roundcorner);
 
   ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
   ctx.fontFace("Yahei");
   ctx.fontSize(14);
 
-  if (item.icon) {
+  if (item.icon.has_value()) {
     if (icon_img_id == -1) {
       auto bits = dump_bitmap_rgb(item.icon.value());
       auto rgba = rgb_to_rgba(bits.data);
@@ -122,11 +125,22 @@ float mb_shell::menu_item_widget::measure_width(ui::UpdateContext &ctx) {
 mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   gap = 5;
 
-  bg = std::make_unique<ui::acrylic_background_widget>();
-  bg->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
-  bg->update_color();
-  bg->radius->reset_to(6);
-  bg->use_dwm = false;
+  if (menu_render::current.value()->style == menu_render::menu_style::fluentui) {
+    auto acrylic = std::make_shared<ui::acrylic_background_widget>();
+    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    acrylic->update_color();
+    acrylic->use_dwm = false;
+    bg = acrylic;
+  } else {
+    bg = std::make_shared<ui::rect_widget>();
+    bg->bg_color = nvgRGBAf(0, 0, 0, 0.5);
+  }
+  if (menu_render::current.value()->style ==
+      menu_render::menu_style::materialyou) {
+    bg->radius->reset_to(15);
+  } else {
+    bg->radius->reset_to(6);
+  }
 
   bg->opacity->reset_to(0);
   bg->opacity->animate_to(255);
@@ -146,7 +160,6 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   bg->width->reset_to(width->dest());
   bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
   bg->update(ctx);
-
 
   ctx.mouse_clicked_on_hit(bg.get());
 }
@@ -178,7 +191,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
-  if(ctx.clicked_widgets.size() == 0 && ctx.mouse_clicked) {
+  if (ctx.clicked_widgets.size() == 0 && ctx.mouse_clicked) {
     ctx.rt.close();
   }
 

@@ -7,7 +7,19 @@
 #include <thread>
 
 namespace ui {
-struct acrylic_background_widget : public widget {
+
+struct rect_widget : public widget {
+  rect_widget();
+  ~rect_widget();
+  sp_anim_float opacity = anim_float(0, 200);
+  sp_anim_float radius = anim_float(0, 200);
+
+  NVGcolor bg_color = nvgRGBAf(0, 0, 0, 0);
+
+  void render(nanovg_context ctx) override;
+};
+
+struct acrylic_background_widget : public rect_widget {
   void *hwnd;
   acrylic_background_widget();
   ~acrylic_background_widget();

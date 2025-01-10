@@ -44,7 +44,7 @@ struct UpdateContext {
 };
 
 /*
-All the widgets in the tree should be owned by the tree.
+All the widgets in the tree should be wrapped in a shared_ptr.
 If you want to use a widget in multiple places, you should create a new instance
 for each place.
 */

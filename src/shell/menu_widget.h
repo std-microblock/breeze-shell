@@ -31,7 +31,7 @@ struct menu_item_widget : public ui::widget {
 struct menu_widget : public ui::widget_parent_flex {
   using super = ui::widget_parent_flex;
   float bg_padding_vertical = 6;
-  std::unique_ptr<ui::acrylic_background_widget> bg;
+  std::shared_ptr<ui::rect_widget> bg;
   menu menu_data;
   menu_widget(menu menu_data);
 

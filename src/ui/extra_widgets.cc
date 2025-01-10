@@ -1,5 +1,6 @@
 #include "extra_widgets.h"
 #include "GLFW/glfw3.h"
+#include "widget.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 #include <print>
@@ -19,19 +20,19 @@ static auto pSetWindowCompositionAttribute =
 
 namespace ui {
 void acrylic_background_widget::update(UpdateContext &ctx) {
-  widget::update(ctx);
+  rect_widget::update(ctx);
 
   dpi_scale = ctx.rt.dpi_scale;
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
-  widget::render(ctx);
+  rect_widget::render(ctx);
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
 
   cv.notify_all();
 }
 
-acrylic_background_widget::acrylic_background_widget() : widget() {
+acrylic_background_widget::acrylic_background_widget() : rect_widget() {
   static bool registered = false;
   if (!registered) {
     WNDCLASSW wc = {0};
@@ -76,6 +77,7 @@ acrylic_background_widget::acrylic_background_widget() : widget() {
       cv.wait(lk);
 
       if (to_close) {
+        ShowWindow((HWND)hwnd, SW_HIDE);
         DestroyWindow((HWND)hwnd);
         break;
       }
@@ -122,4 +124,10 @@ void acrylic_background_widget::update_color() {
                                       sizeof(accent)};
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
 }
+void rect_widget::render(nanovg_context ctx) {
+  ctx.fillColor(bg_color);
+  ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
+}
+rect_widget::rect_widget(): widget() {}
+rect_widget::~rect_widget() {}
 } // namespace ui

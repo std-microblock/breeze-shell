@@ -44,7 +44,7 @@ struct track_menu_args {
 
 std::optional<track_menu_args> track_menu_args_opt;
 bool track_menu_open = false;
-thread_local std::optional<menu_render*> menu_render::current{};
+thread_local std::optional<menu_render *> menu_render::current{};
 menu_render show_menu(int x, int y, menu menu) {
   if (auto res = ui::render_target::init_global(); !res) {
     MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
@@ -54,7 +54,9 @@ menu_render show_menu(int x, int y, menu menu) {
 
   constexpr int l_pad = 100, t_pad = 100, width = 1200, height = 2400;
 
-  auto rt = std::make_unique<ui::render_target>();
+  auto render =
+      menu_render(std::make_unique<ui::render_target>(), std::nullopt);
+  auto &rt = render.rt;
 
   if (auto res = rt->init(); !res) {
     MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
@@ -78,8 +80,8 @@ menu_render show_menu(int x, int y, menu menu) {
   // };
 
   nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
-  return {std::move(rt), std::nullopt};
+  std::println("Current menu: {}", menu_render::current.has_value());
+  return render;
 }
 
 void main() {
@@ -126,7 +128,23 @@ menu_render::menu_render(std::unique_ptr<ui::render_target> rt,
     : rt(std::move(rt)), selected_menu(selected_menu) {
   current = this;
 }
-menu_render::~menu_render() { current = std::nullopt; }
+menu_render::~menu_render() {
+  if (this->rt) {
+    current = nullptr;
+  }
+}
+menu_render::menu_render(menu_render &&t) {
+  current = this;
+
+  rt = std::move(t.rt);
+  selected_menu = std::move(t.selected_menu);
+}
+menu_render &menu_render::operator=(menu_render &&t) {
+  current = this;
+  rt = std::move(t.rt);
+  selected_menu = std::move(t.selected_menu);
+  return *this;
+}
 } // namespace mb_shell
 
 int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
@@ -175,7 +193,8 @@ int main() {
               {.type = menu_item::type::button, .name = "最小化所有窗口(M)"},
               {.type = menu_item::type::button, .name = "还原所有窗口(R)"},
           }};
-      // menu_render = mb_shell::show_menu(0, 0, m);
+      menu_render = show_menu(100, 100, m);
+      std::println("Current menu:2 {}", menu_render::current.has_value());
       menu_render->rt->start_loop();
     }).detach();
   });

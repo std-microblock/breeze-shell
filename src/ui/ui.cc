@@ -170,5 +170,8 @@ void render_target::resize(int width, int height) {
   this->height = height;
   reset_view();
 }
-void render_target::close() { glfwSetWindowShouldClose(window, true); }
+void render_target::close() {
+  ShowWindow(glfwGetWin32Window(window), SW_HIDE);
+  glfwSetWindowShouldClose(window, true);
+}
 } // namespace ui
