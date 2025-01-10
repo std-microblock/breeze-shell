@@ -6,8 +6,8 @@ void ui::widget_parent::render(nanovg_context ctx) {
   widget::render(ctx);
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
-    ctx.offset_x = *x;
-    ctx.offset_y = *y;
+    ctx.offset_x = *x + orig_offset_x;
+    ctx.offset_y = *y + orig_offset_y;
     ctx.save();
     child->render(ctx);
     ctx.restore();
@@ -21,8 +21,8 @@ void ui::widget_parent::update(UpdateContext &ctx) {
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
 
   for (auto &child : children) {
-    ctx.offset_x = *x;
-    ctx.offset_y = *y;
+    ctx.offset_x = *x + orig_offset_x;
+    ctx.offset_y = *y + orig_offset_y;
     child->update(ctx);
   }
 

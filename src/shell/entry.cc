@@ -46,7 +46,6 @@ std::optional<track_menu_args> track_menu_args_opt;
 bool track_menu_open = false;
 thread_local std::optional<menu_render*> menu_render::current{};
 menu_render show_menu(int x, int y, menu menu) {
-    std::println("Hello from mb-shell!");
   if (auto res = ui::render_target::init_global(); !res) {
     MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
                 MB_ICONERROR);

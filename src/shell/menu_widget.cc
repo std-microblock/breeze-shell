@@ -146,6 +146,9 @@ void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
   bg->width->reset_to(width->dest());
   bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
   bg->update(ctx);
+
+
+  ctx.mouse_clicked_on_hit(bg.get());
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   bg->render(ctx);
@@ -174,6 +177,15 @@ void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
   ui::widget_parent::update(ctx);
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
+
+  if(ctx.clicked_widgets.size() == 0 && ctx.mouse_clicked) {
+    ctx.rt.close();
+  }
+
+  // esc to close
+  if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+    ctx.rt.close();
+  }
 }
 void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
   ui::widget_parent::render(ctx);
