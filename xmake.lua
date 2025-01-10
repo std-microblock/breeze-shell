@@ -7,6 +7,7 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.debug", "mode.release")
 
 includes("blook.lua")
+includes("glfw.lua")
 add_requires("blook", "glfw", "nanovg", "glad", "quickjs-ng")
 set_runtimes("MT")
 add_rules("mode.releasedbg")

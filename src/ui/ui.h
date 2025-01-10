@@ -33,7 +33,8 @@ struct render_target {
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::high_resolution_clock clock{};
   decltype(clock.now()) last_time = clock.now();
-  bool mouse_down = false;
+  bool mouse_down = false, right_mouse_down = false;
+  void* parent = nullptr;
 
   render_target() = default;
   ~render_target();

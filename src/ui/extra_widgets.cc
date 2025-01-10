@@ -11,6 +11,14 @@
 #include "swcadef.h"
 #include "ui.h"
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+  if (msg == WM_MOUSEACTIVATE) {
+    return MA_NOACTIVATE;
+  } else if (msg == WM_PAINT) {
+    PAINTSTRUCT ps;
+    BeginPaint(hwnd, &ps);
+    EndPaint(hwnd, &ps);
+    return 0;
+  } 
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 

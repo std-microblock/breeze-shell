@@ -13,9 +13,9 @@ struct UpdateContext {
   float delta_t;
   // mouse position in window coordinates
   double mouse_x, mouse_y;
-  bool mouse_down;
+  bool mouse_down, right_mouse_down;
   // only true for one frame
-  bool mouse_clicked;
+  bool mouse_clicked, right_mouse_clicked;
   bool mouse_up;
 
   // hit test

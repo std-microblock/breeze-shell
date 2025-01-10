@@ -35,13 +35,20 @@ std::expected<bool, std::string> render_target::init() {
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   glfwWindowHint(GLFW_FLOATING, 1);
+  glfwWindowHint(GLFW_VISIBLE, 0);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
-  // add WS_EX_NOACTIVATE to prevent the window from being activated
+  ShowWindow(h, SW_SHOWNOACTIVATE);
+  // topmost & focused
+  SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+  // retrieve all mouse messages
+  SetCapture(h);
+
   SetWindowLongPtr(h, GWL_EXSTYLE,
                    GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                        WS_EX_NOACTIVATE);
@@ -145,14 +152,16 @@ void render_target::render() {
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
       .mouse_y = mouse_y / dpi_scale,
-      .mouse_down =
-          glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
+      .mouse_down = !!(GetAsyncKeyState(VK_LBUTTON) & 0x8000),
+      .right_mouse_down = !!(GetAsyncKeyState(VK_RBUTTON) & 0x8000),
       .rt = *this,
       .vg = vg,
   };
   ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
+  ctx.right_mouse_clicked = !ctx.right_mouse_down && right_mouse_down;
   ctx.mouse_up = !ctx.mouse_down && mouse_down;
   mouse_down = ctx.mouse_down;
+  right_mouse_down = ctx.right_mouse_down;
 
   root->update(ctx);
   root->render(vg);

@@ -132,12 +132,12 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
     acrylic->update_color();
     bg = acrylic;
   } else {
-    // bg = std::make_shared<ui::rect_widget>();
-    // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
-    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
-    acrylic->update_color();
-    bg = acrylic;
+    bg = std::make_shared<ui::rect_widget>();
+    bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
+    // auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
+    // acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    // acrylic->update_color();
+    // bg = acrylic;
   }
   if (menu_render::current.value()->style ==
       menu_render::menu_style::materialyou) {

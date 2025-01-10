@@ -75,6 +75,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
     m.items.push_back(item);
   }
 
+  m.parent_window = hWnd;
+
   return m;
 }
 } // namespace mb_shell
