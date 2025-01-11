@@ -150,6 +150,11 @@ void render_target::render() {
   int window_x, window_y;
   glfwGetWindowPos(window, &window_x, &window_y);
 
+  auto monitor = MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof(MONITORINFOEX);
+  GetMonitorInfo(monitor, &monitor_info);
+
   update_context ctx{
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
@@ -158,6 +163,11 @@ void render_target::render() {
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .right_mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS,
+      .screen = {
+          .width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+          .height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+          .dpi_scale = dpi_scale,
+      },
       .rt = *this,
       .vg = vg,
   };

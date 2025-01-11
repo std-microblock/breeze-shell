@@ -1,12 +1,13 @@
 #include "widget.h"
+#include "ui.h"
 #include <chrono>
 #include <thread>
 void ui::widget_parent::render(nanovg_context ctx) {
   widget::render(ctx);
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
-    ctx.offset_x = *x;
-    ctx.offset_y = *y;
+    ctx.offset_x = *x + orig_offset_x;
+    ctx.offset_y = *y + orig_offset_y;
     ctx.save();
     child->render(ctx);
     ctx.restore();
@@ -20,15 +21,15 @@ void ui::widget_parent::update(update_context &ctx) {
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
 
   for (auto &child : children) {
-    ctx.offset_x = *x;
-    ctx.offset_y = *y;
+    ctx.offset_x = *x + orig_offset_x;
+    ctx.offset_y = *y + orig_offset_y;
     child->update(ctx);
   }
 
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::add_child(std::unique_ptr<widget> child) {
+void ui::widget_parent::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
@@ -86,18 +87,30 @@ void ui::widget_parent_flex::update(update_context &ctx) {
     }
   }
 }
-void ui::widget_padding::update(update_context &ctx) {
-  if (child) {
-    child->update(ctx);
-  }
-
-  width->animate_to(child->width->dest() + padding_left + padding_right);
-  height->animate_to(child->height->dest() + padding_top + padding_bottom);
-  child->x->animate_to(padding_left);
-  child->y->animate_to(padding_top);
+void ui::update_context::set_hit_hovered(widget *w) {
+  hovered_widgets.push_back(w->shared_from_this());
 }
-void ui::widget_padding::render(nanovg_context ctx) {
-  if (child) {
-    child->render(ctx);
+bool ui::update_context::mouse_clicked_on(widget *w) const {
+  return mouse_clicked && hovered(w);
+}
+bool ui::update_context::mouse_down_on(widget *w) const {
+  return mouse_down && hovered(w);
+}
+void ui::update_context::set_hit_clicked(widget *w) {
+  clicked_widgets.push_back(w->shared_from_this());
+}
+bool ui::update_context::mouse_clicked_on_hit(widget *w) {
+  if (mouse_clicked_on(w)) {
+    set_hit_clicked(w);
+    return true;
+  }
+  return false;
+}
+bool ui::update_context::hovered_hit(widget *w) {
+  if (hovered(w)) {
+    set_hit_hovered(w);
+    return true;
+  } else {
+    return false;
   }
 }

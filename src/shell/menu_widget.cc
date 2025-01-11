@@ -207,10 +207,6 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     ui::update_context &ctx, bool animated) {
   auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
                                   MONITOR_DEFAULTTONEAREST);
-  MONITORINFOEX monitor_info;
-  monitor_info.cbSize = sizeof(MONITORINFOEX);
-  GetMonitorInfo(monitor, &monitor_info);
-
   menu_wid->update(ctx);
   auto menu_width = menu_wid->measure_width(ctx);
   auto menu_height = menu_wid->measure_height(ctx);
@@ -233,22 +229,25 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     y = anchor_y;
   }
 
-  if (x < monitor_info.rcMonitor.left) {
-    x = monitor_info.rcMonitor.left;
-  } else if (x + menu_width * ctx.rt.dpi_scale > monitor_info.rcMonitor.right) {
-    x = monitor_info.rcMonitor.right - menu_width * ctx.rt.dpi_scale;
+  constexpr auto padding_vertical = 50, padding_horizontal = 10;
+
+  if (x < padding_vertical) {
+    x = padding_vertical;
+  } else if (x + menu_width * ctx.rt.dpi_scale >
+             ctx.screen.width * ctx.rt.dpi_scale - padding_vertical) {
+    x = ctx.screen.width * ctx.rt.dpi_scale - menu_width * ctx.rt.dpi_scale - padding_vertical;
   }
 
-  if (y < monitor_info.rcMonitor.top) {
-    y = monitor_info.rcMonitor.top;
+  if (y < padding_horizontal) {
+    y = padding_horizontal;
   } else if (y + menu_height * ctx.rt.dpi_scale >
-             monitor_info.rcMonitor.bottom) {
-    y = monitor_info.rcMonitor.bottom - menu_height * ctx.rt.dpi_scale;
+             ctx.screen.height * ctx.rt.dpi_scale - padding_horizontal) {
+    y = ctx.screen.height * ctx.rt.dpi_scale - menu_height * ctx.rt.dpi_scale - padding_horizontal;
   }
 
-  std::println("Calibrated position: {} {} in x: {}~{} y: {}~{}", x, y,
-               monitor_info.rcMonitor.left, monitor_info.rcMonitor.right,
-               monitor_info.rcMonitor.top, monitor_info.rcMonitor.bottom);
+  std::println("Calibrated position: {} {} in screen {} {}", x, y,
+               ctx.screen.width * ctx.rt.dpi_scale,
+               ctx.screen.height * ctx.rt.dpi_scale);
 
   if (animated) {
     this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);

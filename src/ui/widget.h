@@ -9,6 +9,10 @@
 namespace ui {
 struct render_target;
 struct widget;
+struct screen_info {
+  int width, height;
+  float dpi_scale;
+};
 struct update_context {
   float delta_t;
   // mouse position in window coordinates
@@ -17,6 +21,8 @@ struct update_context {
   // only true for one frame
   bool mouse_clicked, right_mouse_clicked;
   bool mouse_up;
+
+  screen_info screen;
 
   // hit test
   std::vector<std::shared_ptr<widget>> hovered_widgets;
