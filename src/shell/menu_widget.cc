@@ -92,7 +92,8 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
 
   if (menu_render::current.value()->style ==
       menu_render::menu_style::fluentui) {
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
+    auto acrylic =
+        std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
     acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
@@ -234,20 +235,19 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
   if (x < padding_vertical) {
     x = padding_vertical;
   } else if (x + menu_width * ctx.rt.dpi_scale >
-             ctx.screen.width * ctx.rt.dpi_scale - padding_vertical) {
-    x = ctx.screen.width * ctx.rt.dpi_scale - menu_width * ctx.rt.dpi_scale - padding_vertical;
+             ctx.screen.width - padding_vertical) {
+    x = ctx.screen.width - menu_width * ctx.rt.dpi_scale - padding_vertical;
   }
 
   if (y < padding_horizontal) {
     y = padding_horizontal;
   } else if (y + menu_height * ctx.rt.dpi_scale >
-             ctx.screen.height * ctx.rt.dpi_scale - padding_horizontal) {
-    y = ctx.screen.height * ctx.rt.dpi_scale - menu_height * ctx.rt.dpi_scale - padding_horizontal;
+             ctx.screen.height - padding_horizontal) {
+    y = ctx.screen.height - menu_height * ctx.rt.dpi_scale - padding_horizontal;
   }
 
   std::println("Calibrated position: {} {} in screen {} {}", x, y,
-               ctx.screen.width * ctx.rt.dpi_scale,
-               ctx.screen.height * ctx.rt.dpi_scale);
+               ctx.screen.width, ctx.screen.height);
 
   if (animated) {
     this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);

@@ -38,22 +38,21 @@ std::expected<bool, std::string> render_target::init() {
   glfwWindowHint(GLFW_VISIBLE, 0);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(1);
+  glfwSwapInterval(0);
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
-                   
+
   ShowWindow(h, SW_SHOWNOACTIVATE);
   // topmost & focused
   SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   // retrieve all mouse messages
   SetCapture(h);
-  
+
   SetWindowLongPtr(h, GWL_EXSTYLE,
                    GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                        WS_EX_NOACTIVATE);
-
 
   if (!window) {
     return std::unexpected("Failed to create window");
@@ -140,7 +139,19 @@ void render_target::render() {
     reset_view();
   }
 
+  auto begin = clock.now();
+
+  auto time_checkpoints = [&](const char *name) {
+    if constexpr (false) {
+      auto end = clock.now();
+      auto delta = std::chrono::duration<float>(end - begin).count();
+      std::println("{}: {}ms", name, delta * 1000);
+      begin = end;
+    }
+  };
+
   nanovg_context vg{nvg};
+  time_checkpoints("NanoVG context");
 
   vg.beginFrame(width, height, dpi_scale);
   vg.scale(dpi_scale, dpi_scale);
@@ -150,7 +161,8 @@ void render_target::render() {
   int window_x, window_y;
   glfwGetWindowPos(window, &window_x, &window_y);
 
-  auto monitor = MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
+  auto monitor =
+      MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof(MONITORINFOEX);
   GetMonitorInfo(monitor, &monitor_info);
@@ -163,11 +175,14 @@ void render_target::render() {
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .right_mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS,
-      .screen = {
-          .width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
-          .height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
-          .dpi_scale = dpi_scale,
-      },
+      .screen =
+          {
+              .width =
+                  monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+              .height =
+                  monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+              .dpi_scale = dpi_scale,
+          },
       .rt = *this,
       .vg = vg,
   };
@@ -176,11 +191,15 @@ void render_target::render() {
   ctx.mouse_up = !ctx.mouse_down && mouse_down;
   mouse_down = ctx.mouse_down;
   right_mouse_down = ctx.right_mouse_down;
-
+  time_checkpoints("Update context");
   root->update(ctx);
+  time_checkpoints("Update root");
   root->render(vg);
+  time_checkpoints("Render root");
   vg.endFrame();
+  glFlush();
   glfwSwapBuffers(window);
+  time_checkpoints("Swap buffers");
 }
 void render_target::reset_view() {
   nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
