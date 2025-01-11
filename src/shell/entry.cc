@@ -211,9 +211,28 @@ int main() {
               {.type = menu_item::type::button, .name = "层叠窗口(D)"},
               {.type = menu_item::type::button, .name = "堆叠显示窗口(E)"},
               {.type = menu_item::type::button, .name = "并排显示窗口(I)"},
-              {.type = menu_item::type::spacer},
-              {.type = menu_item::type::button, .name = "最小化所有窗口(M)"},
-              {.type = menu_item::type::button, .name = "还原所有窗口(R)"},
+              {
+                  .type = menu_item::type::button,
+                  .name = "测试多层菜单",
+                  .submenu = []() {
+                    return menu{
+                        .items = {
+                            {.type = menu_item::type::button,
+                             .name = "测试多层菜单1",
+                              .submenu = []() {
+                                return menu{
+                                    .items = {
+                                        {.type = menu_item::type::button,
+                                          .name = "测试多层菜单1-1"},
+                                        {.type = menu_item::type::button,
+                                          .name = "测试多层菜单1-2"},
+                                        {.type = menu_item::type::button,
+                                          .name = "测试多层菜单1-3"},
+                                    }};
+                              }},
+                        }};
+                  },
+              }
           }};
       menu_render = show_menu(100, 100, m);
       std::println("Current menu:2 {}", menu_render::current.has_value());

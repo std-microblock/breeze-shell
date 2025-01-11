@@ -161,8 +161,8 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
 
   inline nanovg_context with_offset(float x, float y) {
     auto copy = *this;
-    copy.offset_x = x;
-    copy.offset_y = y;
+    copy.offset_x = x + offset_x;
+    copy.offset_y = y + offset_y;
     return copy;
   }
 };

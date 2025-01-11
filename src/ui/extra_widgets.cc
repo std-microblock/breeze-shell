@@ -83,13 +83,14 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
     ShowWindow((HWND)hwnd, SW_SHOW);
     while (true) {
       std::unique_lock<std::mutex> lk(cv_m);
-      cv.wait(lk);
 
       if (to_close) {
         ShowWindow((HWND)hwnd, SW_HIDE);
         DestroyWindow((HWND)hwnd);
         break;
       }
+
+      cv.wait(lk);
 
       int winx, winy;
       RECT rect;

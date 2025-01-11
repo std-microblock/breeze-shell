@@ -24,7 +24,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   if (item.type == menu_item::type::spacer) {
     ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
-    ctx.fillRect(*x, *y, *width, *height);
+    ctx.fillRect(x->dest(), *y, *width, *height);
     return;
   }
 
@@ -63,6 +63,21 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
            item.name->c_str(), nullptr);
+
+  if (item.submenu) {
+    // draw arrow
+    ctx.beginPath();
+    ctx.moveTo(*x + *width - 20, *y + 8);
+    ctx.lineTo(*x + *width - 15, *y + 12);
+    ctx.lineTo(*x + *width - 20, *y + 16);
+    ctx.strokeColor(nvgRGBAf(1, 1, 1, *opacity * 0.6 / 255.f));
+    ctx.strokeWidth(1);
+    ctx.stroke();
+  }
+
+  if (submenu_wid) {
+    submenu_wid->render(ctx);
+  }
 }
 void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   super::update(ctx);
@@ -77,6 +92,30 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   if (ctx.mouse_clicked_on(this)) {
     if (item.action) {
       item.action.value()();
+    }
+  }
+
+  if (item.submenu) {
+    if (ctx.hovered(this) || (submenu_wid && ctx.hovered(submenu_wid.get()))) {
+      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 500.f);
+    } else {
+      show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
+    }
+
+    if (show_submenu_timer >= 100.f) {
+      if (!submenu_wid) {
+        submenu_wid = std::make_shared<menu_widget>(item.submenu.value()());
+
+        submenu_wid->x->reset_to(*width + *x);
+        submenu_wid->y->reset_to(*y);
+        submenu_wid->reset_animation();
+      }
+
+      submenu_wid->update(ctx);
+    } else {
+      if (submenu_wid) {
+        submenu_wid = nullptr;
+      }
     }
   }
 }
@@ -197,7 +236,7 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
   auto children = get_children<menu_item_widget>();
 
   // the show duration for the menu should be within 200ms
-  float delay = std::min(200.f / children.size(), 50.f);
+  float delay = std::min(400.f / children.size(), 50.f);
 
   for (size_t i = 0; i < children.size(); i++) {
     auto &child = children[i];
@@ -206,8 +245,6 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
 }
 void mb_shell::mouse_menu_widget_main::calibrate_position(
     ui::update_context &ctx, bool animated) {
-  auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
-                                  MONITOR_DEFAULTTONEAREST);
   menu_wid->update(ctx);
   auto menu_width = menu_wid->measure_width(ctx);
   auto menu_height = menu_wid->measure_height(ctx);
@@ -306,4 +343,8 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
                : direction == popup_direction::bottom_left  ? "bottom_left"
                : direction == popup_direction::bottom_right ? "bottom_right"
                                                             : "unknown");
+}
+bool mb_shell::menu_item_widget::check_hit(const ui::update_context &ctx) {
+  return ui::widget::check_hit(ctx) ||
+         (submenu_wid && submenu_wid->check_hit(ctx));
 }

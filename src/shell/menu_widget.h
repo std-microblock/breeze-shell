@@ -8,6 +8,8 @@
 #include <optional>
 
 namespace mb_shell {
+
+struct menu_widget;
 struct menu_item_widget : public ui::widget {
   using super = ui::widget;
   menu_item item;
@@ -21,10 +23,14 @@ struct menu_item_widget : public ui::widget {
 
   std::optional<ui::NVGImage> icon_img_bmp{};
 
+  std::shared_ptr<menu_widget> submenu_wid = nullptr;
+  float show_submenu_timer = 0.f;
+
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
   void render(ui::nanovg_context ctx) override;
   void update(ui::update_context &ctx) override;
   float measure_width(ui::update_context &ctx) override;
+  bool check_hit(const ui::update_context &ctx) override;
 };
 
 enum class popup_direction {

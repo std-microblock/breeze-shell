@@ -39,10 +39,7 @@ void ui::widget::update(update_context &ctx) {
   }
 }
 bool ui::update_context::hovered(widget *w) const {
-  return mouse_x >= (w->x->dest() + offset_x) &&
-         mouse_x <= (w->x->dest() + w->width->dest() + offset_x) &&
-         mouse_y >= (w->y->dest() + offset_y) &&
-         mouse_y <= (w->y->dest() + w->height->dest() + offset_y);
+  return w->check_hit(*this);
 }
 float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
 float ui::widget::measure_width(update_context &ctx) { return width->dest(); }
@@ -113,4 +110,10 @@ bool ui::update_context::hovered_hit(widget *w) {
   } else {
     return false;
   }
+}
+bool ui::widget::check_hit(const update_context &ctx) {
+  return ctx.mouse_x >= (x->dest() + ctx.offset_x) &&
+         ctx.mouse_x <= (x->dest() + width->dest() + ctx.offset_x) &&
+         ctx.mouse_y >= (y->dest() + ctx.offset_y) &&
+         ctx.mouse_y <= (y->dest() + height->dest() + ctx.offset_y);
 }

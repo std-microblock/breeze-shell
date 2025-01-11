@@ -14,6 +14,7 @@ struct screen_info {
   float dpi_scale;
 };
 struct update_context {
+  // time since last frame, in milliseconds
   float delta_t;
   // mouse position in window coordinates
   double mouse_x, mouse_y;
@@ -43,8 +44,8 @@ struct update_context {
 
   update_context with_offset(float x, float y) {
     auto copy = *this;
-    copy.offset_x = x;
-    copy.offset_y = y;
+    copy.offset_x = x + offset_x;
+    copy.offset_y = y + offset_y;
     return copy;
   }
 };
@@ -74,6 +75,8 @@ struct widget : std::enable_shared_from_this<widget> {
   template <typename T> inline auto downcast() {
     return std::dynamic_pointer_cast<T>(this->shared_from_this());
   }
+
+  virtual bool check_hit(const update_context &ctx);
 };
 
 // A widget that renders its children

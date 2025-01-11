@@ -3,6 +3,7 @@
 #include "menu_widget.h"
 #include "ui.h"
 #include "utils.h"
+#include <algorithm>
 #include <codecvt>
 
 #include "entry.h"
@@ -24,7 +25,7 @@ std::string menu_item::to_string() {
   std::string str = name.value_or("Unnamed");
 
   if (submenu) {
-    str += " -> (" + submenu->to_string() + ")";
+    str += " -> (" + submenu.value()().to_string() + ")";
   }
 
   return str;
@@ -36,6 +37,40 @@ std::string menu::to_string() {
   }
   return str;
 }
+
+std::wstring strip_extra_infos(std::wstring_view str) {
+  // 1. Test&C -> Test
+  // 2. Test -> Test
+  // 3. Test\txxx -> Test
+  // 4. remove all unicode control characters
+
+  std::wstring result;
+  static const std::vector<wchar_t> whitespace_chars{
+      0x9,    0xA,    0xB,    0xC,    0xD,    0x20,   0x85,   0xA0,   0x1680,
+      0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008,
+      0x2009, 0x200A, 0x200B, 0x2028, 0x2029, 0x3000, 0xFEFF};
+
+  for (int i = 0; i < str.size(); i++) {
+    if (std::ranges::find(whitespace_chars, str[i]) != whitespace_chars.end()) {
+      continue;
+    }
+    if (str[i] == '&' ||
+        (str[i] == '(' && i + 1 < str.size() && str[i + 1] == '&')) {
+      while(str[i] != ')' && i < str.size()) {
+        i++;
+      }
+
+      continue;
+    }
+    if (str[i] == '\t') {
+      break;
+    }
+    result.push_back(str[i]);
+  }
+
+  return result;
+}
+
 menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
   menu m;
 
@@ -53,14 +88,16 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
       continue;
     }
     if (info.hSubMenu) {
-      //  item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
+      item.submenu = [=]() {
+        return construct_with_hmenu(info.hSubMenu, hWnd);
+      };
     }
 
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||
         info.fType & MFT_MENUBREAK) {
       item.type = menu_item::type::spacer;
     } else {
-      item.name = wstring_to_utf8(buffer);
+      item.name = wstring_to_utf8(strip_extra_infos(buffer));
     }
 
     if (info.fType & MFT_BITMAP) {

@@ -28,7 +28,7 @@ struct menu_item {
 
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
-  std::optional<menu> submenu;
+  std::optional<std::function<menu()>> submenu;
 
   std::optional<HBITMAP> icon_bitmap;
 
