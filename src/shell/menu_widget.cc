@@ -5,6 +5,7 @@
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
+#include "utils.h"
 #include <print>
 #include <vector>
 
@@ -91,14 +92,15 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
 
   if (menu_render::current.value()->style ==
       menu_render::menu_style::fluentui) {
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>();
+    auto acrylic = std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
     acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
   } else {
     // bg = std::make_shared<ui::rect_widget>();
     // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
+    auto acrylic =
+        std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
     acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
@@ -198,7 +200,7 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
 
   for (size_t i = 0; i < children.size(); i++) {
     auto &child = children[i];
-    child->reset_appear_animation(delay);
+    child->reset_appear_animation(delay * (reverse ? children.size() - i : i));
   }
 }
 void mb_shell::mouse_menu_widget_main::calibrate_position(
