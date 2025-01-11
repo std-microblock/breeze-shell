@@ -20,15 +20,19 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
   this->item = item;
 }
 
-void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
+void mb_shell::menu_item_widget::render(ui::render_context &ctx) {
   super::render(ctx);
+
+  auto shape = tvg::Shape::gen();
   if (item.type == menu_item::type::spacer) {
-    ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
-    ctx.fillRect(*x, *y, *width, *height);
+    shape->fill(255, 255, 255, 25);
+    shape->appendRect(*x + ctx.offset_x, *y + ctx.offset_y, *width, *height, 0,
+                      0);
+    ctx->push(shape);
     return;
   }
 
-  ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
+  shape->fill(1, 1, 1, *bg_opacity / 255.f);
 
   float roundcorner = 4;
 
@@ -37,32 +41,42 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     roundcorner = height->dest() / 2;
   }
 
-  ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
-                      roundcorner);
+  shape->appendRect(*x + ctx.offset_x + margin, *y + ctx.offset_y,
+                           *width - margin * 2, *height, roundcorner, roundcorner);
 
-  ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
-  ctx.fontFace("Yahei");
-  ctx.fontSize(14);
+  ctx->push(shape);
+  
+
+  auto text = tvg::Text::gen();
 
   if (item.icon_bitmap.has_value()) {
-    auto paintY = floor(*y + (*height - icon_width) / 2);
-    if (!icon_img_bmp) {
-      icon_img_bmp = ui::LoadBitmapImage(ctx, item.icon_bitmap.value());
-    }
+    // auto paintY = floor(*y + (*height - icon_width) / 2);
+    // if (!icon_img_bmp) {
+    //   icon_img_bmp = ui::LoadBitmapImage(ctx, item.icon_bitmap.value());
+    // }
 
-    auto paint =
-        nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
-                        paintY + ctx.offset_y, icon_width, icon_width, 0,
-                        icon_img_bmp->id, *opacity / 255.f);
+    // auto paint =
+    //     nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
+    //                     paintY + ctx.offset_y, icon_width, icon_width, 0,
+    //                     icon_img_bmp->id, *opacity / 255.f);
 
-    ctx.beginPath();
-    ctx.rect(*x + icon_padding + margin, paintY, icon_width, icon_width);
-    ctx.fillPaint(paint);
-    ctx.fill();
+    // ctx.beginPath();
+    // ctx.rect(*x + icon_padding + margin, paintY, icon_width, icon_width);
+    // ctx.fillPaint(paint);
+    // ctx.fill();
   }
 
-  ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
-           item.name->c_str(), nullptr);
+  // ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
+  //          item.name->c_str(), nullptr);
+  text->font("Microsoft Yahei", 14);
+  text->text(item.name->c_str());
+  text->fill(255, 255, 255);
+  text->opacity(*opacity);
+
+  text->translate(*x + text_padding + icon_width + icon_padding * 2 + margin,
+                  *y + 16);
+
+  ctx->push(text);
 }
 void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   super::update(ctx);
@@ -84,15 +98,22 @@ float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
   }
-  return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
-         margin * 2 + icon_width + icon_padding * 2;
+  auto text = tvg::Text::gen();
+  text->font("Microsoft Yahei", 14);
+  text->text(item.name->c_str());
+  float bounds[4];
+  text->bounds(bounds + 0, bounds + 1, bounds + 2, bounds + 3);
+
+  return bounds[2] - bounds[0] + text_padding * 2 + margin * 2 + icon_width +
+         icon_padding * 2;
 }
 mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   gap = 5;
 
   if (menu_render::current.value()->style ==
       menu_render::menu_style::fluentui) {
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
+    auto acrylic =
+        std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
     acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
@@ -133,7 +154,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 
   ctx.mouse_clicked_on_hit(bg.get());
 }
-void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
+void mb_shell::menu_widget::render(ui::render_context &ctx) {
   std::lock_guard lock(data_lock);
   bg->render(ctx);
   super::render(ctx);
@@ -188,7 +209,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     ctx.rt.close();
   }
 }
-void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
+void mb_shell::mouse_menu_widget_main::render(ui::render_context &ctx) {
   ui::widget::render(ctx);
   menu_wid->render(ctx);
 }
@@ -235,14 +256,16 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     x = padding_vertical;
   } else if (x + menu_width * ctx.rt.dpi_scale >
              ctx.screen.width * ctx.rt.dpi_scale - padding_vertical) {
-    x = ctx.screen.width * ctx.rt.dpi_scale - menu_width * ctx.rt.dpi_scale - padding_vertical;
+    x = ctx.screen.width * ctx.rt.dpi_scale - menu_width * ctx.rt.dpi_scale -
+        padding_vertical;
   }
 
   if (y < padding_horizontal) {
     y = padding_horizontal;
   } else if (y + menu_height * ctx.rt.dpi_scale >
              ctx.screen.height * ctx.rt.dpi_scale - padding_horizontal) {
-    y = ctx.screen.height * ctx.rt.dpi_scale - menu_height * ctx.rt.dpi_scale - padding_horizontal;
+    y = ctx.screen.height * ctx.rt.dpi_scale - menu_height * ctx.rt.dpi_scale -
+        padding_horizontal;
   }
 
   std::println("Calibrated position: {} {} in screen {} {}", x, y,

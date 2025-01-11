@@ -8,14 +8,16 @@ add_rules("mode.debug", "mode.release")
 
 includes("blook.lua")
 includes("glfw.lua")
+includes("thorvg.lua")
 add_requires("blook", "glfw", "nanovg", "glad", "quickjs-ng")
+add_requires("thorvg", {configs = { loaders = {"svg", "png", "ttf"}, engines = {"gl"}}})
 set_runtimes("MT")
 add_rules("mode.releasedbg")
 add_rules("mode.minsizerel")
 
 target("ui")
     set_kind("static")
-    add_packages("glfw", "glad", "nanovg", {
+    add_packages("glfw", "glad", "nanovg", "thorvg", {
         public = true
     })
     add_syslinks("dwmapi")

@@ -14,9 +14,9 @@ struct rect_widget : public widget {
   sp_anim_float opacity = anim_float(0, 400);
   sp_anim_float radius = anim_float(0, 200);
 
-  NVGcolor bg_color = nvgRGBAf(0, 0, 0, 0);
+  animated_color bg_color{this};
 
-  void render(nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
 };
 
 struct acrylic_background_widget : public rect_widget {
@@ -34,7 +34,7 @@ struct acrylic_background_widget : public rect_widget {
 
   void update_color();
 
-  void render(nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
 
   void update(update_context &ctx) override;
 };

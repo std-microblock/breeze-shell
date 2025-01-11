@@ -1,10 +1,15 @@
 #pragma once
+#include <array>
 #include <cmath>
 #include <functional>
 #include <optional>
 #include <print>
 
+#include "thorvg.h"
+
+
 namespace ui {
+struct widget;
 enum class easing_type {
   mutation,
   linear,
@@ -53,4 +58,28 @@ struct animated_float {
 };
 
 using sp_anim_float = std::shared_ptr<animated_float>;
+
+struct animated_color {
+  sp_anim_float r = nullptr;
+  sp_anim_float g = nullptr;
+  sp_anim_float b = nullptr;
+  sp_anim_float a = nullptr;
+
+  animated_color() = delete;
+  animated_color(animated_color &&) = default;
+
+  animated_color(ui::widget *thiz, float r = 0, float g = 0, float b = 0,
+                 float a = 0);
+
+  std::array<float, 4> operator*() const;
+
+  inline void fill_shape(tvg::Shape* shape) {
+    shape->fill(r->var(), g->var(), b->var(), a->var());
+  }
+
+  inline void color_text(tvg::Text* text) {
+    text->opacity(a->var());
+    text->fill(r->var(), g->var(), b->var());
+  }
+};
 } // namespace ui

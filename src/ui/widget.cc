@@ -2,19 +2,13 @@
 #include "ui.h"
 #include <chrono>
 #include <thread>
-void ui::widget_parent::render(nanovg_context ctx) {
+void ui::widget_parent::render(ui::render_context& ctx) {
   widget::render(ctx);
-  float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
+  auto new_ctx = ctx.with_offset(*x, *y);
   for (auto &child : children) {
-    ctx.offset_x = *x + orig_offset_x;
-    ctx.offset_y = *y + orig_offset_y;
-    ctx.save();
-    child->render(ctx);
-    ctx.restore();
+     child->render(new_ctx);
   }
-
-  ctx.offset_x = orig_offset_x;
-  ctx.offset_y = orig_offset_y;
+  ctx->push(new_ctx.vg);
 }
 void ui::widget_parent::update(update_context &ctx) {
   widget::update(ctx);
@@ -113,4 +107,12 @@ bool ui::update_context::hovered_hit(widget *w) {
   } else {
     return false;
   }
+}
+ui::render_context ui::render_context::with_offset(float x, float y) {
+  render_context copy = *this;
+  copy.offset_x = x + offset_x;
+  copy.offset_y = y + offset_y;
+  copy.vg = tvg::Scene::gen();
+  copy.vg->translate(x, y);
+  return copy;
 }

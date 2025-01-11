@@ -7,20 +7,18 @@
 #include <utility>
 
 #include "GLFW/glfw3.h"
-#include "nanovg.h"
+// #include "nanovg.h"
 
+#include "thorvg.h"
 #include "widget.h"
 
 namespace ui {
 struct render_target {
   std::shared_ptr<widget_parent> root;
   GLFWwindow *window;
-
-  NVGcontext *nvg;
+  tvg::GlCanvas* canvas = nullptr;
   int width = 1280;
   int height = 720;
-  static std::atomic_int view_cnt;
-  int view_id = view_cnt++;
   float dpi_scale = 1;
   std::expected<bool, std::string> init();
   static std::expected<bool, std::string> init_global();
@@ -34,7 +32,7 @@ struct render_target {
   std::chrono::high_resolution_clock clock{};
   decltype(clock.now()) last_time = clock.now();
   bool mouse_down = false, right_mouse_down = false;
-  void* parent = nullptr;
+  void *parent = nullptr;
 
   render_target() = default;
   ~render_target();

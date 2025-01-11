@@ -1,6 +1,5 @@
 #pragma once
 #include "extra_widgets.h"
-#include "nanovg_wrapper.h"
 #include "shell.h"
 #include "ui.h"
 #include "widget.h"
@@ -19,10 +18,10 @@ struct menu_item_widget : public ui::widget {
   menu_item_widget(menu_item item);
   void reset_appear_animation(float delay);
 
-  std::optional<ui::NVGImage> icon_img_bmp{};
+  std::optional<tvg::Picture> icon_img_bmp{};
 
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
-  void render(ui::nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
   void update(ui::update_context &ctx) override;
   float measure_width(ui::update_context &ctx) override;
 };
@@ -47,7 +46,7 @@ struct menu_widget : public ui::widget_parent_flex {
   void reset_animation(bool reverse = false);
   void update(ui::update_context &ctx) override;
 
-  void render(ui::nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
 };
 
 struct mouse_menu_widget_main : public ui::widget {
@@ -59,7 +58,7 @@ struct mouse_menu_widget_main : public ui::widget {
 
   void update(ui::update_context &ctx);
 
-  void render(ui::nanovg_context ctx);
+  void render(ui::render_context& ctx);
 
   void calibrate_position(ui::update_context &ctx, bool animated = true);
   void calibrate_direction(ui::update_context &ctx);

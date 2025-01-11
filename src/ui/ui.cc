@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "thorvg.h"
 #include <dwmapi.h>
 #include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
@@ -10,12 +11,11 @@
 
 #include "widget.h"
 
-#include "nanovg.h"
-#define NANOVG_GL3_IMPLEMENTATION
-#include "nanovg_gl.h"
+// #include "nanovg.h"
+// #define NANOVG_GL3_IMPLEMENTATION
+// #include "nanovg_gl.h"
 
 namespace ui {
-std::atomic_int render_target::view_cnt = 0;
 void render_target::start_loop() {
   glfwMakeContextCurrent(window);
   while (!glfwWindowShouldClose(window)) {
@@ -31,29 +31,28 @@ std::expected<bool, std::string> render_target::init() {
   }
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_DECORATED, 0);
+  // glfwWindowHint(GLFW_DECORATED, 0);
   glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
   glfwWindowHint(GLFW_FLOATING, 1);
-  glfwWindowHint(GLFW_VISIBLE, 0);
+  // glfwWindowHint(GLFW_VISIBLE, 0);
   window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
-                   
+
   ShowWindow(h, SW_SHOWNOACTIVATE);
   // topmost & focused
   SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   // retrieve all mouse messages
   SetCapture(h);
-  
+
   SetWindowLongPtr(h, GWL_EXSTYLE,
                    GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                        WS_EX_NOACTIVATE);
-
 
   if (!window) {
     return std::unexpected("Failed to create window");
@@ -74,6 +73,7 @@ std::expected<bool, std::string> render_target::init() {
     auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
     rt->width = width;
     rt->height = height;
+    rt->reset_view();
     rt->render();
   });
 
@@ -86,7 +86,7 @@ std::expected<bool, std::string> render_target::init() {
 
   reset_view();
 
-  if (!nvg) {
+  if (!canvas) {
     return std::unexpected("Failed to create NanoVG context");
   }
 
@@ -94,8 +94,8 @@ std::expected<bool, std::string> render_target::init() {
 }
 
 render_target::~render_target() {
-  if (nvg) {
-    nvgDeleteGL3(nvg);
+  if (canvas) {
+    delete canvas;
   }
 
   glfwDestroyWindow(window);
@@ -109,6 +109,8 @@ std::expected<bool, std::string> render_target::init_global() {
   if (!glfwInit()) {
     return std::unexpected("Failed to initialize GLFW");
   }
+  tvg::Initializer::init(0);
+  tvg::Text::load("C:\\WINDOWS\\FONTS\\msyh.ttc");
   return true;
 }
 void render_target::render() {
@@ -116,7 +118,7 @@ void render_target::render() {
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
-  glClearColor(0, 0, 0, 0);
+  glClearColor(0, 0, 0, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   auto now = clock.now();
@@ -134,23 +136,13 @@ void render_target::render() {
     }
   }
 
-  if (fb_width != width || fb_height != height) {
-    width = fb_width;
-    height = fb_height;
-    reset_view();
-  }
-
-  nanovg_context vg{nvg};
-
-  vg.beginFrame(width, height, dpi_scale);
-  vg.scale(dpi_scale, dpi_scale);
-
   double mouse_x, mouse_y;
   glfwGetCursorPos(window, &mouse_x, &mouse_y);
   int window_x, window_y;
   glfwGetWindowPos(window, &window_x, &window_y);
 
-  auto monitor = MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
+  auto monitor =
+      MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof(MONITORINFOEX);
   GetMonitorInfo(monitor, &monitor_info);
@@ -163,29 +155,59 @@ void render_target::render() {
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .right_mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS,
-      .screen = {
-          .width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
-          .height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
-          .dpi_scale = dpi_scale,
-      },
-      .rt = *this,
-      .vg = vg,
+      .screen =
+          {
+              .width =
+                  monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+              .height =
+                  monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+              .dpi_scale = dpi_scale,
+          },
+      .rt = *this
   };
   ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
   ctx.right_mouse_clicked = !ctx.right_mouse_down && right_mouse_down;
   ctx.mouse_up = !ctx.mouse_down && mouse_down;
   mouse_down = ctx.mouse_down;
   right_mouse_down = ctx.right_mouse_down;
-
   root->update(ctx);
-  root->render(vg);
-  vg.endFrame();
+  render_context render_ctx{
+      .vg = tvg::Scene::gen(),
+      .offset_x = 0,
+      .offset_y = 0,
+  };
+  render_ctx.vg->scale(dpi_scale);
+  root->render(render_ctx);
+  canvas->push(render_ctx.vg);
+
+  if (canvas->draw() == tvg::Result::Success) {
+    canvas->sync();
+  } else {
+    std::println("Failed to draw");
+  }
+
   glfwSwapBuffers(window);
+  canvas->remove();
 }
 void render_target::reset_view() {
-  nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
+  if (!canvas) {
+    canvas = tvg::GlCanvas::gen();
+    if (!canvas) {
+      std::println("Failed to create canvas");
+      return;
+    }
+
+    if (canvas->target(glfwGetCurrentContext(), 0, width, height,
+                       tvg::ColorSpace::ABGR8888S) != tvg::Result::Success) {
+      std::println("Failed to set target");
+    }
+  }
+
+  if (canvas->viewport(0, 0, width, height) != tvg::Result::Success) {
+    std::println("Failed to set viewport");
+  }
+
   glfwGetWindowContentScale(window, &this->dpi_scale, nullptr);
-  // std::println("DPI scale: {}", dpi_scale);
   glfwSetWindowSize(window, width, height);
 }
 void render_target::set_position(int x, int y) {

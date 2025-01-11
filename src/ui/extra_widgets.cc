@@ -32,7 +32,7 @@ void acrylic_background_widget::update(update_context &ctx) {
 
   dpi_scale = ctx.rt.dpi_scale;
 }
-void acrylic_background_widget::render(nanovg_context ctx) {
+void acrylic_background_widget::render(ui::render_context& ctx) {
   rect_widget::render(ctx);
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
@@ -134,9 +134,14 @@ void acrylic_background_widget::update_color() {
                                       sizeof(accent)};
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
 }
-void rect_widget::render(nanovg_context ctx) {
-  ctx.fillColor(bg_color);
-  ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
+void rect_widget::render(ui::render_context& ctx) {
+  auto shape = tvg::Shape::gen();
+
+  shape->appendRect(*x + ctx.offset_x, *y + ctx.offset_y, *width, *height,
+                    *radius, *radius);
+
+  auto color = *bg_color;
+  shape->fill(color[0], color[1], color[2], color[3]);
 }
 rect_widget::rect_widget() : widget() {}
 rect_widget::~rect_widget() {}

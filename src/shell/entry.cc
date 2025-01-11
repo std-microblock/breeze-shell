@@ -98,7 +98,7 @@ menu_render show_menu(int x, int y, menu menu) {
     }
   };
 
-  nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+  // nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
   std::println("Current menu: {}", menu_render::current.has_value());
   return render;
 }

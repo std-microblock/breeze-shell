@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nanovg_wrapper.h"
 #include <functional>
 #include <optional>
 #include <string>

@@ -10,39 +10,46 @@
 #include <thread>
 #include <vector>
 
-struct test_widget : public ui::acrylic_background_widget {
-  using super = ui::acrylic_background_widget;
+struct test_widget : public ui::widget {
+  using super = ui::widget;
   test_widget() : super() {
     x->animate_to(100);
     y->animate_to(100);
     width->animate_to(100);
     height->animate_to(100);
 
-    acrylic_bg_color = nvgRGBAf(0, 0.5, 0.5, 0.5);
-    update_color();
-    radius->animate_to(10);
+    // acrylic_bg_color = nvgRGBAf(0, 0.5, 0.5, 0.5);
+    // update_color();
+    // radius->animate_to(10);
   }
 
-  ui::sp_anim_float color_transition = anim_float(256, 3000);
-  void render(ui::nanovg_context ctx) override {
+  ui::animated_color color_transition{this, 255, 0, 0, 255};
+  void render(ui::render_context &ctx) override {
     super::render(ctx);
-    ctx.fontFace("Yahei");
-    ctx.fontSize(24);
-    ctx.text(*x + 10, *y + 30, "Button", nullptr);
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(*x, *y, *width, *height, 0, 0);
+    color_transition.fill_shape(shape);
+    ctx->push(shape);
+    auto text = tvg::Text::gen();
+    text->font("Arial", 50);
+    text->text("Hello, world!");
+    text->fill(255, 0, 0);
+    text->translate(10, 10);
+    ctx->push(text);
   }
 
   void update(ui::update_context &ctx) override {
     super::update(ctx);
     if (ctx.mouse_down_on(this)) {
-      color_transition->animate_to(255);
+      color_transition.r->animate_to(255);
       width->animate_to(200);
       height->animate_to(200);
     } else if (ctx.hovered(this)) {
-      color_transition->animate_to(0);
+      color_transition.r->animate_to(128);
       width->animate_to(150);
       height->animate_to(150);
     } else {
-      color_transition->animate_to(128);
+      color_transition.r->animate_to(0);
       width->animate_to(100);
       height->animate_to(100);
     }
@@ -107,22 +114,23 @@ struct menu_item_widget : public ui::widget {
   }
 
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
-  void render(ui::nanovg_context ctx) override {
+  void render(ui::render_context &ctx) override {
     super::render(ctx);
-    if (item.type == menu_item::type::spacer) {
-      ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
-      ctx.fillRect(*x, *y, *width, *height);
-      return;
-    }
+    // if (item.type == menu_item::type::spacer) {
+    //   ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
+    //   ctx.fillRect(*x, *y, *width, *height);
+    //   return;
+    // }
 
-    ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
-    ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
+    // ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
+    // ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
 
-    ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
-    ctx.fontFace("Yahei");
-    ctx.fontSize(14);
-    ctx.text(floor(*x + text_padding), floor(*y + 2 + 14), item.name->c_str(),
-             nullptr);
+    // ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
+    // ctx.fontFace("Yahei");
+    // ctx.fontSize(14);
+    // ctx.text(floor(*x + text_padding), floor(*y + 2 + 14),
+    // item.name->c_str(),
+    //          nullptr);
   }
 
   void update(ui::update_context &ctx) override {
@@ -140,8 +148,10 @@ struct menu_item_widget : public ui::widget {
     if (item.type == menu_item::type::spacer) {
       return 1;
     }
-    return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
-           margin * 2;
+
+    auto text = tvg::Text::gen();
+    text->font("Microsoft Yahei", 14);
+    text->text(item.name->c_str());
   }
 };
 
@@ -191,7 +201,7 @@ struct menu_widget : public ui::widget_parent_flex {
     }
   }
 
-  void render(ui::nanovg_context ctx) override {
+  void render(ui::render_context &ctx) override {
     bg->render(ctx);
     super::render(ctx);
   }
@@ -211,10 +221,15 @@ int main() {
     return 1;
   }
 
-  rt.root->emplace_child<menu_widget>(items, 20, 20);
-
-  nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
+  rt.root->emplace_child<test_widget>();
+  if (auto res = tvg::Text::load("C:\\Windows\\Fonts\\msyh.ttc");
+      res != tvg::Result::Success) {
+    std::println("Failed to load font1:  {}", (int)res);
+  }
+  if (auto res = tvg::Text::load("C:\\Windows\\Fonts\\arial.ttf");
+      res != tvg::Result::Success) {
+    std::println("Failed to load font2:  {}", (int)res);
+  }
   rt.start_loop();
   return 0;
 }

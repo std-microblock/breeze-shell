@@ -1,6 +1,6 @@
 #pragma once
 #include "animator.h"
-#include "nanovg_wrapper.h"
+#include "thorvg.h"
 
 #include <functional>
 #include <memory>
@@ -39,7 +39,7 @@ struct update_context {
 
   float offset_x = 0, offset_y = 0;
   render_target &rt;
-  nanovg_context vg;
+  tvg::GlCanvas* vg;
 
   update_context with_offset(float x, float y) {
     auto copy = *this;
@@ -47,6 +47,14 @@ struct update_context {
     copy.offset_y = y;
     return copy;
   }
+};
+
+struct render_context {
+  tvg::Scene* vg;
+  float offset_x, offset_y;
+
+  inline tvg::Scene *operator->() { return vg; }
+  render_context with_offset(float x, float y);
 };
 
 /*
@@ -65,7 +73,7 @@ struct widget : std::enable_shared_from_this<widget> {
 
   sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
                 height = anim_float();
-  virtual void render(nanovg_context ctx) {}
+  virtual void render(ui::render_context& ctx) {}
   virtual void update(update_context &ctx);
   virtual ~widget() = default;
   virtual float measure_height(update_context &ctx);
@@ -83,7 +91,7 @@ struct widget : std::enable_shared_from_this<widget> {
 // While all other widgets are like `position: absolute`
 struct widget_parent : public widget {
   std::vector<std::shared_ptr<widget>> children;
-  void render(nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
   void update(update_context &ctx) override;
   void add_child(std::shared_ptr<widget> child);
   template <typename T, typename... Args>
@@ -146,7 +154,7 @@ struct widget_padding : public widget {
   std::shared_ptr<widget> child;
   void update(update_context &ctx) override;
 
-  void render(nanovg_context ctx) override;
+  void render(ui::render_context& ctx) override;
 };
 
 } // namespace ui

@@ -1,4 +1,5 @@
 #include "animator.h"
+#include "ui.h"
 #include <numbers>
 #include <print>
 void ui::animated_float::update(float delta_t) {
@@ -88,3 +89,10 @@ void ui::animated_float::set_delay(float delay) {
   this->delay = delay;
   delay_timer = 0.f;
 }
+std::array<float, 4> ui::animated_color::operator*() const {
+  return {r->var(), g->var(), b->var(), a->var()};
+}
+ui::animated_color::animated_color(ui::widget *thiz, float r, float g, float b,
+                                   float a)
+    : r(thiz->anim_float(r)), g(thiz->anim_float(g)), b(thiz->anim_float(b)),
+      a(thiz->anim_float(a)) {}
