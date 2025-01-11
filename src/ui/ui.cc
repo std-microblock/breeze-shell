@@ -42,16 +42,18 @@ std::expected<bool, std::string> render_target::init() {
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
+                   
   ShowWindow(h, SW_SHOWNOACTIVATE);
   // topmost & focused
   SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   // retrieve all mouse messages
   SetCapture(h);
-
+  
   SetWindowLongPtr(h, GWL_EXSTYLE,
                    GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                        WS_EX_NOACTIVATE);
+
 
   if (!window) {
     return std::unexpected("Failed to create window");

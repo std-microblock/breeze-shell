@@ -58,6 +58,8 @@ menu_render show_menu(int x, int y, menu menu) {
       menu_render(std::make_unique<ui::render_target>(), std::nullopt);
   auto &rt = render.rt;
 
+  rt->parent = menu.parent_window;
+
   if (auto res = rt->init(); !res) {
     MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                 MB_ICONERROR);
@@ -73,11 +75,11 @@ menu_render show_menu(int x, int y, menu menu) {
     listener->operator()({menu_info_basic{.from = "menu", .menu = menu_wid}});
   }
 
-  // rt.on_focus_changed = [](bool focused) {
-  //   if (!focused) {
-  //     glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
-  //   }
-  // };
+  rt->on_focus_changed = [](bool focused) {
+    if (!focused) {
+      glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+    }
+  };
 
   nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
   std::println("Current menu: {}", menu_render::current.has_value());

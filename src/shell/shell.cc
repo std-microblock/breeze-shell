@@ -47,12 +47,13 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
                  MIIM_STATE | MIIM_BITMAP;
     info.dwTypeData = buffer;
     info.cch = 256;
-    if(!GetMenuItemInfoW(hMenu, i, TRUE, &info)) {
-      std::cout << "Failed to get menu item info: " << GetLastError() << std::endl;
+    if (!GetMenuItemInfoW(hMenu, i, TRUE, &info)) {
+      std::cout << "Failed to get menu item info: " << GetLastError()
+                << std::endl;
       continue;
     }
     if (info.hSubMenu) {
-    //  item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
+      //  item.submenu = construct_with_hmenu(info.hSubMenu, hWnd);
     }
 
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||

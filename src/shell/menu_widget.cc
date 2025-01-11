@@ -132,12 +132,12 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
     acrylic->update_color();
     bg = acrylic;
   } else {
-    bg = std::make_shared<ui::rect_widget>();
-    bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
-    // auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
-    // acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
-    // acrylic->update_color();
-    // bg = acrylic;
+    // bg = std::make_shared<ui::rect_widget>();
+    // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
+    auto acrylic = std::make_shared<ui::acrylic_background_widget>(false);
+    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    acrylic->update_color();
+    bg = acrylic;
   }
   if (menu_render::current.value()->style ==
       menu_render::menu_style::materialyou) {
@@ -197,8 +197,10 @@ void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
-  if (ctx.clicked_widgets.size() == 0 && ((GetAsyncKeyState(VK_LBUTTON) & 0x8000) || 
-    (GetAsyncKeyState(VK_RBUTTON) & 0x8000))) {
+  auto mask = /*get if pressed after first call*/ 0x8000;
+  if (ctx.clicked_widgets.size() == 0 &&
+      ((GetAsyncKeyState(VK_LBUTTON) & mask) ||
+       (GetAsyncKeyState(VK_RBUTTON) & mask))) {
     ctx.rt.close();
   }
 
