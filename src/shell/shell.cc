@@ -63,7 +63,6 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
       item.name = wstring_to_utf8(buffer);
     }
 
-    std::println("bitmap: {}", (void *)info.hbmpItem);
     if (info.fType & MFT_BITMAP) {
       item.icon_bitmap = info.hbmpItem;
     } else if (info.hbmpChecked || info.hbmpUnchecked) {

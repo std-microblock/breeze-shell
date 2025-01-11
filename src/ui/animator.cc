@@ -12,6 +12,12 @@ void ui::animated_float::update(float delta_t) {
     return;
   }
 
+  if (delay_timer < delay) {
+    delay_timer += delta_t;
+    _updated = false;
+    return;
+  }
+
   progress += delta_t / duration;
 
   if (progress < 0.f) {
@@ -24,6 +30,9 @@ void ui::animated_float::update(float delta_t) {
     if (value != destination) {
       value = destination;
       _updated = true;
+      if (after_animate) {
+        after_animate.value()(destination);
+      }
     } else {
       _updated = false;
     }
@@ -51,6 +60,7 @@ void ui::animated_float::animate_to(float destination) {
   this->from = value;
   this->destination = destination;
   progress = 0.f;
+  delay_timer = 0.f;
 
   if (before_animate) {
     before_animate.value()(destination);
@@ -63,6 +73,7 @@ void ui::animated_float::reset_to(float destination) {
   this->from = destination;
   this->destination = destination;
   progress = 1.f;
+  delay_timer = 0.f;
   _updated = true;
 }
 float ui::animated_float::dest() const { return destination; }
@@ -74,5 +85,6 @@ void ui::animated_float::set_duration(float duration) {
 }
 bool ui::animated_float::updated() const { return _updated; }
 void ui::animated_float::set_delay(float delay) {
-  progress -= delay / duration;
+  this->delay = delay;
+  delay_timer = 0.f;
 }

@@ -24,6 +24,7 @@ struct animated_float {
       : duration(duration), destination(destination), easing(easing) {}
 
   std::optional<std::function<void(float)>> before_animate = {};
+  std::optional<std::function<void(float)>> after_animate = {};
 
   operator float() const { return var(); }
   float operator*() const { return var(); }
@@ -46,6 +47,7 @@ struct animated_float {
   float from = 0.f;
   float destination = value;
   float progress = 0.f;
+  float delay = 0.f, delay_timer = 0.f;
   bool _updated = true;
   easing_type easing = easing_type::ease_in_out;
 };

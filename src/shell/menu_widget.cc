@@ -45,24 +45,24 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   ctx.fontSize(14);
 
   if (item.icon_bitmap.has_value()) {
+    auto paintY = floor(*y + (*height - icon_width) / 2);
     if (!icon_img_bmp) {
       icon_img_bmp = ui::LoadBitmapImage(ctx, item.icon_bitmap.value());
     }
 
-    auto imageY = *y + (*height - icon_width) / 2;
     auto paint =
         nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
-                        imageY + ctx.offset_y, icon_width, icon_width, 0,
-                        icon_img_bmp->id, 1.f);
+                        paintY + ctx.offset_y, icon_width, icon_width, 0,
+                        icon_img_bmp->id, *opacity / 255.f);
 
     ctx.beginPath();
-    ctx.rect(*x + icon_padding + margin, imageY, icon_width, icon_width);
+    ctx.rect(*x + icon_padding + margin, paintY, icon_width, icon_width);
     ctx.fillPaint(paint);
     ctx.fill();
   }
 
-  ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2),
-           floor(*y + 2 + 14), item.name->c_str(), nullptr);
+  ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
+           item.name->c_str(), nullptr);
 }
 void mb_shell::menu_item_widget::update(ui::UpdateContext &ctx) {
   super::update(ctx);
@@ -139,10 +139,10 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
 }
 void mb_shell::menu_item_widget::set_index_for_animation(int index) {
-  // this->y->before_animate = [this, index](float dest) {
-  //   this->y->from = std::max(0.f, dest - 40 - index * 10);
-  // };
-  auto delay = index * 10.f; // std::min(index * 10.f, 100.f);
+  this->opacity->after_animate = [this](float dest) {
+    this->opacity->set_delay(0);
+  };
+  auto delay = index * 20.f; // std::min(index * 10.f, 100.f);
   // this->y->set_delay(delay);
   opacity->set_delay(delay);
   this->y->set_easing(ui::easing_type::mutation);
