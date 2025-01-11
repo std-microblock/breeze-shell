@@ -65,9 +65,9 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual float measure_height(UpdateContext &ctx);
   virtual float measure_width(UpdateContext &ctx);
 
-  template <typename T> inline auto downcast() { 
+  template <typename T> inline auto downcast() {
     return std::dynamic_pointer_cast<T>(this->shared_from_this());
-   }
+  }
 };
 
 // A widget that renders its children

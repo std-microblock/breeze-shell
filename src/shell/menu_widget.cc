@@ -10,12 +10,11 @@
 
 mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
   opacity->reset_to(0);
-  opacity->animate_to(255);
 
   if (item.type == menu_item::type::spacer) {
-    height->animate_to(1);
+    height->reset_to(1);
   } else {
-    height->animate_to(25);
+    height->reset_to(25);
   }
   this->item = item;
 }
@@ -118,7 +117,6 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
     auto mi = std::make_shared<menu_item_widget>(item);
-    mi->set_index_for_animation(i);
     children.push_back(mi);
   }
 }
@@ -138,13 +136,14 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   bg->render(ctx);
   super::render(ctx);
 }
-void mb_shell::menu_item_widget::set_index_for_animation(int index) {
+void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
     this->opacity->set_delay(0);
   };
-  auto delay = index * 20.f; // std::min(index * 10.f, 100.f);
-  // this->y->set_delay(delay);
   opacity->set_delay(delay);
+  opacity->set_duration(200);
+  opacity->reset_to(0);
+  opacity->animate_to(255);
   this->y->set_easing(ui::easing_type::mutation);
   this->x->set_delay(delay);
   this->x->set_duration(200);
@@ -152,15 +151,28 @@ void mb_shell::menu_item_widget::set_index_for_animation(int index) {
   this->x->animate_to(0);
 }
 mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
-                                                         float x, float y) {
-  children.push_back(std::make_shared<menu_widget>(menu_data));
-  anchor_x = x;
-  anchor_y = y;
+                                                         float x, float y)
+    : widget(), anchor_x(x), anchor_y(y) {
+  menu_wid = std::make_shared<menu_widget>(menu_data);
 }
 void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
-  ui::widget_parent::update(ctx);
+  ui::widget::update(ctx);
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
+
+  if (!direction_calibrated) {
+    calibrate_direction(ctx);
+    direction_calibrated = true;
+    calibrate_position(ctx, false);
+    position_calibrated = true;
+  }
+
+  if (!position_calibrated) {
+    calibrate_position(ctx);
+    position_calibrated = true;
+  }
+
+  menu_wid->update(ctx);
 
   auto mask = /*get if pressed after first call*/ 0x8000;
   if (ctx.clicked_widgets.size() == 0 &&
@@ -175,5 +187,120 @@ void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
   }
 }
 void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
-  ui::widget_parent::render(ctx);
+  ui::widget::render(ctx);
+  menu_wid->render(ctx);
+}
+void mb_shell::menu_widget::reset_animation(bool reverse) {
+  auto children = get_children<menu_item_widget>();
+
+  // the show duration for the menu should be within 200ms
+  float delay = std::min(200.f / children.size(), 50.f);
+
+  for (size_t i = 0; i < children.size(); i++) {
+    auto &child = children[i];
+    child->reset_appear_animation(delay);
+  }
+}
+void mb_shell::mouse_menu_widget_main::calibrate_position(
+    ui::UpdateContext &ctx, bool animated) {
+  auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
+                                  MONITOR_DEFAULTTONEAREST);
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof(MONITORINFOEX);
+  GetMonitorInfo(monitor, &monitor_info);
+
+  menu_wid->update(ctx);
+  auto menu_width = menu_wid->measure_width(ctx);
+  auto menu_height = menu_wid->measure_height(ctx);
+
+  int x, y;
+
+  // avoid the menu to be out of the screen
+  // if the menu is out of the screen, move it to the edge
+  if (direction == popup_direction::top_left) {
+    x = anchor_x - menu_width * ctx.rt.dpi_scale;
+    y = anchor_y - menu_height * ctx.rt.dpi_scale;
+  } else if (direction == popup_direction::top_right) {
+    x = anchor_x;
+    y = anchor_y - menu_height * ctx.rt.dpi_scale;
+  } else if (direction == popup_direction::bottom_left) {
+    x = anchor_x - menu_width * ctx.rt.dpi_scale;
+    y = anchor_y;
+  } else {
+    x = anchor_x;
+    y = anchor_y;
+  }
+
+  if (x < monitor_info.rcMonitor.left) {
+    x = monitor_info.rcMonitor.left;
+  } else if (x + menu_width * ctx.rt.dpi_scale > monitor_info.rcMonitor.right) {
+    x = monitor_info.rcMonitor.right - menu_width * ctx.rt.dpi_scale;
+  }
+
+  if (y < monitor_info.rcMonitor.top) {
+    y = monitor_info.rcMonitor.top;
+  } else if (y + menu_height * ctx.rt.dpi_scale >
+             monitor_info.rcMonitor.bottom) {
+    y = monitor_info.rcMonitor.bottom - menu_height * ctx.rt.dpi_scale;
+  }
+
+  std::println("Calibrated position: {} {}", x, y);
+
+  if (animated) {
+    this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
+    this->menu_wid->y->animate_to(y / ctx.rt.dpi_scale);
+  } else {
+    this->menu_wid->x->reset_to(x / ctx.rt.dpi_scale);
+    this->menu_wid->y->reset_to(y / ctx.rt.dpi_scale);
+  }
+}
+void mb_shell::mouse_menu_widget_main::calibrate_direction(
+    ui::UpdateContext &ctx) {
+  auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
+                                  MONITOR_DEFAULTTONEAREST);
+  MONITORINFOEX monitor_info;
+  monitor_info.cbSize = sizeof(MONITORINFOEX);
+  GetMonitorInfo(monitor, &monitor_info);
+
+  menu_wid->update(ctx);
+  auto menu_width = menu_wid->measure_width(ctx);
+  auto menu_height = menu_wid->measure_height(ctx);
+
+  direction = popup_direction::bottom_right;
+
+  bool top =
+      (/*the space is not enough*/ anchor_y + menu_height * ctx.rt.dpi_scale >
+       monitor_info.rcMonitor.bottom) &&
+      (
+          /*and reversing can solve the problem*/
+          anchor_y - menu_height * ctx.rt.dpi_scale >
+          monitor_info.rcMonitor.top);
+
+  bool left =
+      (/*the space is not enough*/ anchor_x + menu_width * ctx.rt.dpi_scale >
+       monitor_info.rcMonitor.right) &&
+      (
+          /*and reversing can solve the problem*/
+          anchor_x - menu_width * ctx.rt.dpi_scale >
+          monitor_info.rcMonitor.left);
+
+  if (top && left) {
+    direction = popup_direction::top_left;
+  } else if (top) {
+    direction = popup_direction::top_right;
+  } else if (left) {
+    direction = popup_direction::bottom_left;
+  } else {
+    direction = popup_direction::bottom_right;
+  }
+
+  menu_wid->reset_animation(direction == popup_direction::top_left ||
+                            direction == popup_direction::top_right);
+
+  std::println("Calibrated direction: {}",
+               direction == popup_direction::top_left       ? "top_left"
+               : direction == popup_direction::top_right    ? "top_right"
+               : direction == popup_direction::bottom_left  ? "bottom_left"
+               : direction == popup_direction::bottom_right ? "bottom_right"
+                                                            : "unknown");
 }

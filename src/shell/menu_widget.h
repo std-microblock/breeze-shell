@@ -17,7 +17,7 @@ struct menu_item_widget : public ui::widget {
   float icon_width = 16;
   float icon_padding = 10;
   menu_item_widget(menu_item item);
-  void set_index_for_animation(int index);
+  void reset_appear_animation(float delay);
 
   std::optional<ui::NVGImage> icon_img_bmp{};
 
@@ -25,6 +25,14 @@ struct menu_item_widget : public ui::widget {
   void render(ui::nanovg_context ctx) override;
   void update(ui::UpdateContext &ctx) override;
   float measure_width(ui::UpdateContext &ctx) override;
+};
+
+enum class popup_direction {
+  // 第一象限 ~ 第四象限
+  top_left,
+  top_right,
+  bottom_left,
+  bottom_right,
 };
 
 struct menu_widget : public ui::widget_parent_flex {
@@ -36,18 +44,25 @@ struct menu_widget : public ui::widget_parent_flex {
 
   std::mutex data_lock;
 
+  void reset_animation(bool reverse = false);
   void update(ui::UpdateContext &ctx) override;
 
   void render(ui::nanovg_context ctx) override;
 };
 
-struct mouse_menu_widget_main : public ui::widget_parent {
+struct mouse_menu_widget_main : public ui::widget {
   float anchor_x = 0, anchor_y = 0;
   mouse_menu_widget_main(menu menu_data, float x, float y);
+  bool position_calibrated = false, direction_calibrated = false;
+  popup_direction direction;
+  std::shared_ptr<menu_widget> menu_wid;
 
   void update(ui::UpdateContext &ctx);
 
   void render(ui::nanovg_context ctx);
+
+  void calibrate_position(ui::UpdateContext &ctx, bool animated = true);
+  void calibrate_direction(ui::UpdateContext &ctx);
 };
 
 } // namespace mb_shell
