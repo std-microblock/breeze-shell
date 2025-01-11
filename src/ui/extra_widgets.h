@@ -36,6 +36,6 @@ struct acrylic_background_widget : public rect_widget {
 
   void render(nanovg_context ctx) override;
 
-  void update(UpdateContext &ctx) override;
+  void update(update_context &ctx) override;
 };
 } // namespace ui

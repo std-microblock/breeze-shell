@@ -31,7 +31,7 @@ struct test_widget : public ui::acrylic_background_widget {
     ctx.text(*x + 10, *y + 30, "Button", nullptr);
   }
 
-  void update(ui::UpdateContext &ctx) override {
+  void update(ui::update_context &ctx) override {
     super::update(ctx);
     if (ctx.mouse_down_on(this)) {
       color_transition->animate_to(255);
@@ -125,7 +125,7 @@ struct menu_item_widget : public ui::widget {
              nullptr);
   }
 
-  void update(ui::UpdateContext &ctx) override {
+  void update(ui::update_context &ctx) override {
     super::update(ctx);
     if (ctx.mouse_down_on(this)) {
       bg_opacity->animate_to(30);
@@ -136,7 +136,7 @@ struct menu_item_widget : public ui::widget {
     }
   }
 
-  float measure_width(ui::UpdateContext &ctx) override {
+  float measure_width(ui::update_context &ctx) override {
     if (item.type == menu_item::type::spacer) {
       return 1;
     }
@@ -170,7 +170,7 @@ struct menu_widget : public ui::widget_parent_flex {
     }
   }
 
-  void update(ui::UpdateContext &ctx) override {
+  void update(ui::update_context &ctx) override {
     super::update(ctx);
 
     x->reset_to(anchor_x / ctx.rt.dpi_scale);

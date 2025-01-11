@@ -9,7 +9,7 @@
 namespace ui {
 struct render_target;
 struct widget;
-struct UpdateContext {
+struct update_context {
   float delta_t;
   // mouse position in window coordinates
   double mouse_x, mouse_y;
@@ -35,7 +35,7 @@ struct UpdateContext {
   render_target &rt;
   nanovg_context vg;
 
-  UpdateContext with_offset(float x, float y) {
+  update_context with_offset(float x, float y) {
     auto copy = *this;
     copy.offset_x = x;
     copy.offset_y = y;
@@ -60,10 +60,10 @@ struct widget : std::enable_shared_from_this<widget> {
   sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
                 height = anim_float();
   virtual void render(nanovg_context ctx) {}
-  virtual void update(UpdateContext &ctx);
+  virtual void update(update_context &ctx);
   virtual ~widget() = default;
-  virtual float measure_height(UpdateContext &ctx);
-  virtual float measure_width(UpdateContext &ctx);
+  virtual float measure_height(update_context &ctx);
+  virtual float measure_width(update_context &ctx);
 
   template <typename T> inline auto downcast() {
     return std::dynamic_pointer_cast<T>(this->shared_from_this());
@@ -78,7 +78,7 @@ struct widget : std::enable_shared_from_this<widget> {
 struct widget_parent : public widget {
   std::vector<std::shared_ptr<widget>> children;
   void render(nanovg_context ctx) override;
-  void update(UpdateContext &ctx) override;
+  void update(update_context &ctx) override;
   void add_child(std::shared_ptr<widget> child);
   template <typename T, typename... Args>
   inline void emplace_child(Args &&...args) {
@@ -111,7 +111,7 @@ struct widget_parent_flex : public widget_parent {
   bool horizontal = false;
   bool auto_size = true;
 
-  void update(UpdateContext &ctx) override;
+  void update(update_context &ctx) override;
 };
 
 // A widget with padding and margin
@@ -138,7 +138,7 @@ struct widget_padding : public widget {
   }
 
   std::shared_ptr<widget> child;
-  void update(UpdateContext &ctx) override;
+  void update(update_context &ctx) override;
 
   void render(nanovg_context ctx) override;
 };

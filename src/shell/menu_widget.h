@@ -23,8 +23,8 @@ struct menu_item_widget : public ui::widget {
 
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
   void render(ui::nanovg_context ctx) override;
-  void update(ui::UpdateContext &ctx) override;
-  float measure_width(ui::UpdateContext &ctx) override;
+  void update(ui::update_context &ctx) override;
+  float measure_width(ui::update_context &ctx) override;
 };
 
 enum class popup_direction {
@@ -45,7 +45,7 @@ struct menu_widget : public ui::widget_parent_flex {
   std::mutex data_lock;
 
   void reset_animation(bool reverse = false);
-  void update(ui::UpdateContext &ctx) override;
+  void update(ui::update_context &ctx) override;
 
   void render(ui::nanovg_context ctx) override;
 };
@@ -57,12 +57,12 @@ struct mouse_menu_widget_main : public ui::widget {
   popup_direction direction;
   std::shared_ptr<menu_widget> menu_wid;
 
-  void update(ui::UpdateContext &ctx);
+  void update(ui::update_context &ctx);
 
   void render(ui::nanovg_context ctx);
 
-  void calibrate_position(ui::UpdateContext &ctx, bool animated = true);
-  void calibrate_direction(ui::UpdateContext &ctx);
+  void calibrate_position(ui::update_context &ctx, bool animated = true);
+  void calibrate_direction(ui::update_context &ctx);
 };
 
 } // namespace mb_shell

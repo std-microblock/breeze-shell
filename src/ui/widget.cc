@@ -1,13 +1,12 @@
 #include "widget.h"
-#include "ui.h"
 #include <chrono>
 #include <thread>
 void ui::widget_parent::render(nanovg_context ctx) {
   widget::render(ctx);
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
-    ctx.offset_x = *x + orig_offset_x;
-    ctx.offset_y = *y + orig_offset_y;
+    ctx.offset_x = *x;
+    ctx.offset_y = *y;
     ctx.save();
     child->render(ctx);
     ctx.restore();
@@ -16,37 +15,37 @@ void ui::widget_parent::render(nanovg_context ctx) {
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::update(UpdateContext &ctx) {
+void ui::widget_parent::update(update_context &ctx) {
   widget::update(ctx);
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
 
   for (auto &child : children) {
-    ctx.offset_x = *x + orig_offset_x;
-    ctx.offset_y = *y + orig_offset_y;
+    ctx.offset_x = *x;
+    ctx.offset_y = *y;
     child->update(ctx);
   }
 
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::add_child(std::shared_ptr<widget> child) {
+void ui::widget_parent::add_child(std::unique_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
-void ui::widget::update(UpdateContext &ctx) {
+void ui::widget::update(update_context &ctx) {
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
   }
 }
-bool ui::UpdateContext::hovered(widget *w) const {
+bool ui::update_context::hovered(widget *w) const {
   return mouse_x >= (w->x->dest() + offset_x) &&
          mouse_x <= (w->x->dest() + w->width->dest() + offset_x) &&
          mouse_y >= (w->y->dest() + offset_y) &&
          mouse_y <= (w->y->dest() + w->height->dest() + offset_y);
 }
-float ui::widget::measure_height(UpdateContext &ctx) { return height->dest(); }
-float ui::widget::measure_width(UpdateContext &ctx) { return width->dest(); }
-void ui::widget_parent_flex::update(UpdateContext &ctx) {
+float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
+float ui::widget::measure_width(update_context &ctx) { return width->dest(); }
+void ui::widget_parent_flex::update(update_context &ctx) {
   widget_parent::update(ctx);
   float x = 0, y = 0;
   float target_width = 0, target_height = 0;
@@ -87,30 +86,18 @@ void ui::widget_parent_flex::update(UpdateContext &ctx) {
     }
   }
 }
-void ui::UpdateContext::set_hit_hovered(widget *w) {
-  hovered_widgets.push_back(w->shared_from_this());
-}
-bool ui::UpdateContext::mouse_clicked_on(widget *w) const {
-  return mouse_clicked && hovered(w);
-}
-bool ui::UpdateContext::mouse_down_on(widget *w) const {
-  return mouse_down && hovered(w);
-}
-void ui::UpdateContext::set_hit_clicked(widget *w) {
-  clicked_widgets.push_back(w->shared_from_this());
-}
-bool ui::UpdateContext::mouse_clicked_on_hit(widget *w) {
-  if (mouse_clicked_on(w)) {
-    set_hit_clicked(w);
-    return true;
+void ui::widget_padding::update(update_context &ctx) {
+  if (child) {
+    child->update(ctx);
   }
-  return false;
+
+  width->animate_to(child->width->dest() + padding_left + padding_right);
+  height->animate_to(child->height->dest() + padding_top + padding_bottom);
+  child->x->animate_to(padding_left);
+  child->y->animate_to(padding_top);
 }
-bool ui::UpdateContext::hovered_hit(widget *w) {
-  if (hovered(w)) {
-    set_hit_hovered(w);
-    return true;
-  } else {
-    return false;
+void ui::widget_padding::render(nanovg_context ctx) {
+  if (child) {
+    child->render(ctx);
   }
 }

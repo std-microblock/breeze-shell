@@ -27,7 +27,7 @@ static auto pSetWindowCompositionAttribute =
         GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
 
 namespace ui {
-void acrylic_background_widget::update(UpdateContext &ctx) {
+void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
 
   dpi_scale = ctx.rt.dpi_scale;

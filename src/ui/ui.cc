@@ -150,7 +150,7 @@ void render_target::render() {
   int window_x, window_y;
   glfwGetWindowPos(window, &window_x, &window_y);
 
-  UpdateContext ctx{
+  update_context ctx{
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
       .mouse_y = mouse_y / dpi_scale,

@@ -64,7 +64,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
            item.name->c_str(), nullptr);
 }
-void mb_shell::menu_item_widget::update(ui::UpdateContext &ctx) {
+void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   super::update(ctx);
   if (ctx.mouse_down_on(this)) {
     bg_opacity->animate_to(40);
@@ -80,7 +80,7 @@ void mb_shell::menu_item_widget::update(ui::UpdateContext &ctx) {
     }
   }
 }
-float mb_shell::menu_item_widget::measure_width(ui::UpdateContext &ctx) {
+float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
   }
@@ -122,7 +122,7 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
     children.push_back(mi);
   }
 }
-void mb_shell::menu_widget::update(ui::UpdateContext &ctx) {
+void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
   super::update(ctx);
   bg->x->reset_to(x->dest());
@@ -157,7 +157,7 @@ mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
     : widget(), anchor_x(x), anchor_y(y) {
   menu_wid = std::make_shared<menu_widget>(menu_data);
 }
-void mb_shell::mouse_menu_widget_main::update(ui::UpdateContext &ctx) {
+void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   ui::widget::update(ctx);
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
@@ -204,7 +204,7 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
   }
 }
 void mb_shell::mouse_menu_widget_main::calibrate_position(
-    ui::UpdateContext &ctx, bool animated) {
+    ui::update_context &ctx, bool animated) {
   auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
                                   MONITOR_DEFAULTTONEAREST);
   MONITORINFOEX monitor_info;
@@ -246,7 +246,9 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     y = monitor_info.rcMonitor.bottom - menu_height * ctx.rt.dpi_scale;
   }
 
-  std::println("Calibrated position: {} {}", x, y);
+  std::println("Calibrated position: {} {} in x: {}~{} y: {}~{}", x, y,
+               monitor_info.rcMonitor.left, monitor_info.rcMonitor.right,
+               monitor_info.rcMonitor.top, monitor_info.rcMonitor.bottom);
 
   if (animated) {
     this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
@@ -257,7 +259,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
   }
 }
 void mb_shell::mouse_menu_widget_main::calibrate_direction(
-    ui::UpdateContext &ctx) {
+    ui::update_context &ctx) {
   auto monitor = MonitorFromPoint({(LONG)anchor_x, (LONG)anchor_y},
                                   MONITOR_DEFAULTTONEAREST);
   MONITORINFOEX monitor_info;
