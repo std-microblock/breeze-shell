@@ -18,5 +18,14 @@ Breeze is designed with animations in mind.
 Empowered by the embedded JavaScript script api, Breeze enables you to extend the functionalities of your context menu in a few lines of code.
 
 ```javascript
-
+shell.menu_controller.add_menu_listener((a)=>{
+        a.menu.add_menu_item_after({
+            type: 'button',
+            name: 'test',
+            action: ()=>{
+               shell.println(123)
+            }
+     }, 0)
+ })
 ```
+[See full bindings →](./src/shell/script/binding_types.d.ts)
