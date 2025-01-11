@@ -9,17 +9,6 @@
 #include <print>
 #include <vector>
 
-mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
-  opacity->reset_to(0);
-
-  if (item.type == menu_item::type::spacer) {
-    height->reset_to(1);
-  } else {
-    height->reset_to(25);
-  }
-  this->item = item;
-}
-
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   if (item.type == menu_item::type::spacer) {
@@ -75,6 +64,18 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     ctx.stroke();
   }
 
+  if (item.type == menu_item::type::toggle) {
+    if (!item.icon_bitmap && item.checked) {
+      ctx.beginPath();
+      ctx.moveTo(*x + icon_padding + margin + 2, *y + 4 + 8);
+      ctx.lineTo(*x + icon_padding + margin + 6, *y + 8 + 8);
+      ctx.lineTo(*x + icon_padding + margin + 14, *y + 0 + 8);
+      ctx.strokeColor(nvgRGBAf(1, 1, 1, *opacity * 0.6 / 255.f));
+      ctx.strokeWidth(2);
+      ctx.stroke();
+    }
+  }
+
   if (submenu_wid) {
     submenu_wid->render(ctx);
   }
@@ -102,7 +103,7 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
     }
 
-    if (show_submenu_timer >= 100.f) {
+    if (show_submenu_timer >= 250.f) {
       if (!submenu_wid) {
         submenu_wid = std::make_shared<menu_widget>(item.submenu.value()());
 
@@ -156,9 +157,17 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   bg->opacity->animate_to(255);
 
   auto init_items = menu_data.items;
+
+  bool has_icon = std::ranges::any_of(init_items, [](auto &item) {
+    return item.icon_bitmap.has_value() || item.type == menu_item::type::toggle;
+  });
+
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
-    auto mi = std::make_shared<menu_item_widget>(item);
+    auto mi = std::make_shared<menu_item_widget>(item, this);
+    if (!has_icon) {
+      mi->icon_width = 0;
+    }
     children.push_back(mi);
   }
 }
@@ -216,10 +225,20 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
 
   menu_wid->update(ctx);
 
-  auto mask = /*get if pressed after first call*/ 0x8000;
-  if (ctx.clicked_widgets.size() == 0 &&
-      ((GetAsyncKeyState(VK_LBUTTON) & mask) ||
-       (GetAsyncKeyState(VK_RBUTTON) & mask))) {
+  // static bool to_close = false;
+  // auto mask = /*get if pressed after first call*/ 0x8000;
+  // if (ctx.clicked_widgets.size() == 0) {
+  //   if ((GetAsyncKeyState(VK_LBUTTON) & mask) ||
+  //       (GetAsyncKeyState(VK_RBUTTON) & mask))
+  //     to_close = true;
+  //   else if (to_close) {
+  //     ctx.rt.close();
+  //   }
+  // } else {
+  //   to_close = false;
+  // }
+  if (!ctx.hovered(menu_wid.get()) &&
+      (ctx.mouse_clicked || ctx.right_mouse_clicked)) {
     ctx.rt.close();
   }
 
@@ -347,4 +366,25 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
 bool mb_shell::menu_item_widget::check_hit(const ui::update_context &ctx) {
   return ui::widget::check_hit(ctx) ||
          (submenu_wid && submenu_wid->check_hit(ctx));
+}
+mb_shell::menu_item_widget::menu_item_widget(menu_item item,
+                                             menu_widget *parent_menu)
+    : super(), parent_menu(parent_menu) {
+  opacity->reset_to(0);
+
+  if (item.type == menu_item::type::spacer) {
+    height->animate_to(1);
+  } else {
+    height->animate_to(25);
+  }
+  this->item = item;
+}
+bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
+  auto hit = ui::widget::check_hit(ctx) || bg->check_hit(ctx) ||
+             std::ranges::any_of(
+                 get_children<menu_item_widget>(), [&ctx, this](auto &child) {
+                   return child->check_hit(ctx.with_offset(*x, *y));
+                 });
+
+  return hit;
 }

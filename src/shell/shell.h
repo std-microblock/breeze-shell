@@ -29,7 +29,7 @@ struct menu_item {
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
   std::optional<std::function<menu()>> submenu;
-
+  bool checked = false;
   std::optional<HBITMAP> icon_bitmap;
 
   std::string to_string();

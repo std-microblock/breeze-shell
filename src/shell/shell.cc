@@ -45,23 +45,20 @@ std::wstring strip_extra_infos(std::wstring_view str) {
   // 4. remove all unicode control characters
 
   std::wstring result;
-  static const std::vector<wchar_t> whitespace_chars{
-      0x9,    0xA,    0xB,    0xC,    0xD,    0x20,   0x85,   0xA0,   0x1680,
-      0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008,
-      0x2009, 0x200A, 0x200B, 0x2028, 0x2029, 0x3000, 0xFEFF};
 
   for (int i = 0; i < str.size(); i++) {
-    if (std::ranges::find(whitespace_chars, str[i]) != whitespace_chars.end()) {
-      continue;
-    }
-    if (str[i] == '&' ||
-        (str[i] == '(' && i + 1 < str.size() && str[i + 1] == '&')) {
-      while(str[i] != ')' && i < str.size()) {
+    if (str[i] == '(' && i + 1 < str.size() && str[i + 1] == '&') {
+      while (str[i] != ')' && i < str.size()) {
         i++;
       }
 
       continue;
     }
+
+    if (str[i] == '&') {
+      continue;
+    }
+
     if (str[i] == '\t') {
       break;
     }
@@ -87,9 +84,20 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
                 << std::endl;
       continue;
     }
+
+    if (info.fType & MFT_RADIOCHECK) {
+      item.type = menu_item::type::toggle;
+      item.checked = info.fState & MFS_CHECKED;
+    }
+
     if (info.hSubMenu) {
       item.submenu = [=]() {
         return construct_with_hmenu(info.hSubMenu, hWnd);
+      };
+    } else {
+      item.action = [=]() mutable {
+        menu_render::current.value()->selected_menu = info.wID;
+        menu_render::current.value()->rt->close();
       };
     }
 
@@ -147,11 +155,6 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
         }
       }
     }
-    item.action = [=]() mutable {
-      menu_render::current.value()->selected_menu = info.wID;
-      menu_render::current.value()->rt->close();
-      std::cout << "Clicked " << info.wID << std::endl;
-    };
 
     m.items.push_back(item);
   }

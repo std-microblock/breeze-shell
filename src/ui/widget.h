@@ -42,7 +42,7 @@ struct update_context {
   render_target &rt;
   nanovg_context vg;
 
-  update_context with_offset(float x, float y) {
+  update_context with_offset(float x, float y) const {
     auto copy = *this;
     copy.offset_x = x + offset_x;
     copy.offset_y = y + offset_y;

@@ -11,8 +11,8 @@ namespace ui {
 struct rect_widget : public widget {
   rect_widget();
   ~rect_widget();
-  sp_anim_float opacity = anim_float(0, 400);
-  sp_anim_float radius = anim_float(0, 200);
+  sp_anim_float opacity = anim_float(0, 200);
+  sp_anim_float radius = anim_float(0, 0);
 
   NVGcolor bg_color = nvgRGBAf(0, 0, 0, 0);
 

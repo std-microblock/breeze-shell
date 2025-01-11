@@ -29,15 +29,12 @@ static auto pSetWindowCompositionAttribute =
 namespace ui {
 void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
-
   dpi_scale = ctx.rt.dpi_scale;
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
   rect_widget::render(ctx);
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
-
-  cv.notify_all();
 }
 
 acrylic_background_widget::acrylic_background_widget(bool use_dwm)
@@ -52,7 +49,6 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
     registered = true;
   }
 
-  opacity->reset_to(255);
   auto win = glfwGetCurrentContext();
   auto handle = glfwGetWin32Window(win);
   render_thread = std::thread([=, this]() {
@@ -81,6 +77,11 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
     }
 
     ShowWindow((HWND)hwnd, SW_SHOW);
+
+    SetWindowPos((HWND)hwnd, handle, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                     SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
+
     while (true) {
       std::unique_lock<std::mutex> lk(cv_m);
 
@@ -90,20 +91,21 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
         break;
       }
 
-      cv.wait(lk);
-
       int winx, winy;
       RECT rect;
       GetWindowRect(handle, &rect);
       winx = rect.left;
       winy = rect.top;
 
-      SetWindowPos((HWND)hwnd, handle, winx + (*x + offset_x) * dpi_scale,
+      SetWindowPos((HWND)hwnd, nullptr, winx + (*x + offset_x) * dpi_scale,
                    winy + (*y + offset_y) * dpi_scale, *width * dpi_scale,
                    *height * dpi_scale,
                    SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
-                       SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
+                       SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
+                       SWP_NOZORDER);
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
+
+      cv.wait_for(lk, std::chrono::milliseconds(40));
 
       if ((width->updated() || height->updated() || radius->updated()) &&
           !use_dwm) {

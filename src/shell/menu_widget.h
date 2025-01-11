@@ -4,6 +4,7 @@
 #include "shell.h"
 #include "ui.h"
 #include "widget.h"
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -18,7 +19,8 @@ struct menu_item_widget : public ui::widget {
   float margin = 5;
   float icon_width = 16;
   float icon_padding = 10;
-  menu_item_widget(menu_item item);
+  menu_widget *parent_menu;
+  menu_item_widget(menu_item item, menu_widget *parent_menu);
   void reset_appear_animation(float delay);
 
   std::optional<ui::NVGImage> icon_img_bmp{};
@@ -54,6 +56,8 @@ struct menu_widget : public ui::widget_parent_flex {
   void update(ui::update_context &ctx) override;
 
   void render(ui::nanovg_context ctx) override;
+
+  bool check_hit(const ui::update_context &ctx) override;
 };
 
 struct mouse_menu_widget_main : public ui::widget {

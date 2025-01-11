@@ -37,7 +37,7 @@ bool js::menu_controller::add_menu_item_after(js_menu_data data,
     item.action = [data]() { data.action.value()({}); };
   }
 
-  auto new_item = std::make_shared<mb_shell::menu_item_widget>(item);
+  auto new_item = std::make_shared<mb_shell::menu_item_widget>(item, m.get());
 
   if (after_index >= m->children.size()) {
     m->children.push_back(new_item);
