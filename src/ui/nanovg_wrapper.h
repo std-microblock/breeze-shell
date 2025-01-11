@@ -1,3 +1,5 @@
+#pragma once
+#include "glad/glad.h"
 #include "nanovg.h"
 #include <utility>
 
@@ -164,4 +166,35 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     return copy;
   }
 };
+
+struct GLTexture {
+  GLuint id;
+  int width, height;
+
+  inline GLTexture(GLuint id, int width, int height)
+      : id(id), width(width), height(height) {}
+
+  GLTexture(GLTexture &&other) = default;
+  GLTexture &operator=(GLTexture &&other) = default;
+
+  inline ~GLTexture() { glDeleteTextures(1, &id); }
+};
+
+struct NVGImage {
+  int id;
+  int width, height;
+  nanovg_context ctx;
+
+  inline NVGImage(int id, int width, int height, nanovg_context ctx)
+      : id(id), width(width), height(height), ctx(ctx) {}
+
+  NVGImage(NVGImage &&other) = default;
+  NVGImage &operator=(NVGImage &&other) = default;
+
+  inline ~NVGImage() {
+    // if (id != -1)
+    //   ctx.deleteImage(id);
+  }
+};
+
 } // namespace ui

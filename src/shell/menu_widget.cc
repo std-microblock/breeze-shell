@@ -1,6 +1,7 @@
 #include "menu_widget.h"
 #include "animator.h"
 #include "entry.h"
+#include "hbitmap_utils.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
@@ -17,43 +18,6 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item) : super() {
     height->animate_to(25);
   }
   this->item = item;
-}
-
-struct bitmap_dump {
-  int width;
-  int height;
-  std::vector<uint8_t> data;
-};
-
-bitmap_dump dump_bitmap_rgb(HBITMAP bmp) {
-  BITMAP bm;
-  GetObject(bmp, sizeof(bm), &bm);
-
-  BITMAPINFOHEADER bi = {0};
-  bi.biSize = sizeof(BITMAPINFOHEADER);
-  bi.biWidth = bm.bmWidth;
-  bi.biHeight = bm.bmHeight;
-  bi.biPlanes = 1;
-  bi.biBitCount = 32;
-  bi.biCompression = BI_RGB;
-
-  std::vector<uint8_t> bits(bm.bmWidth * bm.bmHeight * 4);
-  HDC hdc = GetDC(nullptr);
-  GetDIBits(hdc, bmp, 0, bm.bmHeight, bits.data(),
-            reinterpret_cast<BITMAPINFO *>(&bi), DIB_RGB_COLORS);
-  ReleaseDC(nullptr, hdc);
-  return {bm.bmWidth, bm.bmHeight, bits};
-}
-
-std::vector<uint8_t> rgb_to_rgba(std::vector<uint8_t> rgb) {
-  std::vector<uint8_t> rgba(rgb.size() * 4 / 3);
-  for (size_t i = 0; i < rgb.size(); i += 3) {
-    rgba[i * 4 / 3] = rgb[i];
-    rgba[i * 4 / 3 + 1] = rgb[i + 1];
-    rgba[i * 4 / 3 + 2] = rgb[i + 2];
-    rgba[i * 4 / 3 + 3] = 255;
-  }
-  return rgba;
 }
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
@@ -80,18 +44,19 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   ctx.fontFace("Yahei");
   ctx.fontSize(14);
 
-  if (item.icon.has_value()) {
-    if (icon_img_id == -1) {
-      auto bits = dump_bitmap_rgb(item.icon.value());
-      auto rgba = rgb_to_rgba(bits.data);
-      icon_img_id =
-          ctx.createImageRGBA(bits.width, bits.height, 0, rgba.data());
+  if (item.icon_bitmap.has_value()) {
+    if (!icon_img_bmp) {
+      icon_img_bmp = ui::LoadBitmapImage(ctx, item.icon_bitmap.value());
     }
 
-    auto paint = nvgImagePattern(ctx.ctx, *x + icon_padding, *y + icon_padding,
-                                 icon_width, icon_width, 0, icon_img_id, 1);
+    auto imageY = *y + (*height - icon_width) / 2;
+    auto paint =
+        nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
+                        imageY + ctx.offset_y, icon_width, icon_width, 0,
+                        icon_img_bmp->id, 1.f);
+
     ctx.beginPath();
-    ctx.rect(*x + icon_padding, *y + icon_padding, icon_width, icon_width);
+    ctx.rect(*x + icon_padding + margin, imageY, icon_width, icon_width);
     ctx.fillPaint(paint);
     ctx.fill();
   }

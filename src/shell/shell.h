@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nanovg_wrapper.h"
 #include <functional>
 #include <optional>
 #include <string>
@@ -29,7 +30,7 @@ struct menu_item {
   std::optional<std::function<void()>> action;
   std::optional<menu> submenu;
 
-  std::optional<HBITMAP> icon;
+  std::optional<HBITMAP> icon_bitmap;
 
   std::string to_string();
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "extra_widgets.h"
+#include "nanovg_wrapper.h"
 #include "shell.h"
 #include "ui.h"
 #include "widget.h"
@@ -11,14 +12,14 @@ struct menu_item_widget : public ui::widget {
   using super = ui::widget;
   menu_item item;
   ui::sp_anim_float opacity = anim_float(0, 200);
-  float text_padding = 13;
+  float text_padding = 8;
   float margin = 5;
   float icon_width = 16;
-  float icon_padding = 5;
+  float icon_padding = 10;
   menu_item_widget(menu_item item);
   void set_index_for_animation(int index);
 
-  int icon_img_id = -1;
+  std::optional<ui::NVGImage> icon_img_bmp{};
 
   ui::sp_anim_float bg_opacity = anim_float(0, 200);
   void render(ui::nanovg_context ctx) override;
