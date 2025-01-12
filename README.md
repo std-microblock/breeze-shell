@@ -1,3 +1,7 @@
+> [!WARNING]
+> This project is still in active development. File a bug report if you meet any!
+> 此项目仍在开发阶段，如果遇到问题请发送 Issue
+
 <div align=center>
   <img src=./resources/breeze-shell-small.webp?1 />
 <h1>Breeze Shell</h1> 
@@ -29,3 +33,15 @@ shell.menu_controller.add_menu_listener((a)=>{
  })
 ```
 [See full bindings →](./src/shell/script/binding_types.d.ts)
+
+## Lightweight & Fast
+Breeze uses breeze-ui, which is implemented to be a cross-platform, simple, animation-friendly and fast ui library for modern C++, with the support of both NanoVG and ThorVG render context. This allowed Breeze to have a delicated user interface in ~2MiB.
+
+# Try it out!
+Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe` and you should get a window in which the context menu is replaced.
+
+# Building
+Breeze uses xmake. You'd have to install xmake in your computer first. Then, type `xmake` in the project dir and follow the instructions. Both clang-cl and MSVC 2019+ can build this project.
+
+# Developing
+After building successfully once, you can oprn the project dir in VSCode for development. Install clangd plugin for full intellisense.
