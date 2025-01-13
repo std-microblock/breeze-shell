@@ -1,11 +1,11 @@
 #include "menu_widget.h"
 #include "animator.h"
-#include "entry.h"
+#include "menu_render.h"
 #include "hbitmap_utils.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
-#include "utils.h"
+#include "../utils.h"
 #include <print>
 #include <vector>
 
@@ -154,6 +154,7 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   }
 
   bg->opacity->reset_to(0);
+  bg->opacity->set_delay(80);
   bg->opacity->animate_to(255);
 
   auto init_items = menu_data.items;

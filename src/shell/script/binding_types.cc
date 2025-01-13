@@ -1,5 +1,5 @@
 #include "binding_types.h"
-#include "../menu_widget.h"
+#include "../contextmenu/menu_widget.h"
 #include "quickjspp.hpp"
 #include <iostream>
 namespace mb_shell {

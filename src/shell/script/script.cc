@@ -1,5 +1,5 @@
 #include "script.h"
-#include "../shell.h"
+#include "../contextmenu/shell.h"
 #include <iostream>
 #include <print>
 #include "binding_qjs.h"
