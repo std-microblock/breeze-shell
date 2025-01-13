@@ -177,15 +177,17 @@ js::menu_controller::get_menu_item(int index) {
 }
 std::function<void()> js::menu_controller::add_menu_listener(
     std::function<void(mb_shell::js::menu_info_basic_js)> listener) {
+  listener({});
   auto listener_cvt = [listener](mb_shell::menu_info_basic info) {
     try {
-      listener(
-          {.from = info.from,
-           .menu = std::make_shared<mb_shell::js::menu_controller>(info.menu)});
+      menu_info_basic_js m{
+          .from = info.from,
+          .menu = std::make_shared<mb_shell::js::menu_controller>(info.menu)};
+      listener(m);
     } catch (qjs::exception e) {
       auto js = &e.context();
       auto exc = js->getException();
-      std::cerr << (std::string)exc << std::endl;
+      std::cerr << "JS Error: " << (std::string)exc << std::endl;
       if ((bool)exc["stack"])
         std::cerr << (std::string)exc["stack"] << std::endl;
     }
