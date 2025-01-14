@@ -5,16 +5,23 @@ try {
 
     shell.println("Hello, world!")
     shell.println(Object.keys(os))
-    shell.menu_controller.add_menu_listener(globalThis.a = (a) => {
+    shell.menu_controller.add_menu_listener((a) => {
         // print call stack
-        shell.println(123, new Error().stack)
-        // a.menu.add_menu_item_after({
-        //     type: 'button',
-        //     name: 'test',
-        //     action: ()=>{
-        //         shell.println(123)
-        //     }
-        // }, 0)
+        shell.println(123, new Error().stack, a)
+        // shell.println(
+        //     a.menu?.get_menu_items()[0].name,
+        //     a.menu?.get_menu_items()[0].type,
+        // )
+        const menus = a.menu?.get_menu_items()
+        // append after `复制`
+        const index = menus?.findIndex((item) => item.name === "复制")
+        a.menu?.add_menu_item_after({
+            type: 'button',
+            name: 'test',
+            action: ()=>{
+                shell.println(123)
+            }
+        }, index)
     })
 
     os.setTimeout(() => {

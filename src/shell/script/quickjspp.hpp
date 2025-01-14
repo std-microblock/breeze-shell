@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <future>
 #include <ios>
 #include <memory>
 #include <optional>
@@ -1778,9 +1779,17 @@ struct js_traits<std::function<R(Args...)>, int> {
     const int argc = sizeof...(Args);
     if constexpr (argc == 0) {
       return [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}]() -> R {
-        JSValue result =
-            JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
-        
+        auto ctx = Context{jsfun_obj.ctx};
+
+        std::promise<JSValue> promise;
+        auto future = promise.get_future();
+        ctx.enqueueJob([&]() {
+          JSValue result =
+              JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
+          promise.set_value(result);
+        });
+        auto result = future.get();
+
         if (JS_IsException(result))
           throw exception{jsfun_obj.ctx};
         return detail::unwrap_free<R>(jsfun_obj.ctx, result);
@@ -1788,15 +1797,35 @@ struct js_traits<std::function<R(Args...)>, int> {
     } else {
       return [jsfun_obj =
                   Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
-        const int argc = sizeof...(Args);
-        JSValue argv[argc];
-        detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
-        JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, argc,
-                                 const_cast<JSValueConst *>(argv));
-        for (int i = 0; i < argc; i++)
-          JS_FreeValue(jsfun_obj.ctx, argv[i]);
+        auto ctx2 = Context{jsfun_obj.ctx};
+        std::promise<JSValue> promise;
+        auto future = promise.get_future();
+        printf("enqueueJob\n");
+
+        // check if this thread is js main thread
+        auto rt = JS_GetRuntime(jsfun_obj.ctx);
+
+        auto work = [&]() {
+          JS_UpdateStackTop(rt);
+          const int argc = sizeof...(Args);
+          JSValue argv[argc];
+          detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
+          JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED,
+                                   argc, const_cast<JSValueConst *>(argv));
+          for (int i = 0; i < argc; i++)
+            JS_FreeValue(jsfun_obj.ctx, argv[i]);
+          promise.set_value(result);
+        };
+        if (JS_IsJobPending(rt)) {
+          ctx2.enqueueJob(work);
+        } else {
+          work();
+        }
+
+        auto result = future.get();
         if (JS_IsException(result))
           throw exception{jsfun_obj.ctx};
+
         return detail::unwrap_free<R>(jsfun_obj.ctx, result);
       };
     }

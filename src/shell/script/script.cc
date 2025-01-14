@@ -4,6 +4,7 @@
 #include "quickjs/quickjs-libc.h"
 #include <iostream>
 #include <print>
+#include <thread>
 
 
 namespace mb_shell {
@@ -37,7 +38,6 @@ void script_context::watch_file(const std::filesystem::path &path,
   auto last_mod = std::filesystem::last_write_time(path);
   eval_file(path);
   on_reload();
-  js_std_loop(js->ctx);
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto new_mod = std::filesystem::last_write_time(path);
@@ -63,6 +63,10 @@ void script_context::bind() {
   js_init_module_std(js->ctx, "std");
   js_init_module_os(js->ctx, "os");
   js_init_module_bjson(js->ctx, "bjson");
+
+  std::thread([this](){
+    js_std_loop(this->js->ctx);
+  }).detach();
 
   auto &module = js->addModule("mshell");
 
