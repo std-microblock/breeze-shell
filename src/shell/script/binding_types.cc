@@ -2,6 +2,7 @@
 #include "../contextmenu/menu_widget.h"
 #include "quickjspp.hpp"
 #include <iostream>
+#include <mutex>
 namespace mb_shell {
 std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
     menu_callbacks;
@@ -14,7 +15,8 @@ bool js::menu_controller::add_menu_item_after(js_menu_data data,
   if (!m)
     return false;
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   mb_shell::menu_item item;
 
@@ -55,7 +57,8 @@ bool js::menu_controller::set_menu_item(int index,
   if (!m)
     return false;
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   if (index >= m->children.size())
     return false;
@@ -88,7 +91,8 @@ bool js::menu_controller::set_menu_item_position(int index, int new_index) {
   if (!m)
     return false;
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   if (index >= m->children.size() || new_index >= m->children.size())
     return false;
@@ -106,7 +110,8 @@ bool js::menu_controller::remove_menu_item(int index) {
   if (!m)
     return false;
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   if (index >= m->children.size())
     return false;
@@ -122,7 +127,8 @@ js::menu_controller::get_menu_items() {
   if (!m)
     return {};
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   std::vector<std::shared_ptr<mb_shell::js::menu_item_data>> items;
 
@@ -154,7 +160,8 @@ js::menu_controller::get_menu_item(int index) {
   if (!m)
     return nullptr;
 
-  std::lock_guard lock(m->data_lock);
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
 
   if (index >= m->children.size())
     return nullptr;

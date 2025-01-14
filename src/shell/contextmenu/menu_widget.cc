@@ -1,13 +1,14 @@
 #include "menu_widget.h"
+#include "../utils.h"
 #include "animator.h"
-#include "menu_render.h"
 #include "hbitmap_utils.h"
+#include "menu_render.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
-#include "../utils.h"
 #include <print>
 #include <vector>
+
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
@@ -196,7 +197,13 @@ void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   opacity->set_duration(200);
   opacity->reset_to(0);
   opacity->animate_to(255);
-  this->y->set_easing(ui::easing_type::mutation);
+  this->y->before_animate = [this](float dest) {
+    if (this->y->dest() == 0) {
+      this->y->set_easing(ui::easing_type::mutation);
+    } else {
+      this->y->set_easing(ui::easing_type::ease_in_out);
+    }
+  };
   this->x->set_delay(delay);
   this->x->set_duration(200);
   this->x->reset_to(-20);

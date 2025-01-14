@@ -1823,6 +1823,7 @@ struct js_traits<std::function<R(Args...)>, int> {
         }
 
         auto result = future.get();
+
         if (JS_IsException(result))
           throw exception{jsfun_obj.ctx};
 

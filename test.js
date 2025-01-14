@@ -18,8 +18,32 @@ try {
         a.menu?.add_menu_item_after({
             type: 'button',
             name: 'test',
-            action: ()=>{
-                shell.println(123)
+            action: () => {
+                try {
+                    // a.menu.set_menu_item_position(
+                    //     a.menu.get_menu_items().findIndex(
+                    //         (item) => item.name === 'test'  
+                    //     ),
+                    //     Math.floor(Math.random() *
+                    //         a.menu.get_menu_items().length
+                    //     ),
+                    // )
+                    for(let i =0; i < 100; i++) {
+                        a.menu?.set_menu_item_position(
+                            Math.floor(Math.random() *
+                                a.menu.get_menu_items().length
+                            ),
+                            Math.floor(Math.random() *
+                                a.menu.get_menu_items().length
+                        )
+                        )
+                    }
+                } catch (e) {
+                    shell.println("Error: " + e);
+                    if (e.stack) {
+                        shell.println("Stack: " + e.stack);
+                    }
+                }
             }
         }, index)
     })

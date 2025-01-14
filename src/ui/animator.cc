@@ -5,6 +5,8 @@ void ui::animated_float::update(float delta_t) {
   if (easing == easing_type::mutation) {
     if (destination != value) {
       value = destination;
+      if (after_animate)
+        after_animate.value()(destination);
       _updated = true;
     } else {
       _updated = false;
