@@ -1783,11 +1783,19 @@ struct js_traits<std::function<R(Args...)>, int> {
 
         std::promise<JSValue> promise;
         auto future = promise.get_future();
-        ctx.enqueueJob([&]() {
-          JSValue result =
-              JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
+        auto work = [&]() {
+          JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
+          JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0,
+                                   nullptr);
           promise.set_value(result);
-        });
+        };
+
+        if (JS_IsJobPending(JS_GetRuntime(jsfun_obj.ctx))) {
+          ctx.enqueueJob(work);
+        } else {
+          work();
+        }
+        
         auto result = future.get();
 
         if (JS_IsException(result))
@@ -1800,8 +1808,6 @@ struct js_traits<std::function<R(Args...)>, int> {
         auto ctx2 = Context{jsfun_obj.ctx};
         std::promise<JSValue> promise;
         auto future = promise.get_future();
-        printf("enqueueJob\n");
-
         // check if this thread is js main thread
         auto rt = JS_GetRuntime(jsfun_obj.ctx);
 

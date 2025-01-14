@@ -6,7 +6,6 @@
 #include <print>
 #include <thread>
 
-
 namespace mb_shell {
 
 void script_context::eval(const std::string &script) {
@@ -26,6 +25,13 @@ void script_context::eval_file(const std::filesystem::path &path) {
                        std::istreambuf_iterator<char>());
 
     js->eval(script, path.generic_string().c_str(), JS_EVAL_TYPE_MODULE);
+
+    std::thread([this]() {
+      while (1) {
+        js_std_loop(js->ctx);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    }).detach();
   } catch (qjs::exception) {
     auto exc = js->getException();
     std::cerr << (std::string)exc << std::endl;
@@ -59,20 +65,16 @@ void println(qjs::rest<std::string> args) {
 }
 
 void script_context::bind() {
-  js_std_init_handlers(rt->rt);
-  js_init_module_std(js->ctx, "std");
-  js_init_module_os(js->ctx, "os");
-  js_init_module_bjson(js->ctx, "bjson");
-
-  std::thread([this](){
-    js_std_loop(this->js->ctx);
-  }).detach();
-
   auto &module = js->addModule("mshell");
 
   module.function("println", println);
 
   bindAll(module);
+
+  js_std_init_handlers(rt->rt);
+  js_init_module_std(js->ctx, "std");
+  js_init_module_os(js->ctx, "os");
+  js_init_module_bjson(js->ctx, "bjson");
 }
 script_context::script_context()
     : rt{std::make_unique<qjs::Runtime>()},

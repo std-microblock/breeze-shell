@@ -17,27 +17,36 @@ try {
         const index = menus?.findIndex((item) => item.name === "复制")
         a.menu?.add_menu_item_after({
             type: 'button',
-            name: 'test',
+            name: '大KB',
             action: () => {
                 try {
-                    // a.menu.set_menu_item_position(
-                    //     a.menu.get_menu_items().findIndex(
-                    //         (item) => item.name === 'test'  
-                    //     ),
-                    //     Math.floor(Math.random() *
-                    //         a.menu.get_menu_items().length
-                    //     ),
-                    // )
-                    for(let i =0; i < 100; i++) {
-                        a.menu?.set_menu_item_position(
-                            Math.floor(Math.random() *
-                                a.menu.get_menu_items().length
+                    const xx = () => {
+
+                        a.menu.set_menu_item_position(
+                            a.menu.get_menu_items().findIndex(
+                                (item) => item.name === '大KB'
                             ),
                             Math.floor(Math.random() *
                                 a.menu.get_menu_items().length
+                            ),
                         )
-                        )
+                    };
+                    xx();
+                    for (let i = 0; i < 100; i++) {
+                        os.setTimeout(() => {
+                            xx();
+                        }, 500 * i)
                     }
+                    // for(let i =0; i < 100; i++) {
+                    //     a.menu?.set_menu_item_position(
+                    //         Math.floor(Math.random() *
+                    //             a.menu.get_menu_items().length
+                    //         ),
+                    //         Math.floor(Math.random() *
+                    //             a.menu.get_menu_items().length
+                    //     )
+                    //     )
+                    // }
                 } catch (e) {
                     shell.println("Error: " + e);
                     if (e.stack) {
