@@ -9,7 +9,6 @@
 #include <print>
 #include <vector>
 
-
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   if (item.type == menu_item::type::spacer) {
@@ -245,9 +244,14 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   // } else {
   //   to_close = false;
   // }
-  if (!ctx.hovered(menu_wid.get()) &&
-      (ctx.mouse_clicked || ctx.right_mouse_clicked)) {
-    ctx.rt.close();
+  if (!ctx.hovered(menu_wid.get())) {
+    std::println("Not hovered");
+    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    if ((ctx.mouse_clicked || ctx.right_mouse_clicked))
+      ctx.rt.close();
+  } else {
+    std::println("Hovered");
+    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
   }
 
   // esc to close
