@@ -117,3 +117,6 @@ bool ui::widget::check_hit(const update_context &ctx) {
          ctx.mouse_y >= (y->dest() + ctx.offset_y) &&
          ctx.mouse_y <= (y->dest() + height->dest() + ctx.offset_y);
 }
+void ui::widget::render(nanovg_context ctx) {
+
+}

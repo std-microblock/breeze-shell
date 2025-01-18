@@ -49,7 +49,8 @@ struct menu_widget : public ui::widget_parent_flex {
   std::shared_ptr<ui::rect_widget> bg;
   menu menu_data;
   menu_widget(menu menu_data);
-
+  popup_direction direction = popup_direction::bottom_right;
+  bool have_overlap = false;
   std::mutex data_lock;
 
   void reset_animation(bool reverse = false);
@@ -70,6 +71,15 @@ struct mouse_menu_widget_main : public ui::widget {
   void update(ui::update_context &ctx);
 
   void render(ui::nanovg_context ctx);
+
+  static std::pair<float, float>
+  calculate_position(menu_widget *menu_wid, ui::update_context &ctx,
+                     float anchor_x, float anchor_y, popup_direction direction);
+
+  static popup_direction calculate_direction(
+      menu_widget *menu_wid, ui::update_context &ctx, float anchor_x,
+      float anchor_y,
+      popup_direction prefer_direction = popup_direction::bottom_right);
 
   void calibrate_position(ui::update_context &ctx, bool animated = true);
   void calibrate_direction(ui::update_context &ctx);

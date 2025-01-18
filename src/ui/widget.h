@@ -66,7 +66,7 @@ struct widget : std::enable_shared_from_this<widget> {
 
   sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
                 height = anim_float();
-  virtual void render(nanovg_context ctx) {}
+  virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);
   virtual ~widget() = default;
   virtual float measure_height(update_context &ctx);
