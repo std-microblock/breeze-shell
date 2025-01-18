@@ -1,8 +1,10 @@
 #include "script.h"
-#include "../shell.h"
+#include "../contextmenu/shell.h"
+#include "binding_qjs.h"
+#include "quickjs/quickjs-libc.h"
 #include <iostream>
 #include <print>
-#include "binding_qjs.h"
+#include <thread>
 
 namespace mb_shell {
 
@@ -23,6 +25,13 @@ void script_context::eval_file(const std::filesystem::path &path) {
                        std::istreambuf_iterator<char>());
 
     js->eval(script, path.generic_string().c_str(), JS_EVAL_TYPE_MODULE);
+
+    std::thread([this]() {
+      while (1) {
+        js_std_loop(js->ctx);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    }).detach();
   } catch (qjs::exception) {
     auto exc = js->getException();
     std::cerr << (std::string)exc << std::endl;
@@ -30,7 +39,8 @@ void script_context::eval_file(const std::filesystem::path &path) {
       std::cerr << (std::string)exc["stack"] << std::endl;
   }
 }
-void script_context::watch_file(const std::filesystem::path &path, std::function<void()> on_reload ) {
+void script_context::watch_file(const std::filesystem::path &path,
+                                std::function<void()> on_reload) {
   auto last_mod = std::filesystem::last_write_time(path);
   eval_file(path);
   on_reload();
@@ -49,8 +59,9 @@ void script_context::watch_file(const std::filesystem::path &path, std::function
 }
 
 void println(qjs::rest<std::string> args) {
-    for (auto const & arg : args) std::cout << arg << " ";
-    std::cout << "\n";
+  for (auto const &arg : args)
+    std::cout << arg << " ";
+  std::cout << "\n";
 }
 
 void script_context::bind() {
@@ -59,11 +70,15 @@ void script_context::bind() {
   module.function("println", println);
 
   bindAll(module);
+
+  js_std_init_handlers(rt->rt);
+  js_init_module_std(js->ctx, "std");
+  js_init_module_os(js->ctx, "os");
+  js_init_module_bjson(js->ctx, "bjson");
 }
 script_context::script_context()
-    : rt{
-        std::make_unique<qjs::Runtime>()
-    }, js{std::make_unique<qjs::Context>(*rt)} {
+    : rt{std::make_unique<qjs::Runtime>()},
+      js{std::make_unique<qjs::Context>(*rt)} {
   bind();
 }
 } // namespace mb_shell

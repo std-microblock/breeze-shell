@@ -76,6 +76,8 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                             &round_value, sizeof(round_value));
     }
 
+    std::unique_lock<std::mutex> lk(cv_m);
+
     ShowWindow((HWND)hwnd, SW_SHOW);
 
     SetWindowPos((HWND)hwnd, handle, 0, 0, 0, 0,
@@ -83,7 +85,6 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                      SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
 
     while (true) {
-      std::unique_lock<std::mutex> lk(cv_m);
 
       if (to_close) {
         ShowWindow((HWND)hwnd, SW_HIDE);
@@ -103,9 +104,10 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                    SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
                        SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
                        SWP_NOZORDER);
+
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-      cv.wait_for(lk, std::chrono::milliseconds(40));
+      cv.wait_for(lk, std::chrono::milliseconds(20));
 
       if ((width->updated() || height->updated() || radius->updated()) &&
           !use_dwm) {

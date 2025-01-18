@@ -1,11 +1,11 @@
 #include "menu_widget.h"
+#include "../utils.h"
 #include "animator.h"
-#include "entry.h"
 #include "hbitmap_utils.h"
+#include "menu_render.h"
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
-#include "utils.h"
 #include <print>
 #include <vector>
 
@@ -154,6 +154,7 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
   }
 
   bg->opacity->reset_to(0);
+  bg->opacity->set_delay(80);
   bg->opacity->animate_to(255);
 
   auto init_items = menu_data.items;
@@ -195,7 +196,13 @@ void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   opacity->set_duration(200);
   opacity->reset_to(0);
   opacity->animate_to(255);
-  this->y->set_easing(ui::easing_type::mutation);
+  this->y->before_animate = [this](float dest) {
+    if (this->y->dest() == 0) {
+      this->y->set_easing(ui::easing_type::mutation);
+    } else {
+      this->y->set_easing(ui::easing_type::ease_in_out);
+    }
+  };
   this->x->set_delay(delay);
   this->x->set_duration(200);
   this->x->reset_to(-20);
@@ -237,9 +244,14 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   // } else {
   //   to_close = false;
   // }
-  if (!ctx.hovered(menu_wid.get()) &&
-      (ctx.mouse_clicked || ctx.right_mouse_clicked)) {
-    ctx.rt.close();
+  if (!ctx.hovered(menu_wid.get())) {
+    std::println("Not hovered");
+    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    if ((ctx.mouse_clicked || ctx.right_mouse_clicked))
+      ctx.rt.close();
+  } else {
+    std::println("Hovered");
+    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
   }
 
   // esc to close

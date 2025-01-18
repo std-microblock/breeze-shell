@@ -2,11 +2,11 @@
 #include "shell.h"
 #include "menu_widget.h"
 #include "ui.h"
-#include "utils.h"
+#include "../utils.h"
 #include <algorithm>
 #include <codecvt>
 
-#include "entry.h"
+#include "menu_render.h"
 
 #include <consoleapi.h>
 #include <debugapi.h>
