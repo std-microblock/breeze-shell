@@ -9,10 +9,11 @@
 #include "ui.h"
 #include "utils.h"
 
-#include "./contextmenu/menu_widget.h"
 #include "./contextmenu/menu_render.h"
+#include "./contextmenu/menu_widget.h"
 #include "./contextmenu/shell.h"
 
+#include <chrono>
 #include <codecvt>
 #include <condition_variable>
 #include <filesystem>
@@ -58,17 +59,16 @@ void main() {
   auto user32 = proc->module("user32.dll");
   // hook NtUserTrackPopupMenu
 
-  auto NtUserTrackPopupMenu = user32.value()->exports("TrackPopupMenu");
+  auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
-  // We have to post the message to another thread for execution as
-  // any winapi call in the hook routine will cause the menu to behave
-  // incorrectly for some reason
-  NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
-                               int nReserved, HWND hWnd, const RECT *prcRect) {
-    // auto open = NtUserTrackHook->call_trampoline<int>(
-    //     hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
+  std::thread([](){
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::ignore = ui::render_target::init_global();
+  }).detach();
 
+  NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
+                               HWND hWnd, LPTPMPARAMS lptpm) {
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
     menu_render.rt->start_loop();
@@ -145,26 +145,27 @@ int main() {
               {
                   .type = menu_item::type::button,
                   .name = "测试多层菜单",
-                  .submenu = []() {
-                    return menu{
-                        .items = {
-                            {.type = menu_item::type::button,
-                             .name = "测试多层菜单1",
-                              .submenu = []() {
-                                return menu{
-                                    .items = {
-                                        {.type = menu_item::type::button,
-                                          .name = "测试多层菜单1-1"},
-                                        {.type = menu_item::type::button,
-                                          .name = "测试多层菜单1-2"},
-                                        {.type = menu_item::type::button,
-                                          .name = "测试多层菜单1-3"},
-                                    }};
-                              }},
-                        }};
-                  },
-              }
-          }};
+                  .submenu =
+                      []() {
+                        return menu{
+                            .items = {
+                                {.type = menu_item::type::button,
+                                 .name = "测试多层菜单1",
+                                 .submenu =
+                                     []() {
+                                       return menu{
+                                           .items = {
+                                               {.type = menu_item::type::button,
+                                                .name = "测试多层菜单1-1"},
+                                               {.type = menu_item::type::button,
+                                                .name = "测试多层菜单1-2"},
+                                               {.type = menu_item::type::button,
+                                                .name = "测试多层菜单1-3"},
+                                           }};
+                                     }},
+                            }};
+                      },
+              }}};
       menu_render = menu_render::create(100, 100, m);
       std::println("Current menu:2 {}", menu_render::current.has_value());
       menu_render->rt->start_loop();

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <expected>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -23,6 +24,11 @@ struct render_target {
   int view_id = view_cnt++;
   float dpi_scale = 1;
   std::expected<bool, std::string> init();
+
+  static std::vector<std::function<void()>> main_thread_tasks;
+  static std::mutex main_thread_tasks_mutex;
+  static void post_main_thread_task(std::function<void()> task);
+  
   static std::expected<bool, std::string> init_global();
   void start_loop();
   void render();

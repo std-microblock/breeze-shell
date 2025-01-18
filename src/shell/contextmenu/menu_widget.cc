@@ -232,25 +232,14 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
 
   menu_wid->update(ctx);
 
-  // static bool to_close = false;
-  // auto mask = /*get if pressed after first call*/ 0x8000;
-  // if (ctx.clicked_widgets.size() == 0) {
-  //   if ((GetAsyncKeyState(VK_LBUTTON) & mask) ||
-  //       (GetAsyncKeyState(VK_RBUTTON) & mask))
-  //     to_close = true;
-  //   else if (to_close) {
-  //     ctx.rt.close();
-  //   }
-  // } else {
-  //   to_close = false;
-  // }
   if (!ctx.hovered(menu_wid.get())) {
-    std::println("Not hovered");
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
-    if ((ctx.mouse_clicked || ctx.right_mouse_clicked))
+    if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
+        GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
+        GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
       ctx.rt.close();
+    }
   } else {
-    std::println("Hovered");
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
   }
 

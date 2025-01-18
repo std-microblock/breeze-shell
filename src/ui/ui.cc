@@ -1,5 +1,6 @@
 #include "glad/glad.h"
 #include <dwmapi.h>
+#include <thread>
 #include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
 #include "GLFW/glfw3.h"
@@ -19,7 +20,6 @@ std::atomic_int render_target::view_cnt = 0;
 void render_target::start_loop() {
   glfwMakeContextCurrent(window);
   while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
     render();
   }
 }
@@ -100,14 +100,30 @@ render_target::~render_target() {
   glfwDestroyWindow(window);
 }
 std::expected<bool, std::string> render_target::init_global() {
-  std::atomic_bool initialized = false;
+  static std::atomic_bool initialized = false;
   if (initialized.exchange(true)) {
-    return true;
+    return false;
   }
 
-  if (!glfwInit()) {
-    return std::unexpected("Failed to initialize GLFW");
-  }
+  std::thread([]() {
+    if (!glfwInit()) {
+      return std::unexpected("Failed to initialize GLFW");
+    }
+
+    std::mutex m;
+    std::unique_lock lock(m);
+    while (true) {
+      if (!main_thread_tasks.empty()) {
+        auto task = std::move(main_thread_tasks.back());
+        main_thread_tasks.pop_back();
+        lock.unlock();
+        task();
+      }
+
+      glfwWaitEvents();
+    }
+  }).detach();
+
   return true;
 }
 void render_target::render() {
@@ -218,5 +234,13 @@ void render_target::resize(int width, int height) {
 void render_target::close() {
   ShowWindow(glfwGetWin32Window(window), SW_HIDE);
   glfwSetWindowShouldClose(window, true);
+}
+
+std::vector<std::function<void()>> render_target::main_thread_tasks{};
+std::mutex render_target::main_thread_tasks_mutex{};
+void render_target::post_main_thread_task(std::function<void()> task) {
+  std::lock_guard lock(main_thread_tasks_mutex);
+  main_thread_tasks.push_back(std::move(task));
+  glfwPostEmptyEvent();
 }
 } // namespace ui
