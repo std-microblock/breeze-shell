@@ -62,9 +62,12 @@ void main() {
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
-  std::thread([](){
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::ignore = ui::render_target::init_global();
+  std::thread([]() {
+    if (auto res = ui::render_target::init_global(); !res) {
+      MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
+                  MB_ICONERROR);
+      return;
+    }
   }).detach();
 
   NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,

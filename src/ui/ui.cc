@@ -1,5 +1,6 @@
 #include "glad/glad.h"
 #include <dwmapi.h>
+#include <future>
 #include <thread>
 #include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
@@ -21,24 +22,38 @@ void render_target::start_loop() {
   glfwMakeContextCurrent(window);
   while (!glfwWindowShouldClose(window)) {
     render();
+    // process winapi messages in this thread
+    PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
   }
 }
 std::expected<bool, std::string> render_target::init() {
   root = std::make_shared<widget_parent>();
 
-  if (auto res = init_global(); !res) {
-    return res;
+  std::ignore = init_global();
+
+  std::promise<void> p;
+
+  render_target::post_main_thread_task([&]() {
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_DECORATED, 0);
+    glfwWindowHint(GLFW_RESIZABLE, 1);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
+    glfwWindowHint(GLFW_FLOATING, 1);
+    glfwWindowHint(GLFW_VISIBLE, 0);
+    window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
+    p.set_value();
+  });
+
+  p.get_future().get();
+
+  if (!window) {
+    return std::unexpected("Failed to create window");
   }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_DECORATED, 0);
-  glfwWindowHint(GLFW_RESIZABLE, 1);
-  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
-  glfwWindowHint(GLFW_FLOATING, 1);
-  glfwWindowHint(GLFW_VISIBLE, 0);
-  window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
+
   glfwMakeContextCurrent(window);
   glfwSwapInterval(0);
+  gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   auto h = glfwGetWin32Window(window);
   DwmEnableBlurBehindWindow(h, nullptr);
@@ -53,19 +68,6 @@ std::expected<bool, std::string> render_target::init() {
   SetWindowLongPtr(h, GWL_EXSTYLE,
                    GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                        WS_EX_NOACTIVATE);
-
-  if (!window) {
-    return std::unexpected("Failed to create window");
-  }
-
-  int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-  if (version == 0) {
-    return std::unexpected("Failed to load OpenGL");
-  }
-
-  if (!window) {
-    return std::unexpected("Failed to create window");
-  }
 
   glfwSetWindowUserPointer(window, this);
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width,
@@ -105,26 +107,32 @@ std::expected<bool, std::string> render_target::init_global() {
     return false;
   }
 
-  std::thread([]() {
+  std::promise<std::expected<bool, std::string>> res;
+  auto future = res.get_future();
+  std::thread([&]() {
     if (!glfwInit()) {
-      return std::unexpected("Failed to initialize GLFW");
+      res.set_value(std::unexpected(std::string("Failed to initialize GLFW")));
+      return;
     }
 
-    std::mutex m;
-    std::unique_lock lock(m);
+    glfwPollEvents();
+    res.set_value(true);
+
     while (true) {
-      if (!main_thread_tasks.empty()) {
-        auto task = std::move(main_thread_tasks.back());
-        main_thread_tasks.pop_back();
-        lock.unlock();
-        task();
+      {
+        std::lock_guard lock(main_thread_tasks_mutex);
+        if (!main_thread_tasks.empty()) {
+          auto task = std::move(main_thread_tasks.back());
+          main_thread_tasks.pop_back();
+          task();
+        }
       }
 
       glfwWaitEvents();
     }
   }).detach();
 
-  return true;
+  return future.get();
 }
 void render_target::render() {
 
@@ -236,8 +244,8 @@ void render_target::close() {
   glfwSetWindowShouldClose(window, true);
 }
 
-std::vector<std::function<void()>> render_target::main_thread_tasks{};
-std::mutex render_target::main_thread_tasks_mutex{};
+std::vector<std::function<void()>> render_target::main_thread_tasks = {};
+std::mutex render_target::main_thread_tasks_mutex = {};
 void render_target::post_main_thread_task(std::function<void()> task) {
   std::lock_guard lock(main_thread_tasks_mutex);
   main_thread_tasks.push_back(std::move(task));
