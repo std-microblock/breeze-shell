@@ -1,4 +1,5 @@
 #pragma once
+#include "../utils.h"
 #include "shell.h"
 #include "ui.h"
 #include <optional>
@@ -7,6 +8,7 @@ namespace mb_shell {
 struct menu_render {
   std::unique_ptr<ui::render_target> rt;
   std::optional<int> selected_menu;
+  bool light_color = is_light_mode();
   enum class menu_style {
     fluentui,
     materialyou

@@ -11,13 +11,15 @@
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
+
+  auto c = menu_render::current.value()->light_color ? 0 : 1;
   if (item.type == menu_item::type::spacer) {
-    ctx.fillColor(nvgRGBAf(1, 1, 1, 0.1));
+    ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
     ctx.fillRect(x->dest(), *y, *width, *height);
     return;
   }
 
-  ctx.fillColor(nvgRGBAf(1, 1, 1, *bg_opacity / 255.f));
+  ctx.fillColor(nvgRGBAf(c, c, c, *bg_opacity / 255.f));
 
   float roundcorner = 4;
 
@@ -28,10 +30,6 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
                       roundcorner);
-
-  ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
-  ctx.fontFace("Yahei");
-  ctx.fontSize(14);
 
   if (item.icon_bitmap.has_value()) {
     auto paintY = floor(*y + (*height - icon_width) / 2);
@@ -50,6 +48,10 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     ctx.fill();
   }
 
+  ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
+  ctx.fontFace("Yahei");
+  ctx.fontSize(14);
+
   ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
            item.name->c_str(), nullptr);
 
@@ -59,7 +61,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     ctx.moveTo(*x + *width - 20, *y + 8);
     ctx.lineTo(*x + *width - 15, *y + 12);
     ctx.lineTo(*x + *width - 20, *y + 16);
-    ctx.strokeColor(nvgRGBAf(1, 1, 1, *opacity * 0.6 / 255.f));
+    ctx.strokeColor(nvgRGBAf(c, c, c, *opacity * 0.6 / 255.f));
     ctx.strokeWidth(1);
     ctx.stroke();
   }
@@ -70,7 +72,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
       ctx.moveTo(*x + icon_padding + margin + 2, *y + 4 + 8);
       ctx.lineTo(*x + icon_padding + margin + 6, *y + 8 + 8);
       ctx.lineTo(*x + icon_padding + margin + 14, *y + 0 + 8);
-      ctx.strokeColor(nvgRGBAf(1, 1, 1, *opacity * 0.6 / 255.f));
+      ctx.strokeColor(nvgRGBAf(c, c, c, *opacity * 0.6 / 255.f));
       ctx.strokeWidth(2);
       ctx.stroke();
     }
@@ -126,12 +128,11 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
             submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
         submenu_wid->direction = direction;
-        submenu_wid->have_overlap = ctx.rt.root->check_hit(ui::update_context{
-            .mouse_x = x / ctx.rt.dpi_scale,
-            .mouse_y = y / ctx.rt.dpi_scale,
-            .screen = ctx.screen,
-            .rt = ctx.rt
-        });
+        submenu_wid->have_overlap = ctx.rt.root->check_hit(
+            ui::update_context{.mouse_x = x / ctx.rt.dpi_scale,
+                               .mouse_y = y / ctx.rt.dpi_scale,
+                               .screen = ctx.screen,
+                               .rt = ctx.rt});
 
         submenu_wid->x->reset_to(x / ctx.rt.dpi_scale - ctx.offset_x);
         submenu_wid->y->reset_to(y / ctx.rt.dpi_scale - ctx.offset_y);
@@ -213,6 +214,11 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   ctx.hovered_hit(bg.get());
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
+  auto c = menu_render::current.value()->light_color ? 1 : 0;
+  ctx.fillColor(nvgRGBAf(c, c, c, 0.6));
+  ctx.fillRoundedRect(*x, *y - bg_padding_vertical, *width,
+                      *height + 2 * bg_padding_vertical, 6);
+
   std::lock_guard lock(data_lock);
   bg->render(ctx);
   super::render(ctx);

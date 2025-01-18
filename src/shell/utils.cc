@@ -40,3 +40,12 @@ bool mb_shell::is_win11_or_later() {
   build &= 0xFFFF;
   return (major >= 10 && build >= 22000);
 }
+bool mb_shell::is_light_mode() {
+  auto key = HKEY_CURRENT_USER;
+  auto subkey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+  auto value = L"AppsUseLightTheme";
+  DWORD data = 0;
+  DWORD size = sizeof(data);
+  auto res = RegGetValueW(key, subkey, value, RRF_RT_REG_DWORD, nullptr, &data, &size);
+  return res == ERROR_SUCCESS && data == 1;
+}
