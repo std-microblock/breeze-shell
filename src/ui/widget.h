@@ -31,9 +31,9 @@ struct update_context {
   void set_hit_hovered(widget *w);
   void set_hit_clicked(widget *w);
 
-  bool hovered(widget *w) const;
-  bool mouse_clicked_on(widget *w) const;
-  bool mouse_down_on(widget *w) const;
+  bool hovered(widget *w, bool hittest = true) const;
+  bool mouse_clicked_on(widget *w, bool hittest = true) const;
+  bool mouse_down_on(widget *w, bool hittest = true) const;
 
   bool mouse_clicked_on_hit(widget *w);
   bool hovered_hit(widget *w);

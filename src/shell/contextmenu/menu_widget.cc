@@ -210,15 +210,12 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   bg->update(ctx);
 
   ctx.mouse_clicked_on_hit(bg.get());
+  ctx.hovered_hit(bg.get());
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   std::lock_guard lock(data_lock);
   bg->render(ctx);
   super::render(ctx);
-
-  if (have_overlap) {
-    std::println("Overlap detected");
-  }
 }
 void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
@@ -267,7 +264,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
 
   menu_wid->update(ctx);
 
-  if (!ctx.hovered(menu_wid.get())) {
+  if (!ctx.hovered(menu_wid.get(), false)) {
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
     if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
         GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||

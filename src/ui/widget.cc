@@ -38,7 +38,10 @@ void ui::widget::update(update_context &ctx) {
     anim->update(ctx.delta_t);
   }
 }
-bool ui::update_context::hovered(widget *w) const {
+bool ui::update_context::hovered(widget *w, bool hittest) const {
+  if (hittest && !hovered_widgets.empty())
+    return false;
+
   return w->check_hit(*this);
 }
 float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
@@ -87,10 +90,14 @@ void ui::widget_parent_flex::update(update_context &ctx) {
 void ui::update_context::set_hit_hovered(widget *w) {
   hovered_widgets.push_back(w->shared_from_this());
 }
-bool ui::update_context::mouse_clicked_on(widget *w) const {
+bool ui::update_context::mouse_clicked_on(widget *w, bool hittest) const {
+  if (hittest && !clicked_widgets.empty())
+    return false;
   return mouse_clicked && hovered(w);
 }
-bool ui::update_context::mouse_down_on(widget *w) const {
+bool ui::update_context::mouse_down_on(widget *w, bool hittest) const {
+  if (hittest && !hovered_widgets.empty())
+    return false;
   return mouse_down && hovered(w);
 }
 void ui::update_context::set_hit_clicked(widget *w) {
@@ -117,6 +124,4 @@ bool ui::widget::check_hit(const update_context &ctx) {
          ctx.mouse_y >= (y->dest() + ctx.offset_y) &&
          ctx.mouse_y <= (y->dest() + height->dest() + ctx.offset_y);
 }
-void ui::widget::render(nanovg_context ctx) {
-
-}
+void ui::widget::render(nanovg_context ctx) {}
