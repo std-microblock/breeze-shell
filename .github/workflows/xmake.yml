@@ -14,14 +14,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: 'true'
+        submodules: recursive
     - uses: xmake-io/github-action-setup-xmake@v1
       with:
         xmake-version: latest
         actions-cache-folder: '.xmake-cache'
         actions-cache-key: 'ci'
     - name: build
-      run: xmake -y
+      run: xmake -y --verbose
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.0
       with:
