@@ -70,6 +70,7 @@ std::wstring strip_extra_infos(std::wstring_view str) {
 
 menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
   menu m;
+  SendMessageW(hWnd, WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu), 0xFFFFFFFF);
 
   for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
     menu_item item;
