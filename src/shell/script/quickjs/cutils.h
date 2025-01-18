@@ -121,10 +121,10 @@ enum {
 };
 #endif
 
-void js__pstrcpy(char *buf, int buf_size, const char *str);
-char *js__pstrcat(char *buf, int buf_size, const char *s);
-int js__strstart(const char *str, const char *val, const char **ptr);
-int js__has_suffix(const char *str, const char *suffix);
+void js__pstrcpy__x(char *buf, int buf_size, const char *str);
+char *js__pstrcat__x(char *buf, int buf_size, const char *s);
+int js__strstart__x(const char *str, const char *val, const char **ptr);
+int js__has_suffix__x(const char *str, const char *suffix);
 
 static inline uint8_t is_be(void) {
     union {
