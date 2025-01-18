@@ -218,6 +218,10 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   x->reset_to(anchor_x / ctx.rt.dpi_scale);
   y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
+  // process events of parents
+  PeekMessage(nullptr, nullptr, 0, 0,
+              PM_REMOVE);
+
   if (!direction_calibrated) {
     calibrate_direction(ctx);
     direction_calibrated = true;

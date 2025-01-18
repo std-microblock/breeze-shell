@@ -22,8 +22,6 @@ void render_target::start_loop() {
   glfwMakeContextCurrent(window);
   while (!glfwWindowShouldClose(window)) {
     render();
-    // process winapi messages in this thread
-    PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
   }
 }
 std::expected<bool, std::string> render_target::init() {
