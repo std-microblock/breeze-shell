@@ -78,9 +78,19 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual float measure_width(update_context &ctx);
   // Update children with the offset.
   // Also deal with the dying time. (If the widget is died, it will be set to nullptr)
-  void update_children_basic(update_context &ctx, std::shared_ptr<widget> &w);
+  void update_child_basic(update_context &ctx, std::shared_ptr<widget> &w);
   // Render children with the offset.
-  void render_children_basic(nanovg_context ctx, std::shared_ptr<widget> &w);
+  void render_child_basic(nanovg_context ctx, std::shared_ptr<widget> &w);
+
+  // Update children list in the widget manner
+  // It will remove the dead children
+  // It will also update the dying time
+  // It will also update the children with the offset
+  void update_children(update_context &ctx,
+                       std::vector<std::shared_ptr<widget>> &children);
+  // Render children list in the widget manner
+  void render_children(nanovg_context ctx,
+                       std::vector<std::shared_ptr<widget>> &children);
 
   template <typename T> inline auto downcast() {
     return std::dynamic_pointer_cast<T>(this->shared_from_this());
@@ -116,6 +126,9 @@ struct widget : std::enable_shared_from_this<widget> {
 
   // Time until the widget is removed from the tree
   // in milliseconds
+  // Widget itself will update this value
+  // And its parent is responsible for removing it
+  // when the time is up
   std::optional<float> dying_time;
 };
 

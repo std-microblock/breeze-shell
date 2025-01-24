@@ -1,4 +1,5 @@
 #pragma once
+#include "animator.h"
 #include "extra_widgets.h"
 #include "nanovg_wrapper.h"
 #include "shell.h"
@@ -47,10 +48,15 @@ struct menu_widget : public ui::widget_flex {
   using super = ui::widget_flex;
   float bg_padding_vertical = 6;
   std::shared_ptr<ui::rect_widget> bg;
+
+  std::shared_ptr<ui::rect_widget> bg_submenu;
+  std::shared_ptr<menu_widget> current_submenu;
+  std::vector<std::shared_ptr<widget>> rendering_submenus;
+
+  std::shared_ptr<ui::rect_widget> create_bg();
   menu menu_data;
   menu_widget(menu menu_data);
   popup_direction direction = popup_direction::bottom_right;
-  bool have_overlap = false;
   std::mutex data_lock;
 
   void reset_animation(bool reverse = false);

@@ -141,34 +141,39 @@ int main() {
     using namespace mb_shell;
     std::thread([]() {
       mb_shell::menu m{
-          .items = {
-              {.type = menu_item::type::button, .name = "层叠窗口(D)"},
-              {.type = menu_item::type::button, .name = "堆叠显示窗口(E)"},
-              {.type = menu_item::type::button, .name = "并排显示窗口(I)"},
-              {
-                  .type = menu_item::type::button,
-                  .name = "测试多层菜单",
-                  .submenu =
-                      []() {
-                        return menu{
-                            .items = {
-                                {.type = menu_item::type::button,
-                                 .name = "测试多层菜单1",
-                                 .submenu =
-                                     []() {
-                                       return menu{
-                                           .items = {
-                                               {.type = menu_item::type::button,
-                                                .name = "测试多层菜单1-1"},
-                                               {.type = menu_item::type::button,
-                                                .name = "测试多层菜单1-2"},
-                                               {.type = menu_item::type::button,
-                                                .name = "测试多层菜单1-3"},
-                                           }};
-                                     }},
-                            }};
-                      },
-              }}};
+          .items =
+              {{.type = menu_item::type::button, .name = "层叠窗口(D)"},
+               {.type = menu_item::type::button, .name = "堆叠显示窗口(E)"},
+               {.type = menu_item::type::button, .name = "并排显示窗口(I)"},
+               {
+                   .type = menu_item::type::button,
+                   .name = "测试多层菜单",
+                   .submenu =
+                       []() {
+                         return menu{
+                             .items = {
+                                 {.type = menu_item::type::button,
+                                  .name = "测试多层菜单1",
+                                  .submenu =
+                                      []() {
+                                        return menu{
+                                            .items = {
+                                                {.type =
+                                                     menu_item::type::button,
+                                                 .name = "测试多层菜单1-1"},
+                                                {.type =
+                                                     menu_item::type::button,
+                                                 .name = "测试多层菜单1-2"},
+                                                {.type =
+                                                     menu_item::type::button,
+                                                 .name = "测试多层菜单1-3"},
+                                            }};
+                                      }},
+                             }};
+                       },
+               }},
+          .is_top_level = true,
+      };
       menu_render = menu_render::create(100, 100, m);
       std::println("Current menu:2 {}", menu_render::current.has_value());
       menu_render->rt->start_loop();

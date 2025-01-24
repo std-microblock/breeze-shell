@@ -15,8 +15,9 @@ struct menu {
   std::vector<menu_item> items;
   std::string to_string();
   void *parent_window = nullptr;
+  bool is_top_level = false;
 
-  static menu construct_with_hmenu(HMENU hMenu, HWND hWnd);
+  static menu construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true);
 };
 
 struct menu_item {

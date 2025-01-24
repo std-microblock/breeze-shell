@@ -30,9 +30,15 @@ namespace ui {
 void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
+  cv.notify_all();
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
-  rect_widget::render(ctx);
+  widget::render(ctx);
+  cv.notify_all();
+
+  ctx.fillColor(bg_color);
+  ctx.fillRoundedRect(*x, *y, *width, *height, use_dwm ? 8.f : **radius);
+
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
 }
@@ -107,7 +113,10 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
 
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-      cv.wait_for(lk, std::chrono::milliseconds(20));
+      cv.wait_for(lk, std::chrono::milliseconds(200));
+
+      // limit to 60fps
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
       if ((width->updated() || height->updated() || radius->updated()) &&
           !use_dwm) {
@@ -125,6 +134,7 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
 }
 acrylic_background_widget::~acrylic_background_widget() {
   to_close = true;
+  std::println("Closing acrylic bg");
   cv.notify_all();
   render_thread.join();
 }

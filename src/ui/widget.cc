@@ -3,8 +3,8 @@
 #include <chrono>
 #include <thread>
 
-void ui::widget::update_children_basic(update_context &ctx,
-                                       std::shared_ptr<widget> &w) {
+void ui::widget::update_child_basic(update_context &ctx,
+                                    std::shared_ptr<widget> &w) {
   if (!w)
     return;
   // handle dying time
@@ -16,8 +16,8 @@ void ui::widget::update_children_basic(update_context &ctx,
   w->update(upd);
 }
 
-void ui::widget::render_children_basic(nanovg_context ctx,
-                                       std::shared_ptr<widget> &w) {
+void ui::widget::render_child_basic(nanovg_context ctx,
+                                    std::shared_ptr<widget> &w) {
   if (!w)
     return;
   ctx.save();
@@ -25,35 +25,17 @@ void ui::widget::render_children_basic(nanovg_context ctx,
   ctx.restore();
 }
 
-void ui::widget::render(nanovg_context ctx) {
-  float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
-  for (auto &child : children) {
-    render_children_basic(ctx, child);
-  }
-
-  ctx.offset_x = orig_offset_x;
-  ctx.offset_y = orig_offset_y;
-}
+void ui::widget::render(nanovg_context ctx) { render_children(ctx, children); }
 void ui::widget::update(update_context &ctx) {
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
   }
 
-  float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
-
-  for (auto &child : children) {
-    update_children_basic(ctx, child);
-  }
-
-  // Remove dead children
-  std::erase_if(children, [](auto &child) { return !child; });
-
-  ctx.offset_x = orig_offset_x;
-  ctx.offset_y = orig_offset_y;
-
   if (dying_time.has_value()) {
     *dying_time = std::max(0.f, *dying_time - ctx.delta_t);
   }
+
+  update_children(ctx, children);
 }
 void ui::widget::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
@@ -144,4 +126,19 @@ bool ui::widget::check_hit(const update_context &ctx) {
          ctx.mouse_x <= (x->dest() + width->dest() + ctx.offset_x) &&
          ctx.mouse_y >= (y->dest() + ctx.offset_y) &&
          ctx.mouse_y <= (y->dest() + height->dest() + ctx.offset_y);
+}
+void ui::widget::update_children(
+    update_context &ctx, std::vector<std::shared_ptr<widget>> &children) {
+  for (auto &child : children) {
+    update_child_basic(ctx, child);
+  }
+
+  // Remove dead children
+  std::erase_if(children, [](auto &child) { return !child; });
+}
+void ui::widget::render_children(
+    nanovg_context ctx, std::vector<std::shared_ptr<widget>> &children) {
+  for (auto &child : children) {
+    render_child_basic(ctx, child);
+  }
 }

@@ -84,6 +84,14 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 }
 void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   super::update(ctx);
+
+  if (parent_menu->dying_time) {
+    bg_opacity->animate_to(0);
+    opacity->animate_to(0);
+    height->animate_to(0);
+    return;
+  }
+
   if (ctx.mouse_down_on(this)) {
     bg_opacity->animate_to(40);
   } else if (ctx.hovered(this)) {
@@ -128,22 +136,22 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
             submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
         submenu_wid->direction = direction;
-        submenu_wid->have_overlap = ctx.rt.root->check_hit(
-            ui::update_context{.mouse_x = x / ctx.rt.dpi_scale,
-                               .mouse_y = y / ctx.rt.dpi_scale,
-                               .screen = ctx.screen,
-                               .rt = ctx.rt});
 
         submenu_wid->x->reset_to(x / ctx.rt.dpi_scale - ctx.offset_x);
         submenu_wid->y->reset_to(y / ctx.rt.dpi_scale - ctx.offset_y);
 
         submenu_wid->reset_animation(direction == popup_direction::top_left ||
                                      direction == popup_direction::top_right);
-      }
 
-      submenu_wid->update(ctx);
+        parent_menu->current_submenu = submenu_wid;
+        parent_menu->rendering_submenus.push_back(submenu_wid);
+      }
     } else {
       if (submenu_wid) {
+        submenu_wid->dying_time = 200;
+        if (parent_menu->current_submenu == submenu_wid) {
+          parent_menu->current_submenu = nullptr;
+        }
         submenu_wid = nullptr;
       }
     }
@@ -156,9 +164,9 @@ float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
          margin * 2 + icon_width + icon_padding * 2;
 }
-mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
-  gap = 5;
 
+std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
+  std::shared_ptr<ui::rect_widget> bg;
   if (menu_render::current.value()->style ==
       menu_render::menu_style::fluentui) {
     auto acrylic =
@@ -175,6 +183,7 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
     acrylic->update_color();
     bg = acrylic;
   }
+
   if (menu_render::current.value()->style ==
       menu_render::menu_style::materialyou) {
     bg->radius->reset_to(18);
@@ -182,9 +191,21 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
     bg->radius->reset_to(6);
   }
 
+  auto c = menu_render::current.value()->light_color ? 1 : 0;
+  bg->bg_color = nvgRGBAf(c, c, c, 0.3);
+
   bg->opacity->reset_to(0);
   bg->opacity->set_delay(80);
   bg->opacity->animate_to(255);
+  return bg;
+}
+
+mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
+  gap = 5;
+
+  if (menu.is_top_level) {
+    bg = create_bg();
+  }
 
   auto init_items = menu_data.items;
 
@@ -204,23 +225,79 @@ mb_shell::menu_widget::menu_widget(menu menu) : super(), menu_data(menu) {
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
   super::update(ctx);
-  bg->x->reset_to(x->dest());
-  bg->y->reset_to(y->dest() - bg_padding_vertical);
-  bg->width->reset_to(width->dest());
-  bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
-  bg->update(ctx);
 
-  ctx.mouse_clicked_on_hit(bg.get());
-  ctx.hovered_hit(bg.get());
+  if (dying_time) {
+    if (bg_submenu)
+      bg_submenu->opacity->animate_to(0);
+    if (bg)
+      bg->opacity->animate_to(0);
+  }
+
+  if (bg) {
+    bg->x->reset_to(x->dest());
+    bg->y->reset_to(y->dest() - bg_padding_vertical);
+    bg->width->reset_to(width->dest());
+    bg->height->reset_to(height->dest() + bg_padding_vertical * 2);
+    bg->update(ctx);
+  }
+
+  if (current_submenu) {
+    if (!bg_submenu) {
+      bg_submenu = create_bg();
+      bg_submenu->opacity->reset_to(0);
+      bg_submenu->opacity->set_delay(80);
+      bg_submenu->x->reset_to(current_submenu->x->dest() + ctx.offset_x + *x);
+      bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical +
+                              ctx.offset_y + *y);
+      bg_submenu->width->reset_to(current_submenu->width->dest());
+      bg_submenu->height->reset_to(current_submenu->height->dest() +
+                                   bg_padding_vertical * 2);
+    }
+
+    bg_submenu->dying_time = std::nullopt;
+    bg_submenu->opacity->animate_to(255);
+    bg_submenu->x->animate_to(current_submenu->x->dest() + ctx.offset_x + *x);
+    bg_submenu->y->animate_to(current_submenu->y->dest() - bg_padding_vertical +
+                              ctx.offset_y + *y);
+    bg_submenu->width->animate_to(current_submenu->width->dest());
+    bg_submenu->height->animate_to(current_submenu->height->dest() +
+                                   bg_padding_vertical * 2);
+  } else {
+    if (bg_submenu) {
+      if (!bg_submenu->dying_time)
+        bg_submenu->dying_time = 200;
+      bg_submenu->opacity->animate_to(0);
+
+      if (bg_submenu->dying_time.value() <= 0) {
+        bg_submenu = nullptr;
+      }
+    }
+  }
+
+  if (bg) {
+    ctx.mouse_clicked_on_hit(bg.get());
+    ctx.hovered_hit(bg.get());
+  }
+
+  if (bg_submenu) {
+    ctx.mouse_clicked_on_hit(bg_submenu.get());
+    ctx.hovered_hit(bg_submenu.get());
+    bg_submenu->update(ctx);
+  }
+
+  update_children(ctx, rendering_submenus);
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
-  auto c = menu_render::current.value()->light_color ? 1 : 0;
-  ctx.fillColor(nvgRGBAf(c, c, c, 0.6));
-  ctx.fillRoundedRect(*x, *y - bg_padding_vertical, *width,
-                      *height + 2 * bg_padding_vertical, 6);
+  render_children(ctx, rendering_submenus);
 
   std::lock_guard lock(data_lock);
-  bg->render(ctx);
+  if (bg) {
+    bg->render(ctx);
+  }
+
+  if (bg_submenu) {
+    bg_submenu->render(ctx);
+  }
   super::render(ctx);
 }
 void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
@@ -399,6 +476,8 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
       return popup_direction::top_right;
     }
   }
+
+  return popup_direction::bottom_right;
 }
 
 void mb_shell::mouse_menu_widget_main::calibrate_position(
@@ -454,7 +533,8 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item,
 }
 
 bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
-  auto hit = ui::widget::check_hit(ctx) || bg->check_hit(ctx) ||
+  auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
+             (bg_submenu && bg_submenu->check_hit(ctx)) ||
              std::ranges::any_of(
                  get_children<menu_item_widget>(), [&ctx, this](auto &child) {
                    return child->check_hit(ctx.with_offset(*x, *y));

@@ -68,7 +68,7 @@ std::wstring strip_extra_infos(std::wstring_view str) {
   return result;
 }
 
-menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
+menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
   menu m;
   SendMessageW(hWnd, WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu), 0xFFFFFFFF);
   
@@ -93,7 +93,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
 
     if (info.hSubMenu) {
       item.submenu = [=]() {
-        return construct_with_hmenu(info.hSubMenu, hWnd);
+        return construct_with_hmenu(info.hSubMenu, hWnd, false);
       };
     } else {
       item.action = [=]() mutable {
@@ -161,7 +161,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd) {
   }
 
   m.parent_window = hWnd;
-
+  m.is_top_level = is_top;
   return m;
 }
 } // namespace mb_shell

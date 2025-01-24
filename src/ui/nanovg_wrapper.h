@@ -1,6 +1,7 @@
 #pragma once
 #include "glad/glad.h"
 #include "nanovg.h"
+#include <functional>
 #include <utility>
 
 namespace ui {
@@ -164,6 +165,19 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     copy.offset_x = x + offset_x;
     copy.offset_y = y + offset_y;
     return copy;
+  }
+
+  inline void transaction(std::function<void()> f) {
+    save();
+    f();
+    restore();
+  }
+
+  template <typename T> inline T transaction(std::function<T()> f) {
+    save();
+    auto res = f();
+    restore();
+    return res;
   }
 };
 
