@@ -145,8 +145,8 @@ struct menu_item_widget : public ui::widget {
   }
 };
 
-struct menu_widget : public ui::widget_parent_flex {
-  using super = ui::widget_parent_flex;
+struct menu_widget : public ui::widget_flex {
+  using super = ui::widget_flex;
   float bg_padding_vertical = 6;
   float anchor_x = 0, anchor_y = 0;
   std::unique_ptr<ui::acrylic_background_widget> bg;

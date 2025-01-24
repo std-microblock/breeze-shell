@@ -2,8 +2,7 @@
 #include "ui.h"
 #include <chrono>
 #include <thread>
-void ui::widget_parent::render(nanovg_context ctx) {
-  widget::render(ctx);
+void ui::widget::render(nanovg_context ctx) {
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
     ctx.offset_x = *x + orig_offset_x;
@@ -16,8 +15,11 @@ void ui::widget_parent::render(nanovg_context ctx) {
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::update(update_context &ctx) {
-  widget::update(ctx);
+void ui::widget::update(update_context &ctx) {
+  for (auto anim : anim_floats) {
+    anim->update(ctx.delta_t);
+  }
+
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
 
   for (auto &child : children) {
@@ -29,15 +31,10 @@ void ui::widget_parent::update(update_context &ctx) {
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
 }
-void ui::widget_parent::add_child(std::shared_ptr<widget> child) {
+void ui::widget::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
-void ui::widget::update(update_context &ctx) {
-  for (auto anim : anim_floats) {
-    anim->update(ctx.delta_t);
-  }
-}
 bool ui::update_context::hovered(widget *w, bool hittest) const {
   if (hittest && !hovered_widgets.empty())
     return false;
@@ -46,8 +43,8 @@ bool ui::update_context::hovered(widget *w, bool hittest) const {
 }
 float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
 float ui::widget::measure_width(update_context &ctx) { return width->dest(); }
-void ui::widget_parent_flex::update(update_context &ctx) {
-  widget_parent::update(ctx);
+void ui::widget_flex::update(update_context &ctx) {
+  widget::update(ctx);
   float x = 0, y = 0;
   float target_width = 0, target_height = 0;
 
@@ -124,4 +121,3 @@ bool ui::widget::check_hit(const update_context &ctx) {
          ctx.mouse_y >= (y->dest() + ctx.offset_y) &&
          ctx.mouse_y <= (y->dest() + height->dest() + ctx.offset_y);
 }
-void ui::widget::render(nanovg_context ctx) {}

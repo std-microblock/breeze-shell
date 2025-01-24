@@ -14,7 +14,7 @@
 
 namespace ui {
 struct render_target {
-  std::shared_ptr<widget_parent> root;
+  std::shared_ptr<widget> root;
   GLFWwindow *window;
 
   NVGcontext *nvg;

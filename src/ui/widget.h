@@ -54,6 +54,11 @@ struct update_context {
 All the widgets in the tree should be wrapped in a shared_ptr.
 If you want to use a widget in multiple places, you should create a new instance
 for each place.
+
+It is responsible for updating and rendering its children
+It also sets the offset for the children
+It's like `posision: relative` in CSS
+While all other widgets are like `position: absolute`
 */
 struct widget : std::enable_shared_from_this<widget> {
   std::vector<sp_anim_float> anim_floats{};
@@ -77,18 +82,9 @@ struct widget : std::enable_shared_from_this<widget> {
   }
 
   virtual bool check_hit(const update_context &ctx);
-};
 
-// A widget that renders its children
-// It is responsible for updating and rendering its children
-// It also sets the offset for the children
-// It's like `posision: relative` in CSS
-// While all other widgets are like `position: absolute`
-struct widget_parent : public widget {
-  std::vector<std::shared_ptr<widget>> children;
-  void render(nanovg_context ctx) override;
-  void update(update_context &ctx) override;
   void add_child(std::shared_ptr<widget> child);
+  std::vector<std::shared_ptr<widget>> children;
   template <typename T, typename... Args>
   inline void emplace_child(Args &&...args) {
     children.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
@@ -115,7 +111,7 @@ struct widget_parent : public widget {
 };
 
 // A widget with child which lays out children in a row or column
-struct widget_parent_flex : public widget_parent {
+struct widget_flex : public widget {
   float gap = 0;
   bool horizontal = false;
   bool auto_size = true;

@@ -25,7 +25,7 @@ void render_target::start_loop() {
   }
 }
 std::expected<bool, std::string> render_target::init() {
-  root = std::make_shared<widget_parent>();
+  root = std::make_shared<widget>();
 
   std::ignore = init_global();
 
