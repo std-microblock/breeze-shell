@@ -273,19 +273,18 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
       }
     }
   }
+  update_children(ctx, rendering_submenus);
+
+  if (bg_submenu) {
+    bg_submenu->update(ctx);
+    ctx.mouse_clicked_on_hit(bg_submenu.get());
+    ctx.hovered_hit(bg_submenu.get());
+  }
 
   if (bg) {
     ctx.mouse_clicked_on_hit(bg.get());
     ctx.hovered_hit(bg.get());
   }
-
-  if (bg_submenu) {
-    ctx.mouse_clicked_on_hit(bg_submenu.get());
-    ctx.hovered_hit(bg_submenu.get());
-    bg_submenu->update(ctx);
-  }
-
-  update_children(ctx, rendering_submenus);
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   render_children(ctx, rendering_submenus);
