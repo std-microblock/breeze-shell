@@ -36,8 +36,9 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   cv.notify_all();
 
-  bg_color.a = *opacity / 255.f;
-  ctx.fillColor(bg_color);
+  auto bg_color_tmp = bg_color;
+  bg_color_tmp.a *= *opacity / 255.f;
+  ctx.fillColor(bg_color_tmp);
   ctx.fillRoundedRect(*x, *y, *width, *height, use_dwm ? 8.f : **radius);
 
   offset_x = ctx.offset_x;
