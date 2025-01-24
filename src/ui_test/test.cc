@@ -183,17 +183,54 @@ struct menu_widget : public ui::widget_flex {
     bg->y->reset_to(y->dest() - bg_padding_vertical);
     bg->update(ctx);
 
-    if (ctx.mouse_clicked) {
-      std::println("Clicked on menu");
-      auto i = items;
-      ctx.rt.root->children.clear();
-      ctx.rt.root->emplace_child<menu_widget>(i, ctx.mouse_x, ctx.mouse_y);
-    }
+    // if (ctx.mouse_clicked) {
+    //   std::println("Clicked on menu");
+    //   auto i = items;
+    //   ctx.rt.root->children.clear();
+    //   ctx.rt.root->emplace_child<menu_widget>(i, ctx.mouse_x, ctx.mouse_y);
+    // }
   }
 
   void render(ui::nanovg_context ctx) override {
     bg->render(ctx);
     super::render(ctx);
+  }
+};
+
+struct dying_widget_test : public ui::widget {
+  using super = ui::widget;
+  
+  ui::sp_anim_float opacity = anim_float(0, 200);
+
+  dying_widget_test() : super() {
+    x->animate_to(100);
+    y->animate_to(100);
+    width->animate_to(100);
+    height->animate_to(100);
+    opacity->animate_to(255);
+  }
+
+  void render(ui::nanovg_context ctx) override {
+    super::render(ctx);
+    std::println("Rendering dying widget");
+    ctx.fillColor(nvgRGBAf(1, 0, 0, *opacity / 255.f));
+    ctx.fillRect(*x, *y, *width, *height);
+  }
+
+
+  void update(ui::update_context &ctx) override {
+    super::update(ctx);
+    if (ctx.mouse_down_on(this)) {
+      dying_time = 200;
+    }
+
+    if (dying_time) {
+      opacity->animate_to(0);
+    } else if (ctx.hovered(this)) {
+      opacity->animate_to(128);
+    } else {
+      opacity->animate_to(255);
+    }    
   }
 };
 
@@ -212,6 +249,7 @@ int main() {
   }
 
   rt.root->emplace_child<menu_widget>(items, 20, 20);
+  rt.root->emplace_child<dying_widget_test>();
 
   nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 

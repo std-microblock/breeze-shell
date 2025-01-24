@@ -2,14 +2,33 @@
 #include "ui.h"
 #include <chrono>
 #include <thread>
+
+void ui::widget::update_children_basic(update_context &ctx,
+                                       std::shared_ptr<widget> &w) {
+  if (!w)
+    return;
+  // handle dying time
+  if (w->dying_time.has_value() && !*w->dying_time) {
+    w = nullptr;
+    return;
+  }
+  update_context upd = ctx.with_offset(*x, *y);
+  w->update(upd);
+}
+
+void ui::widget::render_children_basic(nanovg_context ctx,
+                                       std::shared_ptr<widget> &w) {
+  if (!w)
+    return;
+  ctx.save();
+  w->render(ctx.with_offset(*x, *y));
+  ctx.restore();
+}
+
 void ui::widget::render(nanovg_context ctx) {
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
   for (auto &child : children) {
-    ctx.offset_x = *x + orig_offset_x;
-    ctx.offset_y = *y + orig_offset_y;
-    ctx.save();
-    child->render(ctx);
-    ctx.restore();
+    render_children_basic(ctx, child);
   }
 
   ctx.offset_x = orig_offset_x;
@@ -23,13 +42,18 @@ void ui::widget::update(update_context &ctx) {
   float orig_offset_x = ctx.offset_x, orig_offset_y = ctx.offset_y;
 
   for (auto &child : children) {
-    ctx.offset_x = *x + orig_offset_x;
-    ctx.offset_y = *y + orig_offset_y;
-    child->update(ctx);
+    update_children_basic(ctx, child);
   }
+
+  // Remove dead children
+  std::erase_if(children, [](auto &child) { return !child; });
 
   ctx.offset_x = orig_offset_x;
   ctx.offset_y = orig_offset_y;
+
+  if (dying_time.has_value()) {
+    *dying_time = std::max(0.f, *dying_time - ctx.delta_t);
+  }
 }
 void ui::widget::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));

@@ -76,6 +76,11 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual ~widget() = default;
   virtual float measure_height(update_context &ctx);
   virtual float measure_width(update_context &ctx);
+  // Update children with the offset.
+  // Also deal with the dying time. (If the widget is died, it will be set to nullptr)
+  void update_children_basic(update_context &ctx, std::shared_ptr<widget> &w);
+  // Render children with the offset.
+  void render_children_basic(nanovg_context ctx, std::shared_ptr<widget> &w);
 
   template <typename T> inline auto downcast() {
     return std::dynamic_pointer_cast<T>(this->shared_from_this());
@@ -108,6 +113,10 @@ struct widget : std::enable_shared_from_this<widget> {
     }
     return res;
   }
+
+  // Time until the widget is removed from the tree
+  // in milliseconds
+  std::optional<float> dying_time;
 };
 
 // A widget with child which lays out children in a row or column
