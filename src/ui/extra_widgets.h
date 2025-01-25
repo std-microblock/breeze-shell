@@ -23,7 +23,6 @@ struct acrylic_background_widget : public rect_widget {
   void *hwnd;
   acrylic_background_widget(bool use_dwm = true);
   ~acrylic_background_widget();
-  sp_anim_float radius = anim_float(15, 200);
   bool use_dwm = true;
   NVGcolor acrylic_bg_color = nvgRGBAf(0, 0, 0, 0);
   std::thread render_thread;

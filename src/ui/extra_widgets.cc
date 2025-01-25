@@ -25,6 +25,10 @@ void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
   cv.notify_all();
+
+  if (use_dwm) {
+    radius->reset_to(8.f);
+  }
 }
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
@@ -33,7 +37,7 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   auto bg_color_tmp = bg_color;
   bg_color_tmp.a *= *opacity / 255.f;
   ctx.fillColor(bg_color_tmp);
-  ctx.fillRoundedRect(*x, *y, *width, *height, use_dwm ? 8.f : **radius);
+  ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
 
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;

@@ -167,6 +167,12 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     return copy;
   }
 
+  inline nanovg_context with_reset_offset(float x = 0, float y = 0) {
+    auto copy = *this;
+    copy.offset_x = x;
+    copy.offset_y = y;
+    return copy;
+  }
 
   struct TransactionScope {
     nanovg_context &ctx;

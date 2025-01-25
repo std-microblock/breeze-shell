@@ -291,18 +291,26 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   std::lock_guard lock(data_lock);
   if (bg) {
     bg->render(ctx);
+    ctx.transaction([&]() {
+      ctx.globalCompositeOperation(NVG_COPY);
+      ctx.fillColor(bg->bg_color);
+      ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width,
+                          *bg->height, *bg->radius);
+    });
   }
 
   if (bg_submenu) {
-    bg_submenu->render(ctx);
+    bg_submenu->render(ctx.with_reset_offset());
+    ctx.transaction([&]() {
+      ctx.globalCompositeOperation(NVG_COPY);
+      auto c = bg_submenu->bg_color;
+      c.a *= *bg_submenu->opacity / 255.f;
+      ctx.fillColor(c);
+      ctx.with_reset_offset().fillRoundedRect(*bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
+                          *bg_submenu->height, *bg_submenu->radius);
+    });
   }
 
-  ctx.transaction([&]() {
-    ctx.globalCompositeOperation(NVG_COPY);
-    auto c = menu_render::current.value()->light_color ? 1 : 0;
-    ctx.fillColor(nvgRGBAf(c, c, c, 0.3));
-    ctx.fillRect(*x, *y, *width, *height);
-  });
   super::render(ctx);
 
   render_children(ctx, rendering_submenus);
