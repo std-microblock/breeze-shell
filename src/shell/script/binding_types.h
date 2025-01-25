@@ -178,6 +178,24 @@ struct menu_controller {
       std::function<void(mb_shell::js::menu_info_basic_js)> listener);
   ~menu_controller();
 };
+
+// system api bindings
+struct clipboard {
+  static std::string get_text();
+  static void set_text(std::string text);
+};
+
+struct network {
+  static std::string get(std::string url);
+  static std::string post(std::string url, std::string data);
+  static void get_async(std::string url,
+                        std::function<void(std::string)> callback);
+  static void post_async(std::string url, std::string data,
+                         std::function<void(std::string)> callback);
+};
+
+
+
 } // namespace mb_shell::js
 
 namespace mb_shell {

@@ -1,5 +1,5 @@
 declare module "qjs:os" {
-  import { Seek, Error } from "std";
+  import { Seek, Error } from "qjs:std";
 
   type Success = 0;
   type OSOperationResult = Success | Error;

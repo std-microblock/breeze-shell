@@ -8,6 +8,8 @@
 #include "../contextmenu/menu_render.h"
 #include "../contextmenu/menu_widget.h"
 
+#include "wininet.h"
+
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
@@ -246,5 +248,92 @@ void menu_controller::$update_icon_width() {
       mi->icon_width = 16;
     }
   }
+}
+std::string clipboard::get_text() {
+  if (!OpenClipboard(nullptr))
+    return "";
+
+  HANDLE hData = GetClipboardData(CF_TEXT);
+  if (hData == nullptr) {
+    CloseClipboard();
+    return "";
+  }
+
+  char *pszText = static_cast<char *>(GlobalLock(hData));
+  std::string text(pszText);
+
+  GlobalUnlock(hData);
+  CloseClipboard();
+  return text;
+}
+
+void clipboard::set_text(std::string text) {
+  if (!OpenClipboard(nullptr))
+    return;
+
+  EmptyClipboard();
+  HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+  if (hData == nullptr) {
+    CloseClipboard();
+    return;
+  }
+
+  char *pszData = static_cast<char *>(GlobalLock(hData));
+  strcpy_s(pszData, text.size() + 1, text.c_str());
+  GlobalUnlock(hData);
+
+  SetClipboardData(CF_TEXT, hData);
+  CloseClipboard();
+}
+
+std::string network::post(std::string url, std::string data) {
+  HINTERNET hInternet =
+      InternetOpenA("HTTP", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+  if (!hInternet)
+    return "";
+
+  HINTERNET hConnect =
+      InternetOpenUrlA(hInternet, url.c_str(), data.c_str(), data.length(),
+                       INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
+  if (!hConnect) {
+    InternetCloseHandle(hInternet);
+    return "";
+  }
+
+  std::string response;
+  char buffer[1024];
+  DWORD bytesRead;
+  while (InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead) &&
+         bytesRead > 0) {
+    response.append(buffer, bytesRead);
+  }
+
+  InternetCloseHandle(hConnect);
+  InternetCloseHandle(hInternet);
+  return response;
+}
+
+std::string network::get(std::string url) { return post(url, ""); }
+
+void network::get_async(std::string url,
+                        std::function<void(std::string)> callback) {
+  std::thread([url, callback]() {
+    try {
+      callback(get(url));
+    } catch (std::exception &e) {
+      std::cerr << "Error in network::get_async: " << e.what() << std::endl;
+    }
+  }).detach();
+}
+
+void network::post_async(std::string url, std::string data,
+                         std::function<void(std::string)> callback) {
+  std::thread([url, data, callback]() {
+    try {
+      callback(post(url, data));
+    } catch (std::exception &e) {
+      std::cerr << "Error in network::post_async: " << e.what() << std::endl;
+    }
+  }).detach();
 }
 } // namespace mb_shell::js

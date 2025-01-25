@@ -505,6 +505,56 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::clipboard> {
+    static mb_shell::js::clipboard unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::clipboard obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::clipboard &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::clipboard> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::clipboard>("clipboard")
+            .constructor<>()
+                .static_fun<&mb_shell::js::clipboard::get_text>("get_text")
+                .static_fun<&mb_shell::js::clipboard::set_text>("set_text")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::network> {
+    static mb_shell::js::network unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::network obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::network &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::network> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::network>("network")
+            .constructor<>()
+                .static_fun<&mb_shell::js::network::get>("get")
+                .static_fun<&mb_shell::js::network::post>("post")
+                .static_fun<&mb_shell::js::network::get_async>("get_async")
+                .static_fun<&mb_shell::js::network::post_async>("post_async")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -528,5 +578,9 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::menu_info_basic_js>::bind(mod);
 
     js_bind<mb_shell::js::menu_controller>::bind(mod);
+
+    js_bind<mb_shell::js::clipboard>::bind(mod);
+
+    js_bind<mb_shell::js::network>::bind(mod);
 
 }

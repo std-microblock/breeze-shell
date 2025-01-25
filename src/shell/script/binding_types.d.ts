@@ -137,9 +137,23 @@ export class menu_controller {
 	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
 }
     
+export class clipboard {
+	
+	static get_text: (() => string)
+	static set_text: ((arg1: string) => void)
+}
+    
+export class network {
+	
+	static get: ((arg1: string) => string)
+	static post: ((arg1: string, arg2: string) => string)
+	static get_async: ((arg1: string, arg2: ((arg1: string) => void)) => void)
+	static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void)) => void)
+}
+    
 }
 declare module "qjs:os" {
-  import { Seek, Error } from "std";
+  import { Seek, Error } from "qjs:std";
 
   type Success = 0;
   type OSOperationResult = Success | Error;
