@@ -112,14 +112,82 @@ shell.menu_controller.add_menu_listener((e) => {
             }, 0)
         }
 
+        // e.menu.add_menu_item_after({
+        //     type: 'button',
+        //     name: '测试运行命令',
+        //     action: () => {
+        //         shell.subproc.run_async(`7z`, ({ code, out, err }) => {
+        //             shell.println(`code: ${code}, out: ${out}`)
+        //         })
+        //     }
+        // }, 0)
+
         e.menu.add_menu_item_after({
             type: 'button',
-            name: '测试运行命令',
+            name: '复制当前路径',
             action: () => {
-                shell.subproc.run_async(`7z`, ({ code, out, err }) => {
-                    shell.println(`code: ${code}, out: ${out}`)
-                })
+                shell.clipboard.set_text(e.context.folder_view.current_path)
+                e.menu.close()
             }
         }, 0)
+
+        e.menu.add_menu_item_after({
+            type: 'button',
+            name: '重启资源管理器',
+            action: () => {
+                shell.subproc.run('cmd /c taskkill /f /im explorer.exe && start explorer.exe')
+                e.menu.close()
+            }
+        }, 0)
+
+        const openWithMenus = e.menu.get_menu_items()
+            .filter(menu => menu.get_data().name?.includes('打开')
+                || menu.get_data().name?.includes('Open'))
+        e.menu.add_menu_item_after({
+            type: 'button',
+            name: '用...打开',
+            submenu: openWithMenus.map(menu => ({
+                type: 'button',
+                name: menu.get_data().name,
+                action: menu.get_data().action
+            }))
+        }, 0)
+
+        openWithMenus.map(v => v.remove())
+
+        // fold 查看, 排序方式, 分组 into one menu named 视图
+        const viewMenus = e.menu.get_menu_items().filter(
+            menu => menu.get_data().name?.includes('查看')
+                || menu.get_data().name?.includes('排序方式')
+                || menu.get_data().name?.includes('分组')
+                || menu.get_data().name?.includes('刷新')
+                || menu.get_data().name?.includes('自定义文件夹')
+                || menu.get_data().name?.includes('授予访问权限')
+        )
+
+        e.menu.add_menu_item_after({
+            type: 'button',
+            name: '视图',
+            submenu: viewMenus.map(menu => ({
+                type: 'button',
+                name: menu.get_data().name,
+                action: menu.get_data().action
+            }))
+        }, 0)
+
+        viewMenus.map(v => v.remove())
+
+        // remove two near spacers
+        let is_spacer = false
+        e.menu.get_menu_items().forEach(menu => {
+            if (menu.get_data().type === 'spacer') {
+                if (is_spacer) {
+                    menu.remove()
+                }
+                is_spacer = true
+            } else {
+                is_spacer = false
+            }
+        })
     }
 })
