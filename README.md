@@ -6,7 +6,7 @@
 [中文](./README_zh.md)
 
 <div align=center>
-  <img src=./resources/icon.svg />
+  <img src=./resources/icon.svg width=200 />
 <h1>Breeze Shell</h1>
 <h5>Bring fluency & delication back to Windows</h5>
 <div>
