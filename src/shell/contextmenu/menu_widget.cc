@@ -50,10 +50,11 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
   ctx.fontFace("Yahei");
-  ctx.fontSize(14);
-
-  ctx.text(floor(*x + text_padding + icon_width + icon_padding * 2), *y + 16,
-           item.name->c_str(), nullptr);
+  auto font_size = 14;
+  ctx.fontSize(font_size);
+  ctx.textAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+  ctx.text(round(*x + text_padding + icon_width + icon_padding * 2),
+           round(*y + *height / 2), item.name->c_str(), nullptr);
 
   if (item.submenu) {
     // draw arrow
