@@ -301,8 +301,8 @@ void menu_controller::$update_icon_width() {
   auto m = $menu.lock();
 
   bool has_icon = std::ranges::any_of(m->children, [](auto &item) {
-    return item->template downcast<menu_item_widget>()
-        ->icon_img_bmp.has_value();
+    auto i = item->template downcast<menu_item_widget>()->item;
+    return i.icon_bitmap.has_value() || i.type == menu_item::type::toggle;
   });
 
   for (auto &item : m->children) {

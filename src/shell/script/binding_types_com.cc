@@ -92,7 +92,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
         if (focusIndex >= 0) {
           PIDLIST_ABSOLUTE pidl;
           if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
-            fv->selected_file_path = folder_id_to_path(pidl);
+            fv->focused_file_path = folder_id_to_path(pidl);
             CoTaskMemFree(pidl);
           }
         }
@@ -105,6 +105,25 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
             CoTaskMemFree(pszPath);
           }
           psi->Release();
+        }
+
+        IShellItemArray *psia;
+        if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray, (void **)&psia))) {
+          DWORD count;
+          if (SUCCEEDED(psia->GetCount(&count))) {
+            for (DWORD i = 0; i < count; i++) {
+              IShellItem *psi;
+              if (SUCCEEDED(psia->GetItemAt(i, &psi))) {
+                PWSTR pszPath;
+                if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                  fv->selected_files.push_back(mb_shell::wstring_to_utf8(pszPath));
+                  CoTaskMemFree(pszPath);
+                }
+                psi->Release();
+              }
+            }
+          }
+          psia->Release();
         }
 
         pfv->Release();

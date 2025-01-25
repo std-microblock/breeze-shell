@@ -56,7 +56,9 @@ template <> struct qjs::js_traits<mb_shell::js::folder_view_controller> {
     
         obj.current_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "current_path"));
         
-        obj.selected_file_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "selected_file_path"));
+        obj.focused_file_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "focused_file_path"));
+        
+        obj.selected_files = js_traits<std::vector<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "selected_files"));
         
         return obj;
     }
@@ -66,7 +68,9 @@ template <> struct qjs::js_traits<mb_shell::js::folder_view_controller> {
     
         JS_SetPropertyStr(ctx, obj, "current_path", js_traits<std::string>::wrap(ctx, val.current_path));
         
-        JS_SetPropertyStr(ctx, obj, "selected_file_path", js_traits<std::string>::wrap(ctx, val.selected_file_path));
+        JS_SetPropertyStr(ctx, obj, "focused_file_path", js_traits<std::string>::wrap(ctx, val.focused_file_path));
+        
+        JS_SetPropertyStr(ctx, obj, "selected_files", js_traits<std::vector<std::string>>::wrap(ctx, val.selected_files));
         
         return obj;
     }
@@ -88,7 +92,8 @@ template<> struct js_bind<mb_shell::js::folder_view_controller> {
                 .fun<&mb_shell::js::folder_view_controller::cut>("cut")
                 .fun<&mb_shell::js::folder_view_controller::paste>("paste")
                 .fun<&mb_shell::js::folder_view_controller::current_path>("current_path")
-                .fun<&mb_shell::js::folder_view_controller::selected_file_path>("selected_file_path")
+                .fun<&mb_shell::js::folder_view_controller::focused_file_path>("focused_file_path")
+                .fun<&mb_shell::js::folder_view_controller::selected_files>("selected_files")
             ;
     }
 

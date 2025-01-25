@@ -31,7 +31,8 @@ struct folder_view_controller {
   /* IShellBrowser* */
   void *$controller;
   std::string current_path;
-  std::string selected_file_path;
+  std::string focused_file_path;
+  std::vector<std::string> selected_files;
 
   void change_folder(std::string new_folder_path);
   void focus_file(std::string file_path);

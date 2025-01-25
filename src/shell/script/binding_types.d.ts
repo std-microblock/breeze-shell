@@ -14,7 +14,8 @@ export class example_struct_jni {
     
 export class folder_view_controller {
 	current_path: string
-	selected_file_path: string
+	focused_file_path: string
+	selected_files: Array<string>
 	change_folder: ((arg1: string) => void)
 	focus_file: ((arg1: string) => void)
 	open_file: ((arg1: string) => void)

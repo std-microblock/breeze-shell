@@ -21,4 +21,26 @@ shell.menu_controller.add_menu_listener((e) => {
             }
         }, index - 4)
     }
+
+    if(e.context.folder_view) {
+        e.menu.add_menu_item_after({
+            type: 'button',
+            name: `选中了 ${e.context.folder_view.selected_files.length} 个文件`,
+            action: () => {
+                e.menu.close()
+            }, 
+            submenu: [
+                {
+                    type: 'button',
+                    name: '打印文件名',
+                    action: () => {
+                        e.context.folder_view.selected_files.forEach(file => {
+                            console.log(file.name)
+                        })
+                        e.menu.close()
+                    }
+                }
+            ]
+        }, 1)
+    }
 })
