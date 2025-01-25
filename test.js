@@ -18,13 +18,14 @@ try {
 
         e.menu.add_menu_item_after({
             type: 'button',
-            name: 'Shuffle Buttons',
+            name: 'Shuffle Buttons51211212',
             action: () => {
                 for (const item of menus) {
                     item.set_position(Math.floor(menus.length * Math.random()))
                 }
             },
-        }, index)
+        }, 0)
+
 
         // a.menu?.add_menu_item_after({
         //     type: 'button',

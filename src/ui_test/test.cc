@@ -1,3 +1,4 @@
+#include "GLFW/glfw3.h"
 #include "animator.h"
 #include "extra_widgets.h"
 #include "ui.h"
@@ -236,23 +237,59 @@ struct dying_widget_test : public ui::widget {
 
 int main() {
 
-  if (auto res = ui::render_target::init_global(); !res) {
-    std::println("Failed to initialize global render target: {}", res.error());
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+
+  auto window = glfwCreateWindow(800, 600, "Test", nullptr, nullptr);
+  if (!window) {
+    std::println("Failed to create window");
     return 1;
   }
 
-  ui::render_target rt;
+  glfwMakeContextCurrent(window);
 
-  if (auto res = rt.init(); !res) {
-    std::println("Failed to initialize render target: {}", res.error());
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    std::println("Failed to initialize GLAD");
     return 1;
   }
 
-  rt.root->emplace_child<menu_widget>(items, 20, 20);
-  rt.root->emplace_child<dying_widget_test>();
+  while (!glfwWindowShouldClose(window)) {
+    glClearColor(0.1, 0.1, 0.1, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    glBegin(GL_TRIANGLES);
+    glColor3f(1, 0, 0);
+    glVertex2f(-0.5, -0.5);
+    glColor3f(0, 1, 0);
+    glVertex2f(0.5, -0.5);
+    glColor3f(0, 0, 1);
+    
 
-  nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+  }
 
-  rt.start_loop();
-  return 0;
+  // if (auto res = ui::render_target::init_global(); !res) {
+  //   std::println("Failed to initialize global render target: {}", res.error());
+  //   return 1;
+  // }
+
+  // ui::render_target rt;
+
+  // if (auto res = rt.init(); !res) {
+  //   std::println("Failed to initialize render target: {}", res.error());
+  //   return 1;
+  // }
+
+  // rt.root->emplace_child<menu_widget>(items, 20, 20);
+  // rt.root->emplace_child<dying_widget_test>();
+
+  // nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+
+  // rt.start_loop();
+  // return 0;
 }

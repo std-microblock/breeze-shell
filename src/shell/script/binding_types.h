@@ -16,8 +16,10 @@ struct menu_info_basic {
   std::string from;
   std::shared_ptr<mb_shell::mouse_menu_widget_main> menu;
 };
+
+// TODO: support multiple menus
 extern std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
-    menu_callbacks;
+    menu_callbacks_js;
 } // namespace mb_shell
 
 namespace mb_shell::js {

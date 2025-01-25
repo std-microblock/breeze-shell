@@ -56,7 +56,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   rt->root->children.push_back(menu_wid);
 
-  for (auto &listener : menu_callbacks) {
+  for (auto &listener : menu_callbacks_js) {
     listener->operator()({menu_info_basic{.from = "menu", .menu = menu_wid}});
   }
 
@@ -69,5 +69,28 @@ menu_render menu_render::create(int x, int y, menu menu) {
   nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
   std::println("Current menu: {}", menu_render::current.has_value());
   return render;
+}
+
+menu_render::menu_render(std::unique_ptr<ui::render_target> rt,
+                         std::optional<int> selected_menu)
+    : rt(std::move(rt)), selected_menu(selected_menu) {
+  current = this;
+}
+menu_render::~menu_render() {
+  if (this->rt) {
+    current = nullptr;
+  }
+}
+menu_render::menu_render(menu_render &&t) {
+  current = this;
+
+  rt = std::move(t.rt);
+  selected_menu = std::move(t.selected_menu);
+}
+menu_render &menu_render::operator=(menu_render &&t) {
+  current = this;
+  rt = std::move(t.rt);
+  selected_menu = std::move(t.selected_menu);
+  return *this;
 }
 }; // namespace mb_shell

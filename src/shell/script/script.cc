@@ -27,7 +27,8 @@ void script_context::eval_file(const std::filesystem::path &path) {
     js->eval(script, path.generic_string().c_str(), JS_EVAL_TYPE_MODULE);
 
     std::thread([this]() {
-      while (1) {
+      auto ctx = js->ctx;
+      while (ctx == js->ctx) {
         js_std_loop(js->ctx);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
@@ -42,6 +43,7 @@ void script_context::eval_file(const std::filesystem::path &path) {
 void script_context::watch_file(const std::filesystem::path &path,
                                 std::function<void()> on_reload) {
   auto last_mod = std::filesystem::last_write_time(path);
+  // auto last_mod = std::filesystem::file_time_type::min();
   eval_file(path);
   on_reload();
   while (true) {
@@ -49,6 +51,7 @@ void script_context::watch_file(const std::filesystem::path &path,
     auto new_mod = std::filesystem::last_write_time(path);
     if (new_mod != last_mod) {
       last_mod = new_mod;
+      menu_callbacks_js.clear();
       rt = std::make_unique<qjs::Runtime>();
       js = std::make_unique<qjs::Context>(*rt);
       bind();

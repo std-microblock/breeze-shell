@@ -79,28 +79,6 @@ void main() {
     return menu_render.selected_menu.value_or(0);
   });
 }
-menu_render::menu_render(std::unique_ptr<ui::render_target> rt,
-                         std::optional<int> selected_menu)
-    : rt(std::move(rt)), selected_menu(selected_menu) {
-  current = this;
-}
-menu_render::~menu_render() {
-  if (this->rt) {
-    current = nullptr;
-  }
-}
-menu_render::menu_render(menu_render &&t) {
-  current = this;
-
-  rt = std::move(t.rt);
-  selected_menu = std::move(t.selected_menu);
-}
-menu_render &menu_render::operator=(menu_render &&t) {
-  current = this;
-  rt = std::move(t.rt);
-  selected_menu = std::move(t.selected_menu);
-  return *this;
-}
 } // namespace mb_shell
 
 int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {

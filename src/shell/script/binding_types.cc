@@ -5,7 +5,7 @@
 #include <mutex>
 namespace mb_shell {
 std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
-    menu_callbacks;
+    menu_callbacks_js;
 bool js::menu_controller::valid() { return !$menu.expired(); }
 bool js::menu_controller::add_menu_item_after(js_menu_data data,
                                               int after_index) {
@@ -137,23 +137,12 @@ std::function<void()> js::menu_controller::add_menu_listener(
   };
   auto ptr =
       std::make_shared<std::function<void(menu_info_basic)>>(listener_cvt);
-  menu_callbacks.insert(ptr);
-    // $listeners_to_dispose.insert(ptr.get());
+  menu_callbacks_js.insert(ptr);
   return [ptr]() {
-    menu_callbacks.erase(ptr);
-    // $listeners_to_dispose.erase(ptr.get());
+    menu_callbacks_js.erase(ptr);
   };
 }
 js::menu_controller::~menu_controller() {
-  //   for (auto &listener : $listeners_to_dispose) {
-  //     for (auto it = menu_callbacks.begin(); it != menu_callbacks.end();
-  //     ++it) {
-  //       if (it->get() == listener) {
-  //         menu_callbacks.erase(it);
-  //         break;
-  //       }
-  //     }
-  //   }
 }
 void js::menu_item_controller::set_position(int new_index) {
   if (!valid())
