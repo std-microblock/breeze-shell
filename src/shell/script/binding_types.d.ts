@@ -26,6 +26,15 @@ export class js_menu_data {
 	
 }
     
+export class menu_item_controller {
+	
+	set_position: ((arg1: number) => void)
+	set_data: ((arg1: js_menu_data) => void)
+	get_data: (() => js_menu_data)
+	remove: (() => void)
+	valid: (() => boolean)
+}
+    
 export class menu_item_data {
 	type: string
 	name: string | undefined
@@ -45,8 +54,8 @@ export class menu_controller {
 	set_menu_item: ((arg1: number, arg2: js_menu_data) => boolean)
 	set_menu_item_position: ((arg1: number, arg2: number) => boolean)
 	remove_menu_item: ((arg1: number) => boolean)
-	get_menu_items: (() => Array<menu_item_data>)
-	get_menu_item: ((arg1: number) => menu_item_data)
+	get_menu_items: (() => Array<menu_item_controller>)
+	get_menu_item: ((arg1: number) => menu_item_controller)
 	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
 }
     

@@ -426,53 +426,53 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
   auto menu_width = menu_wid->measure_width(ctx);
   auto menu_height = menu_wid->measure_height(ctx);
 
-  bool top_have_to_revert =
+  bool bottom_overflow =
       (anchor_y + menu_height * ctx.rt.dpi_scale > ctx.screen.height);
-  bool top_can_revert = (anchor_y - menu_height * ctx.rt.dpi_scale > 0);
+  bool top_overflow = (anchor_y - menu_height * ctx.rt.dpi_scale > 0);
 
-  bool left_have_to_revert =
+  bool right_overflow =
       (anchor_x + menu_width * ctx.rt.dpi_scale > ctx.screen.width);
-  bool left_can_revert = (anchor_x - menu_width * ctx.rt.dpi_scale > 0);
+  bool left_overflow = (anchor_x - menu_width * ctx.rt.dpi_scale > 0);
 
   if (prefer_direction == popup_direction::top_left) {
-    if (top_have_to_revert && left_can_revert) {
+    if (!top_overflow && !left_overflow) {
       return popup_direction::top_left;
-    } else if (top_can_revert && left_have_to_revert) {
-      return popup_direction::bottom_right;
-    } else if (top_have_to_revert) {
+    } else if (!top_overflow && !right_overflow) {
       return popup_direction::top_right;
-    } else if (left_have_to_revert) {
+    } else if (!bottom_overflow && !left_overflow) {
       return popup_direction::bottom_left;
+    } else {
+      return popup_direction::bottom_right;
     }
   } else if (prefer_direction == popup_direction::top_right) {
-    if (top_have_to_revert && left_have_to_revert) {
+    if (!top_overflow && !right_overflow) {
       return popup_direction::top_right;
-    } else if (top_can_revert && left_can_revert) {
-      return popup_direction::bottom_left;
-    } else if (top_have_to_revert) {
+    } else if (!top_overflow && !left_overflow) {
       return popup_direction::top_left;
-    } else if (left_have_to_revert) {
+    } else if (!bottom_overflow && !right_overflow) {
       return popup_direction::bottom_right;
+    } else {
+      return popup_direction::bottom_left;
     }
   } else if (prefer_direction == popup_direction::bottom_left) {
-    if (top_can_revert && left_can_revert) {
+    if (!bottom_overflow && !left_overflow) {
       return popup_direction::bottom_left;
-    } else if (top_have_to_revert && left_have_to_revert) {
-      return popup_direction::top_right;
-    } else if (top_can_revert) {
+    } else if (!bottom_overflow && !right_overflow) {
       return popup_direction::bottom_right;
-    } else if (left_can_revert) {
+    } else if (!top_overflow && !left_overflow) {
       return popup_direction::top_left;
+    } else {
+      return popup_direction::top_right;
     }
-  } else {
-    if (top_can_revert && left_have_to_revert) {
+  } else if (prefer_direction == popup_direction::bottom_right) {
+    if (!bottom_overflow && !right_overflow) {
       return popup_direction::bottom_right;
-    } else if (top_have_to_revert && left_can_revert) {
-      return popup_direction::top_left;
-    } else if (top_can_revert) {
+    } else if (!bottom_overflow && !left_overflow) {
       return popup_direction::bottom_left;
-    } else if (left_have_to_revert) {
+    } else if (!top_overflow && !right_overflow) {
       return popup_direction::top_right;
+    } else {
+      return popup_direction::top_left;
     }
   }
 

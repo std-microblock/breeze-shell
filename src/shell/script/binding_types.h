@@ -9,6 +9,9 @@
 
 namespace mb_shell {
 struct mouse_menu_widget_main;
+struct menu_item_widget;
+struct menu_widget;
+
 struct menu_info_basic {
   std::string from;
   std::shared_ptr<mb_shell::mouse_menu_widget_main> menu;
@@ -34,11 +37,20 @@ struct js_menu_action_event_data {};
 struct js_menu_data {
   std::optional<std::string> type;
   std::optional<std::string> name;
-  std::optional<std::vector<std::shared_ptr<mb_shell::js::js_menu_data>>>
-      submenu;
+  std::optional<std::vector<mb_shell::js::js_menu_data>> submenu;
   std::optional<std::function<void(mb_shell::js::js_menu_action_event_data)>>
       action;
   std::optional<std::string> icon_path;
+};
+
+struct menu_item_controller {
+  std::weak_ptr<mb_shell::menu_item_widget> $item;
+  std::weak_ptr<mb_shell::menu_widget> $menu;
+  void set_position(int new_index);
+  void set_data(mb_shell::js::js_menu_data data);
+  js_menu_data get_data();
+  void remove();
+  bool valid();
 };
 
 struct menu_item_data {
@@ -53,7 +65,7 @@ struct menu_info_basic_js {
 };
 
 struct menu_controller {
-  std::weak_ptr<mb_shell::mouse_menu_widget_main> $menu;
+  std::weak_ptr<mb_shell::menu_widget> $menu;
 
   bool valid();
   bool add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
@@ -71,11 +83,12 @@ struct menu_controller {
   bool set_menu_item_position(int index, int new_index);
   bool remove_menu_item(int index);
 
-  std::vector<std::shared_ptr<mb_shell::js::menu_item_data>> get_menu_items();
-  std::shared_ptr<mb_shell::js::menu_item_data> get_menu_item(int index);
+  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
+  get_menu_items();
+  std::shared_ptr<mb_shell::js::menu_item_controller> get_menu_item(int index);
 
-  static std::function<void()>
-  add_menu_listener(std::function<void(mb_shell::js::menu_info_basic_js)> listener);
+  static std::function<void()> add_menu_listener(
+      std::function<void(mb_shell::js::menu_info_basic_js)> listener);
   ~menu_controller();
 };
 } // namespace mb_shell::js
