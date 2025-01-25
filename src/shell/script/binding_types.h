@@ -158,7 +158,6 @@ struct menu_controller {
   std::shared_ptr<mb_shell::js::menu_item_controller>
   add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
   void $update_icon_width();
-  bool set_menu_item(int index, mb_shell::js::js_menu_data data);
   /*
     0 - a
     1 - b
@@ -168,8 +167,6 @@ struct menu_controller {
     1 - c
     2 - a
    */
-  bool set_menu_item_position(int index, int new_index);
-  bool remove_menu_item(int index);
 
   void close();
 

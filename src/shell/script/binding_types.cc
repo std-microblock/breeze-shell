@@ -26,27 +26,10 @@ menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
   std::ignore = lock.try_lock();
 
   menu_item item;
-
-  if (data.type) {
-    if (*data.type == "spacer") {
-      item.type = menu_item::type::spacer;
-    }
-    if (*data.type == "button") {
-      item.type = menu_item::type::button;
-    }
-  } else {
-    item.type = menu_item::type::button;
-  }
-
-  if (data.name) {
-    item.name = *data.name;
-  }
-
-  if (data.action) {
-    item.action = [data]() { data.action.value()({}); };
-  }
-
   auto new_item = std::make_shared<menu_item_widget>(item, m.get());
+  auto ctl = std::make_shared<menu_item_controller>(new_item, m);
+
+  ctl->set_data(data);
 
   if (after_index >= m->children.size()) {
     m->children.push_back(new_item);
@@ -56,76 +39,7 @@ menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
 
   $update_icon_width();
 
-  return std::make_shared<menu_item_controller>(new_item, m);
-}
-bool menu_controller::set_menu_item(int index, js_menu_data data) {
-  if (!valid())
-    return false;
-  auto m = $menu.lock();
-  if (!m)
-    return false;
-
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
-
-  if (index >= m->children.size())
-    return false;
-
-  auto item = m->children[index]->downcast<menu_item_widget>();
-
-  if (data.type) {
-    if (*data.type == "spacer") {
-      item->item.type = menu_item::type::spacer;
-    }
-    if (*data.type == "button") {
-      item->item.type = menu_item::type::button;
-    }
-  }
-
-  if (data.name) {
-    item->item.name = *data.name;
-  }
-
-  if (data.action) {
-    item->item.action = [data]() { data.action.value()({}); };
-  }
-
-  return true;
-}
-bool menu_controller::set_menu_item_position(int index, int new_index) {
-  if (!valid())
-    return false;
-  auto m = $menu.lock();
-  if (!m)
-    return false;
-
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
-
-  if (index >= m->children.size() || new_index >= m->children.size())
-    return false;
-
-  auto item = m->children[index];
-  m->children.erase(m->children.begin() + index);
-  m->children.insert(m->children.begin() + new_index, item);
-
-  return true;
-}
-bool menu_controller::remove_menu_item(int index) {
-  if (!valid())
-    return false;
-  auto m = $menu.lock();
-  if (!m)
-    return false;
-
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
-
-  if (index >= m->children.size())
-    return false;
-
-  m->children.erase(m->children.begin() + index);
-  return true;
+  return ctl;
 }
 std::function<void()> menu_controller::add_menu_listener(
     std::function<void(menu_info_basic_js)> listener) {
@@ -133,7 +47,7 @@ std::function<void()> menu_controller::add_menu_listener(
     try {
       listener(info);
     } catch (std::exception &e) {
-      std::cerr << "C++ Error: " << e.what() << std::endl;
+      std::cerr << "Error in listener: " << e.what() << std::endl;
     }
   };
   auto ptr =
@@ -163,6 +77,39 @@ void menu_item_controller::set_position(int new_index) {
 
   m->children.insert(m->children.begin() + new_index, item);
 }
+
+static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
+  if (js_data.type) {
+    if (*js_data.type == "spacer") {
+      data.type = menu_item::type::spacer;
+    }
+    if (*js_data.type == "button") {
+      data.type = menu_item::type::button;
+    }
+  }
+
+  if (js_data.name) {
+    data.name = *js_data.name;
+  }
+
+  if (js_data.action) {
+    data.action = [js_data]() { js_data.action.value()({}); };
+  }
+
+  if (js_data.submenu) {
+    data.submenu = [js_data]() {
+      auto items = std::vector<menu_item>{};
+      for (auto &i : js_data.submenu.value()) {
+        auto item = menu_item{};
+        to_menu_item(item, i);
+        items.push_back(item);
+      }
+
+      return menu{.items = items};
+    };
+  }
+}
+
 void menu_item_controller::set_data(js_menu_data data) {
   if (!valid())
     return;
@@ -176,22 +123,8 @@ void menu_item_controller::set_data(js_menu_data data) {
 
   auto item = $item.lock();
 
-  if (data.type) {
-    if (*data.type == "spacer") {
-      item->item.type = menu_item::type::spacer;
-    }
-    if (*data.type == "button") {
-      item->item.type = menu_item::type::button;
-    }
-  }
-
-  if (data.name) {
-    item->item.name = *data.name;
-  }
-
-  if (data.action) {
-    item->item.action = [data]() { data.action.value()({}); };
-  }
+  to_menu_item(item->item, data);
+  menu_controller{m}.$update_icon_width();
 }
 void menu_item_controller::remove() {
   if (!valid())
