@@ -3,6 +3,8 @@
 > any!\
 > 此项目仍在开发阶段，如果遇到问题请发送 Issue
 
+[中文](./README_zh.md)
+
 <div align=center>
   <img src=./resources/icon.svg />
 <h1>Breeze Shell</h1>
