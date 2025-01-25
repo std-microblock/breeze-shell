@@ -142,3 +142,15 @@ void ui::widget::render_children(
     render_child_basic(ctx, child);
   }
 }
+void ui::text_widget::render(nanovg_context ctx) {
+  widget::render(ctx);
+  ctx.fontSize(font_size);
+  ctx.fillColor(color.nvg());
+  ctx.text(x->dest(), y->dest(), text.c_str(), nullptr);
+}
+float ui::text_widget::measure_width(update_context &ctx) {
+  return ctx.vg.measureText(text.c_str()).first;
+}
+float ui::text_widget::measure_height(update_context &ctx) {
+  return ctx.vg.measureText(text.c_str()).second;
+}

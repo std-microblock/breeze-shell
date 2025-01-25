@@ -1,5 +1,8 @@
 #pragma once
-#include <Windows.h>
+#define NOMINMAX
+#include "windows.h"
+#include <dwmapi.h>
+
 // Values and names extracted from twinui.pdb (April 2018 update), documented by
 // toying with the API. Output from DIA2Dump above the definitions.
 
@@ -50,7 +53,7 @@ enum Flags : UINT {
 struct ACCENT_POLICY {      // Determines how a window's background is rendered.
   ACCENT_STATE AccentState; // Background effect.
   UINT AccentFlags; // Flags. Set to 2 to tell GradientColor is used, rest is
-                     // unknown.
+                    // unknown.
   COLORREF GradientColor; // Background color.
   LONG AnimationId;       // Unknown
 };
@@ -104,3 +107,7 @@ struct WINDOWCOMPOSITIONATTRIBDATA { // Options for
 
 typedef BOOL(WINAPI *PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)(
     HWND, const WINDOWCOMPOSITIONATTRIBDATA *);
+
+static auto pSetWindowCompositionAttribute =
+    (PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)GetProcAddress(
+        GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");

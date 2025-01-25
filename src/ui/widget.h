@@ -101,8 +101,10 @@ struct widget : std::enable_shared_from_this<widget> {
   void add_child(std::shared_ptr<widget> child);
   std::vector<std::shared_ptr<widget>> children;
   template <typename T, typename... Args>
-  inline void emplace_child(Args &&...args) {
-    children.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
+  inline std::shared_ptr<T> emplace_child(Args &&...args) {
+    auto child = std::make_shared<T>(std::forward<Args>(args)...);
+    children.emplace_back(child);
+    return child;
   }
 
   template <typename T> inline std::shared_ptr<T> get_child() {
@@ -170,4 +172,17 @@ struct widget_padding : public widget {
   void render(nanovg_context ctx) override;
 };
 
+// A widget that renders text
+struct text_widget : public widget {
+  std::string text;
+  float font_size = 14;
+  std::string font_family = "Yahei";
+  animated_color color = {this, 0, 0, 0, 1};
+
+  void render(nanovg_context ctx) override;
+
+  float measure_width(update_context &ctx) override;
+
+  float measure_height(update_context &ctx) override;
+};
 } // namespace ui

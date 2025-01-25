@@ -17,6 +17,14 @@ struct render_target {
   std::shared_ptr<widget> root;
   GLFWwindow *window;
 
+  bool acrylic = false;
+  bool transparent = false;
+  bool no_focus = false;
+  bool capture_all_input = false;
+  bool decorated = true;
+  bool topmost = false;
+  bool resizable = false;
+
   NVGcontext *nvg;
   int width = 1280;
   int height = 720;

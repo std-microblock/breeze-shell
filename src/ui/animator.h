@@ -1,10 +1,13 @@
 #pragma once
+#include "nanovg.h"
 #include <cmath>
 #include <functional>
 #include <optional>
 #include <print>
+#include <array>
 
 namespace ui {
+struct widget;
 enum class easing_type {
   mutation,
   linear,
@@ -53,4 +56,46 @@ struct animated_float {
 };
 
 using sp_anim_float = std::shared_ptr<animated_float>;
+
+struct animated_color {
+  sp_anim_float r = nullptr;
+  sp_anim_float g = nullptr;
+  sp_anim_float b = nullptr;
+  sp_anim_float a = nullptr;
+
+  animated_color() = delete;
+  animated_color(animated_color &&) = default;
+
+  animated_color(ui::widget *thiz, float r = 0, float g = 0, float b = 0,
+                 float a = 0);
+
+  std::array<float, 4> operator*() const;
+
+  inline void animate_to(float r, float g, float b, float a) {
+    this->r->animate_to(r);
+    this->g->animate_to(g);
+    this->b->animate_to(b);
+    this->a->animate_to(a);
+  }
+
+  inline void animate_to(const std::array<float, 4> &color) {
+    animate_to(color[0], color[1], color[2], color[3]);
+  }
+
+  inline void reset_to(float r, float g, float b, float a) {
+    this->r->reset_to(r);
+    this->g->reset_to(g);
+    this->b->reset_to(b);
+    this->a->reset_to(a);
+  }
+
+  inline void reset_to(const std::array<float, 4> &color) {
+    reset_to(color[0], color[1], color[2], color[3]);
+  }
+  
+
+  inline NVGcolor nvg() const {
+    return nvgRGBAf(r->var(), g->var(), b->var(), a->var());
+  }
+};
 } // namespace ui

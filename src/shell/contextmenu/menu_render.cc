@@ -20,6 +20,12 @@ menu_render menu_render::create(int x, int y, menu menu) {
   auto &rt = render.rt;
 
   rt->parent = menu.parent_window;
+  rt->acrylic = false;
+  rt->transparent = true;
+  rt->no_focus = true;
+  rt->capture_all_input = true;
+  rt->decorated = false;
+  rt->topmost = true;
 
   if (auto res = rt->init(); !res) {
     MessageBoxW(NULL, L"Failed to initialize render target", L"Error",

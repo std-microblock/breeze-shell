@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "swcadef.h"
 #include <dwmapi.h>
 #include <future>
 #include <thread>
@@ -34,10 +35,16 @@ std::expected<bool, std::string> render_target::init() {
   render_target::post_main_thread_task([&]() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_DECORATED, 0);
-    glfwWindowHint(GLFW_RESIZABLE, 1);
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
-    glfwWindowHint(GLFW_FLOATING, 1);
+    glfwWindowHint(GLFW_RESIZABLE, resizable);
+    if (transparent) {
+      glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
+      glfwWindowHint(GLFW_FLOATING, 1);
+    } else {
+      glfwWindowHint(GLFW_FLOATING, 0);
+      glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 0);
+    }
+    glfwWindowHint(GLFW_DECORATED, decorated);
+
     glfwWindowHint(GLFW_VISIBLE, 0);
     window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
     p.set_value();
@@ -54,18 +61,47 @@ std::expected<bool, std::string> render_target::init() {
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   auto h = glfwGetWin32Window(window);
-  DwmEnableBlurBehindWindow(h, nullptr);
+  if (acrylic) {
+    MARGINS margins = {-1};
+    DwmExtendFrameIntoClientArea(h, &margins);
 
-  ShowWindow(h, SW_SHOWNOACTIVATE);
-  // topmost & focused
-  SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-  // retrieve all mouse messages
-  SetCapture(h);
+    DWM_BLURBEHIND bb = {0};
+    bb.dwFlags = DWM_BB_ENABLE;
+    bb.fEnable = true;
+    DwmEnableBlurBehindWindow(h, &bb);
 
-  SetWindowLongPtr(h, GWL_EXSTYLE,
-                   GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
-                       WS_EX_NOACTIVATE);
+    ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
+                            Flags::AllowSetWindowRgn, 0x01000000, 0};
+    WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
+                                        sizeof(accent)};
+    pSetWindowCompositionAttribute((HWND)h, &data);
+
+    // dwm round corners
+    auto round_value = DWMWCP_ROUND;
+    DwmSetWindowAttribute((HWND)h, DWMWA_WINDOW_CORNER_PREFERENCE, &round_value,
+                          sizeof(round_value));
+
+  } else {
+    DwmEnableBlurBehindWindow(h, nullptr);
+  }
+
+  if (no_focus) {
+    ShowWindow(h, SW_SHOWNOACTIVATE);
+    SetWindowLongPtr(h, GWL_EXSTYLE,
+                     GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
+                         WS_EX_NOACTIVATE);
+  } else {
+    ShowWindow(h, SW_SHOWNORMAL);
+  }
+  if (capture_all_input) {
+    // retrieve all mouse messages
+    SetCapture(h);
+  }
+
+  if (topmost) {
+    SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+  }
 
   glfwSetWindowUserPointer(window, this);
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width,

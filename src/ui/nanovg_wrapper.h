@@ -93,7 +93,7 @@ inline auto textLineHeight( float lineHeight) { return nvgTextLineHeight(ctx,lin
 inline auto textAlign( int align) { return nvgTextAlign(ctx,align); }
 inline auto fontFaceId( int font) { return nvgFontFaceId(ctx,font); }
 inline auto fontFace( const char* font) { return nvgFontFace(ctx,font); }
-inline auto text( float x, float y, const char* string, const char* end) { return nvgText(ctx,x + offset_x,y + offset_y,string,end); }
+inline auto text( float x, float y, const char* string, const char* end = nullptr) { return nvgText(ctx,x + offset_x,y + offset_y,string,end); }
 inline auto textBox( float x, float y, float breakRowWidth, const char* string, const char* end) { return nvgTextBox(ctx,x + offset_x,y + offset_y,breakRowWidth,string,end); }
 inline auto textBounds( float x, float y, const char* string, const char* end, float* bounds) { return nvgTextBounds(ctx,x + offset_x,y + offset_y,string,end,bounds); }
 inline auto textBoxBounds( float x, float y, float breakRowWidth, const char* string, const char* end, float* bounds) { return nvgTextBoxBounds(ctx,x + offset_x,y + offset_y,breakRowWidth,string,end,bounds); }

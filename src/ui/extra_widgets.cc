@@ -4,9 +4,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 #include <print>
-#define NOMINMAX
-#include "windows.h"
-#include <dwmapi.h>
+
 
 #include "swcadef.h"
 #include "ui.h"
@@ -21,10 +19,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
-
-static auto pSetWindowCompositionAttribute =
-    (PFN_SET_WINDOW_COMPOSITION_ATTRIBUTE)GetProcAddress(
-        GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
 
 namespace ui {
 void acrylic_background_widget::update(update_context &ctx) {
