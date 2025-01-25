@@ -288,8 +288,6 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   }
 }
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
-  render_children(ctx, rendering_submenus);
-
   std::lock_guard lock(data_lock);
   if (bg) {
     bg->render(ctx);
@@ -298,7 +296,16 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   if (bg_submenu) {
     bg_submenu->render(ctx);
   }
+
+  ctx.transaction([&]() {
+    ctx.globalCompositeOperation(NVG_COPY);
+    auto c = menu_render::current.value()->light_color ? 1 : 0;
+    ctx.fillColor(nvgRGBAf(c, c, c, 0.3));
+    ctx.fillRect(*x, *y, *width, *height);
+  });
   super::render(ctx);
+
+  render_children(ctx, rendering_submenus);
 }
 void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {

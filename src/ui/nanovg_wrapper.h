@@ -167,6 +167,15 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     return copy;
   }
 
+
+  struct TransactionScope {
+    nanovg_context &ctx;
+    TransactionScope(nanovg_context &ctx) : ctx(ctx) { ctx.save(); }
+    ~TransactionScope() { ctx.restore(); }
+  };
+
+  inline TransactionScope transaction() { return TransactionScope(*this); }
+
   inline void transaction(std::function<void()> f) {
     save();
     f();
