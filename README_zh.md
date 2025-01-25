@@ -1,5 +1,5 @@
 <div align=center>
-  <img src=./resources/icon.svg />
+  <img src=./resources/icon.svg width=200/>
 <h1>Breeze Shell</h1>
 <h5>为 Windows 重新带来流畅与精致体验</h5>
 <div>
