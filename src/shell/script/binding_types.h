@@ -108,7 +108,6 @@ struct input_box_controller {
   void clear();
 };
 
-
 struct js_menu_action_event_data {};
 
 struct js_menu_data {
@@ -142,7 +141,7 @@ struct js_menu_context {
       window_titlebar;
   std::optional<std::shared_ptr<mb_shell::js::input_box_controller>> input_box;
   // 获取当前活动的窗口或指针下的窗口的数据
-  static js_menu_context $from_window(void* hwnd);
+  static js_menu_context $from_window(void *hwnd);
 };
 
 struct menu_controller;
@@ -155,7 +154,8 @@ struct menu_controller {
   std::weak_ptr<mb_shell::menu_widget> $menu;
 
   bool valid();
-  bool add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
+  std::shared_ptr<mb_shell::js::menu_item_controller>
+  add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
 
   bool set_menu_item(int index, mb_shell::js::js_menu_data data);
   /*
@@ -183,6 +183,7 @@ struct menu_controller {
 } // namespace mb_shell::js
 
 namespace mb_shell {
-  extern std::unordered_set<std::shared_ptr<std::function<void(js::menu_info_basic_js)>>>
+extern std::unordered_set<
+    std::shared_ptr<std::function<void(js::menu_info_basic_js)>>>
     menu_callbacks_js;
 } // namespace mb_shell

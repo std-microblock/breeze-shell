@@ -14,12 +14,12 @@ std::unordered_set<
 namespace mb_shell::js {
 
 bool menu_controller::valid() { return !$menu.expired(); }
-bool menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
+std::shared_ptr<mb_shell::js::menu_item_controller> menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
   if (!valid())
-    return false;
+    return nullptr;
   auto m = $menu.lock();
   if (!m)
-    return false;
+    return nullptr;
 
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
@@ -53,7 +53,7 @@ bool menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
     m->children.insert(m->children.begin() + after_index, new_item);
   }
 
-  return true;
+  return std::make_shared<menu_item_controller>(new_item, m);
 }
 bool menu_controller::set_menu_item(int index, js_menu_data data) {
   if (!valid())

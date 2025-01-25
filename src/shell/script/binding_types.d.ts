@@ -129,7 +129,7 @@ export class menu_info_basic_js {
 export class menu_controller {
 	
 	valid: (() => boolean)
-	add_menu_item_after: ((arg1: js_menu_data, arg2: number) => boolean)
+	add_menu_item_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
 	set_menu_item: ((arg1: number, arg2: js_menu_data) => boolean)
 	set_menu_item_position: ((arg1: number, arg2: number) => boolean)
 	remove_menu_item: ((arg1: number) => boolean)
