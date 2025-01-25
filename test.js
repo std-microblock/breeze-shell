@@ -16,15 +16,15 @@ try {
         // append after `复制`
         const index = menus?.findIndex((item) => item.name === "复制")
 
-        e.menu.add_menu_item_after({
-            type: 'button',
-            name: 'Shuffle Buttons',
-            action: () => {
-                for (const item of menus) {
-                    item.set_position(Math.floor(menus.length * Math.random()))
-                }
-            },
-        }, index)
+        // e.menu.add_menu_item_after({
+        //     type: 'button',
+        //     name: 'Shuffle Buttons',
+        //     action: () => {
+        //         for (const item of menus) {
+        //             item.set_position(Math.floor(menus.length * Math.random()))
+        //         }
+        //     },
+        // }, index)
 
         // a.menu?.add_menu_item_after({
         //     type: 'button',

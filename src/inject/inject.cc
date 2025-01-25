@@ -246,9 +246,9 @@ struct inject_all_switch : public ui::widget {
 
     if (inject_all) {
       if (ctx.hovered(this)) {
-        bg_color.animate_to({0.2, 0.6, 0.2, 0.4});
-      } else {
         bg_color.animate_to({0.4, 0.6, 0.4, 0.4});
+      } else {
+        bg_color.animate_to({0.2, 0.6, 0.2, 0.4});
       }
     } else {
       if (ctx.hovered(this)) {
@@ -288,10 +288,10 @@ struct inject_once_switch : public ui::widget {
       }).detach();
     }
 
-    if (ctx.hovered(this)) {
-      bg_color.animate_to({0.3, 0.3, 0.3, 0.4});
-    } else if (ctx.mouse_down_on(this)) {
+    if (ctx.mouse_down_on(this)) {
       bg_color.animate_to({0.2, 0.2, 0.2, 0.4});
+    } else if (ctx.hovered(this)) {
+      bg_color.animate_to({0.3, 0.3, 0.3, 0.4});
     } else {
       bg_color.animate_to({0.4, 0.4, 0.4, 0.4});
     }
