@@ -5,8 +5,8 @@
 #include <mutex>
 
 // Context menu
-#include "../contextmenu/menu_widget.h"
 #include "../contextmenu/menu_render.h"
+#include "../contextmenu/menu_widget.h"
 
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
@@ -14,7 +14,8 @@ std::unordered_set<
 namespace mb_shell::js {
 
 bool menu_controller::valid() { return !$menu.expired(); }
-std::shared_ptr<mb_shell::js::menu_item_controller> menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
+std::shared_ptr<mb_shell::js::menu_item_controller>
+menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
   if (!valid())
     return nullptr;
   auto m = $menu.lock();
@@ -52,6 +53,8 @@ std::shared_ptr<mb_shell::js::menu_item_controller> menu_controller::add_menu_it
   } else {
     m->children.insert(m->children.begin() + after_index, new_item);
   }
+
+  $update_icon_width();
 
   return std::make_shared<menu_item_controller>(new_item, m);
 }
@@ -129,12 +132,8 @@ std::function<void()> menu_controller::add_menu_listener(
   auto listener_cvt = [listener](menu_info_basic_js info) {
     try {
       listener(info);
-    } catch (qjs::exception e) {
-      auto js = &e.context();
-      auto exc = js->getException();
-      std::cerr << "JS Error: " << (std::string)exc << std::endl;
-      if ((bool)exc["stack"])
-        std::cerr << (std::string)exc["stack"] << std::endl;
+    } catch (std::exception &e) {
+      std::cerr << "C++ Error: " << e.what() << std::endl;
     }
   };
   auto ptr =
@@ -293,6 +292,26 @@ void menu_controller::close() {
   auto current = menu_render::current;
   if (current) {
     (*current)->rt->close();
+  }
+}
+void menu_controller::$update_icon_width() {
+  if (!valid())
+    return;
+
+  auto m = $menu.lock();
+
+  bool has_icon = std::ranges::any_of(m->children, [](auto &item) {
+    return item->template downcast<menu_item_widget>()
+        ->icon_img_bmp.has_value();
+  });
+
+  for (auto &item : m->children) {
+    auto mi = item->template downcast<menu_item_widget>();
+    if (!has_icon) {
+      mi->icon_width = 0;
+    } else {
+      mi->icon_width = 16;
+    }
   }
 }
 } // namespace mb_shell::js

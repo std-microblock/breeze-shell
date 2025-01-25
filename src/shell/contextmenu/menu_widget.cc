@@ -6,6 +6,7 @@
 #include "nanovg.h"
 #include "shell.h"
 #include "ui.h"
+#include <iostream>
 #include <print>
 #include <vector>
 
@@ -103,7 +104,11 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 
   if (ctx.mouse_clicked_on(this)) {
     if (item.action) {
-      item.action.value()();
+      try {
+        item.action.value()();
+      } catch (std::exception &e) {
+        std::cerr << "Error in action: " << e.what() << std::endl;
+      }
     }
   }
 
@@ -294,8 +299,7 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     ctx.transaction([&]() {
       ctx.globalCompositeOperation(NVG_COPY);
       ctx.fillColor(bg->bg_color);
-      ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width,
-                          *bg->height, *bg->radius);
+      ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height, *bg->radius);
     });
   }
 
@@ -306,8 +310,9 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
       auto c = bg_submenu->bg_color;
       c.a *= *bg_submenu->opacity / 255.f;
       ctx.fillColor(c);
-      ctx.with_reset_offset().fillRoundedRect(*bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
-                          *bg_submenu->height, *bg_submenu->radius);
+      ctx.with_reset_offset().fillRoundedRect(
+          *bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
+          *bg_submenu->height, *bg_submenu->radius);
     });
   }
 

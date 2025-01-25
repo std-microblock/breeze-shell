@@ -36,11 +36,26 @@ class Value;
 /** Exception type.
  * Indicates that exception has occured in JS context.
  */
-class exception {
+class exception : public std::runtime_error {
   JSContext *ctx;
+  inline std::string message(JSContext *ctx = nullptr) const {
+    if (!ctx)
+      ctx = this->ctx;
+    auto val = JS_GetException(ctx);
+
+    std::string msg;
+    if (JS_IsError(ctx, val)) {
+      msg = JS_ToCString(ctx, val);
+      JS_FreeValue(ctx, val);
+    } else {
+      msg = "Unknown exception";
+    }
+
+    return msg;
+  }
 
 public:
-  exception(JSContext *ctx) : ctx(ctx) {}
+  exception(JSContext *ctx) : std::runtime_error(message(ctx)), ctx(ctx) {}
   Context &context() const;
 
   /// Clears and returns the occurred exception.
@@ -1785,8 +1800,8 @@ struct js_traits<std::function<R(Args...)>, int> {
         auto future = promise.get_future();
         auto work = [&]() {
           JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
-          JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0,
-                                   nullptr);
+          JSValue result =
+              JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
           promise.set_value(result);
         };
 

@@ -75,9 +75,9 @@ void script_context::bind() {
   bindAll(module);
 
   js_std_init_handlers(rt->rt);
-  js_init_module_std(js->ctx, "std");
-  js_init_module_os(js->ctx, "os");
-  js_init_module_bjson(js->ctx, "bjson");
+  js_init_module_std(js->ctx, "qjs:std");
+  js_init_module_os(js->ctx, "qjs:os");
+  js_init_module_bjson(js->ctx, "qjs:bjson");
 }
 script_context::script_context()
     : rt{std::make_unique<qjs::Runtime>()},

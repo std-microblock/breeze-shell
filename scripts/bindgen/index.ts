@@ -289,6 +289,8 @@ const paths = [
     join(__dirname, '../../src/shell/script')
 ]
 
+typescriptDef += readFileSync(join(__dirname, 'quickjs-types.txt'), 'utf-8');
+
 for (const path of paths) {
     try {
         if (existsSync(join(path, targetFile))) {

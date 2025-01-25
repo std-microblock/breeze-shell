@@ -156,7 +156,7 @@ struct menu_controller {
   bool valid();
   std::shared_ptr<mb_shell::js::menu_item_controller>
   add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
-
+  void $update_icon_width();
   bool set_menu_item(int index, mb_shell::js::js_menu_data data);
   /*
     0 - a
