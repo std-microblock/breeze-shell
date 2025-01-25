@@ -230,7 +230,7 @@ struct inject_all_switch : public ui::widget {
           std::vector<DWORD> injected;
           while (true) {
             std::vector<DWORD> pids = GetExplorerPIDs();
-            if (!inject_all) {
+            if (inject_all) {
               for (DWORD pid : pids) {
                 if (!std::ranges::contains(injected, pid) &&
                     !IsInjected(pid, dllPath)) {
