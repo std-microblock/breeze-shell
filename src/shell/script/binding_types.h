@@ -194,7 +194,17 @@ struct network {
                          std::function<void(std::string)> callback);
 };
 
+struct subproc_result_data {
+  std::string out;
+  std::string err;
+  int code;
+};
 
+struct subproc {
+  static subproc_result_data run(std::string cmd);
+  static void run_async(std::string cmd,
+                        std::function<void(subproc_result_data)> callback);
+};
 
 } // namespace mb_shell::js
 

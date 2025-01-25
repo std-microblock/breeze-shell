@@ -151,6 +151,19 @@ export class network {
 	static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void)) => void)
 }
     
+export class subproc_result_data {
+	out: string
+	err: string
+	code: number
+	
+}
+    
+export class subproc {
+	
+	static run: ((arg1: string) => subproc_result_data)
+	static run_async: ((arg1: string, arg2: ((arg1: subproc_result_data) => void)) => void)
+}
+    
 }
 declare module "qjs:os" {
   import { Seek, Error } from "qjs:std";

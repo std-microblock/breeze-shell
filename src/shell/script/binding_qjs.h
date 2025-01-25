@@ -555,6 +555,67 @@ template<> struct js_bind<mb_shell::js::network> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::subproc_result_data> {
+    static mb_shell::js::subproc_result_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::subproc_result_data obj;
+    
+        obj.out = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "out"));
+        
+        obj.err = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "err"));
+        
+        obj.code = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "code"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::subproc_result_data &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "out", js_traits<std::string>::wrap(ctx, val.out));
+        
+        JS_SetPropertyStr(ctx, obj, "err", js_traits<std::string>::wrap(ctx, val.err));
+        
+        JS_SetPropertyStr(ctx, obj, "code", js_traits<int>::wrap(ctx, val.code));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::subproc_result_data> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::subproc_result_data>("subproc_result_data")
+            .constructor<>()
+                .fun<&mb_shell::js::subproc_result_data::out>("out")
+                .fun<&mb_shell::js::subproc_result_data::err>("err")
+                .fun<&mb_shell::js::subproc_result_data::code>("code")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::subproc> {
+    static mb_shell::js::subproc unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::subproc obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::subproc &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::subproc> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::subproc>("subproc")
+            .constructor<>()
+                .static_fun<&mb_shell::js::subproc::run>("run")
+                .static_fun<&mb_shell::js::subproc::run_async>("run_async")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -582,5 +643,9 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::clipboard>::bind(mod);
 
     js_bind<mb_shell::js::network>::bind(mod);
+
+    js_bind<mb_shell::js::subproc_result_data>::bind(mod);
+
+    js_bind<mb_shell::js::subproc>::bind(mod);
 
 }

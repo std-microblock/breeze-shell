@@ -336,4 +336,60 @@ void network::post_async(std::string url, std::string data,
     }
   }).detach();
 }
+subproc_result_data subproc::run(std::string cmd) {
+  subproc_result_data result;
+  SECURITY_ATTRIBUTES sa;
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.bInheritHandle = TRUE;
+  sa.lpSecurityDescriptor = nullptr;
+
+  HANDLE hReadPipe, hWritePipe;
+  if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
+    return result;
+
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  si.hStdError = hWritePipe;
+  si.hStdOutput = hWritePipe;
+  si.dwFlags |= STARTF_USESTDHANDLES;
+
+  if (!CreateProcessA(nullptr, (LPSTR)cmd.c_str(), nullptr, nullptr, TRUE, 0,
+                      nullptr, nullptr, &si, &pi)) {
+    CloseHandle(hReadPipe);
+    CloseHandle(hWritePipe);
+    return result;
+  }
+
+  CloseHandle(hWritePipe);
+
+  char buffer[4096];
+  DWORD bytesRead;
+  std::string out;
+  while (ReadFile(hReadPipe, buffer, sizeof(buffer), &bytesRead, nullptr) &&
+         bytesRead > 0) {
+    out.append(buffer, bytesRead);
+  }
+
+  CloseHandle(hReadPipe);
+
+  DWORD exitCode;
+  GetExitCodeProcess(pi.hProcess, &exitCode);
+
+  result.out = out;
+  result.code = exitCode;
+
+  return result;
+}
+void subproc::run_async(std::string cmd,
+                        std::function<void(subproc_result_data)> callback) {
+  std::thread([cmd, callback]() {
+    try {
+      callback(run(cmd));
+    } catch (std::exception &e) {
+      std::cerr << "Error in subproc::run_async: " << e.what() << std::endl;
+    }
+  }).detach();
+}
 } // namespace mb_shell::js

@@ -111,5 +111,15 @@ shell.menu_controller.add_menu_listener((e) => {
                 }))
             }, 0)
         }
+
+        e.menu.add_menu_item_after({
+            type: 'button',
+            name: '测试运行命令',
+            action: () => {
+                shell.subproc.run_async(`7z`, ({ code, out, err }) => {
+                    shell.println(`code: ${code}, out: ${out}`)
+                })
+            }
+        }, 0)
     }
 })
