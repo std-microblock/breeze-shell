@@ -7,14 +7,23 @@ try {
     shell.println(Object.keys(os))
     shell.menu_controller.add_menu_listener((e) => {
         // print call stack
-        shell.println(e.context.folder_view.current_folder_path, e.context.folder_view.focused_file_path)
         // shell.println(
         //     a.menu?.get_menu_items()[0].name,
         //     a.menu?.get_menu_items()[0].type,
         // )
-        const menus = e.menu?.get_menu_items()
+        const menus = e.menu.get_menu_items()
         // append after `复制`
-        const index = menus?.findIndex((item) => item.name === "复制")
+        const index = menus.length - 1
+
+        if (e.context.input_box) {
+            e.menu.add_menu_item_after({
+                type: 'button',
+                name: '测试 JavaScript 按钮',
+                action: () => {
+                    e.context.input_box.set_text("Hello, world!")
+                }
+            }, index)
+        }
 
         e.menu.add_menu_item_after({
             type: 'button',

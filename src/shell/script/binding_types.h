@@ -170,6 +170,8 @@ struct menu_controller {
   bool set_menu_item_position(int index, int new_index);
   bool remove_menu_item(int index);
 
+  void close();
+
   std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
   get_menu_items();
   std::shared_ptr<mb_shell::js::menu_item_controller> get_menu_item(int index);

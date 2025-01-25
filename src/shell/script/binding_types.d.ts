@@ -133,6 +133,7 @@ export class menu_controller {
 	set_menu_item: ((arg1: number, arg2: js_menu_data) => boolean)
 	set_menu_item_position: ((arg1: number, arg2: number) => boolean)
 	remove_menu_item: ((arg1: number) => boolean)
+	close: (() => void)
 	get_menu_items: (() => Array<menu_item_controller>)
 	get_menu_item: ((arg1: number) => menu_item_controller)
 	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))

@@ -494,6 +494,7 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
                 .fun<&mb_shell::js::menu_controller::set_menu_item>("set_menu_item")
                 .fun<&mb_shell::js::menu_controller::set_menu_item_position>("set_menu_item_position")
                 .fun<&mb_shell::js::menu_controller::remove_menu_item>("remove_menu_item")
+                .fun<&mb_shell::js::menu_controller::close>("close")
                 .fun<&mb_shell::js::menu_controller::get_menu_items>("get_menu_items")
                 .fun<&mb_shell::js::menu_controller::get_menu_item>("get_menu_item")
                 .static_fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")

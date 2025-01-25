@@ -1,9 +1,12 @@
 #include "binding_types.h"
-#include "../contextmenu/menu_widget.h"
 #include "quickjspp.hpp"
 #include <iostream>
 #include <memory>
 #include <mutex>
+
+// Context menu
+#include "../contextmenu/menu_widget.h"
+#include "../contextmenu/menu_render.h"
 
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
@@ -285,5 +288,11 @@ menu_controller::get_menu_items() {
   }
 
   return items;
+}
+void menu_controller::close() {
+  auto current = menu_render::current;
+  if (current) {
+    (*current)->rt->close();
+  }
 }
 } // namespace mb_shell::js
