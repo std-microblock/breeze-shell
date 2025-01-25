@@ -12,6 +12,78 @@ export class example_struct_jni {
 	add2: ((arg1: string, arg2: string) => number | string)
 }
     
+export class folder_view_controller {
+	current_path: string
+	selected_file_path: string
+	change_folder: ((arg1: string) => void)
+	focus_file: ((arg1: string) => void)
+	open_file: ((arg1: string) => void)
+	open_folder: ((arg1: string) => void)
+	scroll_to_file: ((arg1: string) => void)
+	refresh: (() => void)
+	select_all: (() => void)
+	select_none: (() => void)
+	invert_selection: (() => void)
+	copy: (() => void)
+	cut: (() => void)
+	paste: (() => void)
+}
+    
+export class window_titlebar_controller {
+	is_click_in_titlebar: boolean
+	title: string
+	executable_path: string
+	hwnd: number
+	x: number
+	y: number
+	width: number
+	height: number
+	maximized: boolean
+	minimized: boolean
+	focused: boolean
+	visible: boolean
+	set_title: ((arg1: string) => void)
+	set_icon: ((arg1: string) => void)
+	set_position: ((arg1: number, arg2: number) => void)
+	set_size: ((arg1: number, arg2: number) => void)
+	maximize: (() => void)
+	minimize: (() => void)
+	restore: (() => void)
+	close: (() => void)
+	focus: (() => void)
+	show: (() => void)
+	hide: (() => void)
+}
+    
+export class input_box_controller {
+	text: string
+	placeholder: string
+	multiline: boolean
+	password: boolean
+	readonly: boolean
+	disabled: boolean
+	x: number
+	y: number
+	width: number
+	height: number
+	set_text: ((arg1: string) => void)
+	set_placeholder: ((arg1: string) => void)
+	set_position: ((arg1: number, arg2: number) => void)
+	set_size: ((arg1: number, arg2: number) => void)
+	set_multiline: ((arg1: boolean) => void)
+	set_password: ((arg1: boolean) => void)
+	set_readonly: ((arg1: boolean) => void)
+	set_disabled: ((arg1: boolean) => void)
+	focus: (() => void)
+	blur: (() => void)
+	select_all: (() => void)
+	select_range: ((arg1: number, arg2: number) => void)
+	set_selection: ((arg1: number, arg2: number) => void)
+	insert_text: ((arg1: string) => void)
+	delete_text: ((arg1: number, arg2: number) => void)
+	clear: (() => void)
+}
+    
 export class js_menu_action_event_data {
 	
 	
@@ -41,9 +113,16 @@ export class menu_item_data {
 	
 }
     
+export class js_menu_context {
+	folder_view: folder_view_controller | undefined
+	window_titlebar: window_titlebar_controller | undefined
+	input_box: input_box_controller | undefined
+	
+}
+    
 export class menu_info_basic_js {
-	from: string
 	menu: menu_controller
+	context: js_menu_context
 	
 }
     

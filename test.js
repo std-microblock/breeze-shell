@@ -7,7 +7,7 @@ try {
     shell.println(Object.keys(os))
     shell.menu_controller.add_menu_listener((e) => {
         // print call stack
-        shell.println(123, new Error().stack, e)
+        shell.println(e.context.folder_view.current_folder_path, e.context.folder_view.focused_file_path)
         // shell.println(
         //     a.menu?.get_menu_items()[0].name,
         //     a.menu?.get_menu_items()[0].type,

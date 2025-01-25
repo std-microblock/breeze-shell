@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stdlib.h>
 #include <string>
 #include <unordered_set>
 #include <variant>
@@ -11,15 +12,6 @@ namespace mb_shell {
 struct mouse_menu_widget_main;
 struct menu_item_widget;
 struct menu_widget;
-
-struct menu_info_basic {
-  std::string from;
-  std::shared_ptr<mb_shell::mouse_menu_widget_main> menu;
-};
-
-// TODO: support multiple menus
-extern std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
-    menu_callbacks_js;
 } // namespace mb_shell
 
 namespace mb_shell::js {
@@ -33,6 +25,89 @@ struct example_struct_jni {
   }
   std::string c;
 };
+
+struct folder_view_controller {
+  void *$hwnd;
+  /* IShellBrowser* */
+  void *$controller;
+  std::string current_path;
+  std::string selected_file_path;
+
+  void change_folder(std::string new_folder_path);
+  void focus_file(std::string file_path);
+  void open_file(std::string file_path);
+  void open_folder(std::string folder_path);
+  void scroll_to_file(std::string file_path);
+  void refresh();
+  void select_all();
+  void select_none();
+  void invert_selection();
+  void copy();
+  void cut();
+  void paste();
+};
+
+struct window_titlebar_controller {
+  void *$hwnd;
+  void *$controller;
+  bool is_click_in_titlebar;
+  std::string title;
+  std::string executable_path;
+  int hwnd;
+  int x;
+  int y;
+  int width;
+  int height;
+  bool maximized;
+  bool minimized;
+  bool focused;
+  bool visible;
+
+  void set_title(std::string new_title);
+  void set_icon(std::string icon_path);
+  void set_position(int new_x, int new_y);
+  void set_size(int new_width, int new_height);
+  void maximize();
+  void minimize();
+  void restore();
+  void close();
+  void focus();
+  void show();
+  void hide();
+};
+
+struct input_box_controller {
+  void *$hwnd;
+  void *$controller;
+  std::string text;
+  std::string placeholder;
+  bool multiline;
+  bool password;
+  bool readonly;
+  bool disabled;
+  int x;
+  int y;
+  int width;
+  int height;
+
+  void set_text(std::string new_text);
+  void set_placeholder(std::string new_placeholder);
+  void set_position(int new_x, int new_y);
+  void set_size(int new_width, int new_height);
+  void set_multiline(bool new_multiline);
+  void set_password(bool new_password);
+  void set_readonly(bool new_readonly);
+  void set_disabled(bool new_disabled);
+  void focus();
+  void blur();
+  void select_all();
+  void select_range(int start, int end);
+  void set_selection(int start, int end);
+  void insert_text(std::string new_text);
+  void delete_text(int start, int end);
+  void clear();
+};
+
 
 struct js_menu_action_event_data {};
 
@@ -60,10 +135,20 @@ struct menu_item_data {
   std::optional<std::string> name;
 };
 
+struct js_menu_context {
+  std::optional<std::shared_ptr<mb_shell::js::folder_view_controller>>
+      folder_view;
+  std::optional<std::shared_ptr<mb_shell::js::window_titlebar_controller>>
+      window_titlebar;
+  std::optional<std::shared_ptr<mb_shell::js::input_box_controller>> input_box;
+  // 获取当前活动的窗口或指针下的窗口的数据
+  static js_menu_context $from_window(void* hwnd);
+};
+
 struct menu_controller;
 struct menu_info_basic_js {
-  std::string from;
   std::shared_ptr<mb_shell::js::menu_controller> menu;
+  std::shared_ptr<mb_shell::js::js_menu_context> context;
 };
 
 struct menu_controller {
@@ -94,3 +179,8 @@ struct menu_controller {
   ~menu_controller();
 };
 } // namespace mb_shell::js
+
+namespace mb_shell {
+  extern std::unordered_set<std::shared_ptr<std::function<void(js::menu_info_basic_js)>>>
+    menu_callbacks_js;
+} // namespace mb_shell

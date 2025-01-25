@@ -98,6 +98,7 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
 }
 
 int main() {
+  Sleep(1000);
   if (auto res = ui::render_target::init_global(); !res) {
     MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
                 MB_ICONERROR);

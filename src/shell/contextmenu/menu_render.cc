@@ -15,6 +15,11 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   constexpr int l_pad = 100, t_pad = 100;
 
+  auto current_js_context =
+      std::make_shared<js::js_menu_context>(js::js_menu_context::$from_window(
+        menu.parent_window
+      ));
+
   auto render =
       menu_render(std::make_unique<ui::render_target>(), std::nullopt);
   auto &rt = render.rt;
@@ -56,8 +61,13 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   rt->root->children.push_back(menu_wid);
 
+  js::menu_info_basic_js menu_info {
+    .menu =
+        std::make_shared<js::menu_controller>(menu_wid->menu_wid),
+    .context = current_js_context
+  };
   for (auto &listener : menu_callbacks_js) {
-    listener->operator()({menu_info_basic{.from = "menu", .menu = menu_wid}});
+    listener->operator()(menu_info);
   }
 
   rt->on_focus_changed = [](bool focused) {
@@ -65,7 +75,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
       glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
     }
   };
-
   nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
   std::println("Current menu: {}", menu_render::current.has_value());
   return render;

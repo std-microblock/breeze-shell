@@ -2,13 +2,16 @@
 #include "../contextmenu/menu_widget.h"
 #include "quickjspp.hpp"
 #include <iostream>
+#include <memory>
 #include <mutex>
-namespace mb_shell {
-std::unordered_set<std::shared_ptr<std::function<void(menu_info_basic)>>>
-    menu_callbacks_js;
-bool js::menu_controller::valid() { return !$menu.expired(); }
-bool js::menu_controller::add_menu_item_after(js_menu_data data,
-                                              int after_index) {
+
+std::unordered_set<
+    std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
+    mb_shell::menu_callbacks_js;
+namespace mb_shell::js {
+
+bool menu_controller::valid() { return !$menu.expired(); }
+bool menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
   if (!valid())
     return false;
   auto m = $menu.lock();
@@ -18,17 +21,17 @@ bool js::menu_controller::add_menu_item_after(js_menu_data data,
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
 
-  mb_shell::menu_item item;
+  menu_item item;
 
   if (data.type) {
     if (*data.type == "spacer") {
-      item.type = mb_shell::menu_item::type::spacer;
+      item.type = menu_item::type::spacer;
     }
     if (*data.type == "button") {
-      item.type = mb_shell::menu_item::type::button;
+      item.type = menu_item::type::button;
     }
   } else {
-    item.type = mb_shell::menu_item::type::button;
+    item.type = menu_item::type::button;
   }
 
   if (data.name) {
@@ -39,7 +42,7 @@ bool js::menu_controller::add_menu_item_after(js_menu_data data,
     item.action = [data]() { data.action.value()({}); };
   }
 
-  auto new_item = std::make_shared<mb_shell::menu_item_widget>(item, m.get());
+  auto new_item = std::make_shared<menu_item_widget>(item, m.get());
 
   if (after_index >= m->children.size()) {
     m->children.push_back(new_item);
@@ -49,8 +52,7 @@ bool js::menu_controller::add_menu_item_after(js_menu_data data,
 
   return true;
 }
-bool js::menu_controller::set_menu_item(int index,
-                                        mb_shell::js::js_menu_data data) {
+bool menu_controller::set_menu_item(int index, js_menu_data data) {
   if (!valid())
     return false;
   auto m = $menu.lock();
@@ -67,10 +69,10 @@ bool js::menu_controller::set_menu_item(int index,
 
   if (data.type) {
     if (*data.type == "spacer") {
-      item->item.type = mb_shell::menu_item::type::spacer;
+      item->item.type = menu_item::type::spacer;
     }
     if (*data.type == "button") {
-      item->item.type = mb_shell::menu_item::type::button;
+      item->item.type = menu_item::type::button;
     }
   }
 
@@ -84,7 +86,7 @@ bool js::menu_controller::set_menu_item(int index,
 
   return true;
 }
-bool js::menu_controller::set_menu_item_position(int index, int new_index) {
+bool menu_controller::set_menu_item_position(int index, int new_index) {
   if (!valid())
     return false;
   auto m = $menu.lock();
@@ -103,7 +105,7 @@ bool js::menu_controller::set_menu_item_position(int index, int new_index) {
 
   return true;
 }
-bool js::menu_controller::remove_menu_item(int index) {
+bool menu_controller::remove_menu_item(int index) {
   if (!valid())
     return false;
   auto m = $menu.lock();
@@ -119,14 +121,11 @@ bool js::menu_controller::remove_menu_item(int index) {
   m->children.erase(m->children.begin() + index);
   return true;
 }
-std::function<void()> js::menu_controller::add_menu_listener(
-    std::function<void(mb_shell::js::menu_info_basic_js)> listener) {
-  auto listener_cvt = [listener](mb_shell::menu_info_basic info) {
+std::function<void()> menu_controller::add_menu_listener(
+    std::function<void(menu_info_basic_js)> listener) {
+  auto listener_cvt = [listener](menu_info_basic_js info) {
     try {
-      menu_info_basic_js m{
-          .from = info.from,
-          .menu = std::make_shared<mb_shell::js::menu_controller>(info.menu->menu_wid)};
-      listener(m);
+      listener(info);
     } catch (qjs::exception e) {
       auto js = &e.context();
       auto exc = js->getException();
@@ -136,15 +135,12 @@ std::function<void()> js::menu_controller::add_menu_listener(
     }
   };
   auto ptr =
-      std::make_shared<std::function<void(menu_info_basic)>>(listener_cvt);
+      std::make_shared<std::function<void(menu_info_basic_js)>>(listener_cvt);
   menu_callbacks_js.insert(ptr);
-  return [ptr]() {
-    menu_callbacks_js.erase(ptr);
-  };
+  return [ptr]() { menu_callbacks_js.erase(ptr); };
 }
-js::menu_controller::~menu_controller() {
-}
-void js::menu_item_controller::set_position(int new_index) {
+menu_controller::~menu_controller() {}
+void menu_item_controller::set_position(int new_index) {
   if (!valid())
     return;
 
@@ -165,7 +161,7 @@ void js::menu_item_controller::set_position(int new_index) {
 
   m->children.insert(m->children.begin() + new_index, item);
 }
-void js::menu_item_controller::set_data(mb_shell::js::js_menu_data data) {
+void menu_item_controller::set_data(js_menu_data data) {
   if (!valid())
     return;
 
@@ -180,10 +176,10 @@ void js::menu_item_controller::set_data(mb_shell::js::js_menu_data data) {
 
   if (data.type) {
     if (*data.type == "spacer") {
-      item->item.type = mb_shell::menu_item::type::spacer;
+      item->item.type = menu_item::type::spacer;
     }
     if (*data.type == "button") {
-      item->item.type = mb_shell::menu_item::type::button;
+      item->item.type = menu_item::type::button;
     }
   }
 
@@ -195,7 +191,7 @@ void js::menu_item_controller::set_data(mb_shell::js::js_menu_data data) {
     item->item.action = [data]() { data.action.value()({}); };
   }
 }
-void js::menu_item_controller::remove() {
+void menu_item_controller::remove() {
   if (!valid())
     return;
 
@@ -211,10 +207,10 @@ void js::menu_item_controller::remove() {
   m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
                     m->children.end());
 }
-bool js::menu_item_controller::valid() {
+bool menu_item_controller::valid() {
   return !$item.expired() && !$menu.expired();
 }
-js::js_menu_data js::menu_item_controller::get_data() {
+js_menu_data menu_item_controller::get_data() {
   if (!valid())
     return {};
 
@@ -224,7 +220,7 @@ js::js_menu_data js::menu_item_controller::get_data() {
 
   auto data = js_menu_data{};
 
-  if (item->item.type == mb_shell::menu_item::type::spacer) {
+  if (item->item.type == menu_item::type::spacer) {
     data.type = "spacer";
   } else {
     data.type = "button";
@@ -242,8 +238,8 @@ js::js_menu_data js::menu_item_controller::get_data() {
 
   return data;
 }
-std::shared_ptr<mb_shell::js::menu_item_controller>
-js::menu_controller::get_menu_item(int index) {
+std::shared_ptr<menu_item_controller>
+menu_controller::get_menu_item(int index) {
   if (!valid())
     return nullptr;
 
@@ -259,14 +255,14 @@ js::menu_controller::get_menu_item(int index) {
 
   auto item = m->children[index]->downcast<menu_item_widget>();
 
-  auto controller = std::make_shared<mb_shell::js::menu_item_controller>();
+  auto controller = std::make_shared<menu_item_controller>();
   controller->$item = item;
   controller->$menu = m;
 
   return controller;
 }
-std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
-js::menu_controller::get_menu_items() {
+std::vector<std::shared_ptr<menu_item_controller>>
+menu_controller::get_menu_items() {
   if (!valid())
     return {};
   auto m = $menu.lock();
@@ -276,12 +272,12 @@ js::menu_controller::get_menu_items() {
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
 
-  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> items;
+  std::vector<std::shared_ptr<menu_item_controller>> items;
 
   for (int i = 0; i < m->children.size(); i++) {
     auto item = m->children[i]->downcast<menu_item_widget>();
 
-    auto controller = std::make_shared<mb_shell::js::menu_item_controller>();
+    auto controller = std::make_shared<menu_item_controller>();
     controller->$item = item;
     controller->$menu = m;
 
@@ -290,4 +286,4 @@ js::menu_controller::get_menu_items() {
 
   return items;
 }
-} // namespace mb_shell
+} // namespace mb_shell::js
