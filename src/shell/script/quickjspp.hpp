@@ -5,11 +5,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <future>
 #include <ios>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -38,21 +40,7 @@ class Value;
  */
 class exception : public std::runtime_error {
   JSContext *ctx;
-  inline std::string message(JSContext *ctx = nullptr) const {
-    if (!ctx)
-      ctx = this->ctx;
-    auto val = JS_GetException(ctx);
-
-    std::string msg;
-    if (JS_IsError(ctx, val)) {
-      msg = JS_ToCString(ctx, val);
-      JS_FreeValue(ctx, val);
-    } else {
-      msg = "Unknown exception";
-    }
-
-    return msg;
-  }
+  inline std::string message(JSContext *ctx = nullptr) const;
 
 public:
   exception(JSContext *ctx) : std::runtime_error(message(ctx)), ctx(ctx) {}
@@ -2118,6 +2106,17 @@ inline Context *Runtime::executePendingJob() {
     throw exception{ctx};
   }
   return &Context::get(ctx);
+}
+
+inline std::string exception::message(JSContext *ctx) const {
+  auto &js = Context::get(ctx ? ctx : this->ctx);
+  auto exc = js.getException();
+
+  std::string message = (std::string)exc;
+  if ((bool)exc["stack"])
+    message += (std::string)exc["stack"];
+
+  return message;
 }
 
 } // namespace qjs
