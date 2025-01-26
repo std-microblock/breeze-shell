@@ -65,3 +65,6 @@ MSVC 2019+ can build this project.
 
 After building successfully once, you can oprn the project dir in VSCode for
 development. Install clangd plugin for full intellisense.
+
+# Credits
+@lipraty - Icon Design
