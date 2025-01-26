@@ -50,6 +50,46 @@ struct update_context {
   }
 };
 
+struct dying_time {
+  float time;
+  bool _last_has_value = false;
+  bool _changed = false;
+  inline bool changed() const {
+    return _last_has_value != has_value || _changed;
+  }
+  bool has_value;
+
+  operator bool() const { return has_value; }
+  inline float operator=(float t) {
+    time = t;
+    has_value = true;
+    return t;
+  }
+  inline float operator-=(float t) {
+    time -= t;
+    has_value = true;
+    return time;
+  }
+  inline void operator=(std::nullopt_t) { has_value = false; }
+  inline void reset() {
+    has_value = false;
+    time = 0;
+  }
+
+  inline void update(float dt) {
+    if (has_value && time > 0) {
+      time -= dt;
+    }
+
+    if (_last_has_value != has_value) {
+      _changed = true;
+      _last_has_value = has_value;
+    } else {
+      _changed = false;
+    }
+  }
+};
+
 /*
 All the widgets in the tree should be wrapped in a shared_ptr.
 If you want to use a widget in multiple places, you should create a new instance
@@ -77,7 +117,8 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual float measure_height(update_context &ctx);
   virtual float measure_width(update_context &ctx);
   // Update children with the offset.
-  // Also deal with the dying time. (If the widget is died, it will be set to nullptr)
+  // Also deal with the dying time. (If the widget is died, it will be set to
+  // nullptr)
   void update_child_basic(update_context &ctx, std::shared_ptr<widget> &w);
   // Render children with the offset.
   void render_child_basic(nanovg_context ctx, std::shared_ptr<widget> &w);
@@ -131,7 +172,7 @@ struct widget : std::enable_shared_from_this<widget> {
   // Widget itself will update this value
   // And its parent is responsible for removing it
   // when the time is up
-  std::optional<float> dying_time;
+  dying_time dying_time;
 };
 
 // A widget with child which lays out children in a row or column

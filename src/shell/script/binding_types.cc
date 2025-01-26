@@ -17,7 +17,7 @@ namespace mb_shell::js {
 
 bool menu_controller::valid() { return !$menu.expired(); }
 std::shared_ptr<mb_shell::js::menu_item_controller>
-menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
+menu_controller::append_menu_after(js_menu_data data, int after_index) {
   if (!valid())
     return nullptr;
   auto m = $menu.lock();
@@ -33,13 +33,21 @@ menu_controller::add_menu_item_after(js_menu_data data, int after_index) {
 
   ctl->set_data(data);
 
+  while (after_index < 0) {
+    after_index = m->children.size() + after_index + 1;
+  }
+
   if (after_index >= m->children.size()) {
     m->children.push_back(new_item);
   } else {
     m->children.insert(m->children.begin() + after_index, new_item);
   }
 
-  $update_icon_width();
+  m->update_icon_width();
+
+  if(m->animate_appear_started) {
+    new_item->reset_appear_animation(0);
+  }
 
   return ctl;
 }
@@ -99,15 +107,13 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
   }
 
   if (js_data.submenu) {
-    data.submenu = [js_data]() {
-      auto items = std::vector<menu_item>{};
-      for (auto &i : js_data.submenu.value()) {
-        auto item = menu_item{};
-        to_menu_item(item, i);
-        items.push_back(item);
+    data.submenu = [js_data](std::shared_ptr<menu_widget> mw) {
+      try {
+        js_data.submenu.value()(
+            std::make_shared<menu_controller>(mw->downcast<menu_widget>()));
+      } catch (std::exception &e) {
+        std::cerr << "Error in submenu: " << e.what() << std::endl;
       }
-
-      return menu{.items = items};
     };
   }
 }
@@ -126,7 +132,7 @@ void menu_item_controller::set_data(js_menu_data data) {
   auto item = $item.lock();
 
   to_menu_item(item->item, data);
-  menu_controller{m}.$update_icon_width();
+  m->update_icon_width();
 }
 void menu_item_controller::remove() {
   if (!valid())
@@ -147,7 +153,7 @@ void menu_item_controller::remove() {
 bool menu_item_controller::valid() {
   return !$item.expired() && !$menu.expired();
 }
-js_menu_data menu_item_controller::get_data() {
+js_menu_data menu_item_controller::data() {
   if (!valid())
     return {};
 
@@ -175,8 +181,7 @@ js_menu_data menu_item_controller::get_data() {
 
   return data;
 }
-std::shared_ptr<menu_item_controller>
-menu_controller::get_menu_item(int index) {
+std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
   if (!valid())
     return nullptr;
 
@@ -199,7 +204,7 @@ menu_controller::get_menu_item(int index) {
   return controller;
 }
 std::vector<std::shared_ptr<menu_item_controller>>
-menu_controller::get_menu_items() {
+menu_controller::get_items() {
   if (!valid())
     return {};
   auto m = $menu.lock();
@@ -227,26 +232,6 @@ void menu_controller::close() {
   auto current = menu_render::current;
   if (current) {
     (*current)->rt->close();
-  }
-}
-void menu_controller::$update_icon_width() {
-  if (!valid())
-    return;
-
-  auto m = $menu.lock();
-
-  bool has_icon = std::ranges::any_of(m->children, [](auto &item) {
-    auto i = item->template downcast<menu_item_widget>()->item;
-    return i.icon_bitmap.has_value() || i.type == menu_item::type::toggle;
-  });
-
-  for (auto &item : m->children) {
-    auto mi = item->template downcast<menu_item_widget>();
-    if (!has_icon) {
-      mi->icon_width = 0;
-    } else {
-      mi->icon_width = 16;
-    }
   }
 }
 std::string clipboard::get_text() {
@@ -391,5 +376,26 @@ void subproc::run_async(std::string cmd,
       std::cerr << "Error in subproc::run_async: " << e.what() << std::endl;
     }
   }).detach();
+}
+std::shared_ptr<mb_shell::js::menu_item_controller>
+menu_controller::prepend_menu(mb_shell::js::js_menu_data data) {
+  return append_menu_after(data, 0);
+}
+std::shared_ptr<mb_shell::js::menu_item_controller>
+menu_controller::append_menu(mb_shell::js::js_menu_data data) {
+  return append_menu_after(data, -1);
+}
+void menu_controller::clear() {
+  if (!valid())
+    return;
+  auto m = $menu.lock();
+  if (!m)
+    return;
+
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  m->children.clear();
+  m->menu_data.items.clear();
 }
 } // namespace mb_shell::js

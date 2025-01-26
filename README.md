@@ -29,7 +29,7 @@ the functionalities of your context menu in a few lines of code.
 
 ```javascript
 shell.menu_controller.add_menu_listener((e) => {
-  e.menu.add_menu_item_after({
+  e.menu.add({
     type: "button",
     name: "Shuffle Buttons",
     action: () => {

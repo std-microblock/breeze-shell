@@ -310,7 +310,7 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
         
-        obj.submenu = js_traits<std::optional<std::vector<mb_shell::js::js_menu_data>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
+        obj.submenu = js_traits<std::optional<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
         
         obj.action = js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
         
@@ -326,7 +326,7 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
         
-        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::vector<mb_shell::js::js_menu_data>>>::wrap(ctx, val.submenu));
+        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>>>::wrap(ctx, val.submenu));
         
         JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::wrap(ctx, val.action));
         
@@ -368,7 +368,7 @@ template<> struct js_bind<mb_shell::js::menu_item_controller> {
             .constructor<>()
                 .fun<&mb_shell::js::menu_item_controller::set_position>("set_position")
                 .fun<&mb_shell::js::menu_item_controller::set_data>("set_data")
-                .fun<&mb_shell::js::menu_item_controller::get_data>("get_data")
+                .fun<&mb_shell::js::menu_item_controller::data>("data")
                 .fun<&mb_shell::js::menu_item_controller::remove>("remove")
                 .fun<&mb_shell::js::menu_item_controller::valid>("valid")
             ;
@@ -495,10 +495,13 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
         mod.class_<mb_shell::js::menu_controller>("menu_controller")
             .constructor<>()
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
-                .fun<&mb_shell::js::menu_controller::add_menu_item_after>("add_menu_item_after")
+                .fun<&mb_shell::js::menu_controller::append_menu_after>("append_menu_after")
+                .fun<&mb_shell::js::menu_controller::append_menu>("append_menu")
+                .fun<&mb_shell::js::menu_controller::prepend_menu>("prepend_menu")
                 .fun<&mb_shell::js::menu_controller::close>("close")
-                .fun<&mb_shell::js::menu_controller::get_menu_items>("get_menu_items")
-                .fun<&mb_shell::js::menu_controller::get_menu_item>("get_menu_item")
+                .fun<&mb_shell::js::menu_controller::clear>("clear")
+                .fun<&mb_shell::js::menu_controller::get_items>("get_items")
+                .fun<&mb_shell::js::menu_controller::get_item>("get_item")
                 .static_fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
             ;
     }

@@ -91,11 +91,11 @@ export class js_menu_action_event_data {
 }
     
 export class js_menu_data {
-	type: string | undefined
-	name: string | undefined
-	submenu: Array<js_menu_data> | undefined
-	action: ((arg1: js_menu_action_event_data) => void) | undefined
-	icon_path: string | undefined
+	type?: string | undefined
+	name?: string | undefined
+	submenu?: ((arg1: menu_controller) => void) | undefined
+	action?: ((arg1: js_menu_action_event_data) => void) | undefined
+	icon_path?: string | undefined
 	
 }
     
@@ -103,21 +103,21 @@ export class menu_item_controller {
 	
 	set_position: ((arg1: number) => void)
 	set_data: ((arg1: js_menu_data) => void)
-	get_data: (() => js_menu_data)
+	data: (() => js_menu_data)
 	remove: (() => void)
 	valid: (() => boolean)
 }
     
 export class menu_item_data {
 	type: string
-	name: string | undefined
+	name?: string | undefined
 	
 }
     
 export class js_menu_context {
-	folder_view: folder_view_controller | undefined
-	window_titlebar: window_titlebar_controller | undefined
-	input_box: input_box_controller | undefined
+	folder_view?: folder_view_controller | undefined
+	window_titlebar?: window_titlebar_controller | undefined
+	input_box?: input_box_controller | undefined
 	
 }
     
@@ -130,10 +130,13 @@ export class menu_info_basic_js {
 export class menu_controller {
 	
 	valid: (() => boolean)
-	add_menu_item_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+	append_menu_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+	append_menu: ((arg1: js_menu_data) => menu_item_controller)
+	prepend_menu: ((arg1: js_menu_data) => menu_item_controller)
 	close: (() => void)
-	get_menu_items: (() => Array<menu_item_controller>)
-	get_menu_item: ((arg1: number) => menu_item_controller)
+	clear: (() => void)
+	get_items: (() => Array<menu_item_controller>)
+	get_item: ((arg1: number) => menu_item_controller)
 	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
 }
     
@@ -165,6 +168,10 @@ export class subproc {
 }
     
 }
+declare module "mshell" {
+    export function println(...args: any[]);
+}
+
 declare module "qjs:os" {
   import { Seek, Error } from "qjs:std";
 

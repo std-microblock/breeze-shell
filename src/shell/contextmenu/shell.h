@@ -2,6 +2,7 @@
 
 #include "nanovg_wrapper.h"
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -11,9 +12,9 @@
 
 namespace mb_shell {
 struct menu_item;
+struct menu_widget;
 struct menu {
   std::vector<menu_item> items;
-  std::string to_string();
   void *parent_window = nullptr;
   bool is_top_level = false;
 
@@ -29,10 +30,8 @@ struct menu_item {
 
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
-  std::optional<std::function<menu()>> submenu;
+  std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
   bool checked = false;
   std::optional<HBITMAP> icon_bitmap;
-
-  std::string to_string();
 };
 } // namespace mb_shell

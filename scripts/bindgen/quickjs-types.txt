@@ -1,3 +1,7 @@
+declare module "mshell" {
+    export function println(...args: any[]);
+}
+
 declare module "qjs:os" {
   import { Seek, Error } from "qjs:std";
 

@@ -45,13 +45,13 @@ void main() {
   std::thread([]() {
     script_context ctx;
 
-    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
-      ctx.watch_file("J:\\Projects\\b-shell\\test.js");
-    else if (std::filesystem::exists("D:\\shell\\test.js"))
-      ctx.watch_file("D:\\shell\\test.js");
+    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.ts"))
+      ctx.watch_file("J:\\Projects\\b-shell\\test.ts");
+    else if (std::filesystem::exists("D:\\shell\\test.ts"))
+      ctx.watch_file("D:\\shell\\test.ts");
     else if (std::filesystem::exists(
-                 (std::filesystem::current_path() / "test.js")))
-      ctx.watch_file((std::filesystem::current_path() / "test.js"));
+                 (std::filesystem::current_path() / "test.ts")))
+      ctx.watch_file((std::filesystem::current_path() / "test.ts"));
   }).detach();
 
   auto proc = blook::Process::self();
@@ -108,9 +108,9 @@ int main() {
   mb_shell::script_context ctx;
 
   auto path = []() {
-    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.js"))
-      return "J:\\Projects\\b-shell\\test.js";
-    return "D:\\shell\\test.js";
+    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.ts"))
+      return "J:\\Projects\\b-shell\\test.ts";
+    return "D:\\shell\\test.ts";
   }();
 
   static std::optional<mb_shell::menu_render> menu_render;
@@ -128,27 +128,29 @@ int main() {
                    .type = menu_item::type::button,
                    .name = "测试多层菜单",
                    .submenu =
-                       []() {
-                         return menu{
+                       [](auto mw) {
+                         mw->init_from_data(menu{
                              .items = {
                                  {.type = menu_item::type::button,
                                   .name = "测试多层菜单1",
                                   .submenu =
-                                      []() {
-                                        return menu{
-                                            .items = {
-                                                {.type =
-                                                     menu_item::type::button,
-                                                 .name = "测试多层菜单1-1"},
-                                                {.type =
-                                                     menu_item::type::button,
-                                                 .name = "测试多层菜单1-2"},
-                                                {.type =
-                                                     menu_item::type::button,
-                                                 .name = "测试多层菜单1-3"},
-                                            }};
+                                      [](auto mw) {
+                                        mw->init_from_data(menu{
+                                            .items =
+                                                {
+                                                    {.type = menu_item::type::
+                                                         button,
+                                                     .name = "测试多层菜单1-1"},
+                                                    {.type = menu_item::type::
+                                                         button,
+                                                     .name = "测试多层菜单1-2"},
+                                                    {.type = menu_item::type::
+                                                         button,
+                                                     .name = "测试多层菜单1-3"},
+                                                },
+                                        });
                                       }},
-                             }};
+                             }});
                        },
                }},
           .is_top_level = true,

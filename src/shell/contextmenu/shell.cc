@@ -17,27 +17,6 @@
 #include <winuser.h>
 
 namespace mb_shell {
-std::string menu_item::to_string() {
-  if (type == type::spacer) {
-    return "spacer";
-  }
-
-  std::string str = name.value_or("Unnamed");
-
-  if (submenu) {
-    str += " -> (" + submenu.value()().to_string() + ")";
-  }
-
-  return str;
-}
-std::string menu::to_string() {
-  std::string str;
-  for (auto &item : items) {
-    str += item.to_string();
-  }
-  return str;
-}
-
 std::wstring strip_extra_infos(std::wstring_view str) {
   // 1. Test&C -> Test
   // 2. Test -> Test
@@ -92,8 +71,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     }
 
     if (info.hSubMenu) {
-      item.submenu = [=]() {
-        return construct_with_hmenu(info.hSubMenu, hWnd, false);
+      item.submenu = [=](std::shared_ptr<menu_widget> mw) {
+        mw->init_from_data(menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
       };
     } else {
       item.action = [=]() mutable {

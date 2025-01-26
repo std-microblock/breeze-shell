@@ -108,13 +108,13 @@ struct input_box_controller {
   void delete_text(int start, int end);
   void clear();
 };
-
+struct menu_controller;
 struct js_menu_action_event_data {};
 
 struct js_menu_data {
   std::optional<std::string> type;
   std::optional<std::string> name;
-  std::optional<std::vector<mb_shell::js::js_menu_data>> submenu;
+  std::optional<std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>> submenu;
   std::optional<std::function<void(mb_shell::js::js_menu_action_event_data)>>
       action;
   std::optional<std::string> icon_path;
@@ -125,7 +125,7 @@ struct menu_item_controller {
   std::weak_ptr<mb_shell::menu_widget> $menu;
   void set_position(int new_index);
   void set_data(mb_shell::js::js_menu_data data);
-  js_menu_data get_data();
+  js_menu_data data();
   void remove();
   bool valid();
 };
@@ -156,8 +156,14 @@ struct menu_controller {
 
   bool valid();
   std::shared_ptr<mb_shell::js::menu_item_controller>
-  add_menu_item_after(mb_shell::js::js_menu_data data, int after_index);
-  void $update_icon_width();
+  append_menu_after(mb_shell::js::js_menu_data data, int after_index);
+
+  std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_menu(mb_shell::js::js_menu_data data);
+
+  std::shared_ptr<mb_shell::js::menu_item_controller>
+  prepend_menu(mb_shell::js::js_menu_data data);
+
   /*
     0 - a
     1 - b
@@ -169,10 +175,10 @@ struct menu_controller {
    */
 
   void close();
-
+  void clear();
   std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
-  get_menu_items();
-  std::shared_ptr<mb_shell::js::menu_item_controller> get_menu_item(int index);
+  get_items();
+  std::shared_ptr<mb_shell::js::menu_item_controller> get_item(int index);
 
   static std::function<void()> add_menu_listener(
       std::function<void(mb_shell::js::menu_info_basic_js)> listener);

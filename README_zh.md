@@ -21,7 +21,7 @@ Breeze 以交互动画为核心设计理念。
 
 ```javascript
 shell.menu_controller.add_menu_listener((e) => {
-  e.menu.add_menu_item_after({
+  e.menu.add({
     type: "button",
     name: "Shuffle Buttons",
     action: () => {

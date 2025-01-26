@@ -8,7 +8,7 @@ void ui::widget::update_child_basic(update_context &ctx,
   if (!w)
     return;
   // handle dying time
-  if (w->dying_time.has_value() && !*w->dying_time) {
+  if (w->dying_time && w->dying_time.time <= 0) {
     w = nullptr;
     return;
   }
@@ -31,9 +31,7 @@ void ui::widget::update(update_context &ctx) {
     anim->update(ctx.delta_t);
   }
 
-  if (dying_time.has_value()) {
-    *dying_time = std::max(0.f, *dying_time - ctx.delta_t);
-  }
+  dying_time.update(ctx.delta_t);
 
   update_children(ctx, children);
 }

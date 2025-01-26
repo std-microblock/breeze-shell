@@ -1993,7 +1993,7 @@ template <typename T> struct js_traits<std::optional<T>> {
   static auto unwrap(JSContext *ctx, JSValueConst v) noexcept
       -> std::optional<decltype(js_traits<std::decay_t<T>>::unwrap(ctx, v))> {
     try {
-      if (JS_IsNull(v))
+      if (JS_IsNull(v) || JS_IsUndefined(v))
         return std::nullopt;
       return js_traits<std::decay_t<T>>::unwrap(ctx, v);
     } catch (exception) {
@@ -2114,7 +2114,7 @@ inline std::string exception::message(JSContext *ctx) const {
 
   std::string message = (std::string)exc;
   if ((bool)exc["stack"])
-    message += (std::string)exc["stack"];
+    message += "\n" + (std::string)exc["stack"];
 
   return message;
 }
