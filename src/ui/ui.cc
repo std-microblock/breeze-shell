@@ -57,7 +57,7 @@ std::expected<bool, std::string> render_target::init() {
   }
 
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(0);
+  glfwSwapInterval(1);
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   auto h = glfwGetWin32Window(window);
@@ -71,7 +71,7 @@ std::expected<bool, std::string> render_target::init() {
     DwmEnableBlurBehindWindow(h, &bb);
 
     ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                            Flags::AllowSetWindowRgn, 0x01000000, 0};
+                            Flags::AllowSetWindowRgn, 0x00000000, 0};
     WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                         sizeof(accent)};
     pSetWindowCompositionAttribute((HWND)h, &data);

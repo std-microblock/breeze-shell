@@ -183,7 +183,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
       menu_render::menu_style::fluentui) {
     auto acrylic =
         std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    acrylic->acrylic_bg_color = nvgRGBAf(1,0,0, 0.5);
     acrylic->update_color();
     bg = acrylic;
   } else {
@@ -191,7 +191,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
     // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
     auto acrylic =
         std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(0, 0, 0, 0.5);
+    acrylic->acrylic_bg_color = nvgRGBAf(1,0,0, 0.5);
     acrylic->update_color();
     bg = acrylic;
   }
