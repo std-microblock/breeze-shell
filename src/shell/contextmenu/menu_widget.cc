@@ -79,10 +79,6 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
       ctx.stroke();
     }
   }
-
-  if (submenu_wid) {
-    submenu_wid->render(ctx);
-  }
 }
 void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   super::update(ctx);
@@ -118,7 +114,8 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   }
 
   if (item.submenu) {
-    if (ctx.hovered(this) || (submenu_wid && ctx.hovered(submenu_wid.get()))) {
+    if (ctx.hovered(this) ||
+        (submenu_wid && ctx.hovered(submenu_wid.get(), false))) {
       show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 500.f);
     } else {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
@@ -172,7 +169,7 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
-  }
+  } 
   return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
          margin * 2 + icon_width + icon_padding * 2;
 }
@@ -183,7 +180,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
       menu_render::menu_style::fluentui) {
     auto acrylic =
         std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(1,0,0, 0.5);
+    acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
   } else {
@@ -191,7 +188,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
     // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
     auto acrylic =
         std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(1,0,0, 0.5);
+    acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
     acrylic->update_color();
     bg = acrylic;
   }
@@ -215,7 +212,6 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
 mb_shell::menu_widget::menu_widget() : super() { gap = 5; }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
-  super::update(ctx);
 
   if (dying_time) {
     if (dying_time.changed()) {
@@ -270,16 +266,27 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   update_children(ctx, rendering_submenus);
 
   if (bg_submenu) {
-    bg_submenu->update(ctx);
-    ctx.mouse_clicked_on_hit(bg_submenu.get());
-    ctx.hovered_hit(bg_submenu.get());
+    auto c = ctx.with_reset_offset();
+    c.mouse_clicked_on_hit(bg_submenu.get());
+    c.hovered_hit(bg_submenu.get());
+    bg_submenu->update(c);
   }
+
+  super::update(ctx);
 
   if (bg) {
     ctx.mouse_clicked_on_hit(bg.get());
     ctx.hovered_hit(bg.get());
   }
 }
+
+bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
+  auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
+             (bg_submenu && bg_submenu->check_hit(ctx.with_reset_offset()));
+
+  return hit;
+}
+
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   std::lock_guard lock(data_lock);
   if (bg) {
@@ -290,6 +297,8 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
       ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height, *bg->radius);
     });
   }
+
+  super::render(ctx);
 
   if (bg_submenu) {
     bg_submenu->render(ctx.with_reset_offset());
@@ -303,9 +312,6 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
           *bg_submenu->height, *bg_submenu->radius);
     });
   }
-
-  super::render(ctx);
-
   render_children(ctx, rendering_submenus);
 }
 void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
@@ -500,7 +506,6 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
   std::println("Calibrated position: {} {} in screen {} {}", x, y,
                ctx.screen.width, ctx.screen.height);
 
-
   if (animated) {
     this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
     this->menu_wid->y->animate_to(y / ctx.rt.dpi_scale);
@@ -538,16 +543,7 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item,
   this->item = item;
 }
 
-bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
-  auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
-             (bg_submenu && bg_submenu->check_hit(ctx)) ||
-             std::ranges::any_of(
-                 get_children<menu_item_widget>(), [&ctx, this](auto &child) {
-                   return child->check_hit(ctx.with_offset(*x, *y));
-                 });
 
-  return hit;
-}
 void mb_shell::menu_widget::init_from_data(menu menu_data) {
   if (menu_data.is_top_level && !bg) {
     bg = create_bg();

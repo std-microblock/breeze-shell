@@ -1,6 +1,8 @@
 #include "widget.h"
 #include "ui.h"
+#include <algorithm>
 #include <chrono>
+#include <print>
 #include <thread>
 
 void ui::widget::update_child_basic(update_context &ctx,
@@ -25,7 +27,26 @@ void ui::widget::render_child_basic(nanovg_context ctx,
   ctx.restore();
 }
 
-void ui::widget::render(nanovg_context ctx) { render_children(ctx, children); }
+void ui::widget::render(nanovg_context ctx) {
+  if (_debug_offset_cache[0] != ctx.offset_x ||
+      _debug_offset_cache[1] != ctx.offset_y) {
+    if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
+      std::println(
+          "[Warning] The offset during render is different from the "
+          "offset during update: (update) {} {} vs (render) {} {} ({}, {})",
+          _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
+          ctx.offset_y, (void *)this, typeid(*this).name());
+    } else {
+      std::println(
+          "[Warning] The update function is not called before render: {}", (void*)this);
+    }
+  }
+
+  _debug_offset_cache[0] = -1;
+  _debug_offset_cache[1] = -1;
+
+  render_children(ctx, children);
+}
 void ui::widget::update(update_context &ctx) {
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
@@ -34,14 +55,24 @@ void ui::widget::update(update_context &ctx) {
   dying_time.update(ctx.delta_t);
 
   update_children(ctx, children);
+
+  if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
+    std::println("[Warning] The update function is called twice with different "
+                 "offsets: {} {} vs {} {} ({})",
+                 _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
+                 ctx.offset_y, (void *)this);
+  }
+  _debug_offset_cache[0] = ctx.offset_x;
+  _debug_offset_cache[1] = ctx.offset_y;
 }
 void ui::widget::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
 bool ui::update_context::hovered(widget *w, bool hittest) const {
-  if (hittest && !hovered_widgets.empty())
+  if (hittest && (!hovered_widgets->empty())) {
     return false;
+  }
 
   return w->check_hit(*this);
 }
@@ -89,24 +120,17 @@ void ui::widget_flex::update(update_context &ctx) {
   }
 }
 void ui::update_context::set_hit_hovered(widget *w) {
-  hovered_widgets.push_back(w->shared_from_this());
+  hovered_widgets->push_back(w);
 }
 bool ui::update_context::mouse_clicked_on(widget *w, bool hittest) const {
-  if (hittest && !clicked_widgets.empty())
-    return false;
-  return mouse_clicked && hovered(w);
+  return mouse_clicked && hovered(w, hittest);
 }
 bool ui::update_context::mouse_down_on(widget *w, bool hittest) const {
-  if (hittest && !hovered_widgets.empty())
-    return false;
-  return mouse_down && hovered(w);
-}
-void ui::update_context::set_hit_clicked(widget *w) {
-  clicked_widgets.push_back(w->shared_from_this());
+  return mouse_down && hovered(w, hittest);
 }
 bool ui::update_context::mouse_clicked_on_hit(widget *w) {
   if (mouse_clicked_on(w)) {
-    set_hit_clicked(w);
+    set_hit_hovered(w);
     return true;
   }
   return false;

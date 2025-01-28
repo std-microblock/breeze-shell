@@ -25,11 +25,9 @@ struct update_context {
 
   screen_info screen;
 
-  // hit test
-  std::vector<std::shared_ptr<widget>> hovered_widgets;
-  std::vector<std::shared_ptr<widget>> clicked_widgets;
+  // hit test, lifetime is not guaranteed
+  std::shared_ptr<std::vector<widget*>> hovered_widgets = std::make_shared<std::vector<widget*>>();
   void set_hit_hovered(widget *w);
-  void set_hit_clicked(widget *w);
 
   bool hovered(widget *w, bool hittest = true) const;
   bool mouse_clicked_on(widget *w, bool hittest = true) const;
@@ -46,6 +44,13 @@ struct update_context {
     auto copy = *this;
     copy.offset_x = x + offset_x;
     copy.offset_y = y + offset_y;
+    return copy;
+  }
+
+  update_context with_reset_offset(float x = 0, float y = 0) const {
+    auto copy = *this;
+    copy.offset_x = x;
+    copy.offset_y = y;
     return copy;
   }
 };
@@ -111,6 +116,9 @@ struct widget : std::enable_shared_from_this<widget> {
 
   sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
                 height = anim_float();
+
+  float _debug_offset_cache[2];
+
   virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);
   virtual ~widget() = default;
