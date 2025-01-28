@@ -46,7 +46,7 @@ inline auto lineJoin( int join) { return nvgLineJoin(ctx,join); }
 inline auto globalAlpha( float alpha) { return nvgGlobalAlpha(ctx,alpha); }
 inline auto resetTransform() { return nvgResetTransform(ctx); }
 inline auto transform( float a, float b, float c, float d, float e, float f) { return nvgTransform(ctx,a,b,c,d,e,f); }
-inline auto translate( float x, float y) { return nvgTranslate(ctx,x + offset_x,y + offset_y); }
+inline auto translate( float x, float y) { return nvgTranslate(ctx,x,y); }
 inline auto rotate( float angle) { return nvgRotate(ctx,angle); }
 inline auto skewX( float angle) { return nvgSkewX(ctx,angle); }
 inline auto skewY( float angle) { return nvgSkewY(ctx,angle); }

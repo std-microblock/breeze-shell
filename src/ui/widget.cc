@@ -171,11 +171,40 @@ void ui::text_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   ctx.fontSize(font_size);
   ctx.fillColor(color.nvg());
-  ctx.text(x->dest(), y->dest(), text.c_str(), nullptr);
+  ctx.textAlign(NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+  ctx.fontFace(font_family.c_str());
+
+  ctx.text(*x, *y, text.c_str(), nullptr);
 }
-float ui::text_widget::measure_width(update_context &ctx) {
-  return ctx.vg.measureText(text.c_str()).first;
+void ui::text_widget::update(update_context &ctx) {
+  widget::update(ctx);
+  ctx.vg.fontSize(font_size);
+  ctx.vg.fontFace(font_family.c_str());
+  auto text = ctx.vg.measureText(this->text.c_str());
+
+  if (strink_horizontal) {
+    width->animate_to(text.first);
+  }
+
+  if (strink_vertical) {
+    height->animate_to(text.second);
+  }
 }
-float ui::text_widget::measure_height(update_context &ctx) {
-  return ctx.vg.measureText(text.c_str()).second;
+void ui::padding_widget::update(update_context &ctx) {
+  auto off = ctx.with_offset(*padding_left, *padding_top);
+  widget::update(off);
+
+  float max_width = 0, max_height = 0;
+  for (auto &child : children) {
+    max_width = std::max(max_width, child->measure_width(ctx));
+    max_height = std::max(max_height, child->measure_height(ctx));
+  }
+
+  width->animate_to(max_width + *padding_left + *padding_right);
+  height->animate_to(max_height + *padding_top + *padding_bottom);
+}
+void ui::padding_widget::render(nanovg_context ctx) {
+  ctx.transaction();
+  ctx.translate(**padding_left, **padding_top);
+  widget::render(ctx);
 }

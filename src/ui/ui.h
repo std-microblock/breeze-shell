@@ -25,7 +25,7 @@ struct render_target {
   bool topmost = false;
   bool resizable = false;
 
-  NVGcontext *nvg;
+  NVGcontext *nvg = nullptr;
   int width = 1280;
   int height = 720;
   static std::atomic_int view_cnt;
@@ -36,6 +36,8 @@ struct render_target {
   static std::vector<std::function<void()>> main_thread_tasks;
   static std::mutex main_thread_tasks_mutex;
   static void post_main_thread_task(std::function<void()> task);
+
+  std::mutex render_mutex = {};
   
   static std::expected<bool, std::string> init_global();
   void start_loop();

@@ -2,6 +2,8 @@
 #include "swcadef.h"
 #include <dwmapi.h>
 #include <future>
+#include <print>
+#include <stacktrace>
 #include <thread>
 #include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
@@ -36,6 +38,7 @@ std::expected<bool, std::string> render_target::init() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, resizable);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, 1);
     if (transparent) {
       glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
       glfwWindowHint(GLFW_FLOATING, 1);
@@ -107,9 +110,10 @@ std::expected<bool, std::string> render_target::init() {
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width,
                                             int height) {
     auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
-    rt->width = width;
-    rt->height = height;
-    rt->render();
+    rt->width = width / rt->dpi_scale;
+    rt->height = height / rt->dpi_scale;
+    rt->reset_view();
+    // rt->render();
   });
 
   glfwSetWindowFocusCallback(window, [](GLFWwindow *window, int focused) {
@@ -117,6 +121,12 @@ std::expected<bool, std::string> render_target::init() {
     if (thiz->on_focus_changed) {
       thiz->on_focus_changed.value()(focused);
     }
+  });
+
+  glfwSetWindowContentScaleCallback(window, [](GLFWwindow *window, float x,
+                                               float y) {
+    auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
+    rt->dpi_scale = x;
   });
 
   reset_view();
@@ -169,7 +179,6 @@ std::expected<bool, std::string> render_target::init_global() {
   return future.get();
 }
 void render_target::render() {
-
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
@@ -191,12 +200,6 @@ void render_target::render() {
     }
   }
 
-  if (fb_width != width || fb_height != height) {
-    width = fb_width;
-    height = fb_height;
-    reset_view();
-  }
-
   auto begin = clock.now();
 
   auto time_checkpoints = [&](const char *name) {
@@ -211,7 +214,7 @@ void render_target::render() {
   nanovg_context vg{nvg};
   time_checkpoints("NanoVG context");
 
-  vg.beginFrame(width, height, dpi_scale);
+  vg.beginFrame(fb_width, fb_height, dpi_scale);
   vg.scale(dpi_scale, dpi_scale);
 
   double mouse_x, mouse_y;
@@ -260,17 +263,15 @@ void render_target::render() {
   time_checkpoints("Swap buffers");
 }
 void render_target::reset_view() {
-  nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
-  glfwGetWindowContentScale(window, &this->dpi_scale, nullptr);
-  // std::println("DPI scale: {}", dpi_scale);
-  glfwSetWindowSize(window, width, height);
+  if (!nvg)
+    nvg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
 }
 void render_target::set_position(int x, int y) {
   glfwSetWindowPos(window, x, y);
 }
 void render_target::resize(int width, int height) {
-  this->width = width;
-  this->height = height;
+  this->width = width * dpi_scale;
+  this->height = height * dpi_scale;
   reset_view();
 }
 void render_target::close() {

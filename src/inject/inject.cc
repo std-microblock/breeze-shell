@@ -180,10 +180,12 @@ int NewExplorerProcessAndInject() {
 
 struct inject_ui_title : public ui::widget_flex {
   inject_ui_title() {
+    gap = 10;
+
     {
       auto title = std::make_shared<ui::text_widget>();
       title->text = "breeze-shell";
-      title->font_size = 14;
+      title->font_size = 23;
       title->color.reset_to({1, 1, 1, 1});
       add_child(title);
     }
@@ -191,36 +193,38 @@ struct inject_ui_title : public ui::widget_flex {
     {
       auto title = std::make_shared<ui::text_widget>();
       title->text = "Bring fluency & delication back to Windows";
-      title->font_size = 8;
+      title->font_size = 18;
       title->color.reset_to({1, 1, 1, 0.8});
       add_child(title);
     }
   }
 };
 
-struct inject_all_switch : public ui::widget {
+struct inject_all_switch : public ui::padding_widget {
   bool inject_all = false;
   std::optional<std::thread> inject_thread;
 
   inject_all_switch() {
-    height->reset_to(20);
-    width->reset_to(50);
+    auto text = emplace_child<ui::text_widget>();
+    text->text = "注入所有";
+    text->font_size = 14;
+    text->color.reset_to({1, 1, 1, 1});
+
+    padding_bottom->reset_to(5);
+    padding_top->reset_to(5);
+    padding_left->reset_to(12);
+    padding_right->reset_to(10);
   }
-
-  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.4};
+  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f,
+                                 0.6}; // Increased base opacity
   void render(ui::nanovg_context ctx) override {
-    widget::render(ctx);
-
     ctx.fillColor(bg_color.nvg());
-    ctx.fillRoundedRect(*x, *y, 50, *height, 5);
-
-    ctx.fontSize(9);
-    ctx.fillColor(nvgRGB(255, 255, 255));
-    ctx.text(*x + 7, *y + 13, "全局注入", nullptr);
+    ctx.fillRoundedRect(*x, *y, *width, *height, 12);
+    padding_widget::render(ctx);
   }
 
   void update(ui::update_context &ctx) override {
-    widget::update(ctx);
+    padding_widget::update(ctx);
 
     if (ctx.mouse_clicked_on_hit(this)) {
       inject_all = !inject_all;
@@ -246,40 +250,49 @@ struct inject_all_switch : public ui::widget {
 
     if (inject_all) {
       if (ctx.hovered(this)) {
-        bg_color.animate_to({0.4, 0.6, 0.4, 0.4});
+        bg_color.animate_to(
+            {0.3, 0.8, 0.3,
+             0.7}); // Brighter green with higher opacity when hovered
       } else {
-        bg_color.animate_to({0.2, 0.6, 0.2, 0.4});
+        bg_color.animate_to(
+            {0.2, 0.7, 0.2, 0.6}); // Slightly darker green when active
       }
     } else {
       if (ctx.hovered(this)) {
-        bg_color.animate_to({0.3, 0.3, 0.3, 0.4});
+        bg_color.animate_to(
+            {0.35, 0.35, 0.35,
+             0.7}); // Lighter gray with higher opacity when hovered
       } else {
-        bg_color.animate_to({0.4, 0.4, 0.4, 0.4});
+        bg_color.animate_to(
+            {0.3, 0.3, 0.3, 0.6}); // Darker gray for normal state
       }
     }
   }
 };
 
-struct inject_once_switch : public ui::widget {
+struct inject_once_switch : public ui::padding_widget {
   inject_once_switch() {
-    height->reset_to(20);
-    width->reset_to(50);
+    auto text = emplace_child<ui::text_widget>();
+    text->text = "注入一次";
+    text->font_size = 14;
+    text->color.reset_to({1, 1, 1, 1});
+
+    padding_bottom->reset_to(5);
+    padding_top->reset_to(5);
+    padding_left->reset_to(12);
+    padding_right->reset_to(10);
   }
 
-  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.4};
+  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.6};
+
   void render(ui::nanovg_context ctx) override {
-    widget::render(ctx);
-
     ctx.fillColor(bg_color.nvg());
-    ctx.fillRoundedRect(*x, *y, 50, *height, 5);
-
-    ctx.fontSize(9);
-    ctx.fillColor(nvgRGB(255, 255, 255));
-    ctx.text(*x + 7, *y + 13, "测试注入", nullptr);
+    ctx.fillRoundedRect(*x, *y, *width, *height, 12);
+    padding_widget::render(ctx);
   }
 
   void update(ui::update_context &ctx) override {
-    widget::update(ctx);
+    padding_widget::update(ctx);
 
     if (ctx.mouse_clicked_on_hit(this)) {
       std::thread([]() {
@@ -289,20 +302,21 @@ struct inject_once_switch : public ui::widget {
     }
 
     if (ctx.mouse_down_on(this)) {
-      bg_color.animate_to({0.2, 0.2, 0.2, 0.4});
+      bg_color.animate_to({0.3, 0.3, 0.3, 0.7});
     } else if (ctx.hovered(this)) {
-      bg_color.animate_to({0.3, 0.3, 0.3, 0.4});
+      bg_color.animate_to({0.35, 0.35, 0.35, 0.7});
     } else {
-      bg_color.animate_to({0.4, 0.4, 0.4, 0.4});
+      bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
     }
   }
 };
+
 
 struct injector_ui_main : public ui::widget_flex {
   injector_ui_main() {
     x->reset_to(10);
     y->reset_to(15);
-    gap = 10;
+    gap = 20;
     emplace_child<inject_ui_title>();
 
     auto switches = emplace_child<ui::widget_flex>();

@@ -26,7 +26,8 @@ struct update_context {
   screen_info screen;
 
   // hit test, lifetime is not guaranteed
-  std::shared_ptr<std::vector<widget*>> hovered_widgets = std::make_shared<std::vector<widget*>>();
+  std::shared_ptr<std::vector<widget *>> hovered_widgets =
+      std::make_shared<std::vector<widget *>>();
   void set_hit_hovered(widget *w);
 
   bool hovered(widget *w, bool hittest = true) const;
@@ -192,35 +193,6 @@ struct widget_flex : public widget {
   void update(update_context &ctx) override;
 };
 
-// A widget with padding and margin
-struct widget_padding : public widget {
-  float padding_left = 0, padding_right = 0, padding_top = 0,
-        padding_bottom = 0;
-  float margin_left = 0, margin_right = 0, margin_top = 0, margin_bottom = 0;
-  inline void set_padding(float padding) {
-    padding_left = padding_right = padding_top = padding_bottom = padding;
-  }
-
-  inline void set_margin(float margin) {
-    margin_left = margin_right = margin_top = margin_bottom = margin;
-  }
-
-  inline void set_padding(float vertical, float horizontal) {
-    padding_top = padding_bottom = vertical;
-    padding_left = padding_right = horizontal;
-  }
-
-  inline void set_margin(float vertical, float horizontal) {
-    margin_top = margin_bottom = vertical;
-    margin_left = margin_right = horizontal;
-  }
-
-  std::shared_ptr<widget> child;
-  void update(update_context &ctx) override;
-
-  void render(nanovg_context ctx) override;
-};
-
 // A widget that renders text
 struct text_widget : public widget {
   std::string text;
@@ -230,8 +202,17 @@ struct text_widget : public widget {
 
   void render(nanovg_context ctx) override;
 
-  float measure_width(update_context &ctx) override;
-
-  float measure_height(update_context &ctx) override;
+  bool strink_vertical = true, strink_horizontal = true;
+  void update(update_context &ctx) override;
 };
+
+// A widget that renders children in it with a padding
+struct padding_widget : public widget {
+  sp_anim_float padding_left = anim_float(0), padding_right = anim_float(0),
+                padding_top = anim_float(0), padding_bottom = anim_float(0);
+
+  void update(update_context &ctx) override;
+  void render(nanovg_context ctx) override;
+};
+
 } // namespace ui
