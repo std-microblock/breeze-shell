@@ -129,6 +129,7 @@ std::expected<bool, std::string> render_target::init() {
     rt->dpi_scale = x;
   });
 
+  glfwGetWindowContentScale(window, &dpi_scale, nullptr);
   reset_view();
 
   if (!nvg) {
