@@ -28,19 +28,21 @@ void ui::widget::render_child_basic(nanovg_context ctx,
 }
 
 void ui::widget::render(nanovg_context ctx) {
-  if (_debug_offset_cache[0] != ctx.offset_x ||
-      _debug_offset_cache[1] != ctx.offset_y) {
-    if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
-      std::println(
-          "[Warning] The offset during render is different from the "
-          "offset during update: (update) {} {} vs (render) {} {} ({}, {})",
-          _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
-          ctx.offset_y, (void *)this, typeid(*this).name());
-    } else {
-      std::println(
-          "[Warning] The update function is not called before render: {}", (void*)this);
+  if constexpr (false)
+    if (_debug_offset_cache[0] != ctx.offset_x ||
+        _debug_offset_cache[1] != ctx.offset_y) {
+      if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
+        std::println(
+            "[Warning] The offset during render is different from the "
+            "offset during update: (update) {} {} vs (render) {} {} ({}, {})",
+            _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
+            ctx.offset_y, (void *)this, typeid(*this).name());
+      } else {
+        std::println(
+            "[Warning] The update function is not called before render: {}",
+            (void *)this);
+      }
     }
-  }
 
   _debug_offset_cache[0] = -1;
   _debug_offset_cache[1] = -1;
@@ -55,13 +57,14 @@ void ui::widget::update(update_context &ctx) {
   dying_time.update(ctx.delta_t);
 
   update_children(ctx, children);
-
-  if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
-    std::println("[Warning] The update function is called twice with different "
-                 "offsets: {} {} vs {} {} ({})",
-                 _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
-                 ctx.offset_y, (void *)this);
-  }
+  if constexpr (false)
+    if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
+      std::println(
+          "[Warning] The update function is called twice with different "
+          "offsets: {} {} vs {} {} ({})",
+          _debug_offset_cache[0], _debug_offset_cache[1], ctx.offset_x,
+          ctx.offset_y, (void *)this);
+    }
   _debug_offset_cache[0] = ctx.offset_x;
   _debug_offset_cache[1] = ctx.offset_y;
 }

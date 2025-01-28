@@ -30,6 +30,16 @@ void acrylic_background_widget::update(update_context &ctx) {
     radius->reset_to(8.f);
   }
 }
+
+
+int GetWindowZOrder(HWND hwnd) {
+  int z = 0;
+  for (HWND h = hwnd; h; h = GetWindow(h, GW_HWNDPREV)) {
+    z++;
+  }
+  return z;
+}
+
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   cv.notify_all();
@@ -38,6 +48,20 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   bg_color_tmp.a *= *opacity / 255.f;
   ctx.fillColor(bg_color_tmp);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
+
+  static thread_local HWND last_hwnd = nullptr;
+  // we should be higher than the last hwnd
+  // first check if we are already higher
+  if (last_hwnd) {
+    auto last_z = GetWindowZOrder(last_hwnd);
+    auto z = GetWindowZOrder((HWND)hwnd);
+    if (z < last_z) {
+      SetWindowPos((HWND)hwnd, last_hwnd, 0, 0, 0, 0,
+                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                       SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
+                       SWP_NOZORDER);
+    }
+  }
 
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
