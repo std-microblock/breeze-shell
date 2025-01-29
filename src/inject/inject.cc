@@ -204,80 +204,10 @@ struct inject_ui_title : public ui::widget_flex {
   }
 };
 
-struct inject_all_switch : public ui::padding_widget {
-  bool inject_all = false;
-  std::optional<std::thread> inject_thread;
-
-  inject_all_switch() {
+struct button_widget : public ui::padding_widget {
+  button_widget(const std::string& button_text) {
     auto text = emplace_child<ui::text_widget>();
-    text->text = "注入所有";
-    text->font_size = 14;
-    text->color.reset_to({1, 1, 1, 1});
-
-    padding_bottom->reset_to(10);
-    padding_top->reset_to(10);
-    padding_left->reset_to(22);
-    padding_right->reset_to(20);
-  }
-  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f,
-                                 0.6}; // Increased base opacity
-  void render(ui::nanovg_context ctx) override {
-    ctx.fillColor(bg_color.nvg());
-    ctx.fillRoundedRect(*x, *y, *width, *height, 6);
-    padding_widget::render(ctx);
-  }
-
-  void update(ui::update_context &ctx) override {
-    padding_widget::update(ctx);
-
-    if (ctx.mouse_clicked_on_hit(this)) {
-      inject_all = !inject_all;
-      if (inject_all && !inject_thread) {
-        inject_thread = std::thread([this]() {
-          GetDebugPrivilege();
-          std::vector<DWORD> injected;
-          while (true) {
-            std::vector<DWORD> pids = GetExplorerPIDs();
-            if (inject_all) {
-              for (DWORD pid : pids) {
-                if (!std::ranges::contains(injected, pid) &&
-                    !IsInjected(pid, dllPath)) {
-                  InjectToPID(pid, dllPath);
-                }
-              }
-            }
-            Sleep(100);
-          }
-        });
-      }
-    }
-
-    if (inject_all) {
-      if (ctx.hovered(this)) {
-        bg_color.animate_to(
-            {0.3, 0.8, 0.3,
-             0.7}); // Brighter green with higher opacity when hovered
-      } else {
-        bg_color.animate_to(
-            {0.2, 0.7, 0.2, 0.6}); // Slightly darker green when active
-      }
-    } else {
-      if (ctx.hovered(this)) {
-        bg_color.animate_to(
-            {0.35, 0.35, 0.35,
-             0.7}); // Lighter gray with higher opacity when hovered
-      } else {
-        bg_color.animate_to(
-            {0.3, 0.3, 0.3, 0.6}); // Darker gray for normal state
-      }
-    }
-  }
-};
-
-struct inject_once_switch : public ui::padding_widget {
-  inject_once_switch() {
-    auto text = emplace_child<ui::text_widget>();
-    text->text = "注入一次";
+    text->text = button_text;
     text->font_size = 14;
     text->color.reset_to({1, 1, 1, 1});
 
@@ -289,29 +219,84 @@ struct inject_once_switch : public ui::padding_widget {
 
   ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.6};
 
+  virtual void on_click() = 0;
+
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(bg_color.nvg());
     ctx.fillRoundedRect(*x, *y, *width, *height, 6);
     padding_widget::render(ctx);
   }
 
-  void update(ui::update_context &ctx) override {
-    padding_widget::update(ctx);
-
-    if (ctx.mouse_clicked_on_hit(this)) {
-      std::thread([]() {
-        GetDebugPrivilege();
-        NewExplorerProcessAndInject();
-      }).detach();
-    }
-
-    if (ctx.mouse_down_on(this)) {
+  virtual void update_colors(bool is_active, bool is_hovered) {
+    if (is_active) {
       bg_color.animate_to({0.3, 0.3, 0.3, 0.7});
-    } else if (ctx.hovered(this)) {
+    } else if (is_hovered) {
       bg_color.animate_to({0.35, 0.35, 0.35, 0.7});
     } else {
       bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
     }
+  }
+
+  void update(ui::update_context &ctx) override {
+    padding_widget::update(ctx);
+
+    if (ctx.mouse_clicked_on_hit(this)) {
+      on_click();
+    }
+
+    update_colors(ctx.mouse_down_on(this), ctx.hovered(this));
+  }
+};
+
+struct inject_all_switch : public button_widget {
+  bool inject_all = false;
+  std::optional<std::thread> inject_thread;
+
+  inject_all_switch() : button_widget("注入所有") {}
+
+  void on_click() override {
+    inject_all = !inject_all;
+    if (inject_all && !inject_thread) {
+      inject_thread = std::thread([this]() {
+        GetDebugPrivilege();
+        std::vector<DWORD> injected;
+        while (true) {
+          std::vector<DWORD> pids = GetExplorerPIDs();
+          if (inject_all) {
+            for (DWORD pid : pids) {
+              if (!std::ranges::contains(injected, pid) &&
+                  !IsInjected(pid, dllPath)) {
+                InjectToPID(pid, dllPath);
+              }
+            }
+          }
+          Sleep(100);
+        }
+      });
+    }
+  }
+
+  void update_colors(bool is_active, bool is_hovered) override {
+    if (inject_all) {
+      if (is_hovered) {
+        bg_color.animate_to({0.3, 0.8, 0.3, 0.7});
+      } else {
+        bg_color.animate_to({0.2, 0.7, 0.2, 0.6});
+      }
+    } else {
+      button_widget::update_colors(is_active, is_hovered);
+    }
+  }
+};
+
+struct inject_once_switch : public button_widget {
+  inject_once_switch() : button_widget("注入一次") {}
+
+  void on_click() override {
+    std::thread([]() {
+      GetDebugPrivilege();
+      NewExplorerProcessAndInject();
+    }).detach();
   }
 };
 
