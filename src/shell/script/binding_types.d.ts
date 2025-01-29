@@ -95,7 +95,8 @@ export class js_menu_data {
 	name?: string | undefined
 	submenu?: ((arg1: menu_controller) => void) | undefined
 	action?: ((arg1: js_menu_action_event_data) => void) | undefined
-	icon_path?: string | undefined
+	icon_svg?: string | undefined
+	icon_bitmap?: size_t | undefined
 	
 }
     
@@ -170,6 +171,7 @@ export class subproc {
 }
 declare module "mshell" {
     export function println(...args: any[]);
+    type size_t = number;
 }
 
 declare module "qjs:os" {

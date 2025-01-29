@@ -24,20 +24,20 @@ void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
   cv.notify_all();
-
+  last_hwnd = 0;
   if (use_dwm) {
     radius->reset_to(8.f);
   }
 }
 
 int GetWindowZOrder(HWND hwnd) {
-  int z = 999999;
+  int z = 1;
   for (HWND h = hwnd; h; h = GetWindow(h, GW_HWNDNEXT)) {
-    z--;
+    z++;
   }
   return z;
 }
-
+thread_local size_t acrylic_background_widget::last_hwnd = 0;
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   cv.notify_all();
@@ -46,20 +46,20 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   bg_color_tmp.a *= *opacity / 255.f;
   ctx.fillColor(bg_color_tmp);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
-
-  static thread_local HWND last_hwnd = nullptr;
   // we should be higher than the last hwnd
   // first check if we are already higher
   if (last_hwnd && hwnd) {
-    auto last_z = GetWindowZOrder(last_hwnd);
+    auto last_z = GetWindowZOrder((HWND)last_hwnd);
     auto z = GetWindowZOrder((HWND)hwnd);
     if (z < last_z) {
-      SetWindowPos((HWND)hwnd, last_hwnd, 0, 0, 0, 0,
+      SetWindowPos((HWND)hwnd, (HWND)last_hwnd, 0, 0, 0, 0,
                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
                        SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
                        SWP_NOZORDER);
     }
   }
+
+  last_hwnd = (size_t)hwnd;
 
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
@@ -80,10 +80,10 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
   auto win = glfwGetCurrentContext();
   auto handle = glfwGetWin32Window(win);
   render_thread = std::thread([=, this]() {
-    hwnd = CreateWindowExW(
-        WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_LAYERED,
-        L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, *width, *height, nullptr,
-        NULL, GetModuleHandleW(nullptr), NULL);
+    hwnd = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT |
+                               WS_EX_NOACTIVATE | WS_EX_LAYERED,
+                           L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, 0, 0,
+                           nullptr, NULL, GetModuleHandleW(nullptr), NULL);
 
     if (!hwnd) {
       std::println("Failed to create window: {}", GetLastError());
@@ -128,7 +128,7 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                    SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
                        SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
                        SWP_NOZORDER);
-                       
+
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
       cv.wait_for(lk, std::chrono::milliseconds(200));

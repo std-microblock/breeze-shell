@@ -30,7 +30,7 @@ struct acrylic_background_widget : public rect_widget {
   std::mutex cv_m;
   bool to_close = false;
   float offset_x = 0, offset_y = 0, dpi_scale = 1;
-
+  static thread_local size_t last_hwnd;
   void update_color();
 
   void render(nanovg_context ctx) override;

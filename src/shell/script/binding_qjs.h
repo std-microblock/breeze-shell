@@ -314,7 +314,9 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.action = js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
         
-        obj.icon_path = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_path"));
+        obj.icon_svg = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_svg"));
+        
+        obj.icon_bitmap = js_traits<std::optional<size_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_bitmap"));
         
         return obj;
     }
@@ -330,7 +332,9 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::wrap(ctx, val.action));
         
-        JS_SetPropertyStr(ctx, obj, "icon_path", js_traits<std::optional<std::string>>::wrap(ctx, val.icon_path));
+        JS_SetPropertyStr(ctx, obj, "icon_svg", js_traits<std::optional<std::string>>::wrap(ctx, val.icon_svg));
+        
+        JS_SetPropertyStr(ctx, obj, "icon_bitmap", js_traits<std::optional<size_t>>::wrap(ctx, val.icon_bitmap));
         
         return obj;
     }
@@ -343,7 +347,8 @@ template<> struct js_bind<mb_shell::js::js_menu_data> {
                 .fun<&mb_shell::js::js_menu_data::name>("name")
                 .fun<&mb_shell::js::js_menu_data::submenu>("submenu")
                 .fun<&mb_shell::js::js_menu_data::action>("action")
-                .fun<&mb_shell::js::js_menu_data::icon_path>("icon_path")
+                .fun<&mb_shell::js::js_menu_data::icon_svg>("icon_svg")
+                .fun<&mb_shell::js::js_menu_data::icon_bitmap>("icon_bitmap")
             ;
     }
 

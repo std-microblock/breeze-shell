@@ -117,7 +117,8 @@ struct js_menu_data {
   std::optional<std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>> submenu;
   std::optional<std::function<void(mb_shell::js::js_menu_action_event_data)>>
       action;
-  std::optional<std::string> icon_path;
+  std::optional<std::string> icon_svg;
+  std::optional<size_t> icon_bitmap;
 };
 
 struct menu_item_controller {

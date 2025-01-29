@@ -1,5 +1,6 @@
 declare module "mshell" {
     export function println(...args: any[]);
+    type size_t = number;
 }
 
 declare module "qjs:os" {

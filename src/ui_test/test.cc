@@ -1,6 +1,7 @@
 #include "GLFW/glfw3.h"
 #include "animator.h"
 #include "extra_widgets.h"
+#include "nanovg_wrapper.h"
 #include "ui.h"
 #include "widget.h"
 #include <functional>
@@ -213,9 +214,15 @@ struct dying_widget_test : public ui::widget {
 
   void render(ui::nanovg_context ctx) override {
     super::render(ctx);
-    std::println("Rendering dying widget");
-    ctx.fillColor(nvgRGBAf(1, 0, 0, *opacity / 255.f));
+
+  static std::string s = R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><path fill="red" d="M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8m7.5-3a.5.5 0 0 0-1 0v2.5H5a.5.5 0 0 0 0 1h2.5V11a.5.5 0 0 0 1 0V8.5H11a.5.5 0 0 0 0-1H8.5z"/></svg>)#";
+    static auto svg = nsvgParse(s.data(),
+      "px", 96
+    );
+    ctx.fillColor(nvgRGBAf(0.5, 0.5, 0, *opacity / 255.f));
     ctx.fillRect(*x, *y, *width, *height);
+    ctx.drawSVG(svg, *x, *y, *width, *height);
+    // std::println("Rendering dying widget");
   }
 
 
@@ -237,59 +244,23 @@ struct dying_widget_test : public ui::widget {
 
 int main() {
 
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
-
-  auto window = glfwCreateWindow(800, 600, "Test", nullptr, nullptr);
-  if (!window) {
-    std::println("Failed to create window");
+  if (auto res = ui::render_target::init_global(); !res) {
+    std::println("Failed to initialize global render target: {}", res.error());
     return 1;
   }
 
-  glfwMakeContextCurrent(window);
+  ui::render_target rt;
 
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::println("Failed to initialize GLAD");
+  if (auto res = rt.init(); !res) {
+    std::println("Failed to initialize render target: {}", res.error());
     return 1;
   }
 
-  while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.1, 0.1, 0.1, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    glBegin(GL_TRIANGLES);
-    glColor3f(1, 0, 0);
-    glVertex2f(-0.5, -0.5);
-    glColor3f(0, 1, 0);
-    glVertex2f(0.5, -0.5);
-    glColor3f(0, 0, 1);
-    
+  rt.root->emplace_child<menu_widget>(items, 20, 20);
+  rt.root->emplace_child<dying_widget_test>();
 
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-  }
+  nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
-  // if (auto res = ui::render_target::init_global(); !res) {
-  //   std::println("Failed to initialize global render target: {}", res.error());
-  //   return 1;
-  // }
-
-  // ui::render_target rt;
-
-  // if (auto res = rt.init(); !res) {
-  //   std::println("Failed to initialize render target: {}", res.error());
-  //   return 1;
-  // }
-
-  // rt.root->emplace_child<menu_widget>(items, 20, 20);
-  // rt.root->emplace_child<dying_widget_test>();
-
-  // nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
-  // rt.start_loop();
-  // return 0;
+  rt.start_loop();
+  return 0;
 }

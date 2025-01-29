@@ -1,5 +1,5 @@
 #include "script.h"
-#include "../contextmenu/shell.h"
+#include "../contextmenu/contextmenu.h"
 #include "binding_qjs.h"
 #include "quickjs/quickjs-libc.h"
 #include <iostream>

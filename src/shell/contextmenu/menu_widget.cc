@@ -1,10 +1,10 @@
 #include "menu_widget.h"
 #include "../utils.h"
 #include "animator.h"
+#include "contextmenu.h"
 #include "hbitmap_utils.h"
 #include "menu_render.h"
 #include "nanovg.h"
-#include "shell.h"
 #include "ui.h"
 #include <iostream>
 #include <print>
@@ -32,16 +32,16 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
                       roundcorner);
 
-  if (item.icon_bitmap.has_value()) {
+  if (item.icon_bitmap.has_value() || item.icon_svg.has_value()) {
+    if (!icon_img || item.icon_updated)
+      reload_icon_img(ctx);
+    item.icon_updated = false;
+    
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    if (!icon_img_bmp) {
-      icon_img_bmp = ui::LoadBitmapImage(ctx, item.icon_bitmap.value());
-    }
-
     auto paint =
         nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
                         paintY + ctx.offset_y, icon_width, icon_width, 0,
-                        icon_img_bmp->id, *opacity / 255.f);
+                        icon_img->id, *opacity / 255.f);
 
     ctx.beginPath();
     ctx.rect(*x + icon_padding + margin, paintY, icon_width, icon_width);
@@ -579,7 +579,8 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 void mb_shell::menu_widget::update_icon_width() {
   bool has_icon = std::ranges::any_of(children, [](auto &item) {
     auto i = item->template downcast<menu_item_widget>()->item;
-    return i.icon_bitmap.has_value() || i.type == menu_item::type::toggle;
+    return i.icon_bitmap.has_value() || i.icon_svg.has_value() ||
+           i.type == menu_item::type::toggle;
   });
 
   for (auto &item : children) {
@@ -591,3 +592,13 @@ void mb_shell::menu_widget::update_icon_width() {
     }
   }
 };
+void mb_shell::menu_item_widget::reload_icon_img(ui::nanovg_context ctx) {
+  if (item.icon_bitmap)
+    icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
+  else if (item.icon_svg) {
+    std::string copy = item.icon_svg.value();
+    icon_img = ctx.imageFromSVG(nsvgParse(copy.data(), "px", 96));
+  } else {
+    icon_img = std::nullopt;
+  }
+}

@@ -32,6 +32,8 @@ struct menu_item {
   std::optional<std::function<void()>> action;
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
   bool checked = false;
-  std::optional<HBITMAP> icon_bitmap;
+  std::optional<size_t> icon_bitmap;
+  std::optional<std::string> icon_svg;
+  bool icon_updated = false;
 };
 } // namespace mb_shell

@@ -1,10 +1,11 @@
 
-#include "shell.h"
+#include "contextmenu.h"
+#include "../utils.h"
 #include "menu_widget.h"
 #include "ui.h"
-#include "../utils.h"
 #include <algorithm>
 #include <codecvt>
+
 
 #include "menu_render.h"
 
@@ -49,8 +50,9 @@ std::wstring strip_extra_infos(std::wstring_view str) {
 
 menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
   menu m;
-  SendMessageW(hWnd, WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu), 0xFFFFFFFF);
-  
+  SendMessageW(hWnd, WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
+               0xFFFFFFFF);
+
   for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
     menu_item item;
     wchar_t buffer[256];
@@ -72,7 +74,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
 
     if (info.hSubMenu) {
       item.submenu = [=](std::shared_ptr<menu_widget> mw) {
-        mw->init_from_data(menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
+        mw->init_from_data(
+            menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
       };
     } else {
       item.action = [=]() mutable {
@@ -89,12 +92,12 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     }
 
     if (info.fType & MFT_BITMAP) {
-      item.icon_bitmap = info.hbmpItem;
+      item.icon_bitmap = (size_t)info.hbmpItem;
     } else if (info.hbmpChecked || info.hbmpUnchecked) {
       if (info.fState & MFS_CHECKED)
-        item.icon_bitmap = info.hbmpChecked;
+        item.icon_bitmap = (size_t)info.hbmpChecked;
       else
-        item.icon_bitmap = info.hbmpUnchecked;
+        item.icon_bitmap = (size_t)info.hbmpUnchecked;
     }
 
     if (info.dwItemData) {
@@ -127,7 +130,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
                    bitmap.bmBitsPixel == 16 || bitmap.bmBitsPixel == 8) &&
                   bitmap.bmWidth >= 4 && bitmap.bmWidth <= 64 &&
                   bitmap.bmHeight >= 4 && bitmap.bmHeight <= 64) {
-                item.icon_bitmap = result;
+                item.icon_bitmap = (size_t)result;
                 break;
               }
             }

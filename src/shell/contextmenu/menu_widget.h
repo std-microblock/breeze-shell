@@ -2,7 +2,7 @@
 #include "animator.h"
 #include "extra_widgets.h"
 #include "nanovg_wrapper.h"
-#include "shell.h"
+#include "contextmenu.h"
 #include "ui.h"
 #include "widget.h"
 #include <algorithm>
@@ -24,7 +24,7 @@ struct menu_item_widget : public ui::widget {
   menu_item_widget(menu_item item, menu_widget *parent_menu);
   void reset_appear_animation(float delay);
 
-  std::optional<ui::NVGImage> icon_img_bmp{};
+  std::optional<ui::NVGImage> icon_img{};
 
   std::shared_ptr<menu_widget> submenu_wid = nullptr;
   float show_submenu_timer = 0.f;
@@ -34,6 +34,8 @@ struct menu_item_widget : public ui::widget {
   void update(ui::update_context &ctx) override;
   float measure_width(ui::update_context &ctx) override;
   bool check_hit(const ui::update_context &ctx) override;
+
+  void reload_icon_img(ui::nanovg_context ctx);
 };
 
 enum class popup_direction {

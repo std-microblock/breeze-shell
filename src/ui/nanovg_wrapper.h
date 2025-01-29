@@ -1,10 +1,14 @@
 #pragma once
 #include "glad/glad.h"
+#include "nanosvg.h"
+#include "nanosvgrast.h"
 #include "nanovg.h"
 #include <functional>
 #include <utility>
 
+
 namespace ui {
+struct NVGImage;
 struct nanovg_context {
   NVGcontext *ctx;
   /*
@@ -194,6 +198,46 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     restore();
     return res;
   }
+
+  inline void drawCubicBezier(float x1, float y1, float cx1, float cy1,
+                              float cx2, float cy2, float x2, float y2) {
+    beginPath();
+    moveTo(x1, y1);
+    bezierTo(cx1, cy1, cx2, cy2, x2, y2);
+    stroke();
+  }
+
+  struct NSVGimageRAII {
+    NSVGimage *image;
+    NSVGimageRAII(NSVGimage *image) : image(image) {}
+    ~NSVGimageRAII() { nsvgDelete(image); }
+  };
+
+  inline NVGImage imageFromSVG(NSVGimage *image);
+  inline void drawSVG(NSVGimage *image, float x, float y, float width,
+                      float height) {
+    auto orig_width = image->width, orig_height = image->height;
+    x += offset_x;
+    y += offset_y;
+    for (auto shape = image->shapes; shape != NULL; shape = shape->next) {
+      for (auto path = shape->paths; path != NULL; path = path->next) {
+        for (int i = 0; i < path->npts - 1; i += 3) {
+          float *p = &path->pts[i * 2];
+
+          drawCubicBezier(
+              p[0] * width / orig_width + x, p[1] * height / orig_height + y,
+              p[2] * width / orig_width + x, p[3] * height / orig_height + y,
+              p[4] * width / orig_width + x, p[5] * height / orig_height + y,
+              p[6] * width / orig_width + x, p[7] * height / orig_height + y);
+        }
+      }
+    }
+  }
+
+  inline void drawSVG(NSVGimageRAII &image, float x, float y, float width,
+                      float height) {
+    drawSVG(image.image, x, y, width, height);
+  }
 };
 
 struct GLTexture {
@@ -225,5 +269,15 @@ struct NVGImage {
     //   ctx.deleteImage(id);
   }
 };
+
+NVGImage nanovg_context::imageFromSVG(NSVGimage *image) {
+  static auto rast = nsvgCreateRasterizer();
+  auto width = image->width, height = image->height;
+  auto data = (unsigned char *)malloc(width * height * 4);
+  nsvgRasterize(rast, image, 0, 0, 1, data, width, height, width * 4);
+  auto id = createImageRGBA(width, height, 0, data);
+  free(data);
+  return NVGImage(id, width, height, *this);
+}
 
 } // namespace ui

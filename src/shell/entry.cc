@@ -11,7 +11,7 @@
 
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
-#include "./contextmenu/shell.h"
+#include "./contextmenu/contextmenu.h"
 
 #include <chrono>
 #include <codecvt>

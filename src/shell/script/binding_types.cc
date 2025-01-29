@@ -116,6 +116,16 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
       }
     };
   }
+
+  if (js_data.icon_bitmap) {
+    data.icon_bitmap = js_data.icon_bitmap.value();
+    data.icon_updated = true;
+  }
+
+  if (js_data.icon_svg) {
+    data.icon_svg = js_data.icon_svg.value();
+    data.icon_updated = true;
+  }
 }
 
 void menu_item_controller::set_data(js_menu_data data) {
@@ -177,6 +187,20 @@ js_menu_data menu_item_controller::data() {
     data.action = [item](js_menu_action_event_data) {
       item->item.action.value()();
     };
+  }
+
+  if (item->item.submenu) {
+    data.submenu = [item](std::shared_ptr<menu_controller> ctl) {
+      item->item.submenu.value()(ctl->$menu.lock());
+    };
+  }
+
+  if (item->item.icon_bitmap) {
+    data.icon_bitmap = item->item.icon_bitmap.value();
+  }
+
+  if (item->item.icon_svg) {
+    data.icon_svg = item->item.icon_svg.value();
   }
 
   return data;
