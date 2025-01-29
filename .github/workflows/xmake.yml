@@ -26,8 +26,8 @@ jobs:
     
     - name: build
       run: |
-        xmake b inject -y --verbose
-        xmake b shell -y --verbose
+        xmake b -y --verbose inject
+        xmake b -y --verbose shell
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
