@@ -8,6 +8,7 @@
 #include "script/script.h"
 #include "ui.h"
 #include "utils.h"
+#include "config.h"
 
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
@@ -41,6 +42,7 @@ void main() {
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);
+  config::run_config_loader();
 
   std::thread([]() {
     script_context ctx;

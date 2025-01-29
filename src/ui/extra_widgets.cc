@@ -95,7 +95,7 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
 
     if (use_dwm) {
       // dwm round corners
-      auto round_value = DWMWCP_ROUND;
+      auto round_value = radius > 0 ? DWMWCP_ROUND : DWMWCP_DONOTROUND;
       DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
                             &round_value, sizeof(round_value));
     }
@@ -108,6 +108,7 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
                      SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
 
+    bool rgn_set = false;
     while (true) {
 
       if (to_close) {
@@ -131,22 +132,24 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
 
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-      cv.wait_for(lk, std::chrono::milliseconds(200));
-
-      // limit to 60fps
-      std::this_thread::sleep_for(std::chrono::milliseconds(16));
-
-      if ((width->updated() || height->updated() || radius->updated()) &&
+      if ((width->updated() || height->updated() || radius->updated() ||
+           !rgn_set) &&
           !use_dwm) {
+        rgn_set = true;
         auto rgn = CreateRoundRectRgn(
             0, 0, *width * dpi_scale, *height * dpi_scale,
             *radius * 2 * dpi_scale, *radius * 2 * dpi_scale);
-        SetWindowRgn((HWND)hwnd, rgn, 0);
+        SetWindowRgn((HWND)hwnd, rgn, 1);
 
         if (rgn) {
           DeleteObject(rgn);
         }
       }
+
+      cv.wait_for(lk, std::chrono::milliseconds(200));
+
+      // limit to 60fps
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
   });
 }

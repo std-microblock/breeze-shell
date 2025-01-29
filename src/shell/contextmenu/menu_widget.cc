@@ -1,4 +1,5 @@
 #include "menu_widget.h"
+#include "../config.h"
 #include "../utils.h"
 #include "animator.h"
 #include "contextmenu.h"
@@ -12,7 +13,7 @@
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
-
+  auto icon_width = config::current->context_menu.theme.font_size + 2;
   auto c = menu_render::current.value()->light_color ? 0 : 1;
   if (item.type == menu_item::type::spacer) {
     ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
@@ -22,12 +23,8 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   ctx.fillColor(nvgRGBAf(c, c, c, *bg_opacity / 255.f));
 
-  float roundcorner = 4;
-
-  if (menu_render::current.value()->style ==
-      menu_render::menu_style::materialyou) {
-    roundcorner = height->dest() / 2;
-  }
+  float roundcorner = std::min(roundcorner = height->dest() / 2,
+                               config::current->context_menu.theme.item_radius);
 
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
                       roundcorner);
@@ -36,7 +33,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     if (!icon_img || item.icon_updated)
       reload_icon_img(ctx);
     item.icon_updated = false;
-    
+
     auto paintY = floor(*y + (*height - icon_width) / 2);
     auto paint =
         nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
@@ -51,32 +48,43 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
 
   ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
   ctx.fontFace("Yahei");
-  auto font_size = 14;
+  auto font_size = config::current->context_menu.theme.font_size;
   ctx.fontSize(font_size);
   ctx.textAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
   ctx.text(round(*x + text_padding + icon_width + icon_padding * 2),
            round(*y + *height / 2), item.name->c_str(), nullptr);
 
   if (item.submenu) {
-    // draw arrow
+    static auto icon_unfold = std::format(
+        // point to right
+        R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
+        c ? "white" : "black");
+
+    if (!icon_unfold_img) {
+      static auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
+
+      this->icon_unfold_img = ctx.imageFromSVG(icon_unfold_img_svg);
+    }
+
+    auto paintY = floor(*y + (*height - icon_width) / 2);
+    auto paint2 = nvgImagePattern(ctx.ctx,
+                                  *x + *width - icon_padding - margin -
+                                      icon_width + ctx.offset_x,
+                                  paintY + ctx.offset_y, icon_width, icon_width,
+                                  0, icon_unfold_img->id, *opacity / 255.f);
+
     ctx.beginPath();
-    ctx.moveTo(*x + *width - 20, *y + 8);
-    ctx.lineTo(*x + *width - 15, *y + 12);
-    ctx.lineTo(*x + *width - 20, *y + 16);
-    ctx.strokeColor(nvgRGBAf(c, c, c, *opacity * 0.6 / 255.f));
-    ctx.strokeWidth(1);
-    ctx.stroke();
+    ctx.rect(*x + *width - icon_padding - margin - icon_width, paintY,
+             icon_width, icon_width);
+    ctx.fillPaint(paint2);
+    ctx.fill();
   }
 
   if (item.type == menu_item::type::toggle) {
-    if (!item.icon_bitmap && item.checked) {
-      ctx.beginPath();
-      ctx.moveTo(*x + icon_padding + margin + 2, *y + 4 + 8);
-      ctx.lineTo(*x + icon_padding + margin + 6, *y + 8 + 8);
-      ctx.lineTo(*x + icon_padding + margin + 14, *y + 0 + 8);
-      ctx.strokeColor(nvgRGBAf(c, c, c, *opacity * 0.6 / 255.f));
-      ctx.strokeWidth(2);
-      ctx.stroke();
+    if ((!item.icon_bitmap && !item.icon_svg) && item.checked) {
+      item.icon_svg = std::format(
+          R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
+          c ? "white" : "black");
     }
   }
 }
@@ -92,7 +100,7 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     height->reset_to(1);
   } else {
-    height->reset_to(25);
+    height->reset_to(config::current->context_menu.theme.item_height);
   }
 
   if (ctx.mouse_down_on(this)) {
@@ -170,60 +178,54 @@ float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
   }
+  auto font_size = config::current->context_menu.theme.font_size;
   return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
-         margin * 2 + icon_width + icon_padding * 2;
+         margin * 2 +
+         (font_size + 2
+          /* icon_width */
+          ) +
+         +icon_padding * 2;
 }
 
 std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   std::shared_ptr<ui::rect_widget> bg;
 
-  if (is_acrylic_available()) {
+  if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
     auto acrylic_color = nvgRGBAf(0.15, 0.15, 0.15, 0.5);
     auto light_color = menu_render::current.value()->light_color;
 
     if (light_color) {
       acrylic_color = nvgRGBAf(0.96, 0.96, 0.96, 0.5);
     }
-    if (menu_render::current.value()->style ==
-        menu_render::menu_style::fluentui) {
-      auto acrylic =
-          std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-      acrylic->acrylic_bg_color = acrylic_color;
-      acrylic->update_color();
-      bg = acrylic;
-    } else {
-      // bg = std::make_shared<ui::rect_widget>();
-      // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
-      auto acrylic =
-          std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-      acrylic->acrylic_bg_color = acrylic_color;
-      acrylic->update_color();
-      bg = acrylic;
-    }
+    auto acrylic = std::make_shared<ui::acrylic_background_widget>(
+        config::current->context_menu.theme.use_dwm_if_available
+            ? is_win11_or_later()
+            : false);
+    acrylic->acrylic_bg_color = acrylic_color;
+    acrylic->update_color();
+    bg = acrylic;
+
     if (menu_render::current.value()->light_color)
       bg->bg_color = nvgRGBAf(1, 1, 1, 0);
     else
       bg->bg_color = nvgRGBAf(0, 0, 0, 0);
-
   } else {
     bg = std::make_shared<ui::rect_widget>();
     auto c = menu_render::current.value()->light_color ? 1 : 25 / 255.f;
     bg->bg_color = nvgRGBAf(c, c, c, 0.9);
   }
 
-  if (menu_render::current.value()->style ==
-      menu_render::menu_style::materialyou) {
-    bg->radius->reset_to(18);
-  } else {
-    bg->radius->reset_to(6);
-  }
+  bg->radius->reset_to(config::current->context_menu.theme.radius);
 
   bg->opacity->reset_to(0);
-  bg->opacity->animate_to(255);
+  bg->opacity->animate_to(
+      255 * config::current->context_menu.theme.background_opacity);
   return bg;
 }
 
-mb_shell::menu_widget::menu_widget() : super() { gap = 5; }
+mb_shell::menu_widget::menu_widget() : super() {
+  gap = config::current->context_menu.theme.item_gap;
+}
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
 
@@ -257,7 +259,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     }
 
     bg_submenu->dying_time = std::nullopt;
-    bg_submenu->opacity->animate_to(255);
+    bg_submenu->opacity->animate_to(
+        config::current->context_menu.theme.background_opacity * 255.f);
     bg_submenu->x->animate_to(current_submenu->x->dest() + ctx.offset_x + *x);
     bg_submenu->y->animate_to(current_submenu->y->dest() - bg_padding_vertical +
                               ctx.offset_y + *y);
@@ -586,9 +589,9 @@ void mb_shell::menu_widget::update_icon_width() {
   for (auto &item : children) {
     auto mi = item->template downcast<menu_item_widget>();
     if (!has_icon) {
-      mi->icon_width = 0;
+      mi->has_icon_padding = 0;
     } else {
-      mi->icon_width = 16;
+      mi->has_icon_padding = 1;
     }
   }
 };

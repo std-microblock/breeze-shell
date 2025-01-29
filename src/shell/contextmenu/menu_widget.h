@@ -1,8 +1,9 @@
 #pragma once
+#include "../config.h"
 #include "animator.h"
+#include "contextmenu.h"
 #include "extra_widgets.h"
 #include "nanovg_wrapper.h"
-#include "contextmenu.h"
 #include "ui.h"
 #include "widget.h"
 #include <algorithm>
@@ -17,14 +18,15 @@ struct menu_item_widget : public ui::widget {
   menu_item item;
   ui::sp_anim_float opacity = anim_float(0, 200);
   float text_padding = 8;
-  float margin = 5;
-  float icon_width = 16;
+  float margin = config::current->context_menu.theme.margin;
+  bool has_icon_padding = false;
   float icon_padding = 10;
   menu_widget *parent_menu;
   menu_item_widget(menu_item item, menu_widget *parent_menu);
   void reset_appear_animation(float delay);
 
   std::optional<ui::NVGImage> icon_img{};
+  std::optional<ui::NVGImage> icon_unfold_img{};
 
   std::shared_ptr<menu_widget> submenu_wid = nullptr;
   float show_submenu_timer = 0.f;
