@@ -90,9 +90,9 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   }
 
   if (item.type == menu_item::type::spacer) {
-    height->animate_to(1);
+    height->reset_to(1);
   } else {
-    height->animate_to(25);
+    height->reset_to(25);
   }
 
   if (ctx.mouse_down_on(this)) {
