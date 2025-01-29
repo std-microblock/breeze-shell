@@ -74,13 +74,8 @@ void main() {
                                HWND hWnd, LPTPMPARAMS lptpm) {
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
+    menu_render.rt->last_time = menu_render.rt->clock.now();
     menu_render.rt->render();
-    menu_render.rt->render();
-    menu_render.rt->render();
-    std::println("First frame used: {}ms",
-                 (menu_render.rt->clock.now().time_since_epoch().count() -
-                  menu_render.rt->last_time.time_since_epoch().count()) /
-                     1000000);
     menu_render.rt->last_time = menu_render.rt->clock.now();
     menu_render.rt->start_loop();
 

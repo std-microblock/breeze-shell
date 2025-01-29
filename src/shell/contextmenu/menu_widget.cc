@@ -219,7 +219,6 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   }
 
   bg->opacity->reset_to(0);
-  bg->opacity->set_delay(80);
   bg->opacity->animate_to(255);
   return bg;
 }
@@ -249,8 +248,6 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   if (current_submenu) {
     if (!bg_submenu) {
       bg_submenu = create_bg();
-      bg_submenu->opacity->reset_to(0);
-      bg_submenu->opacity->set_delay(80);
       bg_submenu->x->reset_to(current_submenu->x->dest() + ctx.offset_x + *x);
       bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical +
                               ctx.offset_y + *y);
@@ -337,7 +334,9 @@ void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   opacity->set_duration(200);
   opacity->reset_to(0);
   opacity->animate_to(255);
+  this->y->progress = 1;
   this->y->before_animate = [this](float dest) {
+    std::println("Before animate: {}", dest);
     this->y->from = dest;
     this->y->before_animate = {};
   };
