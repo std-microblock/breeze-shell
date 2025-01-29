@@ -9,6 +9,10 @@
 #include "ui.h"
 #include "widget.h"
 
+static unsigned char g_icon_png[] = {
+  #include "icon-small.png.h"
+};
+
 #include <Windows.h>
 
 #include <TlHelp32.h>
@@ -185,7 +189,7 @@ struct inject_ui_title : public ui::widget_flex {
     {
       auto title = std::make_shared<ui::text_widget>();
       title->text = "breeze-shell";
-      title->font_size = 23;
+      title->font_size = 26;
       title->color.reset_to({1, 1, 1, 1});
       add_child(title);
     }
@@ -193,7 +197,7 @@ struct inject_ui_title : public ui::widget_flex {
     {
       auto title = std::make_shared<ui::text_widget>();
       title->text = "Bring fluency & delication back to Windows";
-      title->font_size = 18;
+      title->font_size = 14;
       title->color.reset_to({1, 1, 1, 0.8});
       add_child(title);
     }
@@ -210,16 +214,16 @@ struct inject_all_switch : public ui::padding_widget {
     text->font_size = 14;
     text->color.reset_to({1, 1, 1, 1});
 
-    padding_bottom->reset_to(5);
-    padding_top->reset_to(5);
-    padding_left->reset_to(12);
-    padding_right->reset_to(10);
+    padding_bottom->reset_to(10);
+    padding_top->reset_to(10);
+    padding_left->reset_to(22);
+    padding_right->reset_to(20);
   }
   ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f,
                                  0.6}; // Increased base opacity
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(bg_color.nvg());
-    ctx.fillRoundedRect(*x, *y, *width, *height, 12);
+    ctx.fillRoundedRect(*x, *y, *width, *height, 6);
     padding_widget::render(ctx);
   }
 
@@ -277,17 +281,17 @@ struct inject_once_switch : public ui::padding_widget {
     text->font_size = 14;
     text->color.reset_to({1, 1, 1, 1});
 
-    padding_bottom->reset_to(5);
-    padding_top->reset_to(5);
-    padding_left->reset_to(12);
-    padding_right->reset_to(10);
+    padding_bottom->reset_to(10);
+    padding_top->reset_to(10);
+    padding_left->reset_to(22);
+    padding_right->reset_to(20);
   }
 
   ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.6};
 
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(bg_color.nvg());
-    ctx.fillRoundedRect(*x, *y, *width, *height, 12);
+    ctx.fillRoundedRect(*x, *y, *width, *height, 6);
     padding_widget::render(ctx);
   }
 
@@ -311,12 +315,29 @@ struct inject_once_switch : public ui::padding_widget {
   }
 };
 
+struct breeze_icon : public ui::widget {
+  std::optional<int> image;
+  breeze_icon() {
+    width->reset_to(50);
+    height->reset_to(50);
+  }
+
+  void render(ui::nanovg_context ctx) override {
+    if (!image) {
+      image = nvgCreateImageMem(ctx.ctx, 0, g_icon_png, sizeof(g_icon_png));
+    }
+    auto paint = nvgImagePattern(ctx.ctx, *x + ctx.offset_x, *y + ctx.offset_y, *height, *height, 0, *image, 1);
+    ctx.fillPaint(paint);
+    ctx.fillRect(*x, *y, *height, *height);
+  }
+};
 
 struct injector_ui_main : public ui::widget_flex {
   injector_ui_main() {
-    x->reset_to(10);
-    y->reset_to(15);
+    x->reset_to(20);
+    y->reset_to(5);
     gap = 20;
+    emplace_child<breeze_icon>();
     emplace_child<inject_ui_title>();
 
     auto switches = emplace_child<ui::widget_flex>();
@@ -327,6 +348,24 @@ struct injector_ui_main : public ui::widget_flex {
     switches->emplace_child<inject_all_switch>();
     switches->emplace_child<inject_once_switch>();
   }
+  void render(ui::nanovg_context ctx) override {
+    ctx.fillColor(nvgRGB(32, 32, 32));
+    auto gradient_height = 40;
+    ctx.fillRect(0, gradient_height, 999, 999);
+
+    // 20->0 linear gradient
+    NVGpaint bg = nvgLinearGradient(ctx.ctx, 0, gradient_height, 0, 0, nvgRGB(32, 32, 32),
+                                    nvgRGBAf(0, 0, 0, 0));
+    ctx.beginPath();
+    ctx.moveTo(0, gradient_height);
+    ctx.lineTo(999, gradient_height);
+    ctx.lineTo(999, 0);
+    ctx.lineTo(0, 0);
+    ctx.fillPaint(bg);
+    ctx.fill();
+
+    widget_flex::render(ctx);
+  }
 };
 
 void StartInjectUI() {
@@ -335,8 +374,8 @@ void StartInjectUI() {
     return;
   }
   ui::render_target rt;
-  rt.transparent = true;
   rt.acrylic = true;
+  rt.transparent = true;
   rt.width = 400;
   rt.height = 200;
   if (auto r = rt.init(); !r) {

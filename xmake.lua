@@ -54,3 +54,7 @@ target("inject")
     add_files("src/inject/*.cc")
     add_deps("ui")
     set_encodings("utf-8")
+    add_rules("utils.bin2c", {
+        extensions = {".png"}
+    })
+    add_files("resources/icon-small.png")

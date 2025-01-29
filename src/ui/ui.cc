@@ -64,10 +64,18 @@ std::expected<bool, std::string> render_target::init() {
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   auto h = glfwGetWin32Window(window);
-  if (acrylic) {
-    MARGINS margins = {-1};
-    DwmExtendFrameIntoClientArea(h, &margins);
 
+  if (acrylic || extend) {
+    MARGINS margins = {
+        .cxLeftWidth = -1,
+        .cxRightWidth = -1,
+        .cyTopHeight = -1,
+        .cyBottomHeight = -1,
+    };
+    DwmExtendFrameIntoClientArea(h, &margins);
+  }
+
+  if (acrylic) {
     DWM_BLURBEHIND bb = {0};
     bb.dwFlags = DWM_BB_ENABLE;
     bb.fEnable = true;

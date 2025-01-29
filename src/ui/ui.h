@@ -18,6 +18,7 @@ struct render_target {
   GLFWwindow *window;
 
   bool acrylic = false;
+  bool extend = false;
   bool transparent = false;
   bool no_focus = false;
   bool capture_all_input = false;
