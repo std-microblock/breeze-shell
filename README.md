@@ -53,7 +53,10 @@ interface in ~2MiB.
 # Try it out!
 
 Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`
-and you should get a window in which the context menu is replaced.
+and click "注入一次" for testing.
+
+![image](https://github.com/user-attachments/assets/9f951dfe-a210-4e8f-ab56-997371670f26)
+
 
 # Building
 
