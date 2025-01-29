@@ -1,28 +1,40 @@
 name: Build
+permissions: all
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  release:
+    types: [created]
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    
     - uses: xmake-io/github-action-setup-xmake@v1
       with:
         xmake-version: latest
         actions-cache-folder: '.xmake-cache'
         actions-cache-key: 'ci'
+    
     - name: build
       run: xmake -y --verbose
-    - name: Upload a Build Artifact
+
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:
         path: ./build/windows/
+
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./build/windows/**/*
+        token: ${{ secrets.GITHUB_TOKEN }}
