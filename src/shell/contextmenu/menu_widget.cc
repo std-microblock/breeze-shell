@@ -169,28 +169,37 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
-  } 
+  }
   return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
          margin * 2 + icon_width + icon_padding * 2;
 }
 
 std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   std::shared_ptr<ui::rect_widget> bg;
-  if (menu_render::current.value()->style ==
-      menu_render::menu_style::fluentui) {
-    auto acrylic =
-        std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
-    acrylic->update_color();
-    bg = acrylic;
+
+  if (is_acrylic_available()) {
+    if (menu_render::current.value()->style ==
+        menu_render::menu_style::fluentui) {
+      auto acrylic =
+          std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
+      acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
+      acrylic->update_color();
+      bg = acrylic;
+    } else {
+      // bg = std::make_shared<ui::rect_widget>();
+      // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
+      auto acrylic =
+          std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
+      acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
+      acrylic->update_color();
+      bg = acrylic;
+    }
+    auto c = menu_render::current.value()->light_color ? 1 : 0;
+    bg->bg_color = nvgRGBAf(c, c, c, 0.3);
   } else {
-    // bg = std::make_shared<ui::rect_widget>();
-    // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
-    auto acrylic =
-        std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-    acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
-    acrylic->update_color();
-    bg = acrylic;
+    bg = std::make_shared<ui::rect_widget>();
+    auto c = menu_render::current.value()->light_color ? 1 : 25 / 255.f;
+    bg->bg_color = nvgRGBAf(c, c, c, 0.9);
   }
 
   if (menu_render::current.value()->style ==
@@ -199,9 +208,6 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   } else {
     bg->radius->reset_to(6);
   }
-
-  auto c = menu_render::current.value()->light_color ? 1 : 0;
-  bg->bg_color = nvgRGBAf(c, c, c, 0.3);
 
   bg->opacity->reset_to(0);
   bg->opacity->set_delay(80);
@@ -542,7 +548,6 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item,
   opacity->reset_to(0);
   this->item = item;
 }
-
 
 void mb_shell::menu_widget::init_from_data(menu menu_data) {
   if (menu_data.is_top_level && !bg) {

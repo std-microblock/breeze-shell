@@ -33,9 +33,9 @@ void acrylic_background_widget::update(update_context &ctx) {
 
 
 int GetWindowZOrder(HWND hwnd) {
-  int z = 0;
-  for (HWND h = hwnd; h; h = GetWindow(h, GW_HWNDPREV)) {
-    z++;
+  int z = 999999;
+  for (HWND h = hwnd; h; h = GetWindow(h, GW_HWNDNEXT)) {
+    z--;
   }
   return z;
 }
@@ -52,7 +52,7 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   static thread_local HWND last_hwnd = nullptr;
   // we should be higher than the last hwnd
   // first check if we are already higher
-  if (last_hwnd) {
+  if (last_hwnd && hwnd) {
     auto last_z = GetWindowZOrder(last_hwnd);
     auto z = GetWindowZOrder((HWND)hwnd);
     if (z < last_z) {

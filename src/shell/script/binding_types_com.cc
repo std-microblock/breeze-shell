@@ -73,65 +73,71 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       (*event_data.input_box)->$hwnd = focused_hwnd;
       return event_data;
     }
-  }
 
-  CoInitializeEx(NULL, COINIT_MULTITHREADED);
-  // Check if the foreground window is an Explorer window
+    if (class_name == "SysListView32" || class_name == "DirectUIHWND") {
+      std::printf("Focused window is a folder view\n");
+      CoInitializeEx(NULL, COINIT_MULTITHREADED);
+      // Check if the foreground window is an Explorer window
 
-  if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
-    IShellView *psv;
-    std::printf("shell browser: %p\n", psb);
-    if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
-      IFolderView *pfv;
-      if (SUCCEEDED(psv->QueryInterface(IID_IFolderView, (void **)&pfv))) {
-        // It's an Explorer window
-        event_data.folder_view = std::make_shared<folder_view_controller>();
-        auto fv = *event_data.folder_view;
-        fv->$hwnd = hWnd;
-        fv->$controller = psb;
+      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
+        IShellView *psv;
+        std::printf("shell browser: %p\n", psb);
+        if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
+          IFolderView *pfv;
+          if (SUCCEEDED(psv->QueryInterface(IID_IFolderView, (void **)&pfv))) {
+            // It's an Explorer window
+            event_data.folder_view = std::make_shared<folder_view_controller>();
+            auto fv = *event_data.folder_view;
+            fv->$hwnd = hWnd;
+            fv->$controller = psb;
 
-        int focusIndex;
-        pfv->GetFocusedItem(&focusIndex);
-        if (focusIndex >= 0) {
-          PIDLIST_ABSOLUTE pidl;
-          if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
-            fv->focused_file_path = folder_id_to_path(pidl);
-            CoTaskMemFree(pidl);
-          }
-        }
-
-        IShellItem *psi;
-        if (SUCCEEDED(pfv->GetFolder(IID_IShellItem, (void **)&psi))) {
-          PWSTR pszPath;
-          if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
-            fv->current_path = mb_shell::wstring_to_utf8(pszPath);
-            CoTaskMemFree(pszPath);
-          }
-          psi->Release();
-        }
-
-        IShellItemArray *psia;
-        if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray, (void **)&psia))) {
-          DWORD count;
-          if (SUCCEEDED(psia->GetCount(&count))) {
-            for (DWORD i = 0; i < count; i++) {
-              IShellItem *psi;
-              if (SUCCEEDED(psia->GetItemAt(i, &psi))) {
-                PWSTR pszPath;
-                if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
-                  fv->selected_files.push_back(mb_shell::wstring_to_utf8(pszPath));
-                  CoTaskMemFree(pszPath);
-                }
-                psi->Release();
+            int focusIndex;
+            pfv->GetFocusedItem(&focusIndex);
+            if (focusIndex >= 0) {
+              PIDLIST_ABSOLUTE pidl;
+              if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
+                fv->focused_file_path = folder_id_to_path(pidl);
+                CoTaskMemFree(pidl);
               }
             }
-          }
-          psia->Release();
-        }
 
-        pfv->Release();
+            IShellItem *psi;
+            if (SUCCEEDED(pfv->GetFolder(IID_IShellItem, (void **)&psi))) {
+              PWSTR pszPath;
+              if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                fv->current_path = mb_shell::wstring_to_utf8(pszPath);
+                CoTaskMemFree(pszPath);
+              }
+              psi->Release();
+            }
+
+            IShellItemArray *psia;
+            if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray,
+                                     (void **)&psia))) {
+              DWORD count;
+              if (SUCCEEDED(psia->GetCount(&count))) {
+                for (DWORD i = 0; i < count; i++) {
+                  IShellItem *psi;
+                  if (SUCCEEDED(psia->GetItemAt(i, &psi))) {
+                    PWSTR pszPath;
+                    if (SUCCEEDED(
+                            psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                      fv->selected_files.push_back(
+                          mb_shell::wstring_to_utf8(pszPath));
+                      CoTaskMemFree(pszPath);
+                    }
+                    psi->Release();
+                  }
+                }
+              }
+              psia->Release();
+            }
+
+            pfv->Release();
+          }
+          psv->Release();
+        }
       }
-      psv->Release();
     }
   }
 
@@ -253,8 +259,9 @@ void window_titlebar_controller::set_title(std::string new_title) {
 }
 
 void window_titlebar_controller::set_icon(std::string icon_path) {
-  HICON hIcon = (HICON)LoadImageW(NULL, mb_shell::utf8_to_wstring(icon_path).c_str(), 
-      IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+  HICON hIcon =
+      (HICON)LoadImageW(NULL, mb_shell::utf8_to_wstring(icon_path).c_str(),
+                        IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
   if (hIcon) {
     SendMessageW((HWND)$hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
     SendMessageW((HWND)$hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
@@ -262,11 +269,13 @@ void window_titlebar_controller::set_icon(std::string icon_path) {
 }
 
 void window_titlebar_controller::set_position(int new_x, int new_y) {
-  SetWindowPos((HWND)$hwnd, NULL, new_x, new_y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+  SetWindowPos((HWND)$hwnd, NULL, new_x, new_y, 0, 0,
+               SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void window_titlebar_controller::set_size(int new_width, int new_height) {
-  SetWindowPos((HWND)$hwnd, NULL, 0, 0, new_width, new_height, SWP_NOMOVE | SWP_NOZORDER);
+  SetWindowPos((HWND)$hwnd, NULL, 0, 0, new_width, new_height,
+               SWP_NOMOVE | SWP_NOZORDER);
 }
 
 void window_titlebar_controller::maximize() {
@@ -285,33 +294,29 @@ void window_titlebar_controller::close() {
   SendMessageW((HWND)$hwnd, WM_CLOSE, 0, 0);
 }
 
-void window_titlebar_controller::focus() {
-  SetForegroundWindow((HWND)$hwnd);
-}
+void window_titlebar_controller::focus() { SetForegroundWindow((HWND)$hwnd); }
 
-void window_titlebar_controller::show() {
-  ShowWindow((HWND)$hwnd, SW_SHOW);
-}
+void window_titlebar_controller::show() { ShowWindow((HWND)$hwnd, SW_SHOW); }
 
-void window_titlebar_controller::hide() {
-  ShowWindow((HWND)$hwnd, SW_HIDE);
-}
+void window_titlebar_controller::hide() { ShowWindow((HWND)$hwnd, SW_HIDE); }
 
 void input_box_controller::set_text(std::string new_text) {
   SetWindowTextW((HWND)$hwnd, mb_shell::utf8_to_wstring(new_text).c_str());
 }
 
 void input_box_controller::set_placeholder(std::string new_placeholder) {
-  SendMessageW((HWND)$hwnd, EM_SETCUEBANNER, TRUE, 
+  SendMessageW((HWND)$hwnd, EM_SETCUEBANNER, TRUE,
                (LPARAM)mb_shell::utf8_to_wstring(new_placeholder).c_str());
 }
 
 void input_box_controller::set_position(int new_x, int new_y) {
-  SetWindowPos((HWND)$hwnd, NULL, new_x, new_y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+  SetWindowPos((HWND)$hwnd, NULL, new_x, new_y, 0, 0,
+               SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void input_box_controller::set_size(int new_width, int new_height) {
-  SetWindowPos((HWND)$hwnd, NULL, 0, 0, new_width, new_height, SWP_NOMOVE | SWP_NOZORDER);
+  SetWindowPos((HWND)$hwnd, NULL, 0, 0, new_width, new_height,
+               SWP_NOMOVE | SWP_NOZORDER);
 }
 
 void input_box_controller::set_multiline(bool new_multiline) {
@@ -342,13 +347,9 @@ void input_box_controller::set_disabled(bool new_disabled) {
   EnableWindow((HWND)$hwnd, !new_disabled);
 }
 
-void input_box_controller::focus() {
-  SetFocus((HWND)$hwnd);
-}
+void input_box_controller::focus() { SetFocus((HWND)$hwnd); }
 
-void input_box_controller::blur() {
-  SetFocus(NULL);
-}
+void input_box_controller::blur() { SetFocus(NULL); }
 
 void input_box_controller::select_all() {
   SendMessageW((HWND)$hwnd, EM_SETSEL, 0, -1);
@@ -363,7 +364,7 @@ void input_box_controller::set_selection(int start, int end) {
 }
 
 void input_box_controller::insert_text(std::string new_text) {
-  SendMessageW((HWND)$hwnd, EM_REPLACESEL, TRUE, 
+  SendMessageW((HWND)$hwnd, EM_REPLACESEL, TRUE,
                (LPARAM)mb_shell::utf8_to_wstring(new_text).c_str());
 }
 
@@ -372,7 +373,5 @@ void input_box_controller::delete_text(int start, int end) {
   SendMessageW((HWND)$hwnd, EM_REPLACESEL, TRUE, (LPARAM)L"");
 }
 
-void input_box_controller::clear() {
-  SetWindowTextW((HWND)$hwnd, L"");
-}
+void input_box_controller::clear() { SetWindowTextW((HWND)$hwnd, L""); }
 } // namespace mb_shell::js
