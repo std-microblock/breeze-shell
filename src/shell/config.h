@@ -17,11 +17,6 @@ struct config {
       float item_gap = 5;
       float item_radius = 100;
       float margin = 5;
-
-      enum class style {
-        fluentui,
-        materialyou,
-      } style;
     } theme;
   } context_menu;
 
