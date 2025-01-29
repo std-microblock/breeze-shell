@@ -13,7 +13,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return {nullptr, std::nullopt};
   }
 
-  constexpr int l_pad = 100, t_pad = 100;
+  constexpr int l_pad = 100, t_pad = -1;
 
   auto current_js_context =
       std::make_shared<js::js_menu_context>(js::js_menu_context::$from_window(

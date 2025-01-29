@@ -279,9 +279,9 @@ void render_target::set_position(int x, int y) {
   glfwSetWindowPos(window, x, y);
 }
 void render_target::resize(int width, int height) {
-  this->width = width * dpi_scale;
-  this->height = height * dpi_scale;
-  reset_view();
+  this->width = width;
+  this->height = height;
+  glfwSetWindowSize(window, this->width, this->height);
 }
 void render_target::close() {
   ShowWindow(glfwGetWin32Window(window), SW_HIDE);

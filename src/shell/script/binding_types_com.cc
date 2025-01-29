@@ -34,6 +34,9 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
 IShellBrowser *GetIShellBrowser(HWND hWnd) {
   __try {
     auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
+    if (!res) {
+      return nullptr;
+    }
     res->AddRef();
     res->Release();
     return res;
