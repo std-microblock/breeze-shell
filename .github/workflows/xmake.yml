@@ -25,16 +25,23 @@ jobs:
         actions-cache-key: 'ci'
     
     - name: build
-      run: xmake -y --verbose
+      run: |
+        xmake b inject -y --verbose
+        xmake b shell -y --verbose
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:
         path: ./build/windows/
 
+    - name: Create Archive
+      if: github.event_name == 'release'
+      run: |
+        Compress-Archive -Path ./build/windows/* -DestinationPath windows-build.zip
+
     - name: Upload Release Assets
       if: github.event_name == 'release'
       uses: softprops/action-gh-release@v1
       with:
-        files: ./build/windows/**/*
+        files: windows-build.zip
         token: ${{ secrets.GITHUB_TOKEN }}
