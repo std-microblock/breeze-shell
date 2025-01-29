@@ -1,5 +1,5 @@
 name: Build
-permissions: write
+permissions: write-all
 
 on:
   push:
