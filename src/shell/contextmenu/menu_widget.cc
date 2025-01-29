@@ -178,7 +178,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   std::shared_ptr<ui::rect_widget> bg;
 
   if (is_acrylic_available()) {
-    auto acrylic_color = nvgRGBAf(0, 0, 0, 0.5);
+    auto acrylic_color = nvgRGBAf(0.15, 0.15, 0.15, 0.5);
     auto light_color = menu_render::current.value()->light_color;
 
     if (light_color) {
