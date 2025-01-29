@@ -178,11 +178,17 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   std::shared_ptr<ui::rect_widget> bg;
 
   if (is_acrylic_available()) {
+    auto acrylic_color = nvgRGBAf(0, 0, 0, 0.5);
+    auto light_color = menu_render::current.value()->light_color;
+
+    if (light_color) {
+      acrylic_color = nvgRGBAf(0.96, 0.96, 0.96, 0.5);
+    }
     if (menu_render::current.value()->style ==
         menu_render::menu_style::fluentui) {
       auto acrylic =
           std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-      acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
+      acrylic->acrylic_bg_color = acrylic_color;
       acrylic->update_color();
       bg = acrylic;
     } else {
@@ -190,12 +196,15 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
       // bg->bg_color = nvgRGBAf(0, 0, 0, 0.8);
       auto acrylic =
           std::make_shared<ui::acrylic_background_widget>(is_win11_or_later());
-      acrylic->acrylic_bg_color = nvgRGBAf(1, 0, 0, 0.5);
+      acrylic->acrylic_bg_color = acrylic_color;
       acrylic->update_color();
       bg = acrylic;
     }
-    auto c = menu_render::current.value()->light_color ? 1 : 0;
-    bg->bg_color = nvgRGBAf(c, c, c, 0.3);
+    if (menu_render::current.value()->light_color)
+      bg->bg_color = nvgRGBAf(1, 1, 1, 0);
+    else
+      bg->bg_color = nvgRGBAf(0, 0, 0, 0);
+
   } else {
     bg = std::make_shared<ui::rect_widget>();
     auto c = menu_render::current.value()->light_color ? 1 : 25 / 255.f;

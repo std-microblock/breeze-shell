@@ -5,7 +5,6 @@
 #include "GLFW/glfw3native.h"
 #include <print>
 
-
 #include "swcadef.h"
 #include "ui.h"
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -30,7 +29,6 @@ void acrylic_background_widget::update(update_context &ctx) {
     radius->reset_to(8.f);
   }
 }
-
 
 int GetWindowZOrder(HWND hwnd) {
   int z = 999999;
@@ -93,17 +91,15 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
 
     SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
-    ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                            Flags::AllowSetWindowRgn, 0x01000000, 0};
-    WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
-                                        sizeof(accent)};
-    pSetWindowCompositionAttribute((HWND)hwnd, &data);
+    update_color();
 
     if (use_dwm) {
       // dwm round corners
       auto round_value = DWMWCP_ROUND;
       DwmSetWindowAttribute((HWND)hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
                             &round_value, sizeof(round_value));
+
+
     }
 
     std::unique_lock<std::mutex> lk(cv_m);
@@ -164,10 +160,12 @@ acrylic_background_widget::~acrylic_background_widget() {
 }
 void acrylic_background_widget::update_color() {
   ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                          Flags::AllowSetWindowRgn | Flags::AllBorder,
-                          RGB(acrylic_bg_color.r * 255,
-                              acrylic_bg_color.g * 255,
-                              acrylic_bg_color.b * 255),
+                          Flags::GradientColor,
+                          RGB(
+                            acrylic_bg_color.r * 255,
+                            acrylic_bg_color.g * 255,
+                            acrylic_bg_color.b * 255
+                          ),
                           0};
   WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                       sizeof(accent)};
