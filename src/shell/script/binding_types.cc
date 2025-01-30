@@ -422,4 +422,87 @@ void menu_controller::clear() {
   m->children.clear();
   m->menu_data.items.clear();
 }
+void fs::chdir(std::string path) {
+  SetCurrentDirectoryA(path.c_str());
+}
+
+std::string fs::cwd() {
+  char buffer[MAX_PATH];
+  GetCurrentDirectoryA(MAX_PATH, buffer);
+  return std::string(buffer);
+}
+
+bool fs::exists(std::string path) {
+  return GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
+void fs::mkdir(std::string path) {
+  CreateDirectoryA(path.c_str(), nullptr);
+}
+
+void fs::rmdir(std::string path) {
+  RemoveDirectoryA(path.c_str());
+}
+
+void fs::rename(std::string old_path, std::string new_path) {
+  MoveFileA(old_path.c_str(), new_path.c_str());
+}
+
+void fs::remove(std::string path) {
+  DeleteFileA(path.c_str());
+}
+
+void fs::copy(std::string src_path, std::string dest_path) {
+  CopyFileA(src_path.c_str(), dest_path.c_str(), FALSE);
+}
+
+void fs::move(std::string src_path, std::string dest_path) {
+  MoveFileA(src_path.c_str(), dest_path.c_str());
+}
+
+std::string fs::read(std::string path) {
+  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE) return "";
+
+  DWORD fileSize = GetFileSize(hFile, nullptr);
+  std::string buffer(fileSize, '\0');
+  DWORD bytesRead;
+  ReadFile(hFile, &buffer[0], fileSize, &bytesRead, nullptr);
+  CloseHandle(hFile);
+  return buffer;
+}
+
+void fs::write(std::string path, std::string data) {
+  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
+               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE) return;
+
+  DWORD bytesWritten;
+  WriteFile(hFile, data.c_str(), data.length(), &bytesWritten, nullptr);
+  CloseHandle(hFile);
+}
+
+std::vector<uint8_t> fs::read_binary(std::string path) {
+  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE) return {};
+
+  DWORD fileSize = GetFileSize(hFile, nullptr);
+  std::vector<uint8_t> buffer(fileSize);
+  DWORD bytesRead;
+  ReadFile(hFile, buffer.data(), fileSize, &bytesRead, nullptr);
+  CloseHandle(hFile);
+  return buffer;
+}
+
+void fs::write_binary(std::string path, std::vector<uint8_t> data) {
+  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
+               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE) return;
+
+  DWORD bytesWritten;
+  WriteFile(hFile, data.data(), data.size(), &bytesWritten, nullptr);
+  CloseHandle(hFile);
+}
 } // namespace mb_shell::js

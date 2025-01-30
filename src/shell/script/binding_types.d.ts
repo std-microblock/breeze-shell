@@ -794,6 +794,127 @@ export class subproc {
             
 }
     
+export class fs {
+	
+	
+/**
+  * 获取当前工作目录
+  *  Get current working directory
+  * @param 
+  * @returns string
+  */
+  static cwd: (() => string)
+            
+	
+/**
+  * 设置当前工作目录
+  *  Set current working directory
+  * @param path: string
+  * @returns void
+  */
+  static chdir: ((arg1: string) => void)
+            
+	
+/**
+  * 判断路径是否存在
+  *  Check if path exists
+  * @param path: string
+  * @returns boolean
+  */
+  static exists: ((arg1: string) => boolean)
+            
+	
+/**
+  * 创建目录
+  *  Create directory
+  * @param path: string
+  * @returns void
+  */
+  static mkdir: ((arg1: string) => void)
+            
+	
+/**
+  * 删除目录
+  *  Remove directory
+  * @param path: string
+  * @returns void
+  */
+  static rmdir: ((arg1: string) => void)
+            
+	
+/**
+  * 重命名文件或目录
+  *  Rename file or directory
+  * @param old_path: string, new_path: string
+  * @returns void
+  */
+  static rename: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 删除文件
+  *  Remove file
+  * @param path: string
+  * @returns void
+  */
+  static remove: ((arg1: string) => void)
+            
+	
+/**
+  * 复制文件
+  *  Copy file
+  * @param src_path: string, dest_path: string
+  * @returns void
+  */
+  static copy: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 移动文件
+  *  Move file
+  * @param src_path: string, dest_path: string
+  * @returns void
+  */
+  static move: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 读取文件
+  *  Read file
+  * @param path: string
+  * @returns string
+  */
+  static read: ((arg1: string) => string)
+            
+	
+/**
+  * 写入文件
+  *  Write file
+  * @param path: string, data: string
+  * @returns void
+  */
+  static write: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 以二进制模式读取文件
+  *  Read file in binary mode
+  * @param path: string
+  * @returns Array<uint8_t>
+  */
+  static read_binary: ((arg1: string) => Array<uint8_t>)
+            
+	
+/**
+  * 以二进制模式写入文件
+  *  Write file in binary mode
+  * @param path: string, data: Array<uint8_t>
+  * @returns void
+  */
+  static write_binary: ((arg1: string, arg2: Array<uint8_t>) => void)
+            
+}
+    
 }
 declare module "mshell" {
     export function println(...args: any[]);

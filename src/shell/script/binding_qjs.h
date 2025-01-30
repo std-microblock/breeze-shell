@@ -624,6 +624,41 @@ template<> struct js_bind<mb_shell::js::subproc> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::fs> {
+    static mb_shell::js::fs unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::fs obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::fs &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::fs> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::fs>("fs")
+            .constructor<>()
+                .static_fun<&mb_shell::js::fs::cwd>("cwd")
+                .static_fun<&mb_shell::js::fs::chdir>("chdir")
+                .static_fun<&mb_shell::js::fs::exists>("exists")
+                .static_fun<&mb_shell::js::fs::mkdir>("mkdir")
+                .static_fun<&mb_shell::js::fs::rmdir>("rmdir")
+                .static_fun<&mb_shell::js::fs::rename>("rename")
+                .static_fun<&mb_shell::js::fs::remove>("remove")
+                .static_fun<&mb_shell::js::fs::copy>("copy")
+                .static_fun<&mb_shell::js::fs::move>("move")
+                .static_fun<&mb_shell::js::fs::read>("read")
+                .static_fun<&mb_shell::js::fs::write>("write")
+                .static_fun<&mb_shell::js::fs::read_binary>("read_binary")
+                .static_fun<&mb_shell::js::fs::write_binary>("write_binary")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -655,5 +690,7 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::subproc_result_data>::bind(mod);
 
     js_bind<mb_shell::js::subproc>::bind(mod);
+
+    js_bind<mb_shell::js::fs>::bind(mod);
 
 }

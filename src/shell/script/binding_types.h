@@ -397,6 +397,62 @@ struct subproc {
                         std::function<void(subproc_result_data)> callback);
 };
 
+// 文件系统操作
+// File system operations
+struct fs {
+  // 获取当前工作目录
+  // Get current working directory
+  static std::string cwd();
+
+  // 设置当前工作目录
+  // Set current working directory
+  static void chdir(std::string path);
+
+  // 判断路径是否存在
+  // Check if path exists
+  static bool exists(std::string path);
+
+  // 创建目录
+  // Create directory
+  static void mkdir(std::string path);
+
+  // 删除目录
+  // Remove directory
+  static void rmdir(std::string path);
+
+  // 重命名文件或目录
+  // Rename file or directory
+  static void rename(std::string old_path, std::string new_path);
+
+  // 删除文件
+  // Remove file
+  static void remove(std::string path);
+
+  // 复制文件
+  // Copy file
+  static void copy(std::string src_path, std::string dest_path);
+
+  // 移动文件
+  // Move file
+  static void move(std::string src_path, std::string dest_path);
+
+  // 读取文件
+  // Read file
+  static std::string read(std::string path);
+
+  // 写入文件
+  // Write file
+  static void write(std::string path, std::string data);
+
+  // 以二进制模式读取文件
+  // Read file in binary mode
+  static std::vector<uint8_t> read_binary(std::string path);
+
+  // 以二进制模式写入文件
+  // Write file in binary mode
+  static void write_binary(std::string path, std::vector<uint8_t> data);
+};
+
 } // namespace mb_shell::js
 
 namespace mb_shell {
