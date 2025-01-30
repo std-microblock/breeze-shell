@@ -60,7 +60,7 @@ interface in ~2MiB.
 Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`
 and click "注入一次" for testing.
 
-![image](https://github.com/user-attachments/assets/9f951dfe-a210-4e8f-ab56-997371670f26)
+![image](https://github.com/user-attachments/assets/474e1fbb-b94c-49c2-afb1-18c84f9f2639)
 
 
 # Building
