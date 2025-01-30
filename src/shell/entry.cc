@@ -47,13 +47,13 @@ void main() {
   std::thread([]() {
     script_context ctx;
 
-    if (std::filesystem::exists("J:\\Projects\\b-shell\\test.ts"))
-      ctx.watch_file("J:\\Projects\\b-shell\\test.ts");
-    else if (std::filesystem::exists("D:\\shell\\test.ts"))
-      ctx.watch_file("D:\\shell\\test.ts");
-    else if (std::filesystem::exists(
-                 (std::filesystem::current_path() / "test.ts")))
-      ctx.watch_file((std::filesystem::current_path() / "test.ts"));
+    auto data_dir = config::data_directory();
+    auto script_dir = data_dir / "scripts";
+
+    if (!std::filesystem::exists(script_dir))
+      std::filesystem::create_directories(script_dir);
+
+    ctx.watch_folder(script_dir);
   }).detach();
 
   auto proc = blook::Process::self();

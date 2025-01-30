@@ -9,8 +9,8 @@
 
 namespace mb_shell {
 struct script_context {
-  std::unique_ptr<qjs::Runtime> rt;
-  std::unique_ptr<qjs::Context> js;
+  std::shared_ptr<qjs::Runtime> rt;
+  std::shared_ptr<qjs::Context> js;
 
   script_context();
 
@@ -22,5 +22,8 @@ struct script_context {
 
   void watch_file(const std::filesystem::path &path, std::function<void()> on_reload = [](){});
 
+  void watch_folder(
+      const std::filesystem::path &path,
+      std::function<void()> on_reload = []() {});
 };
 } // namespace mb_shell
