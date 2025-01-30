@@ -436,7 +436,7 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     y = anchor_y;
   }
 
-  constexpr auto padding_vertical = 50, padding_horizontal = 10;
+  constexpr auto padding_vertical = 0, padding_horizontal = 0;
 
   if (x < padding_vertical) {
     x = padding_vertical;
@@ -463,55 +463,50 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
 
   bool bottom_overflow =
       (anchor_y + menu_height * ctx.rt.dpi_scale > ctx.screen.height);
-  bool top_overflow = (anchor_y - menu_height * ctx.rt.dpi_scale > 0);
+  bool top_overflow = (anchor_y - menu_height * ctx.rt.dpi_scale < 0);
+  std::println("top y: {}", anchor_y - menu_height * ctx.rt.dpi_scale);
 
   bool right_overflow =
       (anchor_x + menu_width * ctx.rt.dpi_scale > ctx.screen.width);
-  bool left_overflow = (anchor_x - menu_width * ctx.rt.dpi_scale > 0);
+  bool left_overflow = (anchor_x - menu_width * ctx.rt.dpi_scale < 0);
 
-  if (prefer_direction == popup_direction::top_left) {
-    if (!top_overflow && !left_overflow) {
-      return popup_direction::top_left;
-    } else if (!top_overflow && !right_overflow) {
-      return popup_direction::top_right;
-    } else if (!bottom_overflow && !left_overflow) {
-      return popup_direction::bottom_left;
-    } else {
-      return popup_direction::bottom_right;
-    }
-  } else if (prefer_direction == popup_direction::top_right) {
-    if (!top_overflow && !right_overflow) {
-      return popup_direction::top_right;
-    } else if (!top_overflow && !left_overflow) {
-      return popup_direction::top_left;
-    } else if (!bottom_overflow && !right_overflow) {
-      return popup_direction::bottom_right;
-    } else {
-      return popup_direction::bottom_left;
-    }
+  std::println("Overflow: top-{} bot-{} le-{} ri-{}", top_overflow,
+               bottom_overflow, left_overflow, right_overflow);
+
+  bool top_revert = false;
+  bool left_revert = false;
+
+  if (prefer_direction == popup_direction::bottom_right) {
+    if (bottom_overflow && !top_overflow)
+      top_revert = true;
+    if (right_overflow && !left_overflow)
+      left_revert = true;
   } else if (prefer_direction == popup_direction::bottom_left) {
-    if (!bottom_overflow && !left_overflow) {
-      return popup_direction::bottom_left;
-    } else if (!bottom_overflow && !right_overflow) {
-      return popup_direction::bottom_right;
-    } else if (!top_overflow && !left_overflow) {
-      return popup_direction::top_left;
-    } else {
-      return popup_direction::top_right;
-    }
-  } else if (prefer_direction == popup_direction::bottom_right) {
-    if (!bottom_overflow && !right_overflow) {
-      return popup_direction::bottom_right;
-    } else if (!bottom_overflow && !left_overflow) {
-      return popup_direction::bottom_left;
-    } else if (!top_overflow && !right_overflow) {
-      return popup_direction::top_right;
-    } else {
-      return popup_direction::top_left;
-    }
+    if (bottom_overflow && !top_overflow)
+      top_revert = true;
+    if (left_overflow && !right_overflow)
+      left_revert = true;
+  } else if (prefer_direction == popup_direction::top_right) {
+    if (top_overflow && !bottom_overflow)
+      top_revert = true;
+    if (right_overflow && !left_overflow)
+      left_revert = true;
+  } else if (prefer_direction == popup_direction::top_left) {
+    if (top_overflow && !bottom_overflow)
+      top_revert = true;
+    if (left_overflow && !right_overflow)
+      left_revert = true;
   }
 
-  return popup_direction::bottom_right;
+  if (top_revert && left_revert) {
+    return popup_direction::top_left;
+  } else if (top_revert && !left_revert) {
+    return popup_direction::top_right;
+  } else if (!top_revert && left_revert) {
+    return popup_direction::bottom_left;
+  } else {
+    return popup_direction::bottom_right;
+  }
 }
 
 void mb_shell::mouse_menu_widget_main::calibrate_position(
