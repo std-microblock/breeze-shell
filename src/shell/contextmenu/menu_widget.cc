@@ -218,6 +218,7 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   bg->radius->reset_to(config::current->context_menu.theme.radius);
 
   bg->opacity->reset_to(0);
+  config::current->context_menu.theme.animation.bg.opacity(bg->opacity, 0);
   bg->opacity->animate_to(
       255 * config::current->context_menu.theme.background_opacity);
   return bg;
@@ -307,8 +308,10 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   if (bg) {
     bg->render(ctx);
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_COPY);
-      ctx.fillColor(bg->bg_color);
+      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      auto cl = bg->bg_color;
+      cl.a = 1 - *bg->opacity / 255.f;
+      ctx.fillColor(cl);
       ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height, *bg->radius);
     });
   }
@@ -318,10 +321,10 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   if (bg_submenu) {
     bg_submenu->render(ctx.with_reset_offset());
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_COPY);
-      auto c = bg_submenu->bg_color;
-      c.a *= *bg_submenu->opacity / 255.f;
-      ctx.fillColor(c);
+      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      auto cl = bg_submenu->bg_color;
+      cl.a = 1 - *bg_submenu->opacity / 255.f;
+      ctx.fillColor(cl);
       ctx.with_reset_offset().fillRoundedRect(
           *bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
           *bg_submenu->height, *bg_submenu->radius);
@@ -333,19 +336,12 @@ void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
     this->opacity->set_delay(0);
   };
-  opacity->set_delay(delay);
-  opacity->set_duration(200);
+  config::current->context_menu.theme.animation.item.opacity(opacity, delay);
+  config::current->context_menu.theme.animation.item.x(x, delay);
+
   opacity->reset_to(0);
   opacity->animate_to(255);
   this->y->progress = 1;
-  this->y->before_animate = [this](float dest) {
-    std::println("Before animate: {}", dest);
-    this->y->from = dest;
-    this->y->before_animate = {};
-  };
-
-  this->x->set_delay(delay);
-  this->x->set_duration(200);
   this->x->reset_to(-20);
   this->x->animate_to(0);
 }

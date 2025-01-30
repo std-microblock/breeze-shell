@@ -6,6 +6,14 @@
 namespace mb_shell {
 
 struct config {
+  struct animated_float_conf {
+    float duration = 200;
+    ui::easing_type easing = ui::easing_type::ease_in_out;
+    float delay_scale = 1;
+
+    void apply_to(ui::sp_anim_float &anim, float delay = 0);
+    void operator()(ui::sp_anim_float &anim, float delay = 0);
+  };
   struct context_menu {
     struct theme {
       bool use_dwm_if_available = true;
@@ -17,12 +25,21 @@ struct config {
       float item_gap = 5;
       float item_radius = 100;
       float margin = 5;
+
+      struct animation {
+        struct item {
+            animated_float_conf opacity;
+            animated_float_conf x;
+        } item;
+        struct bg {
+            animated_float_conf opacity;
+        } bg;
+      } animation;
     } theme;
 
     bool vsync = true;
   } context_menu;
   bool debug_console = false;
-  
 
   static std::unique_ptr<config> current;
   static void read_config();

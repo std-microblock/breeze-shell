@@ -1,6 +1,8 @@
 #include "extra_widgets.h"
 #include "GLFW/glfw3.h"
 #include "widget.h"
+#include <future>
+#include <thread>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 #include <print>
@@ -24,7 +26,7 @@ void acrylic_background_widget::update(update_context &ctx) {
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
   cv.notify_all();
-  last_hwnd = 0;
+  last_hwnd = nullptr;
   if (use_dwm) {
     radius->reset_to(8.f);
   }
@@ -37,7 +39,7 @@ int GetWindowZOrder(HWND hwnd) {
   }
   return z;
 }
-thread_local size_t acrylic_background_widget::last_hwnd = 0;
+thread_local void *acrylic_background_widget::last_hwnd = 0;
 void acrylic_background_widget::render(nanovg_context ctx) {
   widget::render(ctx);
   cv.notify_all();
@@ -46,20 +48,9 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   bg_color_tmp.a *= *opacity / 255.f;
   ctx.fillColor(bg_color_tmp);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
-  // we should be higher than the last hwnd
-  // first check if we are already higher
-  if (last_hwnd && hwnd) {
-    auto last_z = GetWindowZOrder((HWND)last_hwnd);
-    auto z = GetWindowZOrder((HWND)hwnd);
-    if (z < last_z) {
-      SetWindowPos((HWND)hwnd, (HWND)last_hwnd, 0, 0, 0, 0,
-                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-                       SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
-                       SWP_NOZORDER);
-    }
-  }
 
-  last_hwnd = (size_t)hwnd;
+  last_hwnd_self = last_hwnd;
+  last_hwnd = hwnd;
 
   offset_x = ctx.offset_x;
   offset_y = ctx.offset_y;
@@ -129,6 +120,15 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
                    SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOOWNERZORDER |
                        SWP_NOSENDCHANGING | SWP_NOCOPYBITS | SWP_NOREPOSITION |
                        SWP_NOZORDER);
+
+      auto zorder_this = GetWindowZOrder((HWND)hwnd);
+      auto zorder_last = GetWindowZOrder((HWND)last_hwnd_self);
+
+      if (zorder_this < zorder_last && last_hwnd_self && hwnd) {
+        SetWindowPos((HWND)hwnd, handle, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                         SWP_NOSENDCHANGING | SWP_NOCOPYBITS);
+      }
 
       SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 

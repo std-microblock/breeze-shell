@@ -93,4 +93,14 @@ void config::run_config_loader() {
     }
   }).detach();
 }
+void config::animated_float_conf::apply_to(ui::sp_anim_float &anim,
+                                           float delay) {
+  anim->set_duration(duration);
+  anim->set_easing(easing);
+  anim->set_delay(delay * delay_scale);
+}
+void config::animated_float_conf::operator()(ui::sp_anim_float &anim,
+                                             float delay) {
+  apply_to(anim, delay);
+}
 } // namespace mb_shell

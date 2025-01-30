@@ -20,7 +20,7 @@ struct rect_widget : public widget {
 };
 
 struct acrylic_background_widget : public rect_widget {
-  void *hwnd;
+  void *hwnd = nullptr;
   acrylic_background_widget(bool use_dwm = true);
   ~acrylic_background_widget();
   bool use_dwm = true;
@@ -30,7 +30,8 @@ struct acrylic_background_widget : public rect_widget {
   std::mutex cv_m;
   bool to_close = false;
   float offset_x = 0, offset_y = 0, dpi_scale = 1;
-  static thread_local size_t last_hwnd;
+  static thread_local void* last_hwnd;
+  void* last_hwnd_self = nullptr;
   void update_color();
 
   void render(nanovg_context ctx) override;
