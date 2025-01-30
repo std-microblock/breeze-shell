@@ -8,26 +8,124 @@ export class example_struct_jni {
 	a: number
 	b: number
 	c: string
-	add1: ((arg1: number, arg2: number) => number)
-	add2: ((arg1: string, arg2: string) => number | string)
+	
+/**
+  * 
+  * @param a: number, b: number
+  * @returns number
+  */
+  add1: ((arg1: number, arg2: number) => number)
+            
+	
+/**
+  * 
+  * @param a: string, b: string
+  * @returns number | string
+  */
+  add2: ((arg1: string, arg2: string) => number | string)
+            
 }
     
 export class folder_view_controller {
 	current_path: string
 	focused_file_path: string
 	selected_files: Array<string>
-	change_folder: ((arg1: string) => void)
-	focus_file: ((arg1: string) => void)
-	open_file: ((arg1: string) => void)
-	open_folder: ((arg1: string) => void)
-	scroll_to_file: ((arg1: string) => void)
-	refresh: (() => void)
-	select_all: (() => void)
-	select_none: (() => void)
-	invert_selection: (() => void)
-	copy: (() => void)
-	cut: (() => void)
-	paste: (() => void)
+	
+/**
+  * 
+  * @param new_folder_path: string
+  * @returns void
+  */
+  change_folder: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param file_path: string
+  * @returns void
+  */
+  focus_file: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param file_path: string
+  * @returns void
+  */
+  open_file: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param folder_path: string
+  * @returns void
+  */
+  open_folder: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param file_path: string
+  * @returns void
+  */
+  scroll_to_file: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  refresh: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  select_all: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  select_none: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  invert_selection: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  copy: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  cut: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  paste: (() => void)
+            
 }
     
 export class window_titlebar_controller {
@@ -43,17 +141,94 @@ export class window_titlebar_controller {
 	minimized: boolean
 	focused: boolean
 	visible: boolean
-	set_title: ((arg1: string) => void)
-	set_icon: ((arg1: string) => void)
-	set_position: ((arg1: number, arg2: number) => void)
-	set_size: ((arg1: number, arg2: number) => void)
-	maximize: (() => void)
-	minimize: (() => void)
-	restore: (() => void)
-	close: (() => void)
-	focus: (() => void)
-	show: (() => void)
-	hide: (() => void)
+	
+/**
+  * 
+  * @param new_title: string
+  * @returns void
+  */
+  set_title: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param icon_path: string
+  * @returns void
+  */
+  set_icon: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param new_x: number, new_y: number
+  * @returns void
+  */
+  set_position: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param new_width: number, new_height: number
+  * @returns void
+  */
+  set_size: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  maximize: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  minimize: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  restore: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  close: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  focus: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  show: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  hide: (() => void)
+            
 }
     
 export class input_box_controller {
@@ -67,22 +242,134 @@ export class input_box_controller {
 	y: number
 	width: number
 	height: number
-	set_text: ((arg1: string) => void)
-	set_placeholder: ((arg1: string) => void)
-	set_position: ((arg1: number, arg2: number) => void)
-	set_size: ((arg1: number, arg2: number) => void)
-	set_multiline: ((arg1: boolean) => void)
-	set_password: ((arg1: boolean) => void)
-	set_readonly: ((arg1: boolean) => void)
-	set_disabled: ((arg1: boolean) => void)
-	focus: (() => void)
-	blur: (() => void)
-	select_all: (() => void)
-	select_range: ((arg1: number, arg2: number) => void)
-	set_selection: ((arg1: number, arg2: number) => void)
-	insert_text: ((arg1: string) => void)
-	delete_text: ((arg1: number, arg2: number) => void)
-	clear: (() => void)
+	
+/**
+  * 
+  * @param new_text: string
+  * @returns void
+  */
+  set_text: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param new_placeholder: string
+  * @returns void
+  */
+  set_placeholder: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param new_x: number, new_y: number
+  * @returns void
+  */
+  set_position: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param new_width: number, new_height: number
+  * @returns void
+  */
+  set_size: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param new_multiline: boolean
+  * @returns void
+  */
+  set_multiline: ((arg1: boolean) => void)
+            
+	
+/**
+  * 
+  * @param new_password: boolean
+  * @returns void
+  */
+  set_password: ((arg1: boolean) => void)
+            
+	
+/**
+  * 
+  * @param new_readonly: boolean
+  * @returns void
+  */
+  set_readonly: ((arg1: boolean) => void)
+            
+	
+/**
+  * 
+  * @param new_disabled: boolean
+  * @returns void
+  */
+  set_disabled: ((arg1: boolean) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  focus: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  blur: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  select_all: (() => void)
+            
+	
+/**
+  * 
+  * @param start: number, end: number
+  * @returns void
+  */
+  select_range: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param start: number, end: number
+  * @returns void
+  */
+  set_selection: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param new_text: string
+  * @returns void
+  */
+  insert_text: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param start: number, end: number
+  * @returns void
+  */
+  delete_text: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  clear: (() => void)
+            
 }
     
 export class js_menu_action_event_data {
@@ -102,11 +389,46 @@ export class js_menu_data {
     
 export class menu_item_controller {
 	
-	set_position: ((arg1: number) => void)
-	set_data: ((arg1: js_menu_data) => void)
-	data: (() => js_menu_data)
-	remove: (() => void)
-	valid: (() => boolean)
+	
+/**
+  * 
+  * @param new_index: number
+  * @returns void
+  */
+  set_position: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns void
+  */
+  set_data: ((arg1: js_menu_data) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns js_menu_data
+  */
+  data: (() => js_menu_data)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  remove: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns boolean
+  */
+  valid: (() => boolean)
+            
 }
     
 export class menu_item_data {
@@ -130,29 +452,140 @@ export class menu_info_basic_js {
     
 export class menu_controller {
 	
-	valid: (() => boolean)
-	append_menu_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
-	append_menu: ((arg1: js_menu_data) => menu_item_controller)
-	prepend_menu: ((arg1: js_menu_data) => menu_item_controller)
-	close: (() => void)
-	clear: (() => void)
-	get_items: (() => Array<menu_item_controller>)
-	get_item: ((arg1: number) => menu_item_controller)
-	static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
+	
+/**
+  * 
+  * @param 
+  * @returns boolean
+  */
+  valid: (() => boolean)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data, after_index: number
+  * @returns menu_item_controller
+  */
+  append_menu_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  append_menu: ((arg1: js_menu_data) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  prepend_menu: ((arg1: js_menu_data) => menu_item_controller)
+            
+	
+/**
+  * 0 - a
+  * 1 - b
+  * 2 - c
+  * set_pos(0, 2)
+  * 0 - b
+  * 1 - c
+  * 2 - a
+  * @param 
+  * @returns void
+  */
+  close: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  clear: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns Array<menu_item_controller>
+  */
+  get_items: (() => Array<menu_item_controller>)
+            
+	
+/**
+  * 
+  * @param index: number
+  * @returns menu_item_controller
+  */
+  get_item: ((arg1: number) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param listener: ((arg1: menu_info_basic_js) => void)
+  * @returns (() => void)
+  */
+  static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
+            
 }
     
 export class clipboard {
 	
-	static get_text: (() => string)
-	static set_text: ((arg1: string) => void)
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static get_text: (() => string)
+            
+	
+/**
+  * 
+  * @param text: string
+  * @returns void
+  */
+  static set_text: ((arg1: string) => void)
+            
 }
     
 export class network {
 	
-	static get: ((arg1: string) => string)
-	static post: ((arg1: string, arg2: string) => string)
-	static get_async: ((arg1: string, arg2: ((arg1: string) => void)) => void)
-	static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void)) => void)
+	
+/**
+  * 
+  * @param url: string
+  * @returns string
+  */
+  static get: ((arg1: string) => string)
+            
+	
+/**
+  * 
+  * @param url: string, data: string
+  * @returns string
+  */
+  static post: ((arg1: string, arg2: string) => string)
+            
+	
+/**
+  * 
+  * @param url: string, callback: ((arg1: string) => void)
+  * @returns void
+  */
+  static get_async: ((arg1: string, arg2: ((arg1: string) => void)) => void)
+            
+	
+/**
+  * 
+  * @param url: string, data: string, callback: ((arg1: string) => void)
+  * @returns void
+  */
+  static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void)) => void)
+            
 }
     
 export class subproc_result_data {
@@ -164,8 +597,22 @@ export class subproc_result_data {
     
 export class subproc {
 	
-	static run: ((arg1: string) => subproc_result_data)
-	static run_async: ((arg1: string, arg2: ((arg1: subproc_result_data) => void)) => void)
+	
+/**
+  * 
+  * @param cmd: string
+  * @returns subproc_result_data
+  */
+  static run: ((arg1: string) => subproc_result_data)
+            
+	
+/**
+  * testtest
+  * @param cmd: string, callback: ((arg1: subproc_result_data) => void)
+  * @returns void
+  */
+  static run_async: ((arg1: string, arg2: ((arg1: subproc_result_data) => void)) => void)
+            
 }
     
 }
