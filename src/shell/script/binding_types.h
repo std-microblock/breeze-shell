@@ -327,8 +327,6 @@ struct menu_controller {
   static std::function<void()> add_menu_listener(
       std::function<void(mb_shell::js::menu_info_basic_js)> listener);
 
-  // 析构函数
-  // Destructor
   ~menu_controller();
 };
 
@@ -449,6 +447,11 @@ struct fs {
   // 以二进制模式写入文件
   // Write file in binary mode
   static void write_binary(std::string path, std::vector<uint8_t> data);
+};
+
+struct breeze {
+  static std::string version();
+  static std::string data_directory();
 };
 
 } // namespace mb_shell::js

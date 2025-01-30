@@ -511,4 +511,10 @@ void fs::write_binary(std::string path, std::vector<uint8_t> data) {
   WriteFile(hFile, data.data(), data.size(), &bytesWritten, nullptr);
   CloseHandle(hFile);
 }
+std::string breeze::version() {
+  return "0.1.0";
+}
+std::string breeze::data_directory() {
+  return config::data_directory().generic_string();
+}
 } // namespace mb_shell::js

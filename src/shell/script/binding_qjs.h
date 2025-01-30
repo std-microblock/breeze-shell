@@ -632,6 +632,30 @@ template<> struct js_bind<mb_shell::js::fs> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::breeze> {
+    static mb_shell::js::breeze unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze>("breeze")
+            .constructor<>()
+                .static_fun<&mb_shell::js::breeze::version>("version")
+                .static_fun<&mb_shell::js::breeze::data_directory>("data_directory")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -663,5 +687,7 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::subproc>::bind(mod);
 
     js_bind<mb_shell::js::fs>::bind(mod);
+
+    js_bind<mb_shell::js::breeze>::bind(mod);
 
 }

@@ -916,6 +916,26 @@ export class fs {
             
 }
     
+export class breeze {
+	
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static version: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static data_directory: (() => string)
+            
+}
+    
 }
 declare module "mshell" {
     export function println(...args: any[]);
