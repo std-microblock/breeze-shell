@@ -184,11 +184,11 @@ float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
          (font_size + 2
           /* icon_width */
           ) +
-         + icon_padding * 2
-         + (item.submenu ? font_size + 2 : 0);
+         +icon_padding * 2 + (item.submenu ? font_size + 2 : 0);
 }
 
-std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
+std::shared_ptr<ui::rect_widget>
+mb_shell::menu_widget::create_bg(bool is_main) {
   std::shared_ptr<ui::rect_widget> bg;
 
   if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
@@ -219,7 +219,12 @@ std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
   bg->radius->reset_to(config::current->context_menu.theme.radius);
 
   bg->opacity->reset_to(0);
-  config::current->context_menu.theme.animation.bg.opacity(bg->opacity, 0);
+  if (is_main)
+    config::current->context_menu.theme.animation.main_bg.opacity(bg->opacity,
+                                                                  0);
+  else
+    config::current->context_menu.theme.animation.submenu_bg.opacity(
+        bg->opacity, 0);
   bg->opacity->animate_to(
       255 * config::current->context_menu.theme.background_opacity);
   return bg;
@@ -251,7 +256,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 
   if (current_submenu) {
     if (!bg_submenu) {
-      bg_submenu = create_bg();
+      bg_submenu = create_bg(false);
       bg_submenu->x->reset_to(current_submenu->x->dest() + ctx.offset_x + *x);
       bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical +
                               ctx.offset_y + *y);
@@ -550,7 +555,7 @@ mb_shell::menu_item_widget::menu_item_widget(menu_item item,
 
 void mb_shell::menu_widget::init_from_data(menu menu_data) {
   if (menu_data.is_top_level && !bg) {
-    bg = create_bg();
+    bg = create_bg(true);
   }
   auto init_items = menu_data.items;
 

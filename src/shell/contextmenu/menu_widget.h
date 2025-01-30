@@ -57,7 +57,7 @@ struct menu_widget : public ui::widget_flex {
   std::shared_ptr<menu_widget> current_submenu;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
 
-  std::shared_ptr<ui::rect_widget> create_bg();
+  std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;
   menu_widget();
   popup_direction direction = popup_direction::bottom_right;
