@@ -2,6 +2,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <thread>
 
 #include "rfl.hpp"
@@ -66,11 +67,13 @@ void config::read_config() {
 
 std::filesystem::path config::data_directory() {
   static std::optional<std::filesystem::path> path;
+  static std::mutex mtx;
+  std::lock_guard lock(mtx);
+
   if (!path) {
     wchar_t home_dir[MAX_PATH];
     GetEnvironmentVariableW(L"USERPROFILE", home_dir, MAX_PATH);
-    path = home_dir;
-    *path /= ".breeze-shell";
+    path = std::filesystem::path(home_dir) / ".breeze-shell";
   }
 
   if (!std::filesystem::exists(*path)) {

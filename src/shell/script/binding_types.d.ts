@@ -27,12 +27,31 @@ export class example_struct_jni {
 }
     
 export class folder_view_controller {
-	current_path: string
-	focused_file_path: string
-	selected_files: Array<string>
+	
+  /**
+  * 当前文件夹路径
+  *  Current folder path
+  */
+  current_path: string
+            
+	
+  /**
+  * 当前焦点文件路径
+  *  Currently focused file path
+  */
+  focused_file_path: string
+            
+	
+  /**
+  * 选中的文件列表
+  *  List of selected files
+  */
+  selected_files: Array<string>
+            
 	
 /**
-  * 
+  * 切换到新文件夹
+  *  Change to a new folder
   * @param new_folder_path: string
   * @returns void
   */
@@ -40,7 +59,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 聚焦到指定文件
+  *  Focus on specified file
   * @param file_path: string
   * @returns void
   */
@@ -48,7 +68,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 打开文件
+  *  Open a file
   * @param file_path: string
   * @returns void
   */
@@ -56,7 +77,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 打开文件夹
+  *  Open a folder
   * @param folder_path: string
   * @returns void
   */
@@ -64,7 +86,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 滚动到指定文件
+  *  Scroll to specified file
   * @param file_path: string
   * @returns void
   */
@@ -72,7 +95,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 刷新视图
+  *  Refresh view
   * @param 
   * @returns void
   */
@@ -80,7 +104,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 全选
+  *  Select all items
   * @param 
   * @returns void
   */
@@ -88,7 +113,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 取消全选
+  *  Deselect all items
   * @param 
   * @returns void
   */
@@ -96,7 +122,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 反选
+  *  Invert selection
   * @param 
   * @returns void
   */
@@ -104,7 +131,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 复制
+  *  Copy selected items
   * @param 
   * @returns void
   */
@@ -112,7 +140,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 剪切
+  *  Cut selected items
   * @param 
   * @returns void
   */
@@ -120,7 +149,8 @@ export class folder_view_controller {
             
 	
 /**
-  * 
+  * 粘贴
+  *  Paste items
   * @param 
   * @returns void
   */
@@ -129,21 +159,52 @@ export class folder_view_controller {
 }
     
 export class window_titlebar_controller {
-	is_click_in_titlebar: boolean
-	title: string
-	executable_path: string
+	
+  /**
+  * 是否在标题栏中点击
+  *  Whether click is in titlebar
+  */
+  is_click_in_titlebar: boolean
+            
+	
+  /**
+  * 窗口标题
+  *  Window title
+  */
+  title: string
+            
+	
+  /**
+  * 可执行文件路径
+  *  Executable path
+  */
+  executable_path: string
+            
 	hwnd: number
-	x: number
+	
+  /**
+  * 窗口位置和大小
+  *  Window position and size
+  */
+  x: number
+            
 	y: number
 	width: number
 	height: number
-	maximized: boolean
+	
+  /**
+  * 窗口状态
+  *  Window state
+  */
+  maximized: boolean
+            
 	minimized: boolean
 	focused: boolean
 	visible: boolean
 	
 /**
-  * 
+  * 设置窗口标题
+  *  Set window title
   * @param new_title: string
   * @returns void
   */
@@ -151,7 +212,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 设置窗口图标
+  *  Set window icon
   * @param icon_path: string
   * @returns void
   */
@@ -159,7 +221,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 设置窗口位置
+  *  Set window position
   * @param new_x: number, new_y: number
   * @returns void
   */
@@ -167,7 +230,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 设置窗口大小
+  *  Set window size
   * @param new_width: number, new_height: number
   * @returns void
   */
@@ -175,7 +239,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 最大化窗口
+  *  Maximize window
   * @param 
   * @returns void
   */
@@ -183,7 +248,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 最小化窗口
+  *  Minimize window
   * @param 
   * @returns void
   */
@@ -191,7 +257,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 还原窗口
+  *  Restore window
   * @param 
   * @returns void
   */
@@ -199,7 +266,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 关闭窗口
+  *  Close window
   * @param 
   * @returns void
   */
@@ -207,7 +275,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 聚焦窗口
+  *  Focus window
   * @param 
   * @returns void
   */
@@ -215,7 +284,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 显示窗口
+  *  Show window
   * @param 
   * @returns void
   */
@@ -223,7 +293,8 @@ export class window_titlebar_controller {
             
 	
 /**
-  * 
+  * 隐藏窗口
+  *  Hide window
   * @param 
   * @returns void
   */
@@ -232,19 +303,62 @@ export class window_titlebar_controller {
 }
     
 export class input_box_controller {
-	text: string
-	placeholder: string
-	multiline: boolean
-	password: boolean
-	readonly: boolean
-	disabled: boolean
-	x: number
+	
+  /**
+  * 输入框文本
+  *  Input box text
+  */
+  text: string
+            
+	
+  /**
+  * 占位符文本
+  *  Placeholder text
+  */
+  placeholder: string
+            
+	
+  /**
+  * 是否多行
+  *  Whether multiline
+  */
+  multiline: boolean
+            
+	
+  /**
+  * 是否密码框
+  *  Whether password field
+  */
+  password: boolean
+            
+	
+  /**
+  * 是否只读
+  *  Whether readonly
+  */
+  readonly: boolean
+            
+	
+  /**
+  * 是否禁用
+  *  Whether disabled
+  */
+  disabled: boolean
+            
+	
+  /**
+  * 输入框位置和大小
+  *  Input box position and size
+  */
+  x: number
+            
 	y: number
 	width: number
 	height: number
 	
 /**
-  * 
+  * 设置文本
+  *  Set text
   * @param new_text: string
   * @returns void
   */
@@ -252,7 +366,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置占位符
+  *  Set placeholder
   * @param new_placeholder: string
   * @returns void
   */
@@ -260,7 +375,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置位置
+  *  Set position
   * @param new_x: number, new_y: number
   * @returns void
   */
@@ -268,7 +384,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置大小
+  *  Set size
   * @param new_width: number, new_height: number
   * @returns void
   */
@@ -276,7 +393,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置是否多行
+  *  Set multiline state
   * @param new_multiline: boolean
   * @returns void
   */
@@ -284,7 +402,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置是否为密码框
+  *  Set password field state
   * @param new_password: boolean
   * @returns void
   */
@@ -292,7 +411,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置是否只读
+  *  Set readonly state
   * @param new_readonly: boolean
   * @returns void
   */
@@ -300,7 +420,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置是否禁用
+  *  Set disabled state
   * @param new_disabled: boolean
   * @returns void
   */
@@ -308,7 +429,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 获取焦点
+  *  Get focus
   * @param 
   * @returns void
   */
@@ -316,7 +438,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 失去焦点
+  *  Lose focus
   * @param 
   * @returns void
   */
@@ -324,7 +447,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 全选文本
+  *  Select all text
   * @param 
   * @returns void
   */
@@ -332,7 +456,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 选择文本范围
+  *  Select text range
   * @param start: number, end: number
   * @returns void
   */
@@ -340,7 +465,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 设置选择范围
+  *  Set selection range
   * @param start: number, end: number
   * @returns void
   */
@@ -348,7 +474,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 插入文本
+  *  Insert text
   * @param new_text: string
   * @returns void
   */
@@ -356,7 +483,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 删除文本
+  *  Delete text
   * @param start: number, end: number
   * @returns void
   */
@@ -364,7 +492,8 @@ export class input_box_controller {
             
 	
 /**
-  * 
+  * 清空文本
+  *  Clear text
   * @param 
   * @returns void
   */
@@ -378,12 +507,36 @@ export class js_menu_action_event_data {
 }
     
 export class js_menu_data {
-	type?: string | undefined
-	name?: string | undefined
+	
+  /**
+  * 菜单项类型
+  *  Menu item type
+  */
+  type?: string | undefined
+            
+	
+  /**
+  * 菜单项名称
+  *  Menu item name
+  */
+  name?: string | undefined
+            
 	submenu?: ((arg1: menu_controller) => void) | undefined
 	action?: ((arg1: js_menu_action_event_data) => void) | undefined
-	icon_svg?: string | undefined
-	icon_bitmap?: size_t | undefined
+	
+  /**
+  * SVG图标
+  *  SVG icon
+  */
+  icon_svg?: string | undefined
+            
+	
+  /**
+  * 位图图标
+  *  Bitmap icon
+  */
+  icon_bitmap?: size_t | undefined
+            
 	
 }
     
@@ -454,7 +607,8 @@ export class menu_controller {
 	
 	
 /**
-  * 
+  * 检查菜单控制器是否有效
+  *  Check if menu controller is valid
   * @param 
   * @returns boolean
   */
@@ -486,13 +640,8 @@ export class menu_controller {
             
 	
 /**
-  * 0 - a
-  * 1 - b
-  * 2 - c
-  * set_pos(0, 2)
-  * 0 - b
-  * 1 - c
-  * 2 - a
+  * 关闭菜单
+  *  Close menu
   * @param 
   * @returns void
   */
@@ -500,7 +649,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 清除所有菜单项
+  *  Clear all menu items
   * @param 
   * @returns void
   */
@@ -508,7 +658,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 获取所有菜单项
+  *  Get all menu items
   * @param 
   * @returns Array<menu_item_controller>
   */
@@ -516,7 +667,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 获取指定索引的菜单项
+  *  Get menu item at index
   * @param index: number
   * @returns menu_item_controller
   */
@@ -524,7 +676,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 添加菜单事件监听器
+  *  Add menu event listener
   * @param listener: ((arg1: menu_info_basic_js) => void)
   * @returns (() => void)
   */
@@ -536,7 +689,8 @@ export class clipboard {
 	
 	
 /**
-  * 
+  * 从剪贴板获取文本
+  *  Get text from clipboard
   * @param 
   * @returns string
   */
@@ -544,7 +698,8 @@ export class clipboard {
             
 	
 /**
-  * 
+  * 设置文本到剪贴板
+  *  Set text to clipboard
   * @param text: string
   * @returns void
   */
@@ -556,7 +711,8 @@ export class network {
 	
 	
 /**
-  * 
+  * 同步HTTP GET请求
+  *  Synchronous HTTP GET request
   * @param url: string
   * @returns string
   */
@@ -564,7 +720,8 @@ export class network {
             
 	
 /**
-  * 
+  * 同步HTTP POST请求
+  *  Synchronous HTTP POST request
   * @param url: string, data: string
   * @returns string
   */
@@ -572,7 +729,8 @@ export class network {
             
 	
 /**
-  * 
+  * 异步HTTP GET请求
+  *  Asynchronous HTTP GET request
   * @param url: string, callback: ((arg1: string) => void)
   * @returns void
   */
@@ -580,7 +738,8 @@ export class network {
             
 	
 /**
-  * 
+  * 异步HTTP POST请求
+  *  Asynchronous HTTP POST request
   * @param url: string, data: string, callback: ((arg1: string) => void)
   * @returns void
   */
@@ -589,9 +748,27 @@ export class network {
 }
     
 export class subproc_result_data {
-	out: string
-	err: string
-	code: number
+	
+  /**
+  * 标准输出
+  *  Standard output
+  */
+  out: string
+            
+	
+  /**
+  * 标准错误
+  *  Standard error
+  */
+  err: string
+            
+	
+  /**
+  * 退出码
+  *  Exit code
+  */
+  code: number
+            
 	
 }
     
@@ -599,7 +776,8 @@ export class subproc {
 	
 	
 /**
-  * 
+  * 同步运行命令
+  *  Run command synchronously
   * @param cmd: string
   * @returns subproc_result_data
   */
@@ -607,7 +785,8 @@ export class subproc {
             
 	
 /**
-  * testtest
+  * 异步运行命令
+  *  Run command asynchronously
   * @param cmd: string, callback: ((arg1: subproc_result_data) => void)
   * @returns void
   */
