@@ -139,6 +139,10 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       }
     }
 
+    if (info.fState & MFS_DISABLED) {
+      item.disabled = true;
+    }
+
     m.items.push_back(item);
   }
 

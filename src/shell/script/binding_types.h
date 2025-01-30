@@ -253,6 +253,9 @@ struct js_menu_data {
   // 位图图标
   // Bitmap icon
   std::optional<size_t> icon_bitmap;
+  // 是否禁用
+  // Whether disabled
+  std::optional<bool> disabled;
 };
 
 struct menu_item_controller {
@@ -263,11 +266,6 @@ struct menu_item_controller {
   js_menu_data data();
   void remove();
   bool valid();
-};
-
-struct menu_item_data {
-  std::string type;
-  std::optional<std::string> name;
 };
 
 struct js_menu_context {

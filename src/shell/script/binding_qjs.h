@@ -318,6 +318,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.icon_bitmap = js_traits<std::optional<size_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_bitmap"));
         
+        obj.disabled = js_traits<std::optional<bool>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "disabled"));
+        
         return obj;
     }
 
@@ -336,6 +338,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "icon_bitmap", js_traits<std::optional<size_t>>::wrap(ctx, val.icon_bitmap));
         
+        JS_SetPropertyStr(ctx, obj, "disabled", js_traits<std::optional<bool>>::wrap(ctx, val.disabled));
+        
         return obj;
     }
 };
@@ -349,6 +353,7 @@ template<> struct js_bind<mb_shell::js::js_menu_data> {
                 .fun<&mb_shell::js::js_menu_data::action>("action")
                 .fun<&mb_shell::js::js_menu_data::icon_svg>("icon_svg")
                 .fun<&mb_shell::js::js_menu_data::icon_bitmap>("icon_bitmap")
+                .fun<&mb_shell::js::js_menu_data::disabled>("disabled")
             ;
     }
 
@@ -376,38 +381,6 @@ template<> struct js_bind<mb_shell::js::menu_item_controller> {
                 .fun<&mb_shell::js::menu_item_controller::data>("data")
                 .fun<&mb_shell::js::menu_item_controller::remove>("remove")
                 .fun<&mb_shell::js::menu_item_controller::valid>("valid")
-            ;
-    }
-
-};
-    
-template <> struct qjs::js_traits<mb_shell::js::menu_item_data> {
-    static mb_shell::js::menu_item_data unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::menu_item_data obj;
-    
-        obj.type = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "type"));
-        
-        obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
-        
-        return obj;
-    }
-
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_item_data &val) noexcept {
-        JSValue obj = JS_NewObject(ctx);
-    
-        JS_SetPropertyStr(ctx, obj, "type", js_traits<std::string>::wrap(ctx, val.type));
-        
-        JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
-        
-        return obj;
-    }
-};
-template<> struct js_bind<mb_shell::js::menu_item_data> {
-    static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::menu_item_data>("menu_item_data")
-            .constructor<>()
-                .fun<&mb_shell::js::menu_item_data::type>("type")
-                .fun<&mb_shell::js::menu_item_data::name>("name")
             ;
     }
 
@@ -674,8 +647,6 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::js_menu_data>::bind(mod);
 
     js_bind<mb_shell::js::menu_item_controller>::bind(mod);
-
-    js_bind<mb_shell::js::menu_item_data>::bind(mod);
 
     js_bind<mb_shell::js::js_menu_context>::bind(mod);
 

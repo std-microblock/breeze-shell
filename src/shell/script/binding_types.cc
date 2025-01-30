@@ -126,6 +126,10 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     data.icon_svg = js_data.icon_svg.value();
     data.icon_updated = true;
   }
+
+  if (js_data.disabled) {
+    data.disabled = js_data.disabled.value();
+  }
 }
 
 void menu_item_controller::set_data(js_menu_data data) {
@@ -202,6 +206,8 @@ js_menu_data menu_item_controller::data() {
   if (item->item.icon_svg) {
     data.icon_svg = item->item.icon_svg.value();
   }
+
+  data.disabled = item->item.disabled;
 
   return data;
 }

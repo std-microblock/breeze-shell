@@ -538,6 +538,13 @@ export class js_menu_data {
   icon_bitmap?: size_t | undefined
             
 	
+  /**
+  * 是否禁用
+  *  Whether disabled
+  */
+  disabled?: boolean | undefined
+            
+	
 }
     
 export class menu_item_controller {
@@ -582,12 +589,6 @@ export class menu_item_controller {
   */
   valid: (() => boolean)
             
-}
-    
-export class menu_item_data {
-	type: string
-	name?: string | undefined
-	
 }
     
 export class js_menu_context {

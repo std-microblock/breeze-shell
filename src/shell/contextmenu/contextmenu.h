@@ -35,5 +35,6 @@ struct menu_item {
   std::optional<size_t> icon_bitmap;
   std::optional<std::string> icon_svg;
   bool icon_updated = false;
+  bool disabled = false;
 };
 } // namespace mb_shell

@@ -103,6 +103,11 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
     height->reset_to(config::current->context_menu.theme.item_height);
   }
 
+  if (item.disabled) {
+    opacity->animate_to(128);
+    return;
+  }
+
   if (ctx.mouse_down_on(this)) {
     bg_opacity->animate_to(40);
   } else if (ctx.hovered(this)) {
