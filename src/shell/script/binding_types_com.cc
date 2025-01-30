@@ -32,22 +32,22 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
 }
 
 IShellBrowser *GetIShellBrowser(HWND hWnd) {
-  __try {
-    auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
-    if (!res) {
-      return nullptr;
-    }
-    res->AddRef();
-    res->Release();
-    return res;
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
+  if (!res) {
     return nullptr;
   }
+  res->AddRef();
+  res->Release();
+  return res;
 }
 
 IShellBrowser *GetIShellBrowserRecursive(HWND hWnd) {
   if (IShellBrowser *psb = GetIShellBrowser(hWnd)) {
     return psb;
+  }
+
+  if (GetParent(hWnd) == NULL || GetParent(hWnd) == hWnd) {
+    return nullptr;
   }
 
   return GetIShellBrowserRecursive(GetParent(hWnd));
@@ -74,7 +74,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       return event_data;
     }
 
-    if (class_name == "SysListView32" || class_name == "DirectUIHWND") {
+    if (class_name == "SysListView32" || class_name == "DirectUIHWND" || true) {
       std::printf("Focused window is a folder view\n");
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window

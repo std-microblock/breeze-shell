@@ -20,8 +20,9 @@ struct config {
     } theme;
 
     bool vsync = true;
-    bool debug_console = false;
   } context_menu;
+  bool debug_console = false;
+  
 
   static std::unique_ptr<config> current;
   static void read_config();

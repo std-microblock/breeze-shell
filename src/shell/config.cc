@@ -43,6 +43,7 @@ void config::read_config() {
         << "Config file could not be opened. Using default config instead."
         << std::endl;
     config::current = std::make_unique<config>();
+    config::current->debug_console = true;
   } else {
     if (auto json =
             rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(
@@ -52,10 +53,11 @@ void config::read_config() {
       std::cerr << "Failed to read config file: " << json.error()->what()
                 << "\nUsing default config instead." << std::endl;
       config::current = std::make_unique<config>();
+      config::current->debug_console = true;
     }
   }
 
-  if (config::current->context_menu.debug_console) {
+  if (config::current->debug_console) {
     ShowWindow(GetConsoleWindow(), SW_SHOW);
   } else {
     ShowWindow(GetConsoleWindow(), SW_HIDE);

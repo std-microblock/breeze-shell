@@ -464,14 +464,10 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
   bool bottom_overflow =
       (anchor_y + menu_height * ctx.rt.dpi_scale > ctx.screen.height);
   bool top_overflow = (anchor_y - menu_height * ctx.rt.dpi_scale < 0);
-  std::println("top y: {}", anchor_y - menu_height * ctx.rt.dpi_scale);
 
   bool right_overflow =
       (anchor_x + menu_width * ctx.rt.dpi_scale > ctx.screen.width);
   bool left_overflow = (anchor_x - menu_width * ctx.rt.dpi_scale < 0);
-
-  std::println("Overflow: top-{} bot-{} le-{} ri-{}", top_overflow,
-               bottom_overflow, left_overflow, right_overflow);
 
   bool top_revert = false;
   bool left_revert = false;
