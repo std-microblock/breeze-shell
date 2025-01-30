@@ -81,8 +81,10 @@ std::expected<bool, std::string> render_target::init() {
     bb.fEnable = true;
     DwmEnableBlurBehindWindow(h, &bb);
 
-    ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND,
-                            Flags::AllowSetWindowRgn, 0x00000000, 0};
+    ACCENT_POLICY accent = {
+        ACCENT_ENABLE_ACRYLICBLURBEHIND,
+        Flags::AllowSetWindowRgn | Flags::AllBorder | Flags::GradientColor,
+        RGB(*acrylic * 255, *acrylic * 255, *acrylic * 255), 0};
     WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                         sizeof(accent)};
     pSetWindowCompositionAttribute((HWND)h, &data);

@@ -335,7 +335,7 @@ struct injector_ui_main : public ui::widget_flex {
   }
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(nvgRGB(32, 32, 32));
-    auto gradient_height = 90;
+    auto gradient_height = 130;
     ctx.fillRect(0, gradient_height, 999, 999);
 
     // 20->0 linear gradient
@@ -359,7 +359,7 @@ void StartInjectUI() {
     return;
   }
   ui::render_target rt;
-  rt.acrylic = true;
+  rt.acrylic = 0.1;
   rt.transparent = true;
   rt.width = 400;
   rt.height = 200;

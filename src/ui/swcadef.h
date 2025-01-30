@@ -31,7 +31,7 @@ enum ACCENT_STATE : INT { // Affects the rendering of the background of a
 };
 
 enum Flags : UINT {
-  NoneBordr = 0x00,
+  NoneBorder = 0x00,
   GradientColor = 0x02,
   Luminosity = 0x02,
   LeftBorder = 0x20,

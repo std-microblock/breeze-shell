@@ -17,7 +17,8 @@ struct render_target {
   std::shared_ptr<widget> root;
   GLFWwindow *window;
 
-  bool acrylic = false;
+  // float: darkness of the acrylic effect, 0~1
+  std::optional<float> acrylic = {};
   bool extend = false;
   bool transparent = false;
   bool no_focus = false;
@@ -37,8 +38,6 @@ struct render_target {
   static std::vector<std::function<void()>> main_thread_tasks;
   static std::mutex main_thread_tasks_mutex;
   static void post_main_thread_task(std::function<void()> task);
-
-  std::mutex render_mutex = {};
   
   static std::expected<bool, std::string> init_global();
   void start_loop();
