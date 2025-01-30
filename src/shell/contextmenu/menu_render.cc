@@ -30,6 +30,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
   rt->capture_all_input = true;
   rt->decorated = false;
   rt->topmost = true;
+  rt->vsync = config::current->context_menu.vsync;
 
   if (auto res = rt->init(); !res) {
     MessageBoxW(NULL, L"Failed to initialize render target", L"Error",

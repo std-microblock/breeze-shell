@@ -33,6 +33,12 @@ void config::read_config() {
       config::current = std::make_unique<config>();
     }
   }
+
+  if (config::current->context_menu.debug_console) {
+     ShowWindow(GetConsoleWindow(), SW_SHOW);
+  } else {
+     ShowWindow(GetConsoleWindow(), SW_HIDE);
+  }
 }
 
 std::filesystem::path config::data_directory() {

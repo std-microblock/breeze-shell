@@ -17,6 +17,7 @@
 #include <chrono>
 #include <codecvt>
 #include <condition_variable>
+#include <consoleapi3.h>
 #include <filesystem>
 #include <functional>
 #include <future>
@@ -42,6 +43,7 @@ void main() {
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);
+  ShowWindow(GetConsoleWindow(), SW_HIDE);
   config::run_config_loader();
 
   std::thread([]() {
