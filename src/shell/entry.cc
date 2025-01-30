@@ -2,17 +2,17 @@
 #include "GLFW/glfw3.h"
 #include "blook/blook.h"
 
+#include "config.h"
 #include "entry.h"
 #include "script/binding_types.h"
 #include "script/quickjspp.hpp"
 #include "script/script.h"
 #include "ui.h"
 #include "utils.h"
-#include "config.h"
 
+#include "./contextmenu/contextmenu.h"
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
-#include "./contextmenu/contextmenu.h"
 
 #include <chrono>
 #include <codecvt>
@@ -85,6 +85,11 @@ void main() {
 
     return menu_render.selected_menu.value_or(0);
   });
+
+  // reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+  RegSetKeyValueW(HKEY_CURRENT_USER,
+                  L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+                  nullptr, REG_SZ, L"", sizeof(L""));
 }
 } // namespace mb_shell
 
