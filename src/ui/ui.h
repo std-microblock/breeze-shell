@@ -26,6 +26,7 @@ struct render_target {
   bool decorated = true;
   bool topmost = false;
   bool resizable = false;
+  bool vsync = true;
 
   NVGcontext *nvg = nullptr;
   int width = 1280;

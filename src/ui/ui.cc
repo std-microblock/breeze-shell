@@ -60,7 +60,7 @@ std::expected<bool, std::string> render_target::init() {
   }
 
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(0);
+  glfwSwapInterval(vsync);
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   auto h = glfwGetWin32Window(window);

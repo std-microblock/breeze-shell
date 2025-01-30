@@ -10,13 +10,14 @@
 #include "widget.h"
 
 static unsigned char g_icon_png[] = {
-  #include "icon-small.png.h"
+#include "icon-small.png.h"
 };
 
 #include <Windows.h>
 
 #include <TlHelp32.h>
 #include <psapi.h>
+#include <shellapi.h>
 
 namespace fs = std::filesystem;
 
@@ -180,6 +181,7 @@ int NewExplorerProcessAndInject() {
   }
 
   InjectToPID(targetPID, dllPath);
+  return 0;
 }
 
 struct inject_ui_title : public ui::widget_flex {
@@ -205,7 +207,7 @@ struct inject_ui_title : public ui::widget_flex {
 };
 
 struct button_widget : public ui::padding_widget {
-  button_widget(const std::string& button_text) {
+  button_widget(const std::string &button_text) {
     auto text = emplace_child<ui::text_widget>();
     text->text = button_text;
     text->font_size = 14;
@@ -248,36 +250,129 @@ struct button_widget : public ui::padding_widget {
   }
 };
 
-struct inject_all_switch : public button_widget {
-  bool inject_all = false;
-  std::optional<std::thread> inject_thread;
+struct start_when_startup_switch : public button_widget {
+  bool start_when_startup = false;
 
-  inject_all_switch() : button_widget("注入所有") {}
+  static bool check_startup() {
+    HKEY hkey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                      L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0,
+                      KEY_READ, &hkey) != ERROR_SUCCESS) {
+      return false;
+    }
+
+    wchar_t path[MAX_PATH];
+    DWORD size = sizeof(path);
+    bool exists = RegQueryValueExW(hkey, L"breeze-shell", nullptr, nullptr,
+                                   (LPBYTE)path, &size) == ERROR_SUCCESS;
+    RegCloseKey(hkey);
+    return exists;
+  }
+
+  static void set_startup(bool startup) {
+    HKEY hkey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                      L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0,
+                      KEY_SET_VALUE, &hkey) != ERROR_SUCCESS) {
+      return;
+    }
+
+    if (startup) {
+      wchar_t path[MAX_PATH];
+      GetModuleFileNameW(NULL, path, MAX_PATH);
+      std::wstring command =
+          L"\"" + std::wstring(path) + L"\" inject-consistent";
+      RegSetValueExW(hkey, L"breeze-shell", 0, REG_SZ, (BYTE *)command.c_str(),
+                     (command.size() + 1) * sizeof(wchar_t));
+    } else {
+      RegDeleteValueW(hkey, L"breeze-shell");
+    }
+    RegCloseKey(hkey);
+  }
+
+  start_when_startup_switch() : button_widget("开机自启") {
+    start_when_startup = check_startup();
+  }
 
   void on_click() override {
-    inject_all = !inject_all;
-    if (inject_all && !inject_thread) {
-      inject_thread = std::thread([this]() {
-        GetDebugPrivilege();
-        std::vector<DWORD> injected;
-        while (true) {
-          std::vector<DWORD> pids = GetExplorerPIDs();
-          if (inject_all) {
-            for (DWORD pid : pids) {
-              if (!std::ranges::contains(injected, pid) &&
-                  !IsInjected(pid, dllPath)) {
-                InjectToPID(pid, dllPath);
-              }
-            }
-          }
-          Sleep(100);
-        }
-      });
-    }
+    set_startup(!start_when_startup);
+    start_when_startup = check_startup();
   }
 
   void update_colors(bool is_active, bool is_hovered) override {
-    if (inject_all) {
+    if (start_when_startup) {
+      if (is_hovered) {
+        bg_color.animate_to({0.3, 0.8, 0.3, 0.7});
+      } else {
+        bg_color.animate_to({0.2, 0.7, 0.2, 0.6});
+      }
+    } else {
+      button_widget::update_colors(is_active, is_hovered);
+    }
+  }
+};
+
+void InjectAllConsistent() {
+  GetDebugPrivilege();
+  std::vector<DWORD> injected;
+  while (true) {
+    std::vector<DWORD> pids = GetExplorerPIDs();
+
+    for (DWORD pid : pids) {
+      if (!std::ranges::contains(injected, pid) && !IsInjected(pid, dllPath)) {
+        InjectToPID(pid, dllPath);
+      }
+    }
+    Sleep(100);
+    MSG msg;
+    if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+      TranslateMessage(&msg);
+      DispatchMessageW(&msg);
+    }
+  }
+}
+
+struct inject_all_switch : public button_widget {
+  bool injecting_all = false;
+  inject_all_switch() : button_widget("注入所有") { check_is_injecting_all(); }
+
+  void check_is_injecting_all() {
+    HANDLE mutex = CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+      injecting_all = true;
+    } else {
+      injecting_all = false;
+    }
+
+    CloseHandle(mutex);
+  }
+
+  void on_click() override {
+    injecting_all = !injecting_all;
+    if (injecting_all) {
+      wchar_t path[MAX_PATH];
+      GetModuleFileNameW(NULL, path, MAX_PATH);
+      SHELLEXECUTEINFOW sei = {sizeof(sei)};
+      sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+      sei.lpFile = path;
+      sei.lpParameters = L"inject-consistent";
+      sei.nShow = SW_HIDE;
+      ShellExecuteExW(&sei);
+    } else {
+      HANDLE event = CreateEventW(NULL, TRUE, FALSE,
+                                  L"breeze-shell-inject-consistent-exit");
+      SetEvent(event);
+      CloseHandle(event);
+    }
+
+    std::thread([this]() {
+      Sleep(200);
+      check_is_injecting_all();
+    }).detach();
+  }
+
+  void update_colors(bool is_active, bool is_hovered) override {
+    if (injecting_all) {
       if (is_hovered) {
         bg_color.animate_to({0.3, 0.8, 0.3, 0.7});
       } else {
@@ -311,7 +406,8 @@ struct breeze_icon : public ui::widget {
     if (!image) {
       image = nvgCreateImageMem(ctx.ctx, 0, g_icon_png, sizeof(g_icon_png));
     }
-    auto paint = nvgImagePattern(ctx.ctx, *x + ctx.offset_x, *y + ctx.offset_y, *height, *height, 0, *image, 1);
+    auto paint = nvgImagePattern(ctx.ctx, *x + ctx.offset_x, *y + ctx.offset_y,
+                                 *height, *height, 0, *image, 1);
     ctx.fillPaint(paint);
     ctx.fillRect(*x, *y, *height, *height);
   }
@@ -332,6 +428,7 @@ struct injector_ui_main : public ui::widget_flex {
 
     switches->emplace_child<inject_all_switch>();
     switches->emplace_child<inject_once_switch>();
+    switches->emplace_child<start_when_startup_switch>();
   }
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(nvgRGB(32, 32, 32));
@@ -339,8 +436,8 @@ struct injector_ui_main : public ui::widget_flex {
     ctx.fillRect(0, gradient_height, 999, 999);
 
     // 20->0 linear gradient
-    NVGpaint bg = nvgLinearGradient(ctx.ctx, 0, gradient_height, 0, 0, nvgRGB(32, 32, 32),
-                                    nvgRGBAf(0, 0, 0, 0));
+    NVGpaint bg = nvgLinearGradient(ctx.ctx, 0, gradient_height, 0, 0,
+                                    nvgRGB(32, 32, 32), nvgRGBAf(0, 0, 0, 0));
     ctx.beginPath();
     ctx.moveTo(0, gradient_height);
     ctx.lineTo(999, gradient_height);
@@ -374,14 +471,39 @@ void StartInjectUI() {
   rt.start_loop();
 }
 
-int main(int argc, char **argv) {
-  std::vector<std::string> args(argv, argv + argc);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nShowCmd) {
+
+  int argc = 0;
+  auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+  std::vector<std::wstring> args;
+  for (int x = 0; x < argc; x++) {
+    args.push_back(argv[x]);
+  }
 
   if (args.size() <= 1) {
     StartInjectUI();
   } else {
-    if (args[1] == "new") {
+    if (args[1] == L"new") {
       NewExplorerProcessAndInject();
+    } else if (args[1] == L"inject-consistent") {
+      HANDLE mutex =
+          CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
+      if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        std::cerr << "Another instance is running." << std::endl;
+        return 1;
+      }
+
+      std::thread([]() {
+        HANDLE event = CreateEventW(NULL, TRUE, FALSE,
+                                    L"breeze-shell-inject-consistent-exit");
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
+        exit(0);
+      }).detach();
+
+      InjectAllConsistent();
     } else {
       std::cerr << "Invalid argument." << std::endl;
     }

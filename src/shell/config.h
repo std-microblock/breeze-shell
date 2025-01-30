@@ -18,6 +18,9 @@ struct config {
       float item_radius = 100;
       float margin = 5;
     } theme;
+
+    bool vsync = true;
+    bool debug_console = false;
   } context_menu;
 
   static std::unique_ptr<config> current;
