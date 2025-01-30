@@ -32,7 +32,6 @@ void config::read_config() {
     std::ofstream ofs(config_file);
     if (!ofs) {
       std::cerr << "Failed to write config file." << std::endl;
-      return;
     }
 
     ofs << "{}";
@@ -49,6 +48,7 @@ void config::read_config() {
             rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(
                 ifs)) {
       config::current = std::make_unique<config>(json.value());
+      std::cout << "Config reloaded." << std::endl;
     } else {
       std::cerr << "Failed to read config file: " << json.error()->what()
                 << "\nUsing default config instead." << std::endl;
