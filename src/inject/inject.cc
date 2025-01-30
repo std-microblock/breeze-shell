@@ -312,6 +312,24 @@ struct start_when_startup_switch : public button_widget {
   }
 };
 
+struct restart_explorer_switch : public button_widget {
+  restart_explorer_switch() : button_widget("重启资源管理器") {}
+
+  void on_click() override {
+    std::thread([]() {
+      std::vector<DWORD> pids = GetExplorerPIDs();
+      for (DWORD pid : pids) {
+        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+        if (hProcess) {
+          TerminateProcess(hProcess, 0);
+          CloseHandle(hProcess);
+        }
+      }
+      ShellExecuteW(NULL, L"open", L"explorer.exe", L"", NULL, SW_SHOW);
+    }).detach();
+  }
+};
+
 void InjectAllConsistent() {
   GetDebugPrivilege();
   std::vector<DWORD> injected;
@@ -334,7 +352,7 @@ void InjectAllConsistent() {
 
 struct inject_all_switch : public button_widget {
   bool injecting_all = false;
-  inject_all_switch() : button_widget("注入所有") { check_is_injecting_all(); }
+  inject_all_switch() : button_widget("全局注入") { check_is_injecting_all(); }
 
   void check_is_injecting_all() {
     HANDLE mutex = CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
@@ -417,18 +435,24 @@ struct injector_ui_main : public ui::widget_flex {
   injector_ui_main() {
     x->reset_to(20);
     y->reset_to(5);
-    gap = 20;
+    gap = 15;
     emplace_child<breeze_icon>();
     emplace_child<inject_ui_title>();
 
-    auto switches = emplace_child<ui::widget_flex>();
-
+    auto switches_box =  emplace_child<ui::widget_flex>();
+    switches_box->gap = 7;
+    auto switches = switches_box->emplace_child<ui::widget_flex>();
     switches->gap = 7;
     switches->horizontal = true;
 
     switches->emplace_child<inject_all_switch>();
     switches->emplace_child<inject_once_switch>();
+
+    switches = switches_box->emplace_child<ui::widget_flex>();
+    switches->gap = 7;
+    switches->horizontal = true;
     switches->emplace_child<start_when_startup_switch>();
+    switches->emplace_child<restart_explorer_switch>();
   }
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(nvgRGB(32, 32, 32));
@@ -459,7 +483,7 @@ void StartInjectUI() {
   rt.acrylic = 0.1;
   rt.transparent = true;
   rt.width = 400;
-  rt.height = 200;
+  rt.height = 230;
   if (auto r = rt.init(); !r) {
     std::cerr << "Failed to initialize render target." << std::endl;
     return;
