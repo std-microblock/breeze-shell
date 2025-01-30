@@ -554,10 +554,6 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
   }
   auto init_items = menu_data.items;
 
-  bool has_icon = std::ranges::any_of(init_items, [](auto &item) {
-    return item.icon_bitmap.has_value() || item.type == menu_item::type::toggle;
-  });
-
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
     auto mi = std::make_shared<menu_item_widget>(item, this);
