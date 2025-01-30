@@ -15,6 +15,7 @@ static unsigned char g_icon_png[] = {
 
 #include <Windows.h>
 
+#include "data_directory.inc"
 #include <TlHelp32.h>
 #include <psapi.h>
 #include <shellapi.h>
@@ -312,8 +313,8 @@ struct start_when_startup_switch : public button_widget {
   }
 };
 
-struct restart_explorer_switch : public button_widget {
-  restart_explorer_switch() : button_widget("重启资源管理器") {}
+struct restart_explorer_btn : public button_widget {
+  restart_explorer_btn() : button_widget("重启资源管理器") {}
 
   void on_click() override {
     std::thread([]() {
@@ -413,6 +414,15 @@ struct inject_once_switch : public button_widget {
   }
 };
 
+struct data_dir_btn : public button_widget {
+  data_dir_btn() : button_widget("数据目录") {}
+
+  void on_click() override {
+    std::wstring path = data_directory().wstring();
+    ShellExecuteW(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+  }
+};
+
 struct breeze_icon : public ui::widget {
   std::optional<int> image;
   breeze_icon() {
@@ -447,12 +457,13 @@ struct injector_ui_main : public ui::widget_flex {
 
     switches->emplace_child<inject_all_switch>();
     switches->emplace_child<inject_once_switch>();
+    switches->emplace_child<data_dir_btn>();
 
     switches = switches_box->emplace_child<ui::widget_flex>();
     switches->gap = 7;
     switches->horizontal = true;
     switches->emplace_child<start_when_startup_switch>();
-    switches->emplace_child<restart_explorer_switch>();
+    switches->emplace_child<restart_explorer_btn>();
   }
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(nvgRGB(32, 32, 32));
