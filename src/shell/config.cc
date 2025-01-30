@@ -5,28 +5,49 @@
 #include <thread>
 
 #include "rfl.hpp"
-#include "rfl/json.hpp"
 #include "rfl/DefaultIfMissing.hpp"
+#include "rfl/json.hpp"
 
 #include "windows.h"
 
 namespace mb_shell {
 std::unique_ptr<config> config::current;
-void config::write_config() {}
+void config::write_config() {
+  auto config_file = data_directory() / "config.json";
+  std::ofstream ofs(config_file);
+  if (!ofs) {
+    std::cerr << "Failed to write config file." << std::endl;
+    return;
+  }
+
+  ofs << rfl::json::write(*config::current);
+}
 void config::read_config() {
   auto config_file = data_directory() / "config.json";
 
+  std::ifstream ifs(config_file);
+
   if (!std::filesystem::exists(config_file)) {
-    config::current = std::make_unique<config>();
-  } else {
-    std::ifstream ifs(config_file);
-    if (!ifs) {
-      config::current = std::make_unique<config>();
+    auto config_file = data_directory() / "config.json";
+    std::ofstream ofs(config_file);
+    if (!ofs) {
+      std::cerr << "Failed to write config file." << std::endl;
       return;
     }
 
-    if (auto json = rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(ifs)) {
-      config::current = std::make_unique<mb_shell::config>(json.value());
+    ofs << "{}";
+  }
+
+  if (!ifs) {
+    std::cerr
+        << "Config file could not be opened. Using default config instead."
+        << std::endl;
+    config::current = std::make_unique<config>();
+  } else {
+    if (auto json =
+            rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(
+                ifs)) {
+      config::current = std::make_unique<config>(json.value());
     } else {
       std::cerr << "Failed to read config file: " << json.error()->what()
                 << "\nUsing default config instead." << std::endl;
@@ -35,9 +56,9 @@ void config::read_config() {
   }
 
   if (config::current->context_menu.debug_console) {
-     ShowWindow(GetConsoleWindow(), SW_SHOW);
+    ShowWindow(GetConsoleWindow(), SW_SHOW);
   } else {
-     ShowWindow(GetConsoleWindow(), SW_HIDE);
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
   }
 }
 

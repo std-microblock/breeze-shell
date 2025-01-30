@@ -157,7 +157,7 @@ static std::wstring dllPath = GetModuleDirectory() + L"\\shell.dll";
 int NewExplorerProcessAndInject() {
   GetDebugPrivilege();
   std::vector<DWORD> initialPIDs = GetExplorerPIDs();
-  system("explorer.exe C:/");
+  ShellExecuteW(NULL, L"open", L"explorer.exe", L"C:/", NULL, SW_SHOW);
   std::this_thread::sleep_for(std::chrono::seconds(1));
   std::vector<DWORD> newPIDs = GetExplorerPIDs();
   DWORD targetPID = 0;
