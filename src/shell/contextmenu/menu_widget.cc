@@ -184,7 +184,8 @@ float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
          (font_size + 2
           /* icon_width */
           ) +
-         +icon_padding * 2;
+         + icon_padding * 2
+         + (item.submenu ? font_size + 2 : 0);
 }
 
 std::shared_ptr<ui::rect_widget> mb_shell::menu_widget::create_bg() {
