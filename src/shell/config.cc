@@ -68,7 +68,7 @@ std::filesystem::path config::data_directory() {
   static std::optional<std::filesystem::path> path;
   if (!path) {
     wchar_t home_dir[MAX_PATH];
-    GetEnvironmentVariableW(L"HOMEPATH", home_dir, MAX_PATH);
+    GetEnvironmentVariableW(L"USERPROFILE", home_dir, MAX_PATH);
     path = home_dir;
     *path /= ".breeze-shell";
   }
