@@ -436,7 +436,7 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     y = anchor_y;
   }
 
-  constexpr auto padding_vertical = 0, padding_horizontal = 0;
+  constexpr auto padding_vertical = 5, padding_horizontal = 0;
 
   if (x < padding_vertical) {
     x = padding_vertical;
