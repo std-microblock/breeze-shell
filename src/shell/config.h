@@ -25,6 +25,7 @@ struct config {
       float item_gap = 5;
       float item_radius = 100;
       float margin = 5;
+      float acrylic_opacity = 0.1;
 
       struct animation {
         struct item {
