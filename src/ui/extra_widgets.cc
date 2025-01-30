@@ -72,7 +72,7 @@ acrylic_background_widget::acrylic_background_widget(bool use_dwm)
   auto handle = glfwGetWin32Window(win);
   render_thread = std::thread([=, this]() {
     hwnd = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT |
-                               WS_EX_NOACTIVATE | WS_EX_LAYERED,
+                               WS_EX_NOACTIVATE | WS_EX_LAYERED | WS_EX_TOPMOST,
                            L"mbui-acrylic-bg", L"", WS_POPUP, *x, *y, 0, 0,
                            nullptr, NULL, GetModuleHandleW(nullptr), NULL);
 
