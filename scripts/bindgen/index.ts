@@ -180,30 +180,6 @@ template <> struct qjs::js_traits<${currentNamespace}::${structName}> {
         `;
     }
 
-    // for (const method of methods) {
-    //     binding += `
-    //     JS_SetPropertyStr(
-    //         ctx, obj, "${method.name}",
-    //         JS_NewCFunction(
-    //             ctx,
-    //             [](JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) -> JSValue {
-    //                 auto obj = js_traits<${currentNamespace}::${structName}>::unwrap(ctx, this_val);
-    //                 if (argc == ${method.args.length}) {
-    //                     ${method.args.length > 0 ? `return js_traits<${method.returnType}>::wrap(
-    //                         ctx,
-    //                         obj.${method.name}(
-    //                             ${method.args.map((arg, i) => `js_traits<${arg}>::unwrap(ctx, argv[${i}])`).join(', ')}
-    //                         )
-    //                     );` : `obj.${method.name}(); return JS_UNDEFINED;`
-    //         }
-    //                 } else {
-    //                     return JS_ThrowTypeError(ctx, "Expected ${method.args.length} arguments");
-    //                 }
-    //             },
-    //             "${method.name}", ${method.args.length}));
-    //     `;
-    // }
-
     binding += `
         return obj;
     }
