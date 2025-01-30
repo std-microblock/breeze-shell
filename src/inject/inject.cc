@@ -439,7 +439,7 @@ struct injector_ui_main : public ui::widget_flex {
     emplace_child<breeze_icon>();
     emplace_child<inject_ui_title>();
 
-    auto switches_box =  emplace_child<ui::widget_flex>();
+    auto switches_box = emplace_child<ui::widget_flex>();
     switches_box->gap = 7;
     auto switches = switches_box->emplace_child<ui::widget_flex>();
     switches->gap = 7;
@@ -501,6 +501,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);
+
+  try {
+    std::println("breeze-shell injector started.");
+  } catch (std::exception &) {
+    freopen("NUL", "w", stdout);
+    freopen("NUL", "w", stderr);
+  }
 
   int argc = 0;
   auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
