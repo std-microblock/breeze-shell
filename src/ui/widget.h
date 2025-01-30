@@ -57,13 +57,13 @@ struct update_context {
 };
 
 struct dying_time {
-  float time;
+  float time = 100;
   bool _last_has_value = false;
   bool _changed = false;
   inline bool changed() const {
     return _last_has_value != has_value || _changed;
   }
-  bool has_value;
+  bool has_value = false;
 
   operator bool() const { return has_value; }
   inline float operator=(float t) {

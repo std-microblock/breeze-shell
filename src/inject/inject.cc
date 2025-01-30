@@ -497,6 +497,10 @@ void StartInjectUI() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nShowCmd) {
+  AttachConsole(ATTACH_PARENT_PROCESS);
+  freopen("CONOUT$", "w", stdout);
+  freopen("CONOUT$", "w", stderr);
+  freopen("CONIN$", "r", stdin);
 
   int argc = 0;
   auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
