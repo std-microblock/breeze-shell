@@ -3,6 +3,7 @@
 #include "menu_widget.h"
 
 #include "../script/binding_types.h"
+#include "ui.h"
 #include <mutex>
 #include <thread>
 
@@ -32,6 +33,8 @@ menu_render menu_render::create(int x, int y, menu menu) {
       MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                   MB_ICONERROR);
     }
+
+    nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
@@ -54,6 +57,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
   rt->resize(monitor_info.rcMonitor.right - monitor_info.rcMonitor.left + l_pad,
              monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top +
                  t_pad);
+
+  glfwMakeContextCurrent(rt->window);
+  glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
+
   rt->show();
   auto menu_wid = std::make_shared<mouse_menu_widget_main>(
       menu,
@@ -71,10 +78,9 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   rt->on_focus_changed = [](bool focused) {
     if (!focused) {
-      
     }
   };
-  nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+
   std::println("Current menu: {}", menu_render::current.has_value());
   return render;
 }
