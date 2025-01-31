@@ -100,10 +100,10 @@ void main() {
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
 
-    has_active_menu = false;
     menu_render.rt->last_time = menu_render.rt->clock.now();
     menu_render.rt->start_loop();
 
+    has_active_menu = false;
     return menu_render.selected_menu.value_or(0);
   });
 
