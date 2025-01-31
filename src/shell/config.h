@@ -48,6 +48,7 @@ struct config {
     } position;
   } context_menu;
   bool debug_console = false;
+  // Restart to apply font changes
   std::filesystem::path font_path_main = default_main_font();
   std::filesystem::path font_path_fallback = default_fallback_font();
 
