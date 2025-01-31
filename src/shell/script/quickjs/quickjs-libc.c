@@ -4172,7 +4172,7 @@ void js_std_promise_rejection_tracker(JSContext *ctx, JSValue promise,
 }
 
 /* main loop which calls the user JS callbacks */
-int js_std_loop(JSContext *ctx)
+int js_std_loop(JSContext *ctx, JS_BOOL* stop_signal)
 {
     JSRuntime *rt = JS_GetRuntime(ctx);
     JSThreadState *ts = js_get_thread_state(rt);
@@ -4188,9 +4188,13 @@ int js_std_loop(JSContext *ctx)
                     goto done;
                 break;
             }
+
+            if (stop_signal && *stop_signal) {
+                goto done;
+            }
         }
 
-        if (!ts->can_js_os_poll || js_os_poll(ctx))
+        if (!ts || !ts->can_js_os_poll || js_os_poll(ctx))
             break;
     }
 done:

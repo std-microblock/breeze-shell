@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -23,7 +24,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
+extern thread_local bool is_thread_js_main;
 #if defined(__cpp_rtti)
 #define QJSPP_TYPENAME(...) (typeid(__VA_ARGS__).name())
 #else
@@ -1394,9 +1395,11 @@ public:
   bool isJobPending() const { return JS_IsJobPending(rt); }
 
 private:
-  static void promise_unhandled_rejection_tracker(JSContext *ctx, JSValue promise,
-                                           JSValue reason,
-                                           JS_BOOL is_handled, void *opaque);
+  static void promise_unhandled_rejection_tracker(JSContext *ctx,
+                                                  JSValue promise,
+                                                  JSValue reason,
+                                                  JS_BOOL is_handled,
+                                                  void *opaque);
 
   static JSModuleDef *module_loader(JSContext *ctx, const char *module_name,
                                     void *opaque);
@@ -1778,16 +1781,20 @@ struct js_traits<std::function<R(Args...)>, int> {
       return [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}]() -> R {
         auto ctx = Context{jsfun_obj.ctx};
 
-        std::promise<JSValue> promise;
+        std::promise<std::expected<JSValue, exception>> promise;
         auto future = promise.get_future();
         auto work = [&]() {
-          JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
           JSValue result =
               JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
           promise.set_value(result);
+
+          if (JS_IsException(result))
+            promise.set_exception(
+                std::make_exception_ptr(exception{jsfun_obj.ctx}));
         };
 
-        if (JS_IsJobPending(JS_GetRuntime(jsfun_obj.ctx))) {
+        std::printf("is thread js main: %d\n", is_thread_js_main);
+        if (!is_thread_js_main) {
           ctx.enqueueJob(work);
         } else {
           work();
@@ -1795,21 +1802,19 @@ struct js_traits<std::function<R(Args...)>, int> {
 
         auto result = future.get();
 
-        if (JS_IsException(result))
-          throw exception{jsfun_obj.ctx};
-        return detail::unwrap_free<R>(jsfun_obj.ctx, result);
+        if (!result)
+          throw result.error();
+
+        return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
       };
     } else {
       return [jsfun_obj =
                   Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
         auto ctx2 = Context{jsfun_obj.ctx};
-        std::promise<JSValue> promise;
+        std::promise<std::expected<JSValue, exception>> promise;
         auto future = promise.get_future();
-        // check if this thread is js main thread
-        auto rt = JS_GetRuntime(jsfun_obj.ctx);
-
+        
         auto work = [&]() {
-          JS_UpdateStackTop(rt);
           const int argc = sizeof...(Args);
           JSValue argv[argc];
           detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
@@ -1818,19 +1823,23 @@ struct js_traits<std::function<R(Args...)>, int> {
           for (int i = 0; i < argc; i++)
             JS_FreeValue(jsfun_obj.ctx, argv[i]);
           promise.set_value(result);
+
+          if (JS_IsException(result))
+            promise.set_exception(
+                std::make_exception_ptr(exception{jsfun_obj.ctx}));
         };
-        if (JS_IsJobPending(rt)) {
+        std::printf("is thread js main: %d\n", is_thread_js_main);
+        if (!is_thread_js_main) {
           ctx2.enqueueJob(work);
         } else {
           work();
         }
 
         auto result = future.get();
+        if (!result)
+          throw result.error();
 
-        if (JS_IsException(result))
-          throw exception{jsfun_obj.ctx};
-
-        return detail::unwrap_free<R>(jsfun_obj.ctx, result);
+        return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
       };
     }
   }

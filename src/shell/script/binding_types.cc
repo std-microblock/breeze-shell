@@ -10,7 +10,7 @@
 #include "../contextmenu/menu_render.h"
 #include "../contextmenu/menu_widget.h"
 
-#include "wininet.h"
+#include "winhttp.h"
 
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
@@ -129,7 +129,7 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     data.icon_updated = true;
   }
 
-  if (js_data.disabled) {
+  if (js_data.disabled.has_value()) {
     data.disabled = js_data.disabled.value();
   }
 }
@@ -294,60 +294,104 @@ void clipboard::set_text(std::string text) {
     CloseClipboard();
     return;
   }
+  std::wstring wtext = utf8_to_wstring(text);
+  HGLOBAL hDataW = GlobalAlloc(GMEM_MOVEABLE, (wtext.size() + 1) * sizeof(wchar_t));
+  if (hDataW == nullptr) {
+    CloseClipboard();
+    return;
+  }
 
-  char *pszData = static_cast<char *>(GlobalLock(hData));
-  strcpy_s(pszData, text.size() + 1, text.c_str());
-  GlobalUnlock(hData);
-
-  SetClipboardData(CF_TEXT, hData);
+  wchar_t *pszDataW = static_cast<wchar_t *>(GlobalLock(hDataW));
+  wcscpy_s(pszDataW, wtext.size() + 1, wtext.c_str());
+  GlobalUnlock(hDataW);
+  SetClipboardData(CF_UNICODETEXT, hDataW);
   CloseClipboard();
 }
 
 std::string network::post(std::string url, std::string data) {
-  HINTERNET hInternet = InternetOpenA("WinINet", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
-  if (!hInternet)
-    throw std::runtime_error("Failed to initialize WinINet");
+  HINTERNET hSession = WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+    WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+  if (!hSession) {
+    throw std::runtime_error("Failed to initialize WinHTTP");
+  }
 
-  HINTERNET hConnect = InternetOpenUrlA(hInternet, url.c_str(), data.c_str(),
-                                       data.length(), INTERNET_FLAG_RELOAD, 0);
+  URL_COMPONENTS urlComp = {sizeof(URL_COMPONENTS)};
+  wchar_t hostName[256] = {0};
+  wchar_t urlPath[1024] = {0};
+  urlComp.lpszHostName = hostName;
+  urlComp.dwHostNameLength = sizeof(hostName)/sizeof(wchar_t);
+  urlComp.lpszUrlPath = urlPath;
+  urlComp.dwUrlPathLength = sizeof(urlPath)/sizeof(wchar_t);
+
+  std::wstring wideUrl = utf8_to_wstring(url);
+  if (!WinHttpCrackUrl(wideUrl.c_str(), wideUrl.length(), 0, &urlComp)) {
+    WinHttpCloseHandle(hSession);
+    throw std::runtime_error("Invalid URL format");
+  }
+
+  HINTERNET hConnect = WinHttpConnect(hSession, hostName, 
+    urlComp.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0);
   if (!hConnect) {
-    InternetCloseHandle(hInternet);
+    WinHttpCloseHandle(hSession);
     throw std::runtime_error("Failed to connect to server");
   }
 
-  std::string response;
-  char buffer[4096];
-  DWORD bytesRead;
-  BOOL readResult;
-
-  while ((readResult = InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead))) {
-    if (bytesRead == 0) break;
-    response.append(buffer, bytesRead);
+  DWORD flags = WINHTTP_FLAG_REFRESH;
+  if (urlComp.nScheme == INTERNET_SCHEME_HTTPS) {
+    flags |= WINHTTP_FLAG_SECURE;
   }
 
-  if (!readResult) {
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
-    throw std::runtime_error("Failed to read complete response");
+  HINTERNET hRequest = WinHttpOpenRequest(hConnect, 
+    data.empty() ? L"GET" : L"POST",
+    urlPath, nullptr, WINHTTP_NO_REFERER,
+    WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
+  if (!hRequest) {
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    throw std::runtime_error("Failed to create request");
+  }
+
+  BOOL result = WinHttpSendRequest(hRequest,
+    WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+    data.empty() ? WINHTTP_NO_REQUEST_DATA : (LPVOID)data.c_str(),
+    data.length(), data.length(), 0);
+
+  if (!result || !WinHttpReceiveResponse(hRequest, nullptr)) {
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    throw std::runtime_error("Failed to send/receive request");
   }
 
   DWORD statusCode = 0;
   DWORD statusCodeSize = sizeof(statusCode);
-  if (!HttpQueryInfoA(hConnect, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
-                      &statusCode, &statusCodeSize, nullptr)) {
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
-    throw std::runtime_error("Failed to get HTTP status code");
-  }
+  WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+    WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize, WINHTTP_NO_HEADER_INDEX);
 
   if (statusCode >= 400) {
-    InternetCloseHandle(hConnect);
-    InternetCloseHandle(hInternet);
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
     throw std::runtime_error("Server returned error: " + std::to_string(statusCode));
   }
 
-  InternetCloseHandle(hConnect);
-  InternetCloseHandle(hInternet);
+  std::string response;
+  DWORD bytesAvailable;
+  do {
+    bytesAvailable = 0;
+    if (!WinHttpQueryDataAvailable(hRequest, &bytesAvailable)) break;
+    if (!bytesAvailable) break;
+
+    std::vector<char> buffer(bytesAvailable);
+    DWORD bytesRead = 0;
+    if (WinHttpReadData(hRequest, buffer.data(), bytesAvailable, &bytesRead)) {
+      response.append(buffer.data(), bytesRead);
+    }
+  } while (bytesAvailable > 0);
+
+  WinHttpCloseHandle(hRequest);
+  WinHttpCloseHandle(hConnect);
+  WinHttpCloseHandle(hSession);
 
   return response;
 }

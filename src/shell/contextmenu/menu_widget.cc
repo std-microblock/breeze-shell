@@ -107,6 +107,8 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   if (item.disabled) {
     opacity->animate_to(128);
     return;
+  } else {
+    opacity->animate_to(255);
   }
 
   if (ctx.mouse_down_on(this)) {
