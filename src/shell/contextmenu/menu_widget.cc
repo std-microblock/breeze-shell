@@ -64,7 +64,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     if (!icon_unfold_img) {
       static auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
 
-      this->icon_unfold_img = ctx.imageFromSVG(icon_unfold_img_svg);
+      this->icon_unfold_img = ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
@@ -607,7 +607,7 @@ void mb_shell::menu_item_widget::reload_icon_img(ui::nanovg_context ctx) {
     std::string copy = item.icon_svg.value();
     auto svg = nsvgParse(copy.data(), "px", 96);
     auto icon_width = config::current->context_menu.theme.font_size + 2;
-    icon_img = ctx.imageFromSVG(svg, icon_width, icon_width, ctx.rt->dpi_scale);
+    icon_img = ctx.imageFromSVG(svg, ctx.rt->dpi_scale);
   } else {
     icon_img = std::nullopt;
   }

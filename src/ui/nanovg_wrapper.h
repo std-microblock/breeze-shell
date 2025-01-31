@@ -214,8 +214,7 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     ~NSVGimageRAII() { nsvgDelete(image); }
   };
 
-  inline NVGImage imageFromSVG(NSVGimage *image, float width = 0,
-                               float height = 0, float dpi_scale = 1);
+  inline NVGImage imageFromSVG(NSVGimage *image, float dpi_scale = 1);
   inline void drawSVG(NSVGimage *image, float x, float y, float width,
                       float height) {
     auto orig_width = image->width, orig_height = image->height;
@@ -272,11 +271,9 @@ struct NVGImage {
   }
 };
 
-NVGImage nanovg_context::imageFromSVG(NSVGimage *image, float width,
-                                      float height, float dpi_scale) {
+NVGImage nanovg_context::imageFromSVG(NSVGimage *image, float dpi_scale) {
   static auto rast = nsvgCreateRasterizer();
-  if (!width || !height)
-    width = image->width, height = image->height;
+  auto width = image->width, height = image->height;
   width *= dpi_scale, height *= dpi_scale;
 
   auto data = (unsigned char *)malloc(width * height * 4);
