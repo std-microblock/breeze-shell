@@ -39,6 +39,11 @@ struct config {
     } theme;
 
     bool vsync = true;
+    
+    struct position {
+        int padding_vertical = 20;
+        int padding_horizontal = 0;
+    } position;
   } context_menu;
   bool debug_console = false;
 

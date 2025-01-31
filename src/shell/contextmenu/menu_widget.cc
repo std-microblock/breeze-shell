@@ -128,8 +128,8 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
   }
 
   if (item.submenu) {
-    if (ctx.hovered(this) ||
-        (submenu_wid && ctx.with_reset_offset().hovered(submenu_wid.get(), false))) {
+    if (ctx.hovered(this) || (submenu_wid && ctx.with_reset_offset().hovered(
+                                                 submenu_wid.get(), false))) {
       show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 500.f);
     } else {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
@@ -442,7 +442,10 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     y = anchor_y;
   }
 
-  constexpr auto padding_vertical = 5, padding_horizontal = 0;
+  auto padding_vertical =
+           config::current->context_menu.position.padding_horizontal,
+       padding_horizontal =
+           config::current->context_menu.position.padding_vertical;
 
   if (x < padding_vertical) {
     x = padding_vertical;
@@ -467,13 +470,20 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
   auto menu_width = menu_wid->measure_width(ctx);
   auto menu_height = menu_wid->measure_height(ctx);
 
-  bool bottom_overflow =
-      (anchor_y + menu_height * ctx.rt.dpi_scale > ctx.screen.height);
-  bool top_overflow = (anchor_y - menu_height * ctx.rt.dpi_scale < 0);
+  auto padding_vertical =
+           config::current->context_menu.position.padding_horizontal,
+       padding_horizontal =
+           config::current->context_menu.position.padding_vertical;
 
-  bool right_overflow =
-      (anchor_x + menu_width * ctx.rt.dpi_scale > ctx.screen.width);
-  bool left_overflow = (anchor_x - menu_width * ctx.rt.dpi_scale < 0);
+  bool bottom_overflow = (anchor_y + menu_height * ctx.rt.dpi_scale >
+                          ctx.screen.height - padding_vertical);
+  bool top_overflow =
+      (anchor_y - menu_height * ctx.rt.dpi_scale < padding_vertical);
+
+  bool right_overflow = (anchor_x + menu_width * ctx.rt.dpi_scale >
+                         ctx.screen.width - padding_horizontal);
+  bool left_overflow =
+      (anchor_x - menu_width * ctx.rt.dpi_scale < padding_horizontal);
 
   bool top_revert = false;
   bool left_revert = false;
