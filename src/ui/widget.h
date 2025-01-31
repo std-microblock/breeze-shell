@@ -34,8 +34,8 @@ struct update_context {
   bool mouse_clicked_on(widget *w, bool hittest = true) const;
   bool mouse_down_on(widget *w, bool hittest = true) const;
 
-  bool mouse_clicked_on_hit(widget *w);
-  bool hovered_hit(widget *w);
+  bool mouse_clicked_on_hit(widget *w, bool hittest = true);
+  bool hovered_hit(widget *w, bool hittest = true);
 
   float offset_x = 0, offset_y = 0;
   render_target &rt;
@@ -135,7 +135,7 @@ struct widget : std::enable_shared_from_this<widget> {
   // Update children list in the widget manner
   // It will remove the dead children
   // It will also update the dying time
-  // It will also update the children with the offset
+  // It will **NOT** update the children with the offset, call it with with_offset(*x, *y) if needed
   void update_children(update_context &ctx,
                        std::vector<std::shared_ptr<widget>> &children);
   // Render children list in the widget manner

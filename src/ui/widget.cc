@@ -14,8 +14,7 @@ void ui::widget::update_child_basic(update_context &ctx,
     w = nullptr;
     return;
   }
-  update_context upd = ctx.with_offset(*x, *y);
-  w->update(upd);
+  w->update(ctx);
 }
 
 void ui::widget::render_child_basic(nanovg_context ctx,
@@ -23,7 +22,7 @@ void ui::widget::render_child_basic(nanovg_context ctx,
   if (!w)
     return;
   ctx.save();
-  w->render(ctx.with_offset(*x, *y));
+  w->render(ctx);
   ctx.restore();
 }
 
@@ -47,7 +46,7 @@ void ui::widget::render(nanovg_context ctx) {
   _debug_offset_cache[0] = -1;
   _debug_offset_cache[1] = -1;
 
-  render_children(ctx, children);
+  render_children(ctx.with_offset(*x, *y), children);
 }
 void ui::widget::update(update_context &ctx) {
   for (auto anim : anim_floats) {
@@ -55,8 +54,8 @@ void ui::widget::update(update_context &ctx) {
   }
 
   dying_time.update(ctx.delta_t);
-
-  update_children(ctx, children);
+  update_context upd = ctx.with_offset(*x, *y);
+  update_children(upd, children);
   if constexpr (false)
     if (_debug_offset_cache[0] != -1 || _debug_offset_cache[1] != -1) {
       std::println(
@@ -131,15 +130,15 @@ bool ui::update_context::mouse_clicked_on(widget *w, bool hittest) const {
 bool ui::update_context::mouse_down_on(widget *w, bool hittest) const {
   return mouse_down && hovered(w, hittest);
 }
-bool ui::update_context::mouse_clicked_on_hit(widget *w) {
-  if (mouse_clicked_on(w)) {
+bool ui::update_context::mouse_clicked_on_hit(widget *w, bool hittest) {
+  if (mouse_clicked_on(w, hittest)) {
     set_hit_hovered(w);
     return true;
   }
   return false;
 }
-bool ui::update_context::hovered_hit(widget *w) {
-  if (hovered(w)) {
+bool ui::update_context::hovered_hit(widget *w,  bool hittest) {
+  if (hovered(w, hittest)) {
     set_hit_hovered(w);
     return true;
   } else {

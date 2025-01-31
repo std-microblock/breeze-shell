@@ -9,6 +9,7 @@
 #include "ui.h"
 #include <iostream>
 #include <print>
+#include <stacktrace>
 #include <vector>
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
@@ -128,7 +129,7 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 
   if (item.submenu) {
     if (ctx.hovered(this) ||
-        (submenu_wid && ctx.hovered(submenu_wid.get(), false))) {
+        (submenu_wid && ctx.with_reset_offset().hovered(submenu_wid.get(), false))) {
       show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 500.f);
     } else {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
@@ -158,9 +159,8 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
             submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
         submenu_wid->direction = direction;
-
-        submenu_wid->x->reset_to(x / ctx.rt.dpi_scale - ctx.offset_x);
-        submenu_wid->y->reset_to(y / ctx.rt.dpi_scale - ctx.offset_y);
+        submenu_wid->x->reset_to(x / ctx.rt.dpi_scale);
+        submenu_wid->y->reset_to(y / ctx.rt.dpi_scale);
 
         submenu_wid->reset_animation(direction == popup_direction::top_left ||
                                      direction == popup_direction::top_right);
@@ -241,7 +241,6 @@ mb_shell::menu_widget::menu_widget() : super() {
 }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
-
   if (dying_time) {
     if (dying_time.changed()) {
       y->animate_to(*y - 10);
@@ -263,9 +262,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   if (current_submenu) {
     if (!bg_submenu) {
       bg_submenu = create_bg(false);
-      bg_submenu->x->reset_to(current_submenu->x->dest() + ctx.offset_x + *x);
-      bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical +
-                              ctx.offset_y + *y);
+      bg_submenu->x->reset_to(current_submenu->x->dest());
+      bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical);
       bg_submenu->width->reset_to(current_submenu->width->dest());
       bg_submenu->height->reset_to(current_submenu->height->dest() +
                                    bg_padding_vertical * 2);
@@ -274,9 +272,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     bg_submenu->dying_time = std::nullopt;
     bg_submenu->opacity->animate_to(
         config::current->context_menu.theme.background_opacity * 255.f);
-    bg_submenu->x->animate_to(current_submenu->x->dest() + ctx.offset_x + *x);
-    bg_submenu->y->animate_to(current_submenu->y->dest() - bg_padding_vertical +
-                              ctx.offset_y + *y);
+    bg_submenu->x->animate_to(current_submenu->x->dest());
+    bg_submenu->y->animate_to(current_submenu->y->dest() - bg_padding_vertical);
     bg_submenu->width->animate_to(current_submenu->width->dest());
     bg_submenu->height->animate_to(current_submenu->height->dest() +
                                    bg_padding_vertical * 2);
@@ -291,7 +288,9 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
       }
     }
   }
-  update_children(ctx, rendering_submenus);
+
+  auto rst = ctx.with_reset_offset();
+  update_children(rst, rendering_submenus);
 
   if (bg_submenu) {
     auto c = ctx.with_reset_offset();
@@ -309,8 +308,9 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 }
 
 bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
-  auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
-             (bg_submenu && bg_submenu->check_hit(ctx.with_reset_offset()));
+  auto hit =
+      ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
+      (current_submenu && current_submenu->check_hit(ctx.with_reset_offset()));
 
   return hit;
 }
@@ -342,7 +342,8 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
           *bg_submenu->height, *bg_submenu->radius);
     });
   }
-  render_children(ctx, rendering_submenus);
+  auto rst = ctx.with_reset_offset();
+  render_children(rst, rendering_submenus);
 }
 void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
@@ -365,8 +366,6 @@ mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
 }
 void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   ui::widget::update(ctx);
-  x->reset_to(anchor_x / ctx.rt.dpi_scale);
-  y->reset_to(anchor_y / ctx.rt.dpi_scale);
 
   // process events of parents
   PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
@@ -382,7 +381,6 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     calibrate_position(ctx);
     position_calibrated = true;
   }
-
   menu_wid->update(ctx);
 
   if (!ctx.hovered(menu_wid.get(), false)) {
