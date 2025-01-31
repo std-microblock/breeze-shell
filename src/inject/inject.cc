@@ -298,6 +298,15 @@ struct start_when_startup_switch : public button_widget {
   void on_click() override {
     set_startup(!start_when_startup);
     start_when_startup = check_startup();
+
+    if (!start_when_startup) {
+      HKEY key;
+      RegOpenKeyExW(HKEY_CURRENT_USER,
+                    L"HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+                    0, KEY_SET_VALUE, &key);
+      RegDeleteValueW(key, L"");
+      RegCloseKey(key);
+    }
   }
 
   void update_colors(bool is_active, bool is_hovered) override {
