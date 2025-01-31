@@ -130,7 +130,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                         }
                                     },
                                     disabled: installed,
-                                    icon_svg: installed ? ICON_CHECKED : ICON_UNCHECKED,
+                                    icon_svg: installed ? ICON_CHECKED : ICON_EMPTY,
                                 })
                             }
 
@@ -172,7 +172,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                         let name = plugin.replace('.js', '').replace('.disabled', '')
                         const m = sub.append_menu({
                             name,
-                            icon_svg: disabled ? ICON_UNCHECKED : ICON_CHECKED,
+                            icon_svg: disabled ? ICON_EMPTY : ICON_CHECKED,
                             action() {
                                 if (disabled) {
                                     shell.fs.rename(shell.breeze.data_directory() + '/scripts/' + name + '.js.disabled', shell.breeze.data_directory() + '/scripts/' + name + '.js')
@@ -184,7 +184,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     shell.fs.rename(shell.breeze.data_directory() + '/scripts/' + name + '.js', shell.breeze.data_directory() + '/scripts/' + name + '.js.disabled')
                                     m.set_data({
                                         name,
-                                        icon_svg: ICON_UNCHECKED
+                                        icon_svg: ICON_EMPTY
                                     })
                                 }
 
