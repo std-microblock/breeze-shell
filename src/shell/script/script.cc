@@ -2,14 +2,17 @@
 #include "../contextmenu/contextmenu.h"
 #include "binding_qjs.h"
 #include "quickjs/quickjs-libc.h"
-#include <debugapi.h>
+
+#include "../utils.h"
 #include <future>
 #include <iostream>
 #include <mutex>
 #include <print>
 #include <ranges>
+#include <sstream>
 #include <thread>
 #include <unordered_set>
+
 
 #include "FileWatch.hpp"
 #include "quickjs/quickjs.h"
@@ -67,9 +70,14 @@ void script_context::watch_file(const std::filesystem::path &path,
 }
 
 void println(qjs::rest<std::string> args) {
-  for (auto const &arg : args)
-    std::cout << arg << " ";
-  std::cout << "\n";
+  std::stringstream ss;
+  for (auto &arg : args) {
+    ss << arg << " ";
+  }
+  ss << std::endl;
+  auto ws = utf8_to_wstring(ss.str());
+  WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), ws.c_str(), ws.size(), nullptr,
+                nullptr);
 }
 
 void script_context::bind() {
