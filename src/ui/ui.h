@@ -47,6 +47,10 @@ struct render_target {
   void set_position(int x, int y);
   void reset_view();
   void close();
+  void hide();
+  void show();
+  void hide_as_close();
+  bool should_loop_stop = false;
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::high_resolution_clock clock{};
   decltype(clock.now()) last_time = clock.now();

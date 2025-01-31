@@ -388,7 +388,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
         GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
         GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
-      ctx.rt.close();
+      ctx.rt.hide_as_close();
     }
   } else {
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
@@ -396,7 +396,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
 
   // esc to close
   if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
-    ctx.rt.close();
+    ctx.rt.hide_as_close();
   }
 }
 void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {

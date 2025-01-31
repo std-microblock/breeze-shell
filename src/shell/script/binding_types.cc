@@ -263,7 +263,7 @@ menu_controller::get_items() {
 void menu_controller::close() {
   auto current = menu_render::current;
   if (current) {
-    (*current)->rt->close();
+    (*current)->rt->hide_as_close();
   }
 }
 std::string clipboard::get_text() {

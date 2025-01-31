@@ -80,7 +80,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     } else {
       item.action = [=]() mutable {
         menu_render::current.value()->selected_menu = info.wID;
-        menu_render::current.value()->rt->close();
+        menu_render::current.value()->rt->hide_as_close();
       };
     }
 
