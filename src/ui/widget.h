@@ -197,7 +197,7 @@ struct widget_flex : public widget {
 struct text_widget : public widget {
   std::string text;
   float font_size = 14;
-  std::string font_family = "Yahei";
+  std::string font_family = "main";
   animated_color color = {this, 0, 0, 0, 1};
 
   void render(nanovg_context ctx) override;

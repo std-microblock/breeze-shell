@@ -28,7 +28,7 @@ struct test_widget : public ui::acrylic_background_widget {
   ui::sp_anim_float color_transition = anim_float(256, 3000);
   void render(ui::nanovg_context ctx) override {
     super::render(ctx);
-    ctx.fontFace("Yahei");
+    ctx.fontFace("main");
     ctx.fontSize(24);
     ctx.text(*x + 10, *y + 30, "Button", nullptr);
   }
@@ -121,7 +121,7 @@ struct menu_item_widget : public ui::widget {
     ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height, 4);
 
     ctx.fillColor(nvgRGBAf(1, 1, 1, *opacity / 255.f));
-    ctx.fontFace("Yahei");
+    ctx.fontFace("main");
     ctx.fontSize(14);
     ctx.text(floor(*x + text_padding), floor(*y + 2 + 14), item.name->c_str(),
              nullptr);
@@ -259,7 +259,7 @@ int main() {
   rt.root->emplace_child<menu_widget>(items, 20, 20);
   rt.root->emplace_child<dying_widget_test>();
 
-  nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+  nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
   rt.start_loop();
   return 0;

@@ -500,7 +500,7 @@ void StartInjectUI() {
     std::cerr << "Failed to initialize render target." << std::endl;
     return;
   }
-  nvgCreateFont(rt.nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+  nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
   rt.root->emplace_child<injector_ui_main>();
 

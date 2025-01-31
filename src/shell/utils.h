@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <string>
 
 namespace mb_shell {
@@ -7,4 +8,5 @@ std::wstring utf8_to_wstring(std::string const &str);
 bool is_win11_or_later();
 bool is_light_mode();
 bool is_acrylic_available();
+std::optional<std::string> env(const std::string &name);
 } // namespace mb_shell

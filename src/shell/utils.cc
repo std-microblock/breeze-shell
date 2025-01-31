@@ -57,3 +57,11 @@ bool mb_shell::is_light_mode() {
 bool mb_shell::is_acrylic_available() {
   return get_personalize_dword_value(L"EnableTransparency");
 }
+std::optional<std::string> mb_shell::env(const std::string &name) {
+  wchar_t buffer[32767];
+  GetEnvironmentVariableW(utf8_to_wstring(name).c_str(), buffer, 32767);
+  if (buffer[0] == 0) {
+    return std::nullopt;
+  }
+  return wstring_to_utf8(buffer);
+}

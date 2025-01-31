@@ -6,6 +6,8 @@
 namespace mb_shell {
 
 struct config {
+  static std::filesystem::path default_main_font();
+  static std::filesystem::path default_fallback_font();
   struct animated_float_conf {
     float duration = 200;
     ui::easing_type easing = ui::easing_type::ease_in_out;
@@ -29,23 +31,25 @@ struct config {
 
       struct animation {
         struct item {
-            animated_float_conf opacity;
-            animated_float_conf x;
+          animated_float_conf opacity;
+          animated_float_conf x;
         } item;
         struct bg {
-            animated_float_conf opacity;
+          animated_float_conf opacity;
         } main_bg, submenu_bg;
       } animation;
     } theme;
 
     bool vsync = true;
-    
+
     struct position {
-        int padding_vertical = 20;
-        int padding_horizontal = 0;
+      int padding_vertical = 20;
+      int padding_horizontal = 0;
     } position;
   } context_menu;
   bool debug_console = false;
+  std::filesystem::path font_path_main = default_main_font();
+  std::filesystem::path font_path_fallback = default_fallback_font();
 
   static std::unique_ptr<config> current;
   static void read_config();

@@ -9,6 +9,7 @@
 #include "rfl/DefaultIfMissing.hpp"
 #include "rfl/json.hpp"
 
+#include "utils.h"
 #include "windows.h"
 
 namespace mb_shell {
@@ -71,9 +72,7 @@ std::filesystem::path config::data_directory() {
   std::lock_guard lock(mtx);
 
   if (!path) {
-    wchar_t home_dir[MAX_PATH];
-    GetEnvironmentVariableW(L"USERPROFILE", home_dir, MAX_PATH);
-    path = std::filesystem::path(home_dir) / ".breeze-shell";
+    path = std::filesystem::path(env("USERPROFILE").value()) / ".breeze-shell";
   }
 
   if (!std::filesystem::exists(*path)) {
@@ -105,5 +104,12 @@ void config::animated_float_conf::apply_to(ui::sp_anim_float &anim,
 void config::animated_float_conf::operator()(ui::sp_anim_float &anim,
                                              float delay) {
   apply_to(anim, delay);
+}
+
+std::filesystem::path config::default_main_font() {
+    return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "segoeui.ttf";
+}
+std::filesystem::path config::default_fallback_font() {
+    return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
 }
 } // namespace mb_shell

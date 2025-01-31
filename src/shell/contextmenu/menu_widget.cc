@@ -48,7 +48,7 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   }
 
   ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
-  ctx.fontFace("Yahei");
+  ctx.fontFace("main");
   auto font_size = config::current->context_menu.theme.font_size;
   ctx.fontSize(font_size);
   ctx.textAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);

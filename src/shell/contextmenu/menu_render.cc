@@ -34,7 +34,9 @@ menu_render menu_render::create(int x, int y, menu menu) {
                   MB_ICONERROR);
     }
 
-    nvgCreateFont(rt->nvg, "Yahei", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+    nvgCreateFont(rt->nvg, "main", config::current->font_path_main.string().c_str());
+    nvgCreateFont(rt->nvg, "fallback", config::current->font_path_fallback.string().c_str());
+    nvgAddFallbackFont(rt->nvg, "main", "fallback");
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
