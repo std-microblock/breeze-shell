@@ -23,11 +23,17 @@ namespace ui {
 std::atomic_int render_target::view_cnt = 0;
 void render_target::start_loop() {
   glfwMakeContextCurrent(window);
-  while (!glfwWindowShouldClose(window) && !should_loop_stop) {
+  while (!glfwWindowShouldClose(window) && !should_loop_stop_hide_as_close) {
     render();
   }
-
-  should_loop_stop = false;
+  if (should_loop_stop_hide_as_close) {
+    should_loop_stop_hide_as_close = false;
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwSwapBuffers(window);
+    resize(0, 0);
+    hide();
+  }
 }
 std::expected<bool, std::string> render_target::init() {
   root = std::make_shared<widget>();
@@ -298,15 +304,10 @@ void render_target::post_main_thread_task(std::function<void()> task) {
   main_thread_tasks.push_back(std::move(task));
   glfwPostEmptyEvent();
 }
-void render_target::show() {
-  ShowWindow(glfwGetWin32Window(window), SW_SHOW);
-}
-void render_target::hide() {
-  ShowWindow(glfwGetWin32Window(window), SW_HIDE);
-}
+void render_target::show() { ShowWindow(glfwGetWin32Window(window), SW_SHOW); }
+void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
-  hide();
-  should_loop_stop = true;
+  should_loop_stop_hide_as_close = true;
   root->children.clear();
 }
 } // namespace ui
