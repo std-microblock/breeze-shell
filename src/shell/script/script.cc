@@ -84,7 +84,7 @@ void script_context::bind() {
 script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
-  std::unordered_set<std::filesystem::path> watched_files;
+  std::unordered_set<std::filesystem::path> files;
   auto reload_all = [&]() {
     std::println("Reloading all scripts");
     menu_callbacks_js.clear();
@@ -100,7 +100,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
     }).detach();
 
     bind();
-    for (auto &path : watched_files) {
+    for (auto &path : files) {
       try {
         std::ifstream file(path);
         std::string script((std::istreambuf_iterator<char>(file)),
@@ -117,8 +117,8 @@ void script_context::watch_folder(const std::filesystem::path &path,
   std::ranges::copy(std::filesystem::directory_iterator(path) |
                         std::ranges::views::filter([](auto &entry) {
                           return entry.path().extension() == ".js";
-                        })
-                    , std::inserter(watched_files, watched_files.end()));
+                        }),
+                    std::inserter(files, files.end()));
 
   reload_all();
 
@@ -130,18 +130,6 @@ void script_context::watch_folder(const std::filesystem::path &path,
         if (!path.ends_with(".js")) {
           return;
         }
-        if (change_type == filewatch::Event::added ||
-            change_type == filewatch::Event::modified) {
-          watched_files.insert(path);
-        } else if (change_type == filewatch::Event::removed) {
-          watched_files.erase(path);
-        } else if (change_type == filewatch::Event::renamed_new) {
-          watched_files.insert(path);
-        } else if (change_type == filewatch::Event::renamed_old) {
-          watched_files.erase(path);
-        } else {
-          std::cerr << "Unknown event type: " << (int)change_type << std::endl;
-        }
         has_update = true;
       });
 
@@ -149,6 +137,12 @@ void script_context::watch_folder(const std::filesystem::path &path,
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
     if (has_update && on_reload()) {
       has_update = false;
+      files.clear();
+      std::ranges::copy(std::filesystem::directory_iterator(path) |
+                            std::ranges::views::filter([](auto &entry) {
+                              return entry.path().extension() == ".js";
+                            }),
+                        std::inserter(files, files.end()));
       reload_all();
     }
   }
