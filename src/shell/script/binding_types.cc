@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <ranges>
+#include <regex>
 
 // Context menu
 #include "../contextmenu/menu_render.h"
@@ -308,6 +309,29 @@ void clipboard::set_text(std::string text) {
   CloseClipboard();
 }
 
+// https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
+std::string url_encode(const std::string &value) {
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (auto i = value.begin(), n = value.end(); i != n; ++i) {
+        std::string::value_type c = (*i);
+
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+
+        // Any other characters are percent-encoded
+        escaped << std::uppercase;
+        escaped << '%' << std::setw(2) << int((unsigned char) c);
+        escaped << std::nouppercase;
+    }
+
+    return escaped.str();
+}
 std::string network::post(std::string url, std::string data) {
   HINTERNET hSession = WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
     WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -323,7 +347,8 @@ std::string network::post(std::string url, std::string data) {
   urlComp.lpszUrlPath = urlPath;
   urlComp.dwUrlPathLength = sizeof(urlPath)/sizeof(wchar_t);
 
-  std::wstring wideUrl = utf8_to_wstring(url);
+  std::wstring wideUrl = utf8_to_wstring(url_encode(url));
+  std::println("URL: {}", url_encode(url));
   if (!WinHttpCrackUrl(wideUrl.c_str(), wideUrl.length(), 0, &urlComp)) {
     WinHttpCloseHandle(hSession);
     throw std::runtime_error("Invalid URL format");
