@@ -1394,11 +1394,9 @@ public:
   bool isJobPending() const { return JS_IsJobPending(rt); }
 
 private:
-  static void promise_unhandled_rejection_tracker(JSContext *ctx,
-                                                  JSValueConst promise,
-                                                  JSValueConst reason,
-                                                  JS_BOOL is_handled,
-                                                  void *opaque);
+  static void promise_unhandled_rejection_tracker(JSContext *ctx, JSValue promise,
+                                           JSValue reason,
+                                           JS_BOOL is_handled, void *opaque);
 
   static JSModuleDef *module_loader(JSContext *ctx, const char *module_name,
                                     void *opaque);
@@ -2038,14 +2036,14 @@ inline Context &exception::context() const { return Context::get(ctx); }
 inline Value exception::get() { return context().getException(); }
 
 inline void Runtime::promise_unhandled_rejection_tracker(JSContext *ctx,
-                                                         JSValueConst promise,
-                                                         JSValueConst reason,
+                                                         JSValue promise,
+                                                         JSValue reason,
                                                          JS_BOOL is_handled,
                                                          void *opaque) {
   auto &context = Context::get(ctx);
   if (context.onUnhandledPromiseRejection) {
-    context.onUnhandledPromiseRejection(
-        context.newValue(JS_DupValue(ctx, reason)));
+    // context.onUnhandledPromiseRejection(
+    //     context.newValue(JS_DupValue(ctx, reason)));
   }
 }
 

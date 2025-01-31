@@ -357,11 +357,12 @@ std::string network::get(std::string url) { return post(url, ""); }
 void network::get_async(std::string url,
                         std::function<void(std::string)> callback,
                         std::function<void(std::string)> error_callback) {
-  std::thread([url, callback]() {
+  std::thread([url, callback, error_callback]() {
     try {
       callback(get(url));
     } catch (std::exception &e) {
       std::cerr << "Error in network::get_async: " << e.what() << std::endl;
+      error_callback(e.what());
     }
   }).detach();
 }
@@ -369,11 +370,12 @@ void network::get_async(std::string url,
 void network::post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback) {
-  std::thread([url, data, callback]() {
+  std::thread([url, data, callback, error_callback]() {
     try {
       callback(post(url, data));
     } catch (std::exception &e) {
       std::cerr << "Error in network::post_async: " << e.what() << std::endl;
+      error_callback(e.what());
     }
   }).detach();
 }
