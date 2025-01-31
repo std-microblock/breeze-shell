@@ -652,6 +652,7 @@ template<> struct js_bind<mb_shell::js::breeze> {
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze::version>("version")
                 .static_fun<&mb_shell::js::breeze::data_directory>("data_directory")
+                .static_fun<&mb_shell::js::breeze::is_light_theme>("is_light_theme")
             ;
     }
 

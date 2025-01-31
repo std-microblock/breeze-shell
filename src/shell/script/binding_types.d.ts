@@ -943,6 +943,14 @@ export class breeze {
   */
   static data_directory: (() => string)
             
+	
+/**
+  * 
+  * @param 
+  * @returns boolean
+  */
+  static is_light_theme: (() => boolean)
+            
 }
     
 }

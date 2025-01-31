@@ -458,6 +458,7 @@ struct fs {
 struct breeze {
   static std::string version();
   static std::string data_directory();
+  static bool is_light_theme();
 };
 
 } // namespace mb_shell::js

@@ -574,4 +574,7 @@ std::vector<std::string> fs::readdir(std::string path) {
                     std::back_inserter(result));
   return result;
 }
+bool breeze::is_light_theme() {
+  return is_light_mode();
+}
 } // namespace mb_shell::js
