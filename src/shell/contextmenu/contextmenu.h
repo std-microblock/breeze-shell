@@ -30,6 +30,8 @@ struct menu_item {
 
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
+  // only for information, set this changes nothing
+  std::optional<size_t> wID;
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
   bool checked = false;
   std::optional<size_t> icon_bitmap;

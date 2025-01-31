@@ -256,6 +256,9 @@ struct js_menu_data {
   // 是否禁用
   // Whether disabled
   std::optional<bool> disabled;
+  // 仅作为信息标识，不影响行为
+  // Only for information, set this changes nothing
+  std::optional<size_t> wID;
 };
 
 struct menu_item_controller {

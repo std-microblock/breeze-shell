@@ -1793,7 +1793,6 @@ struct js_traits<std::function<R(Args...)>, int> {
                 std::make_exception_ptr(exception{jsfun_obj.ctx}));
         };
 
-        std::printf("is thread js main: %d\n", is_thread_js_main);
         if (!is_thread_js_main) {
           ctx.enqueueJob(work);
         } else {
@@ -1813,7 +1812,7 @@ struct js_traits<std::function<R(Args...)>, int> {
         auto ctx2 = Context{jsfun_obj.ctx};
         std::promise<std::expected<JSValue, exception>> promise;
         auto future = promise.get_future();
-        
+
         auto work = [&]() {
           const int argc = sizeof...(Args);
           JSValue argv[argc];
@@ -1828,7 +1827,6 @@ struct js_traits<std::function<R(Args...)>, int> {
             promise.set_exception(
                 std::make_exception_ptr(exception{jsfun_obj.ctx}));
         };
-        std::printf("is thread js main: %d\n", is_thread_js_main);
         if (!is_thread_js_main) {
           ctx2.enqueueJob(work);
         } else {

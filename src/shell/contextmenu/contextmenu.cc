@@ -82,6 +82,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
         menu_render::current.value()->selected_menu = info.wID;
         menu_render::current.value()->rt->hide_as_close();
       };
+
+      item.wID = info.wID;
     }
 
     if (info.fType & MFT_SEPARATOR || info.fType & MFT_MENUBARBREAK ||

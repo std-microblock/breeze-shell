@@ -545,6 +545,13 @@ export class js_menu_data {
   disabled?: boolean | undefined
             
 	
+  /**
+  * 仅作为信息标识，不影响行为
+  *  Only for information, set this changes nothing
+  */
+  wID?: size_t | undefined
+            
+	
 }
     
 export class menu_item_controller {
