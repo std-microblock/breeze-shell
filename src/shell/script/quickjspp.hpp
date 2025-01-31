@@ -14,6 +14,7 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -1443,6 +1444,9 @@ class Context {
 public:
   JSContext *ctx;
 
+  // for starting jobs quickly
+  std::condition_variable js_job_start_cv;
+  std::mutex js_job_start_mutex;
   /** Module wrapper
    * Workaround for lack of opaque pointer for module load function by keeping a
    * list of modules in qjs::Context.
@@ -1779,7 +1783,7 @@ struct js_traits<std::function<R(Args...)>, int> {
     const int argc = sizeof...(Args);
     if constexpr (argc == 0) {
       return [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}]() -> R {
-        auto ctx = Context{jsfun_obj.ctx};
+        auto &ctx = Context::get(jsfun_obj.ctx);
 
         std::promise<std::expected<JSValue, exception>> promise;
         auto future = promise.get_future();
@@ -1809,7 +1813,7 @@ struct js_traits<std::function<R(Args...)>, int> {
     } else {
       return [jsfun_obj =
                   Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
-        auto ctx2 = Context{jsfun_obj.ctx};
+        auto &ctx = Context::get(jsfun_obj.ctx);
         std::promise<std::expected<JSValue, exception>> promise;
         auto future = promise.get_future();
 
@@ -1828,7 +1832,7 @@ struct js_traits<std::function<R(Args...)>, int> {
                 std::make_exception_ptr(exception{jsfun_obj.ctx}));
         };
         if (!is_thread_js_main) {
-          ctx2.enqueueJob(work);
+          ctx.enqueueJob(work);
         } else {
           work();
         }
@@ -2012,6 +2016,8 @@ template <typename Key> property_proxy<Key>::operator Value() const {
 } // namespace detail
 
 template <typename Function> void Context::enqueueJob(Function &&job) {
+  auto &ctx_real = Context::get(this->ctx);
+
   JSValue job_val =
       js_traits<std::function<void()>>::wrap(ctx, std::forward<Function>(job));
   JSValueConst arg = job_val;
@@ -2033,6 +2039,7 @@ template <typename Function> void Context::enqueueJob(Function &&job) {
         return JS_UNDEFINED;
       },
       1, &arg);
+  ctx_real.js_job_start_cv.notify_all();
   JS_FreeValue(ctx, job_val);
   if (err < 0)
     throw exception{ctx};

@@ -91,6 +91,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
       }
 
       while (auto ptr = js) {
+
         if (ptr->ctx) {
           auto r = js_std_loop(ptr->ctx, ss.get());
           if (r) {
@@ -101,7 +102,10 @@ void script_context::watch_folder(const std::filesystem::path &path,
         if (*ss)
           break;
 
-        Sleep(100);
+        std::unique_lock lock(js->js_job_start_mutex);
+        std::this_thread::yield();
+
+        js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(100));
       }
     }).detach();
     // ftr_init.get();

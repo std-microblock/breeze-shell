@@ -1,6 +1,7 @@
 #pragma once
 #include "quickjspp.hpp"
 #include <chrono>
+#include <condition_variable>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -15,9 +16,7 @@ struct script_context {
   std::shared_ptr<qjs::Runtime> rt;
   std::shared_ptr<qjs::Context> js;
   std::shared_ptr<int> stop_signal = std::make_shared<int>(0);
-
   script_context();
-
   void bind();
 
   void watch_folder(
