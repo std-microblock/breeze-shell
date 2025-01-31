@@ -18,6 +18,7 @@
 #include <codecvt>
 #include <condition_variable>
 #include <consoleapi3.h>
+#include <exception>
 #include <filesystem>
 #include <functional>
 #include <future>
@@ -65,6 +66,23 @@ void main() {
 
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
+
+  std::set_terminate([]() {
+    auto eptr = std::current_exception();
+    if (eptr) {
+      try {
+        std::rethrow_exception(eptr);
+      } catch (const std::exception &e) {
+        std::cerr << "Uncaught exception: " << e.what() << std::endl;
+      } catch (...) {
+        std::cerr << "Uncaught exception of unknown type" << std::endl;
+      }
+
+      ShowWindow(GetConsoleWindow(), SW_SHOW);
+      std::getchar();
+    }
+    std::abort();
+  });
 
   std::thread([]() {
     if (auto res = ui::render_target::init_global(); !res) {

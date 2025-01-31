@@ -356,12 +356,14 @@ struct network {
   // 异步HTTP GET请求
   // Asynchronous HTTP GET request
   static void get_async(std::string url,
-                        std::function<void(std::string)> callback);
+                        std::function<void(std::string)> callback,
+                        std::function<void(std::string)> error_callback);
 
   // 异步HTTP POST请求
   // Asynchronous HTTP POST request
   static void post_async(std::string url, std::string data,
-                         std::function<void(std::string)> callback);
+                         std::function<void(std::string)> callback,
+                         std::function<void(std::string)> error_callback);
 };
 
 // 子进程执行结果
@@ -447,6 +449,10 @@ struct fs {
   // 以二进制模式写入文件
   // Write file in binary mode
   static void write_binary(std::string path, std::vector<uint8_t> data);
+
+  // 读取目录
+  // Read directory
+  static std::vector<std::string> readdir(std::string path);
 };
 
 struct breeze {

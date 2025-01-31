@@ -1,6 +1,17 @@
 declare module "mshell" {
     export function println(...args: any[]);
     type size_t = number;
+    type uint8_t = number;
+    type uint16_t = number;
+    type uint32_t = number;
+    type uint64_t = number;
+    type int8_t = number;
+    type int16_t = number;
+    type int32_t = number;
+    type int64_t = number;
+    type intptr_t = number;
+    type uintptr_t = number;
+    type ssize_t = number;
 }
 
 declare module "qjs:os" {

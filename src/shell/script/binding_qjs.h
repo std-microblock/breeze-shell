@@ -627,6 +627,7 @@ template<> struct js_bind<mb_shell::js::fs> {
                 .static_fun<&mb_shell::js::fs::write>("write")
                 .static_fun<&mb_shell::js::fs::read_binary>("read_binary")
                 .static_fun<&mb_shell::js::fs::write_binary>("write_binary")
+                .static_fun<&mb_shell::js::fs::readdir>("readdir")
             ;
     }
 

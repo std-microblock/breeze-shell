@@ -340,9 +340,10 @@ void InjectAllConsistent() {
     for (DWORD pid : pids) {
       if (!std::ranges::contains(injected, pid) && !IsInjected(pid, dllPath)) {
         InjectToPID(pid, dllPath);
+        injected.push_back(pid);
       }
     }
-    Sleep(100);
+    Sleep(1000);
     MSG msg;
     if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
       TranslateMessage(&msg);

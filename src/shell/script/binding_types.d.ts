@@ -732,19 +732,19 @@ export class network {
 /**
   * 异步HTTP GET请求
   *  Asynchronous HTTP GET request
-  * @param url: string, callback: ((arg1: string) => void)
+  * @param url: string, callback: ((arg1: string) => void), error_callback: ((arg1: string) => void)
   * @returns void
   */
-  static get_async: ((arg1: string, arg2: ((arg1: string) => void)) => void)
+  static get_async: ((arg1: string, arg2: ((arg1: string) => void), arg3: ((arg1: string) => void)) => void)
             
 	
 /**
   * 异步HTTP POST请求
   *  Asynchronous HTTP POST request
-  * @param url: string, data: string, callback: ((arg1: string) => void)
+  * @param url: string, data: string, callback: ((arg1: string) => void), error_callback: ((arg1: string) => void)
   * @returns void
   */
-  static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void)) => void)
+  static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void), arg4: ((arg1: string) => void)) => void)
             
 }
     
@@ -914,6 +914,15 @@ export class fs {
   */
   static write_binary: ((arg1: string, arg2: Array<uint8_t>) => void)
             
+	
+/**
+  * 读取目录
+  *  Read directory
+  * @param path: string
+  * @returns Array<string>
+  */
+  static readdir: ((arg1: string) => Array<string>)
+            
 }
     
 export class breeze {
@@ -940,6 +949,17 @@ export class breeze {
 declare module "mshell" {
     export function println(...args: any[]);
     type size_t = number;
+    type uint8_t = number;
+    type uint16_t = number;
+    type uint32_t = number;
+    type uint64_t = number;
+    type int8_t = number;
+    type int16_t = number;
+    type int32_t = number;
+    type int64_t = number;
+    type intptr_t = number;
+    type uintptr_t = number;
+    type ssize_t = number;
 }
 
 declare module "qjs:os" {

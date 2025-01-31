@@ -1,8 +1,10 @@
 #include "binding_types.h"
 #include "quickjspp.hpp"
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <ranges>
 
 // Context menu
 #include "../contextmenu/menu_render.h"
@@ -45,7 +47,7 @@ menu_controller::append_menu_after(js_menu_data data, int after_index) {
 
   m->update_icon_width();
 
-  if(m->animate_appear_started) {
+  if (m->animate_appear_started) {
     new_item->reset_appear_animation(0);
   }
 
@@ -302,36 +304,59 @@ void clipboard::set_text(std::string text) {
 }
 
 std::string network::post(std::string url, std::string data) {
-  HINTERNET hInternet =
-      InternetOpenA("HTTP", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+  HINTERNET hInternet = InternetOpenA("WinINet", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
   if (!hInternet)
-    return "";
+    throw std::runtime_error("Failed to initialize WinINet");
 
-  HINTERNET hConnect =
-      InternetOpenUrlA(hInternet, url.c_str(), data.c_str(), data.length(),
-                       INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
+  HINTERNET hConnect = InternetOpenUrlA(hInternet, url.c_str(), data.c_str(),
+                                       data.length(), INTERNET_FLAG_RELOAD, 0);
   if (!hConnect) {
     InternetCloseHandle(hInternet);
-    return "";
+    throw std::runtime_error("Failed to connect to server");
   }
 
   std::string response;
-  char buffer[1024];
+  char buffer[4096];
   DWORD bytesRead;
-  while (InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead) &&
-         bytesRead > 0) {
+  BOOL readResult;
+
+  while ((readResult = InternetReadFile(hConnect, buffer, sizeof(buffer), &bytesRead))) {
+    if (bytesRead == 0) break;
     response.append(buffer, bytesRead);
+  }
+
+  if (!readResult) {
+    InternetCloseHandle(hConnect);
+    InternetCloseHandle(hInternet);
+    throw std::runtime_error("Failed to read complete response");
+  }
+
+  DWORD statusCode = 0;
+  DWORD statusCodeSize = sizeof(statusCode);
+  if (!HttpQueryInfoA(hConnect, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
+                      &statusCode, &statusCodeSize, nullptr)) {
+    InternetCloseHandle(hConnect);
+    InternetCloseHandle(hInternet);
+    throw std::runtime_error("Failed to get HTTP status code");
+  }
+
+  if (statusCode >= 400) {
+    InternetCloseHandle(hConnect);
+    InternetCloseHandle(hInternet);
+    throw std::runtime_error("Server returned error: " + std::to_string(statusCode));
   }
 
   InternetCloseHandle(hConnect);
   InternetCloseHandle(hInternet);
+
   return response;
 }
 
 std::string network::get(std::string url) { return post(url, ""); }
 
 void network::get_async(std::string url,
-                        std::function<void(std::string)> callback) {
+                        std::function<void(std::string)> callback,
+                        std::function<void(std::string)> error_callback) {
   std::thread([url, callback]() {
     try {
       callback(get(url));
@@ -342,7 +367,8 @@ void network::get_async(std::string url,
 }
 
 void network::post_async(std::string url, std::string data,
-                         std::function<void(std::string)> callback) {
+                         std::function<void(std::string)> callback,
+                         std::function<void(std::string)> error_callback) {
   std::thread([url, data, callback]() {
     try {
       callback(post(url, data));
@@ -428,9 +454,7 @@ void menu_controller::clear() {
   m->children.clear();
   m->menu_data.items.clear();
 }
-void fs::chdir(std::string path) {
-  SetCurrentDirectoryA(path.c_str());
-}
+void fs::chdir(std::string path) { SetCurrentDirectoryA(path.c_str()); }
 
 std::string fs::cwd() {
   char buffer[MAX_PATH];
@@ -442,21 +466,15 @@ bool fs::exists(std::string path) {
   return GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-void fs::mkdir(std::string path) {
-  CreateDirectoryA(path.c_str(), nullptr);
-}
+void fs::mkdir(std::string path) { CreateDirectoryA(path.c_str(), nullptr); }
 
-void fs::rmdir(std::string path) {
-  RemoveDirectoryA(path.c_str());
-}
+void fs::rmdir(std::string path) { RemoveDirectoryA(path.c_str()); }
 
 void fs::rename(std::string old_path, std::string new_path) {
   MoveFileA(old_path.c_str(), new_path.c_str());
 }
 
-void fs::remove(std::string path) {
-  DeleteFileA(path.c_str());
-}
+void fs::remove(std::string path) { DeleteFileA(path.c_str()); }
 
 void fs::copy(std::string src_path, std::string dest_path) {
   CopyFileA(src_path.c_str(), dest_path.c_str(), FALSE);
@@ -467,9 +485,11 @@ void fs::move(std::string src_path, std::string dest_path) {
 }
 
 std::string fs::read(std::string path) {
-  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE) return "";
+  HANDLE hFile =
+      CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE)
+    return "";
 
   DWORD fileSize = GetFileSize(hFile, nullptr);
   std::string buffer(fileSize, '\0');
@@ -481,8 +501,9 @@ std::string fs::read(std::string path) {
 
 void fs::write(std::string path, std::string data) {
   HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
-               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE) return;
+                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE)
+    return;
 
   DWORD bytesWritten;
   WriteFile(hFile, data.c_str(), data.length(), &bytesWritten, nullptr);
@@ -490,9 +511,11 @@ void fs::write(std::string path, std::string data) {
 }
 
 std::vector<uint8_t> fs::read_binary(std::string path) {
-  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE) return {};
+  HANDLE hFile =
+      CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE)
+    return {};
 
   DWORD fileSize = GetFileSize(hFile, nullptr);
   std::vector<uint8_t> buffer(fileSize);
@@ -504,17 +527,25 @@ std::vector<uint8_t> fs::read_binary(std::string path) {
 
 void fs::write_binary(std::string path, std::vector<uint8_t> data) {
   HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
-               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE) return;
+                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (hFile == INVALID_HANDLE_VALUE)
+    return;
 
   DWORD bytesWritten;
   WriteFile(hFile, data.data(), data.size(), &bytesWritten, nullptr);
   CloseHandle(hFile);
 }
-std::string breeze::version() {
-  return "0.1.0";
-}
+std::string breeze::version() { return "0.1.0"; }
 std::string breeze::data_directory() {
   return config::data_directory().generic_string();
+}
+std::vector<std::string> fs::readdir(std::string path) {
+  std::vector<std::string> result;
+  std::ranges::copy(std::filesystem::directory_iterator(path) |
+                        std::ranges::views::transform([](const auto &entry) {
+                          return entry.path().generic_string();
+                        }),
+                    std::back_inserter(result));
+  return result;
 }
 } // namespace mb_shell::js
