@@ -191,14 +191,13 @@ js_menu_data menu_item_controller::data() {
   }
 
   if (item->item.action) {
-    data.action = [item](js_menu_action_event_data) {
-      item->item.action.value()();
-    };
+    data.action = [action = item->item.action.value()](
+                      js_menu_action_event_data) { action(); };
   }
 
   if (item->item.submenu) {
-    data.submenu = [item](std::shared_ptr<menu_controller> ctl) {
-      item->item.submenu.value()(ctl->$menu.lock());
+    data.submenu = [submenu = item->item.submenu.value()](std::shared_ptr<menu_controller> ctl) {
+      submenu(ctl->$menu.lock());
     };
   }
 
@@ -300,7 +299,8 @@ void clipboard::set_text(std::string text) {
     return;
   }
   std::wstring wtext = utf8_to_wstring(text);
-  HGLOBAL hDataW = GlobalAlloc(GMEM_MOVEABLE, (wtext.size() + 1) * sizeof(wchar_t));
+  HGLOBAL hDataW =
+      GlobalAlloc(GMEM_MOVEABLE, (wtext.size() + 1) * sizeof(wchar_t));
   if (hDataW == nullptr) {
     CloseClipboard();
     return;
@@ -314,8 +314,9 @@ void clipboard::set_text(std::string text) {
 }
 
 std::string network::post(std::string url, std::string data) {
-  HINTERNET hSession = WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-    WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+  HINTERNET hSession =
+      WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                  WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
   if (!hSession) {
     throw std::runtime_error("Failed to initialize WinHTTP");
   }
@@ -324,9 +325,9 @@ std::string network::post(std::string url, std::string data) {
   wchar_t hostName[256] = {0};
   wchar_t urlPath[1024] = {0};
   urlComp.lpszHostName = hostName;
-  urlComp.dwHostNameLength = sizeof(hostName)/sizeof(wchar_t);
+  urlComp.dwHostNameLength = sizeof(hostName) / sizeof(wchar_t);
   urlComp.lpszUrlPath = urlPath;
-  urlComp.dwUrlPathLength = sizeof(urlPath)/sizeof(wchar_t);
+  urlComp.dwUrlPathLength = sizeof(urlPath) / sizeof(wchar_t);
 
   std::wstring wideUrl = utf8_to_wstring(url);
 
@@ -335,8 +336,11 @@ std::string network::post(std::string url, std::string data) {
     throw std::runtime_error("Invalid URL format");
   }
 
-  HINTERNET hConnect = WinHttpConnect(hSession, hostName, 
-    urlComp.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0);
+  HINTERNET hConnect = WinHttpConnect(hSession, hostName,
+                                      urlComp.nScheme == INTERNET_SCHEME_HTTPS
+                                          ? INTERNET_DEFAULT_HTTPS_PORT
+                                          : INTERNET_DEFAULT_HTTP_PORT,
+                                      0);
   if (!hConnect) {
     WinHttpCloseHandle(hSession);
     throw std::runtime_error("Failed to connect to server");
@@ -347,20 +351,19 @@ std::string network::post(std::string url, std::string data) {
     flags |= WINHTTP_FLAG_SECURE;
   }
 
-  HINTERNET hRequest = WinHttpOpenRequest(hConnect, 
-    data.empty() ? L"GET" : L"POST",
-    urlPath, nullptr, WINHTTP_NO_REFERER,
-    WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
+  HINTERNET hRequest = WinHttpOpenRequest(
+      hConnect, data.empty() ? L"GET" : L"POST", urlPath, nullptr,
+      WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
   if (!hRequest) {
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
     throw std::runtime_error("Failed to create request");
   }
 
-  BOOL result = WinHttpSendRequest(hRequest,
-    WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-    data.empty() ? WINHTTP_NO_REQUEST_DATA : (LPVOID)data.c_str(),
-    data.length(), data.length(), 0);
+  BOOL result = WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                   data.empty() ? WINHTTP_NO_REQUEST_DATA
+                                                : (LPVOID)data.c_str(),
+                                   data.length(), data.length(), 0);
 
   if (!result || !WinHttpReceiveResponse(hRequest, nullptr)) {
     WinHttpCloseHandle(hRequest);
@@ -371,22 +374,27 @@ std::string network::post(std::string url, std::string data) {
 
   DWORD statusCode = 0;
   DWORD statusCodeSize = sizeof(statusCode);
-  WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-    WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize, WINHTTP_NO_HEADER_INDEX);
+  WinHttpQueryHeaders(hRequest,
+                      WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                      WINHTTP_HEADER_NAME_BY_INDEX, &statusCode,
+                      &statusCodeSize, WINHTTP_NO_HEADER_INDEX);
 
   if (statusCode >= 400) {
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
-    throw std::runtime_error("Server returned error: " + std::to_string(statusCode));
+    throw std::runtime_error("Server returned error: " +
+                             std::to_string(statusCode));
   }
 
   std::string response;
   DWORD bytesAvailable;
   do {
     bytesAvailable = 0;
-    if (!WinHttpQueryDataAvailable(hRequest, &bytesAvailable)) break;
-    if (!bytesAvailable) break;
+    if (!WinHttpQueryDataAvailable(hRequest, &bytesAvailable))
+      break;
+    if (!bytesAvailable)
+      break;
 
     std::vector<char> buffer(bytesAvailable);
     DWORD bytesRead = 0;
@@ -507,37 +515,31 @@ void menu_controller::clear() {
   m->menu_data.items.clear();
 }
 
-void fs::chdir(std::string path) { 
-  std::filesystem::current_path(path); 
+void fs::chdir(std::string path) { std::filesystem::current_path(path); }
+
+std::string fs::cwd() { return std::filesystem::current_path().string(); }
+
+bool fs::exists(std::string path) { return std::filesystem::exists(path); }
+
+void fs::mkdir(std::string path) {
+  try {
+    std::filesystem::create_directories(path);
+  } catch (std::exception &e) {
+    std::filesystem::create_directory(path);
+  }
 }
 
-std::string fs::cwd() {
-  return std::filesystem::current_path().string();
-}
-
-bool fs::exists(std::string path) {
-  return std::filesystem::exists(path);
-}
-
-void fs::mkdir(std::string path) { 
-  std::filesystem::create_directory(path); 
-}
-
-void fs::rmdir(std::string path) { 
-  std::filesystem::remove(path); 
-}
+void fs::rmdir(std::string path) { std::filesystem::remove(path); }
 
 void fs::rename(std::string old_path, std::string new_path) {
   std::filesystem::rename(old_path, new_path);
 }
 
-void fs::remove(std::string path) { 
-  std::filesystem::remove(path); 
-}
+void fs::remove(std::string path) { std::filesystem::remove(path); }
 
 void fs::copy(std::string src_path, std::string dest_path) {
-  std::filesystem::copy_file(src_path, dest_path, 
-    std::filesystem::copy_options::overwrite_existing);
+  std::filesystem::copy_file(src_path, dest_path,
+                             std::filesystem::copy_options::overwrite_existing);
 }
 
 void fs::move(std::string src_path, std::string dest_path) {
@@ -547,7 +549,7 @@ void fs::move(std::string src_path, std::string dest_path) {
 std::string fs::read(std::string path) {
   std::ifstream file(path, std::ios::binary);
   return std::string((std::istreambuf_iterator<char>(file)),
-            std::istreambuf_iterator<char>());
+                     std::istreambuf_iterator<char>());
 }
 
 void fs::write(std::string path, std::string data) {
@@ -558,12 +560,12 @@ void fs::write(std::string path, std::string data) {
 std::vector<uint8_t> fs::read_binary(std::string path) {
   std::ifstream file(path, std::ios::binary);
   return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)),
-                 std::istreambuf_iterator<char>());
+                              std::istreambuf_iterator<char>());
 }
 
 void fs::write_binary(std::string path, std::vector<uint8_t> data) {
   std::ofstream file(path, std::ios::binary);
-  file.write(reinterpret_cast<const char*>(data.data()), data.size());
+  file.write(reinterpret_cast<const char *>(data.data()), data.size());
 }
 std::string breeze::version() { return "0.1.0"; }
 std::string breeze::data_directory() {
@@ -578,7 +580,5 @@ std::vector<std::string> fs::readdir(std::string path) {
                     std::back_inserter(result));
   return result;
 }
-bool breeze::is_light_theme() {
-  return is_light_mode();
-}
+bool breeze::is_light_theme() { return is_light_mode(); }
 } // namespace mb_shell::js
