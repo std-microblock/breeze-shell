@@ -94,13 +94,12 @@ void script_context::watch_folder(const std::filesystem::path &path,
     *stop_signal = true;
     stop_signal = std::make_shared<int>(false);
 
-    // while (!IsDebuggerPresent())
-    //   ;
     static std::mutex m;
     std::thread([&, this, ss = stop_signal]() {
       std::lock_guard<std::mutex> lock(m);
       is_thread_js_main = true;
-
+      std::setlocale(LC_CTYPE, ".UTF-8");
+      std::locale::global(std::locale("en_US.UTF-8"));
       rt = std::make_shared<qjs::Runtime>();
       JS_UpdateStackTop(rt->rt);
       js = std::make_shared<qjs::Context>(*rt);

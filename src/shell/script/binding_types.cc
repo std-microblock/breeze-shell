@@ -309,29 +309,6 @@ void clipboard::set_text(std::string text) {
   CloseClipboard();
 }
 
-// https://stackoverflow.com/questions/154536/encode-decode-urls-in-c
-std::string url_encode(const std::string &value) {
-    std::ostringstream escaped;
-    escaped.fill('0');
-    escaped << std::hex;
-
-    for (auto i = value.begin(), n = value.end(); i != n; ++i) {
-        std::string::value_type c = (*i);
-
-        // Keep alphanumeric and other accepted characters intact
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
-            escaped << c;
-            continue;
-        }
-
-        // Any other characters are percent-encoded
-        escaped << std::uppercase;
-        escaped << '%' << std::setw(2) << int((unsigned char) c);
-        escaped << std::nouppercase;
-    }
-
-    return escaped.str();
-}
 std::string network::post(std::string url, std::string data) {
   HINTERNET hSession = WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
     WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -347,8 +324,8 @@ std::string network::post(std::string url, std::string data) {
   urlComp.lpszUrlPath = urlPath;
   urlComp.dwUrlPathLength = sizeof(urlPath)/sizeof(wchar_t);
 
-  std::wstring wideUrl = utf8_to_wstring(url_encode(url));
-  std::println("URL: {}", url_encode(url));
+  std::wstring wideUrl = utf8_to_wstring(url);
+
   if (!WinHttpCrackUrl(wideUrl.c_str(), wideUrl.length(), 0, &urlComp)) {
     WinHttpCloseHandle(hSession);
     throw std::runtime_error("Invalid URL format");
@@ -525,86 +502,64 @@ void menu_controller::clear() {
   m->children.clear();
   m->menu_data.items.clear();
 }
-void fs::chdir(std::string path) { SetCurrentDirectoryA(path.c_str()); }
+
+void fs::chdir(std::string path) { 
+  std::filesystem::current_path(path); 
+}
 
 std::string fs::cwd() {
-  char buffer[MAX_PATH];
-  GetCurrentDirectoryA(MAX_PATH, buffer);
-  return std::string(buffer);
+  return std::filesystem::current_path().string();
 }
 
 bool fs::exists(std::string path) {
-  return GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+  return std::filesystem::exists(path);
 }
 
-void fs::mkdir(std::string path) { CreateDirectoryA(path.c_str(), nullptr); }
+void fs::mkdir(std::string path) { 
+  std::filesystem::create_directory(path); 
+}
 
-void fs::rmdir(std::string path) { RemoveDirectoryA(path.c_str()); }
+void fs::rmdir(std::string path) { 
+  std::filesystem::remove(path); 
+}
 
 void fs::rename(std::string old_path, std::string new_path) {
-  MoveFileA(old_path.c_str(), new_path.c_str());
+  std::filesystem::rename(old_path, new_path);
 }
 
-void fs::remove(std::string path) { DeleteFileA(path.c_str()); }
+void fs::remove(std::string path) { 
+  std::filesystem::remove(path); 
+}
 
 void fs::copy(std::string src_path, std::string dest_path) {
-  CopyFileA(src_path.c_str(), dest_path.c_str(), FALSE);
+  std::filesystem::copy_file(src_path, dest_path, 
+    std::filesystem::copy_options::overwrite_existing);
 }
 
 void fs::move(std::string src_path, std::string dest_path) {
-  MoveFileA(src_path.c_str(), dest_path.c_str());
+  std::filesystem::rename(src_path, dest_path);
 }
 
 std::string fs::read(std::string path) {
-  HANDLE hFile =
-      CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE)
-    return "";
-
-  DWORD fileSize = GetFileSize(hFile, nullptr);
-  std::string buffer(fileSize, '\0');
-  DWORD bytesRead;
-  ReadFile(hFile, &buffer[0], fileSize, &bytesRead, nullptr);
-  CloseHandle(hFile);
-  return buffer;
+  std::ifstream file(path, std::ios::binary);
+  return std::string((std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>());
 }
 
 void fs::write(std::string path, std::string data) {
-  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
-                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE)
-    return;
-
-  DWORD bytesWritten;
-  WriteFile(hFile, data.c_str(), data.length(), &bytesWritten, nullptr);
-  CloseHandle(hFile);
+  std::ofstream file(path, std::ios::binary);
+  file.write(data.c_str(), data.length());
 }
 
 std::vector<uint8_t> fs::read_binary(std::string path) {
-  HANDLE hFile =
-      CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE)
-    return {};
-
-  DWORD fileSize = GetFileSize(hFile, nullptr);
-  std::vector<uint8_t> buffer(fileSize);
-  DWORD bytesRead;
-  ReadFile(hFile, buffer.data(), fileSize, &bytesRead, nullptr);
-  CloseHandle(hFile);
-  return buffer;
+  std::ifstream file(path, std::ios::binary);
+  return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)),
+                 std::istreambuf_iterator<char>());
 }
 
 void fs::write_binary(std::string path, std::vector<uint8_t> data) {
-  HANDLE hFile = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr,
-                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (hFile == INVALID_HANDLE_VALUE)
-    return;
-
-  DWORD bytesWritten;
-  WriteFile(hFile, data.data(), data.size(), &bytesWritten, nullptr);
-  CloseHandle(hFile);
+  std::ofstream file(path, std::ios::binary);
+  file.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 std::string breeze::version() { return "0.1.0"; }
 std::string breeze::data_directory() {
