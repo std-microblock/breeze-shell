@@ -6,11 +6,12 @@
 #include <functional>
 #include <utility>
 
-
 namespace ui {
 struct NVGImage;
+struct render_target;
 struct nanovg_context {
   NVGcontext *ctx;
+  render_target *rt;
   /*
   Codegen:
 
@@ -213,7 +214,8 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
     ~NSVGimageRAII() { nsvgDelete(image); }
   };
 
-  inline NVGImage imageFromSVG(NSVGimage *image);
+  inline NVGImage imageFromSVG(NSVGimage *image, float width = 0,
+                               float height = 0, float dpi_scale = 1);
   inline void drawSVG(NSVGimage *image, float x, float y, float width,
                       float height) {
     auto orig_width = image->width, orig_height = image->height;
@@ -270,11 +272,15 @@ struct NVGImage {
   }
 };
 
-NVGImage nanovg_context::imageFromSVG(NSVGimage *image) {
+NVGImage nanovg_context::imageFromSVG(NSVGimage *image, float width,
+                                      float height, float dpi_scale) {
   static auto rast = nsvgCreateRasterizer();
-  auto width = image->width, height = image->height;
+  if (!width || !height)
+    width = image->width, height = image->height;
+  width *= dpi_scale, height *= dpi_scale;
+
   auto data = (unsigned char *)malloc(width * height * 4);
-  nsvgRasterize(rast, image, 0, 0, 1, data, width, height, width * 4);
+  nsvgRasterize(rast, image, 0, 0, dpi_scale, data, width, height, width * 4);
   auto id = createImageRGBA(width, height, 0, data);
   free(data);
   return NVGImage(id, width, height, *this);

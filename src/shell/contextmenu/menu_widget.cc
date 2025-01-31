@@ -605,7 +605,9 @@ void mb_shell::menu_item_widget::reload_icon_img(ui::nanovg_context ctx) {
     icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
   else if (item.icon_svg) {
     std::string copy = item.icon_svg.value();
-    icon_img = ctx.imageFromSVG(nsvgParse(copy.data(), "px", 96));
+    auto svg = nsvgParse(copy.data(), "px", 96);
+    auto icon_width = config::current->context_menu.theme.font_size + 2;
+    icon_img = ctx.imageFromSVG(svg, icon_width, icon_width, ctx.rt->dpi_scale);
   } else {
     icon_img = std::nullopt;
   }

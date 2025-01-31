@@ -83,15 +83,16 @@ std::filesystem::path config::data_directory() {
 }
 void config::run_config_loader() {
   std::thread([]() {
-    config::read_config();
     auto config_path = config::data_directory() / "config.json";
+    std::println("config file: {}", config_path.string());
+    config::read_config();
     auto last_mod = std::filesystem::last_write_time(config_path);
     while (true) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
       if (std::filesystem::last_write_time(config_path) != last_mod) {
         last_mod = std::filesystem::last_write_time(config_path);
         config::read_config();
       }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }).detach();
 }

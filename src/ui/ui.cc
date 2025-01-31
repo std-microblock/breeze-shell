@@ -229,7 +229,7 @@ void render_target::render() {
     }
   };
 
-  nanovg_context vg{nvg};
+  nanovg_context vg{nvg, this};
   time_checkpoints("NanoVG context");
 
   vg.beginFrame(fb_width, fb_height, dpi_scale);
