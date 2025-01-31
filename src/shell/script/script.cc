@@ -83,7 +83,7 @@ void script_context::bind() {
 }
 script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
-                                  std::function<void()> on_reload) {
+                                  std::function<bool()> on_reload) {
   std::unordered_set<std::filesystem::path> watched_files;
   auto reload_all = [&]() {
     std::println("Reloading all scripts");
@@ -110,6 +110,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
         std::cerr << "Error in file: " << path << " " << e.what() << std::endl;
       }
     }
+
     on_reload();
   };
 
@@ -146,7 +147,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    if (has_update) {
+    if (has_update && on_reload()) {
       has_update = false;
       reload_all();
     }

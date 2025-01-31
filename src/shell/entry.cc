@@ -14,6 +14,7 @@
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
 
+#include <atomic>
 #include <chrono>
 #include <codecvt>
 #include <condition_variable>
@@ -47,6 +48,7 @@ void main() {
   ShowWindow(GetConsoleWindow(), SW_HIDE);
   config::run_config_loader();
 
+  static std::atomic_bool has_active_menu = false;
   std::thread([]() {
     script_context ctx;
 
@@ -56,7 +58,7 @@ void main() {
     if (!std::filesystem::exists(script_dir))
       std::filesystem::create_directories(script_dir);
 
-    ctx.watch_folder(script_dir);
+    ctx.watch_folder(script_dir, [&]() { return !has_active_menu.load(); });
   }).detach();
 
   auto proc = blook::Process::self();
@@ -94,19 +96,23 @@ void main() {
 
   NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
                                HWND hWnd, LPTPMPARAMS lptpm) {
+    has_active_menu = true;
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
     menu_render.rt->last_time = menu_render.rt->clock.now();
     menu_render.rt->render();
     menu_render.rt->last_time = menu_render.rt->clock.now();
     menu_render.rt->start_loop();
-
+    has_active_menu = false;
     return menu_render.selected_menu.value_or(0);
   });
 
-  // reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+  // reg.exe add
+  // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
+  // /f /ve
   RegSetKeyValueW(HKEY_CURRENT_USER,
-                  L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+                  L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
+                  L"50c905bae2a2}\\InprocServer32",
                   nullptr, REG_SZ, L"", sizeof(L""));
 }
 } // namespace mb_shell

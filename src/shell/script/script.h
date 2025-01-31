@@ -24,6 +24,6 @@ struct script_context {
 
   void watch_folder(
       const std::filesystem::path &path,
-      std::function<void()> on_reload = []() {});
+      std::function<bool()> on_reload = []() { return true; });
 };
 } // namespace mb_shell
