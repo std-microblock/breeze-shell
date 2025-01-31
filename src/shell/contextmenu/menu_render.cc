@@ -34,8 +34,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
                   MB_ICONERROR);
     }
 
-    nvgCreateFont(rt->nvg, "main", config::current->font_path_main.string().c_str());
-    nvgCreateFont(rt->nvg, "fallback", config::current->font_path_fallback.string().c_str());
+    nvgCreateFont(rt->nvg, "main",
+                  config::current->font_path_main.string().c_str());
+    nvgCreateFont(rt->nvg, "fallback",
+                  config::current->font_path_fallback.string().c_str());
     nvgAddFallbackFont(rt->nvg, "main", "fallback");
     return rt;
   }();
@@ -74,9 +76,15 @@ menu_render menu_render::create(int x, int y, menu menu) {
   js::menu_info_basic_js menu_info{
       .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
       .context = current_js_context};
+
+  auto before_js = rt->clock.now();
   for (auto &listener : menu_callbacks_js) {
     listener->operator()(menu_info);
   }
+  std::println("[perf] JS plugins costed {}ms",
+               std::chrono::duration_cast<std::chrono::milliseconds>(
+                   rt->clock.now() - before_js)
+                   .count());
 
   rt->on_focus_changed = [](bool focused) {
     if (!focused) {

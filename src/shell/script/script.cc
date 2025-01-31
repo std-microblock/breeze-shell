@@ -10,64 +10,23 @@
 #include <print>
 #include <ranges>
 #include <sstream>
+#include <string_view>
 #include <thread>
 #include <unordered_set>
 
-
 #include "FileWatch.hpp"
 #include "quickjs/quickjs.h"
+
 thread_local bool is_thread_js_main = false;
+
+static unsigned char script_js_bytes[] = {
+#include "script.js.h"
+};
+
+std::string breeze_script_js = std::string(
+    reinterpret_cast<char *>(script_js_bytes), sizeof(script_js_bytes) - 1);
+
 namespace mb_shell {
-
-void script_context::eval(const std::string &script) {
-  try {
-    js->eval(script, "<import>", JS_EVAL_TYPE_MODULE);
-  } catch (qjs::exception) {
-    auto exc = js->getException();
-    std::cerr << (std::string)exc << std::endl;
-    if ((bool)exc["stack"])
-      std::cerr << (std::string)exc["stack"] << std::endl;
-  }
-}
-void script_context::eval_file(const std::filesystem::path &path) {
-  try {
-    std::ifstream file(path);
-    std::string script((std::istreambuf_iterator<char>(file)),
-                       std::istreambuf_iterator<char>());
-
-    js->eval(script, path.generic_string().c_str(), JS_EVAL_TYPE_MODULE);
-
-    std::thread([this]() {
-      auto ctx = js->ctx;
-      while (ctx == js->ctx) {
-        js_std_loop(js->ctx, nullptr);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
-    }).detach();
-  } catch (qjs::exception) {
-    auto exc = js->getException();
-    std::cerr << (std::string)exc << std::endl;
-    if ((bool)exc["stack"])
-      std::cerr << (std::string)exc["stack"] << std::endl;
-  }
-}
-void script_context::watch_file(const std::filesystem::path &path,
-                                std::function<void()> on_reload) {
-  auto last_mod = std::filesystem::file_time_type::min();
-  while (true) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto new_mod = std::filesystem::last_write_time(path);
-    if (new_mod != last_mod) {
-      last_mod = new_mod;
-      menu_callbacks_js.clear();
-      rt = std::make_shared<qjs::Runtime>();
-      js = std::make_shared<qjs::Context>(*rt);
-      bind();
-      eval_file(path);
-      on_reload();
-    }
-  }
-}
 
 void println(qjs::rest<std::string> args) {
   std::stringstream ss;
@@ -112,6 +71,12 @@ void script_context::watch_folder(const std::filesystem::path &path,
       JS_UpdateStackTop(rt->rt);
       js = std::make_shared<qjs::Context>(*rt);
       bind();
+
+      try {
+        js->eval(breeze_script_js, "breeze-script.js", JS_EVAL_TYPE_MODULE);
+      } catch (std::exception &e) {
+        std::cerr << "Error in breeze-script.js: " << e.what() << std::endl;
+      }
 
       for (auto &path : files) {
         try {

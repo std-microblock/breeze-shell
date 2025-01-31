@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <codecvt>
 
-
 #include "menu_render.h"
 
 #include <consoleapi.h>
@@ -73,9 +72,9 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     }
 
     if (info.hSubMenu) {
-      item.submenu = [=](std::shared_ptr<menu_widget> mw) {
-        mw->init_from_data(
-            menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
+      item.submenu = [data = menu::construct_with_hmenu(info.hSubMenu, hWnd, false)](std::shared_ptr<menu_widget> mw) {
+                        std::println("init from data");
+        mw->init_from_data(data);
       };
     } else {
       item.action = [=]() mutable {
