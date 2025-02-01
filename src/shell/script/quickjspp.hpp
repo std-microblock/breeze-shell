@@ -16,6 +16,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <print>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -226,6 +227,16 @@ template <> struct js_traits<const char *> {
   }
 };
 
+template <typename T>
+concept has_user_defined_conversion = requires {
+  { js_traits<T>::unwrap };
+};
+
+template <typename T>
+concept is_callable_concept = requires(T t) {
+  { &T::operator() };
+};
+
 /** Conversion from const std::variant */
 template <typename... Ts> struct js_traits<std::variant<Ts...>> {
   static JSValue wrap(JSContext *ctx, std::variant<Ts...> value) noexcept {
@@ -261,6 +272,10 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
   template <typename T> struct is_variant : std::false_type {};
   template <typename... Us>
   struct is_variant<std::variant<Us...>> : std::true_type {};
+
+  template <typename T> struct is_callable {
+    static constexpr bool value = is_callable_concept<T>;
+  };
 
   /** Attempt to match common types (integral, floating-point, string, etc.) */
   template <template <typename R> typename Trait, typename U, typename... Us>
@@ -345,12 +360,15 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
   template <typename T>
   static bool isCompatible(JSContext *ctx, JSValueConst v) noexcept {
     // const char * type_name = typeid(T).name();
+    if (JS_IsFunction(ctx, v)) {
+      return is_callable<T>::value;
+    }
     switch (JS_VALUE_GET_TAG(v)) {
     case JS_TAG_STRING:
       return is_string<T>::value;
 
     case JS_TAG_FUNCTION_BYTECODE:
-      return std::is_function<T>::value;
+      return is_callable<T>::value;
     case JS_TAG_OBJECT:
       if (JS_IsArray(ctx, v) == 1)
         return is_vector<T>::value || is_pair<T>::value;
@@ -396,12 +414,17 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
 
   static std::variant<Ts...> unwrap(JSContext *ctx, JSValueConst v) {
     const auto tag = JS_VALUE_GET_TAG(v);
+
+    if (JS_IsFunction(ctx, v)) {
+      return unwrapPriority<is_callable>(ctx, v);
+    }
+
     switch (tag) {
     case JS_TAG_STRING:
       return unwrapPriority<is_string>(ctx, v);
 
     case JS_TAG_FUNCTION_BYTECODE:
-      return unwrapPriority<std::is_function>(ctx, v);
+      return unwrapPriority<is_callable>(ctx, v);
     case JS_TAG_OBJECT:
       if (auto result = unwrapObj<Ts...>(ctx, v, JS_GetClassID(v))) {
         return *result;
@@ -2001,7 +2024,7 @@ template <typename T> struct js_traits<std::optional<T>> {
       if (JS_IsNull(v) || JS_IsUndefined(v))
         return std::nullopt;
       return js_traits<std::decay_t<T>>::unwrap(ctx, v);
-    } catch (exception) {
+    } catch (std::exception &e) {
       // ignore and clear exception
       JS_FreeValue(ctx, JS_GetException(ctx));
     }

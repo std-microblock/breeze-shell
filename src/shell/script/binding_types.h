@@ -80,6 +80,11 @@ struct folder_view_controller {
   void paste();
 };
 
+// special flag struct to indicate that the corresponding
+// value should be reset to none instead of unchanged
+struct value_reset {};
+#define WITH_RESET_OPTION(x) std::optional<std::variant<x, std::shared_ptr<mb_shell::js::value_reset>>>
+
 // 窗口标题栏控制器
 // Window titlebar controller
 struct window_titlebar_controller {
@@ -240,19 +245,20 @@ struct js_menu_data {
   std::optional<std::string> name;
   // 子菜单回调函数
   // Submenu callback function
-  std::optional<
-      std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>>
-      submenu;
+  WITH_RESET_OPTION(
+          std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>)
+  submenu;
   // 菜单动作回调函数
   // Menu action callback function
-  std::optional<std::function<void(mb_shell::js::js_menu_action_event_data)>>
-      action;
+  WITH_RESET_OPTION(
+             std::function<void(mb_shell::js::js_menu_action_event_data)>)
+  action;
   // SVG图标
   // SVG icon
-  std::optional<std::string> icon_svg;
+  WITH_RESET_OPTION(std::string) icon_svg;
   // 位图图标
   // Bitmap icon
-  std::optional<size_t> icon_bitmap;
+  WITH_RESET_OPTION(size_t) icon_bitmap;
   // 是否禁用
   // Whether disabled
   std::optional<bool> disabled;

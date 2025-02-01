@@ -99,6 +99,28 @@ template<> struct js_bind<mb_shell::js::folder_view_controller> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::value_reset> {
+    static mb_shell::js::value_reset unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::value_reset obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::value_reset &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::value_reset> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::value_reset>("value_reset")
+            .constructor<>()
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::window_titlebar_controller> {
     static mb_shell::js::window_titlebar_controller unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::window_titlebar_controller obj;
@@ -310,17 +332,17 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
         
-        obj.submenu = js_traits<std::optional<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
+        obj.submenu = js_traits<std::optional<std::variant<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
         
-        obj.action = js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
+        obj.action = js_traits<std::optional<std::variant<std::function<void (mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
         
-        obj.icon_svg = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_svg"));
+        obj.icon_svg = js_traits<std::optional<std::variant<std::string, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_svg"));
         
-        obj.icon_bitmap = js_traits<std::optional<size_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_bitmap"));
+        obj.icon_bitmap = js_traits<std::optional<std::variant<size_t, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_bitmap"));
         
         obj.disabled = js_traits<std::optional<bool>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "disabled"));
         
-        obj.wID = js_traits<std::optional<size_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "wID"));
+        obj.wID = js_traits<std::optional<int64_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "wID"));
         
         return obj;
     }
@@ -332,17 +354,17 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
         
-        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>>>::wrap(ctx, val.submenu));
+        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::variant<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.submenu));
         
-        JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::function<void (mb_shell::js::js_menu_action_event_data)>>>::wrap(ctx, val.action));
+        JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::variant<std::function<void (mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.action));
         
-        JS_SetPropertyStr(ctx, obj, "icon_svg", js_traits<std::optional<std::string>>::wrap(ctx, val.icon_svg));
+        JS_SetPropertyStr(ctx, obj, "icon_svg", js_traits<std::optional<std::variant<std::string, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.icon_svg));
         
-        JS_SetPropertyStr(ctx, obj, "icon_bitmap", js_traits<std::optional<size_t>>::wrap(ctx, val.icon_bitmap));
+        JS_SetPropertyStr(ctx, obj, "icon_bitmap", js_traits<std::optional<std::variant<size_t, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.icon_bitmap));
         
         JS_SetPropertyStr(ctx, obj, "disabled", js_traits<std::optional<bool>>::wrap(ctx, val.disabled));
         
-        JS_SetPropertyStr(ctx, obj, "wID", js_traits<std::optional<size_t>>::wrap(ctx, val.wID));
+        JS_SetPropertyStr(ctx, obj, "wID", js_traits<std::optional<int64_t>>::wrap(ctx, val.wID));
         
         return obj;
     }
@@ -668,6 +690,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_controller>::bind(mod);
+
+    js_bind<mb_shell::js::value_reset>::bind(mod);
 
     js_bind<mb_shell::js::window_titlebar_controller>::bind(mod);
 

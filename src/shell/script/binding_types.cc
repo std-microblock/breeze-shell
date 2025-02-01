@@ -4,8 +4,10 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <print>
 #include <ranges>
 #include <regex>
+#include <variant>
 
 // Context menu
 #include "../contextmenu/menu_render.h"
@@ -92,6 +94,12 @@ void menu_item_controller::set_position(int new_index) {
 }
 
 static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
+  auto get_if_not_reset = [](auto &v) {
+    std::println("get_if_not_reset index: {}, value: {}", v.index(),
+                 (void *)(v.index() == 0 ? &std::get<0>(v) : nullptr));
+    return v.index() == 0 ? &std::get<0>(v) : nullptr;
+  };
+
   if (js_data.type) {
     if (*js_data.type == "spacer") {
       data.type = menu_item::type::spacer;
@@ -106,28 +114,43 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
   }
 
   if (js_data.action) {
-    data.action = [js_data]() { js_data.action.value()({}); };
+    if (auto action = get_if_not_reset(*js_data.action)) {
+      data.action = [action = *action]() { action({}); };
+    } else {
+      std::println("reset action");
+      data.action = {};
+    }
   }
 
   if (js_data.submenu) {
-    data.submenu = [js_data](std::shared_ptr<menu_widget> mw) {
-      try {
-        js_data.submenu.value()(
-            std::make_shared<menu_controller>(mw->downcast<menu_widget>()));
-      } catch (std::exception &e) {
-        std::cerr << "Error in submenu: " << e.what() << std::endl;
-      }
-    };
+    if (auto submenu = get_if_not_reset(*js_data.submenu)) {
+      data.submenu = [submenu = *submenu](std::shared_ptr<menu_widget> mw) {
+        try {
+          submenu(
+              std::make_shared<menu_controller>(mw->downcast<menu_widget>()));
+        } catch (std::exception &e) {
+          std::cerr << "Error in submenu: " << e.what() << std::endl;
+        }
+      };
+    } else {
+      data.submenu = {};
+    }
   }
 
   if (js_data.icon_bitmap) {
-    data.icon_bitmap = js_data.icon_bitmap.value();
-    data.icon_updated = true;
+    if (auto icon_bitmap = get_if_not_reset(*js_data.icon_bitmap)) {
+      data.icon_bitmap = *icon_bitmap;
+    } else {
+      data.icon_bitmap = {};
+    }
   }
 
   if (js_data.icon_svg) {
-    data.icon_svg = js_data.icon_svg.value();
-    data.icon_updated = true;
+    if (auto icon_svg = get_if_not_reset(*js_data.icon_svg)) {
+      data.icon_svg = *icon_svg;
+    } else {
+      data.icon_svg = {};
+    }
   }
 
   if (js_data.disabled.has_value()) {

@@ -158,6 +158,11 @@ export class folder_view_controller {
             
 }
     
+export class value_reset {
+	
+	
+}
+    
 export class window_titlebar_controller {
 	
   /**
@@ -521,21 +526,21 @@ export class js_menu_data {
   */
   name?: string | undefined
             
-	submenu?: ((arg1: menu_controller) => void) | undefined
-	action?: ((arg1: js_menu_action_event_data) => void) | undefined
+	submenu?: ((arg1: menu_controller) => void) | value_reset | undefined
+	action?: ((arg1: js_menu_action_event_data) => void) | value_reset | undefined
 	
   /**
   * SVG图标
   *  SVG icon
   */
-  icon_svg?: string | undefined
+  icon_svg?: string | value_reset | undefined
             
 	
   /**
   * 位图图标
   *  Bitmap icon
   */
-  icon_bitmap?: size_t | undefined
+  icon_bitmap?: size_t | value_reset | undefined
             
 	
   /**
@@ -549,7 +554,7 @@ export class js_menu_data {
   * 仅作为信息标识，不影响行为
   *  Only for information, set this changes nothing
   */
-  wID?: size_t | undefined
+  wID?: int64_t | undefined
             
 	
 }
