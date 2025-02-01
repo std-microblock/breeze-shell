@@ -71,6 +71,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             const plugins_page = data.plugins.slice((page - 1) * 10, page * 10)
                             for (const plugin of plugins_page) {
                                 const installed = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)
+                                    || shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')
                                 const m = sub.append_menu({
                                     name: plugin.name,
                                     action() {
