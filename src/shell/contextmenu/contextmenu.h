@@ -30,13 +30,15 @@ struct menu_item {
 
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
-  // only for information, set this changes nothing
-  std::optional<size_t> wID;
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
   bool checked = false;
   std::optional<size_t> icon_bitmap;
   std::optional<std::string> icon_svg;
   bool icon_updated = false;
   bool disabled = false;
+
+  // the two below are only for information; set them changes nothing
+  std::optional<size_t> wID;
+  std::optional<std::string> name_resid;
 };
 } // namespace mb_shell

@@ -265,6 +265,7 @@ struct js_menu_data {
   // 仅作为信息标识，不影响行为
   // Only for information, set this changes nothing
   std::optional<int64_t> wID;
+  std::optional<std::string> name_resid;
 };
 
 struct menu_item_controller {

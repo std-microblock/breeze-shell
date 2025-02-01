@@ -231,9 +231,8 @@ js_menu_data menu_item_controller::data() {
     data.icon_svg = item->item.icon_svg.value();
   }
 
-  if (item->item.wID) {
-    data.wID = item->item.wID.value();
-  }
+  data.wID = item->item.wID;
+  data.name_resid = item->item.name_resid;
 
   data.disabled = item->item.disabled;
 

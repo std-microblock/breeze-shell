@@ -8,12 +8,15 @@
 
 #include "menu_render.h"
 
+#include "../res_string_loader.h"
+
 #include <consoleapi.h>
 #include <debugapi.h>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <variant>
 #include <winuser.h>
 
 namespace mb_shell {
@@ -90,6 +93,12 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       item.type = menu_item::type::spacer;
     } else {
       item.name = wstring_to_utf8(strip_extra_infos(buffer));
+      auto id_stripped = res_string_loader::string_to_id(buffer);
+      if (std::get_if<size_t>(&id_stripped)) {
+        item.name_resid = res_string_loader::string_to_id_string(strip_extra_infos(buffer));
+      } else {
+        item.name_resid = res_string_loader::string_to_id_string(buffer);
+      }
     }
 
     if (info.fType & MFT_BITMAP) {

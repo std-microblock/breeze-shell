@@ -48,9 +48,10 @@ struct config {
     } position;
   } context_menu;
   bool debug_console = false;
-  // Restart to apply font changes
+  // Restart to apply font/hook changes
   std::filesystem::path font_path_main = default_main_font();
   std::filesystem::path font_path_fallback = default_fallback_font();
+  bool res_string_loader_use_hook = false;
 
   static std::unique_ptr<config> current;
   static void read_config();

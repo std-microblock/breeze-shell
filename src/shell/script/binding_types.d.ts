@@ -556,6 +556,7 @@ export class js_menu_data {
   */
   wID?: int64_t | undefined
             
+	name_resid?: string | undefined
 	
 }
     

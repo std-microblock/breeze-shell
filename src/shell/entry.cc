@@ -4,12 +4,14 @@
 
 #include "config.h"
 #include "entry.h"
+#include "error_handler.h"
+#include "res_string_loader.h"
 #include "script/binding_types.h"
 #include "script/quickjspp.hpp"
 #include "script/script.h"
 #include "ui.h"
 #include "utils.h"
-#include "error_handler.h"
+
 
 #include "./contextmenu/contextmenu.h"
 #include "./contextmenu/menu_render.h"
@@ -50,6 +52,8 @@ void main() {
 
   install_error_handlers();
   config::run_config_loader();
+  
+  res_string_loader::init();
 
   static std::atomic_bool has_active_menu = false;
   std::thread([]() {

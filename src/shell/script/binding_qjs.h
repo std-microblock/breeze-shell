@@ -344,6 +344,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.wID = js_traits<std::optional<int64_t>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "wID"));
         
+        obj.name_resid = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name_resid"));
+        
         return obj;
     }
 
@@ -366,6 +368,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "wID", js_traits<std::optional<int64_t>>::wrap(ctx, val.wID));
         
+        JS_SetPropertyStr(ctx, obj, "name_resid", js_traits<std::optional<std::string>>::wrap(ctx, val.name_resid));
+        
         return obj;
     }
 };
@@ -381,6 +385,7 @@ template<> struct js_bind<mb_shell::js::js_menu_data> {
                 .fun<&mb_shell::js::js_menu_data::icon_bitmap>("icon_bitmap")
                 .fun<&mb_shell::js::js_menu_data::disabled>("disabled")
                 .fun<&mb_shell::js::js_menu_data::wID>("wID")
+                .fun<&mb_shell::js::js_menu_data::name_resid>("name_resid")
             ;
     }
 
