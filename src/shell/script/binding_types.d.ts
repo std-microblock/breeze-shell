@@ -759,6 +759,15 @@ export class network {
   */
   static post_async: ((arg1: string, arg2: string, arg3: ((arg1: string) => void), arg4: ((arg1: string) => void)) => void)
             
+	
+/**
+  * 下载文件
+  *  Download file
+  * @param url: string, path: string, callback: (() => void), error_callback: ((arg1: string) => void)
+  * @returns void
+  */
+  static download_async: ((arg1: string, arg2: string, arg3: (() => void), arg4: ((arg1: string) => void)) => void)
+            
 }
     
 export class subproc_result_data {

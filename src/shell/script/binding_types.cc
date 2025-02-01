@@ -602,4 +602,18 @@ std::vector<std::string> fs::readdir(std::string path) {
   return result;
 }
 bool breeze::is_light_theme() { return is_light_mode(); }
+void network::download_async(std::string url, std::string path,
+                             std::function<void()> callback,
+                             std::function<void(std::string)> error_callback) {
+
+  std::thread([url, path, callback, error_callback]() {
+    try {
+      auto data = get(url);
+      fs::write_binary(path, std::vector<uint8_t>(data.begin(), data.end()));
+      callback();
+    } catch (std::exception &e) {
+      error_callback(e.what());
+    }
+  }).detach();
+}
 } // namespace mb_shell::js

@@ -27,6 +27,11 @@ const splitIntoLines = (str, maxLen) => {
             if (line.charCodeAt(x) > 255) {
                 x++
             }
+
+            if (line.charAt(x) === '\n') {
+                break
+            }
+
             x++
         }
         lines.push(line.substr(0, x))
@@ -39,7 +44,7 @@ globalThis.on_plugin_menu = {};
 
 shell.menu_controller.add_menu_listener(ctx => {
     const color = shell.breeze.is_light_theme() ? 'black' : 'white'
-    const ICON_EMPTY = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"></svg>`
+    const ICON_EMPTY = new shell.value_reset()
     const ICON_CHECKED = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path fill="currentColor" d="M9.765 3.205a.75.75 0 0 1 .03 1.06l-4.25 4.5a.75.75 0 0 1-1.075.015L2.22 6.53a.75.75 0 0 1 1.06-1.06l1.705 1.704l3.72-3.939a.75.75 0 0 1 1.06-.03"/></svg>`.replaceAll('currentColor', color)
     const ICON_CHANGE = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="m17.66 9.53l-7.07 7.07l-4.24-4.24l1.41-1.41l2.83 2.83l5.66-5.66zM4 12c0-2.33 1.02-4.42 2.62-5.88L9 8.5v-6H3l2.2 2.2C3.24 6.52 2 9.11 2 12c0 5.19 3.95 9.45 9 9.95v-2.02c-3.94-.49-7-3.86-7-7.93m18 0c0-5.19-3.95-9.45-9-9.95v2.02c3.94.49 7 3.86 7 7.93c0 2.33-1.02 4.42-2.62 5.88L15 15.5v6h6l-2.2-2.2c1.96-1.82 3.2-4.41 3.2-7.3"/></svg>`.replaceAll('currentColor', color)
     const ICON_REPAIR = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M15.73 3H8.27L3 8.27v7.46L8.27 21h7.46L21 15.73V8.27zM19 14.9L14.9 19H9.1L5 14.9V9.1L9.1 5h5.8L19 9.1z"/><path fill="currentColor" d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>`.replaceAll('currentColor', color)
@@ -49,7 +54,7 @@ shell.menu_controller.add_menu_listener(ctx => {
             name: "管理 Breeze Shell",
             submenu(sub) {
                 sub.append_menu({
-                    name: "插件市场",
+                    name: "插件市场 / 更新本体",
                     submenu(sub) {
                         const updatePlugins = async (page) => {
                             for (const m of sub.get_items().slice(1))
@@ -58,18 +63,54 @@ shell.menu_controller.add_menu_listener(ctx => {
                             sub.append_menu({
                                 name: '加载中...'
                             })
-
                             const res = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json');
                             const data = JSON.parse(res)
 
                             for (const m of sub.get_items().slice(1))
                                 m.remove()
 
+                            const current_version = shell.breeze.version();
+                            const remote_version = data.shell.version;
+                            const upd = sub.append_menu({
+                                name: current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`,
+                                icon_svg: current_version === remote_version ? ICON_CHECKED : ICON_CHANGE,
+                                action() {
+                                    if (current_version === remote_version) return
+                                    const path = shell.breeze.data_directory() + '/shell_new.dll'
+                                    const url = PLUGIN_SOURCES[current_source] + data.shell.path
+                                    upd.set_data({
+                                        name: '更新中...',
+                                        icon_svg: ICON_REPAIR,
+                                        disabled: true
+                                    })
+                                    shell.network.download_async(url, path, () => {
+                                        upd.set_data({
+                                            name: '新版本已下载，将于下次重启资源管理器生效',
+                                            icon_svg: ICON_CHECKED,
+                                            disabled: true
+                                        })
+                                    }, e => {
+                                        upd.set_data({
+                                            name: '更新失败: ' + e,
+                                            icon_svg: ICON_REPAIR,
+                                            disabled: false
+                                        })
+                                    })
+                                },
+                                submenu(sub) {
+                                    for (const line of splitIntoLines(data.shell.changelog, 40)) {
+                                        sub.append_menu({
+                                            name: line
+                                        })
+                                    }
+                                }
+                            })
+
                             const plugins_page = data.plugins.slice((page - 1) * 10, page * 10)
                             for (const plugin of plugins_page) {
                                 const installed = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)
                                     || shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')
-                                    let preview_sub = null
+                                let preview_sub = null
                                 const m = sub.append_menu({
                                     name: plugin.name,
                                     action() {
@@ -199,7 +240,6 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     action() {
                                         shell.fs.remove(shell.breeze.data_directory() + '/scripts/' + plugin)
                                         m.remove()
-                                        sub.close()
                                     }
                                 })
 
@@ -217,7 +257,7 @@ shell.menu_controller.add_menu_listener(ctx => {
     }
 
     // fixtures
-    for(const items of ctx.menu.get_items()) {
+    for (const items of ctx.menu.get_items()) {
         const data = items.data()
         if (data.name_resid === '10580@SHELL32.dll' /* 清空回收站 */) {
             items.set_data({

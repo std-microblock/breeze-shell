@@ -374,6 +374,12 @@ struct network {
   static void post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback);
+
+  // 下载文件
+  // Download file
+  static void download_async(std::string url, std::string path,
+                             std::function<void()> callback,
+                             std::function<void(std::string)> error_callback);
 };
 
 // 子进程执行结果

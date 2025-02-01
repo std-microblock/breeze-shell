@@ -563,6 +563,7 @@ template<> struct js_bind<mb_shell::js::network> {
                 .static_fun<&mb_shell::js::network::post>("post")
                 .static_fun<&mb_shell::js::network::get_async>("get_async")
                 .static_fun<&mb_shell::js::network::post_async>("post_async")
+                .static_fun<&mb_shell::js::network::download_async>("download_async")
             ;
     }
 

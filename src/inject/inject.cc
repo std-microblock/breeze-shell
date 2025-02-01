@@ -302,7 +302,8 @@ struct start_when_startup_switch : public button_widget {
     if (!start_when_startup) {
       HKEY key;
       RegOpenKeyExW(HKEY_CURRENT_USER,
-                    L"HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+                    L"HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
+                    L"50c905bae2a2}\\InprocServer32",
                     0, KEY_SET_VALUE, &key);
       RegDeleteValueW(key, L"");
       RegCloseKey(key);
@@ -340,6 +341,21 @@ struct restart_explorer_btn : public button_widget {
   }
 };
 
+void TryUpdateDll() {
+  std::wstring dllPathNew = data_directory().wstring() + L"\\shell_new.dll";
+  if (fs::exists(dllPathNew)) {
+    std::cout << "New DLL found, trying to update." << std::endl;
+    try {
+      std::filesystem::copy_file(dllPathNew, dllPath,
+                                 fs::copy_options::overwrite_existing);
+      std::filesystem::remove(dllPathNew);
+      std::cout << "DLL updated successfully." << std::endl;
+    } catch (std::exception &e) {
+      std::cerr << "Error updating DLL: " << e.what() << std::endl;
+    }
+  }
+}
+
 void InjectAllConsistent() {
   GetDebugPrivilege();
   std::vector<DWORD> injected;
@@ -348,6 +364,7 @@ void InjectAllConsistent() {
 
     for (DWORD pid : pids) {
       if (!std::ranges::contains(injected, pid) && !IsInjected(pid, dllPath)) {
+        TryUpdateDll();
         InjectToPID(pid, dllPath);
         injected.push_back(pid);
       }
@@ -518,18 +535,6 @@ void StartInjectUI() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nShowCmd) {
-  AttachConsole(ATTACH_PARENT_PROCESS);
-  freopen("CONOUT$", "w", stdout);
-  freopen("CONOUT$", "w", stderr);
-  freopen("CONIN$", "r", stdin);
-
-  try {
-    std::println("breeze-shell injector started.");
-  } catch (std::exception &) {
-    freopen("NUL", "w", stdout);
-    freopen("NUL", "w", stderr);
-  }
-
   int argc = 0;
   auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
@@ -539,8 +544,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   if (args.size() <= 1) {
+    AttachConsole(ATTACH_PARENT_PROCESS);
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
+    freopen("CONIN$", "r", stdin);
+
+    try {
+      std::println("breeze-shell injector started.");
+    } catch (std::exception &) {
+      freopen("NUL", "w", stdout);
+      freopen("NUL", "w", stderr);
+    }
+
     StartInjectUI();
   } else {
+    freopen("NUL", "w", stdout);
+    freopen("NUL", "w", stderr);
+
     if (args[1] == L"new") {
       NewExplorerProcessAndInject();
     } else if (args[1] == L"inject-consistent") {
