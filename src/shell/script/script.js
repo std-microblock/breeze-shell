@@ -59,10 +59,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                 name: '加载中...'
                             })
 
-                            shell.println('updatePlugins', page)
                             const res = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json');
-
-                            shell.println(res)
                             const data = JSON.parse(res)
 
                             for (const m of sub.get_items().slice(1))
