@@ -1470,6 +1470,7 @@ public:
   // for starting jobs quickly
   std::condition_variable js_job_start_cv;
   std::mutex js_job_start_mutex;
+  bool has_pending_job = false;
   /** Module wrapper
    * Workaround for lack of opaque pointer for module load function by keeping a
    * list of modules in qjs::Context.
@@ -2039,8 +2040,6 @@ template <typename Key> property_proxy<Key>::operator Value() const {
 } // namespace detail
 
 template <typename Function> void Context::enqueueJob(Function &&job) {
-  auto &ctx_real = Context::get(this->ctx);
-
   JSValue job_val =
       js_traits<std::function<void()>>::wrap(ctx, std::forward<Function>(job));
   JSValueConst arg = job_val;
@@ -2062,7 +2061,8 @@ template <typename Function> void Context::enqueueJob(Function &&job) {
         return JS_UNDEFINED;
       },
       1, &arg);
-  ctx_real.js_job_start_cv.notify_all();
+  has_pending_job = true;
+  js_job_start_cv.notify_all();
   JS_FreeValue(ctx, job_val);
   if (err < 0)
     throw exception{ctx};

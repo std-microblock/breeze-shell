@@ -91,9 +91,9 @@ void script_context::watch_folder(const std::filesystem::path &path,
       }
 
       while (auto ptr = js) {
-
         if (ptr->ctx) {
           auto r = js_std_loop(ptr->ctx, ss.get());
+          js->has_pending_job = false;
           if (r) {
             js_std_dump_error(ptr->ctx);
           }
@@ -102,10 +102,10 @@ void script_context::watch_folder(const std::filesystem::path &path,
         if (*ss)
           break;
 
-        std::unique_lock lock(js->js_job_start_mutex);
         std::this_thread::yield();
-
-        js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(100));
+        std::unique_lock lock(js->js_job_start_mutex);
+        if (!js->has_pending_job)
+          js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(1000));
       }
     }).detach();
   };
