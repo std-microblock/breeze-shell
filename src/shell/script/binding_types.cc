@@ -95,8 +95,6 @@ void menu_item_controller::set_position(int new_index) {
 
 static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
   auto get_if_not_reset = [](auto &v) {
-    std::println("get_if_not_reset index: {}, value: {}", v.index(),
-                 (void *)(v.index() == 0 ? &std::get<0>(v) : nullptr));
     return v.index() == 0 ? &std::get<0>(v) : nullptr;
   };
 
