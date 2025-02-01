@@ -115,7 +115,6 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     if (auto action = get_if_not_reset(*js_data.action)) {
       data.action = [action = *action]() { action({}); };
     } else {
-      std::println("reset action");
       data.action = {};
     }
   }
