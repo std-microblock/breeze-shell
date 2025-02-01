@@ -72,10 +72,14 @@ shell.menu_controller.add_menu_listener(ctx => {
                             for (const plugin of plugins_page) {
                                 const installed = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)
                                     || shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')
+                                    let preview_sub = null
                                 const m = sub.append_menu({
                                     name: plugin.name,
                                     action() {
                                         if (installed) return
+                                        if (preview_sub) {
+                                            preview_sub.close()
+                                        }
                                         m.set_data({
                                             name: plugin.name,
                                             icon_svg: ICON_CHANGE,
@@ -117,6 +121,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                         })
                                     },
                                     submenu(sub) {
+                                        preview_sub = sub
                                         sub.append_menu({
                                             name: '版本: ' + plugin.version
                                         })
@@ -197,6 +202,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     action() {
                                         shell.fs.remove(shell.breeze.data_directory() + '/scripts/' + plugin)
                                         m.remove()
+                                        sub.close()
                                     }
                                 })
 
