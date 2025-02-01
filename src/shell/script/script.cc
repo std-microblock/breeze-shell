@@ -108,7 +108,6 @@ void script_context::watch_folder(const std::filesystem::path &path,
         js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(100));
       }
     }).detach();
-    // ftr_init.get();
   };
 
   std::ranges::copy(std::filesystem::directory_iterator(path) |
