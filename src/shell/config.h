@@ -3,6 +3,7 @@
 #include "animator.h"
 #include <filesystem>
 #include <memory>
+#include <vector>
 namespace mb_shell {
 
 struct config {
@@ -52,6 +53,7 @@ struct config {
   std::filesystem::path font_path_main = default_main_font();
   std::filesystem::path font_path_fallback = default_fallback_font();
   bool res_string_loader_use_hook = false;
+  std::vector<std::string> plugin_load_order = {};
 
   static std::unique_ptr<config> current;
   static void read_config();

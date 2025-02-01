@@ -3,7 +3,10 @@
 #include "binding_qjs.h"
 #include "quickjs/quickjs-libc.h"
 
+#include "../config.h"
 #include "../utils.h"
+
+#include <algorithm>
 #include <future>
 #include <iostream>
 #include <mutex>
@@ -53,7 +56,7 @@ void script_context::bind() {
 script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
-  std::unordered_set<std::filesystem::path> files;
+
   auto reload_all = [&]() {
     std::println("Reloading all scripts");
     menu_callbacks_js.clear();
@@ -78,6 +81,37 @@ void script_context::watch_folder(const std::filesystem::path &path,
         std::cerr << "Error in breeze-script.js: " << e.what() << std::endl;
       }
 
+      std::vector<std::filesystem::path> files;
+      std::ranges::copy(std::filesystem::directory_iterator(path) |
+                            std::ranges::views::filter([](auto &entry) {
+                              return entry.path().extension() == ".js";
+                            }),
+                        std::back_inserter(files));
+
+      // resort files by config
+      auto plugin_load_order = config::current->plugin_load_order;
+      // if not found, load after all
+      std::ranges::sort(files, [&](auto &a, auto &b) {
+        auto a_name = a.filename().stem().string();
+        auto b_name = b.filename().stem().string();
+
+        auto a_pos = std::ranges::find(plugin_load_order, a_name);
+        auto b_pos = std::ranges::find(plugin_load_order, b_name);
+
+        if (a_pos == plugin_load_order.end() && b_pos == plugin_load_order.end()) {
+          return a_name < b_name;
+        }
+
+        if (a_pos == plugin_load_order.end()) {
+          return false;
+        }
+
+        if (b_pos == plugin_load_order.end()) {
+          return true;
+        }
+
+        return a_pos < b_pos;
+      });
       for (auto &path : files) {
         try {
           std::ifstream file(path);
@@ -110,12 +144,6 @@ void script_context::watch_folder(const std::filesystem::path &path,
     }).detach();
   };
 
-  std::ranges::copy(std::filesystem::directory_iterator(path) |
-                        std::ranges::views::filter([](auto &entry) {
-                          return entry.path().extension() == ".js";
-                        }),
-                    std::inserter(files, files.end()));
-
   reload_all();
 
   bool has_update = false;
@@ -133,12 +161,6 @@ void script_context::watch_folder(const std::filesystem::path &path,
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
     if (has_update && on_reload()) {
       has_update = false;
-      files.clear();
-      std::ranges::copy(std::filesystem::directory_iterator(path) |
-                            std::ranges::views::filter([](auto &entry) {
-                              return entry.path().extension() == ".js";
-                            }),
-                        std::inserter(files, files.end()));
       reload_all();
     }
   }
