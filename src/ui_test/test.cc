@@ -12,6 +12,10 @@
 #include <thread>
 #include <vector>
 
+#define NOMINMAX
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "GLFW/glfw3native.h"
+
 struct test_widget : public ui::acrylic_background_widget {
   using super = ui::acrylic_background_widget;
   test_widget() : super() {
@@ -244,23 +248,37 @@ struct dying_widget_test : public ui::widget {
 
 int main() {
 
-  if (auto res = ui::render_target::init_global(); !res) {
-    std::println("Failed to initialize global render target: {}", res.error());
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+
+  auto window = glfwCreateWindow(800, 600, "Test", nullptr, nullptr);
+  if (!window) {
+    std::println("Failed to create window");
+    return 1;
+  }
+  // WS_EX_LAYERED, change to WS_APPWINDOW
+  auto hwnd = glfwGetWin32Window(window);
+  SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+  SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_APPWINDOW);
+
+  glfwMakeContextCurrent(window);
+
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    std::println("Failed to initialize GLAD");
     return 1;
   }
 
-  ui::render_target rt;
-
-  if (auto res = rt.init(); !res) {
-    std::println("Failed to initialize render target: {}", res.error());
-    return 1;
+  while (!glfwWindowShouldClose(window)) {
+    glClearColor(0.1, 0.1, 0.1, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
 
-  rt.root->emplace_child<menu_widget>(items, 20, 20);
-  rt.root->emplace_child<dying_widget_test>();
-
-  nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
-  rt.start_loop();
   return 0;
 }
