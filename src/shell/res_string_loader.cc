@@ -1,14 +1,14 @@
 #include "res_string_loader.h"
 #include <atomic>
+#include <fstream>
 #include <mutex>
 #include <print>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <fstream>
 
-#include "utils.h"
 #include "config.h"
+#include "utils.h"
 
 #include "blook/blook.h"
 
@@ -61,6 +61,8 @@ void res_string_loader::init_hook() {
     if (res > 0) {
       std::wstring str(lpBuffer, res);
       std::lock_guard lock(lock_str_data);
+      if (str_data.find(str) != str_data.end())
+        return res;
       str_data[str] = {uID, store_module_name(hInstance)};
     }
     return res;
@@ -76,7 +78,10 @@ void res_string_loader::init_hook() {
     if (res > 0) {
       std::string str(lpBuffer, res);
       std::lock_guard lock(lock_str_data);
-      str_data[utf8_to_wstring(str)] = {uID, store_module_name(hInstance)};
+      auto s = utf8_to_wstring(str);
+      if (str_data.find(s) != str_data.end())
+        return res;
+      str_data[s] = {uID, store_module_name(hInstance)};
     }
 
     return res;
@@ -94,7 +99,7 @@ void res_string_loader::init() {
   std::thread([]() {
     init_known_strings();
     if (config::current->res_string_loader_use_hook)
-    init_hook();
+      init_hook();
   }).detach();
 }
 
@@ -109,9 +114,8 @@ void EnumerateStringResources(
                 lParam);
 
         if (!IS_INTRESOURCE(lpName))
-          return TRUE; // 忽略非整数资源名的字符串块
+          return TRUE;
 
-        // 加载字符串资源
         HRSRC hRes = FindResourceW(hModule, lpName, MAKEINTRESOURCEW(6));
         if (!hRes)
           return TRUE;
@@ -127,21 +131,16 @@ void EnumerateStringResources(
         DWORD dwSize = SizeofResource(hModule, hRes);
         DWORD pos = 0;
 
-        // 每个块包含最多16个字符串
         for (int i = 0; i < 16 && pos < dwSize; ++i) {
-          // 读取字符串长度（字符数）
           WORD len = *reinterpret_cast<const WORD *>(pData + pos);
           pos += sizeof(WORD);
 
-          // 长度为0表示空条目
           if (len == 0)
             continue;
 
-          // 检查边界
           if (pos + len * sizeof(WCHAR) > dwSize)
             break;
 
-          // 创建字符串视图并回调
           std::wstring_view strView(
               reinterpret_cast<const wchar_t *>(pData + pos), len);
           cb(strView,
@@ -162,7 +161,6 @@ void load_all_res_strings(std::string module) {
     return;
   }
   if (!hInstance) {
-    std::cerr << "Failed to get module handle for " << module << std::endl;
     return;
   }
   auto mod_hash = store_module_name(hInstance);
@@ -171,19 +169,22 @@ void load_all_res_strings(std::string module) {
     std::lock_guard lock(lock_str_data);
     if (str.length() > 60)
       return;
-
-    str_data[std::wstring(str)] = {id, mod_hash};
+    auto s = std::wstring(str);
+    if (str_data.find(s) != str_data.end())
+      return;
+    str_data[s] = {id, mod_hash};
   });
 }
 
 void res_string_loader::init_known_strings() {
-  auto res_dlls = {"acppage.dll",         "ntshrui.dll",  "appresolver.dll",
-                   "windows.storage.dll", "shell32.dll",  "explorerframe.dll",
-                   "explorer.exe",        "user32.dll",   "wpdshext.dll",
-                   "display.dll",         "themecpl.dll", "regedit.exe",
-                   "powershell.exe",      "stobject.dll", "fvecpl.dll",
-                   "twext.dll",           "twinui.dll",   "twinui.pcshell.dll",
-                   "isoburn.exe"};
+  auto res_dlls = {
+      "shell32.dll",     "acppage.dll",         "ntshrui.dll",
+      "appresolver.dll", "windows.storage.dll", "explorerframe.dll",
+      "explorer.exe",    "user32.dll",          "wpdshext.dll",
+      "display.dll",     "themecpl.dll",        "regedit.exe",
+      "powershell.exe",  "stobject.dll",        "fvecpl.dll",
+      "twext.dll",       "twinui.dll",          "twinui.pcshell.dll",
+      "isoburn.exe"};
 
   auto now = std::chrono::high_resolution_clock::now();
   for (auto &dll : res_dlls) {
