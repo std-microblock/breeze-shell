@@ -178,6 +178,11 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
         submenu_wid = nullptr;
       }
     }
+  } else {
+    if (submenu_wid) {
+      submenu_wid->close();
+      submenu_wid = nullptr;
+    }
   }
 
   if (submenu_wid && submenu_wid->dying_time.has_value) {
