@@ -169,17 +169,19 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
                                      direction == popup_direction::top_right);
 
         parent_menu->current_submenu = submenu_wid;
+        submenu_wid->parent_menu = parent_menu;
         parent_menu->rendering_submenus.push_back(submenu_wid);
       }
     } else {
       if (submenu_wid) {
-        submenu_wid->dying_time = 200;
-        if (parent_menu->current_submenu == submenu_wid) {
-          parent_menu->current_submenu = nullptr;
-        }
+        submenu_wid->close();
         submenu_wid = nullptr;
       }
     }
+  }
+
+  if (submenu_wid && submenu_wid->dying_time.has_value) {
+    submenu_wid = nullptr;
   }
 }
 float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
@@ -611,5 +613,18 @@ void mb_shell::menu_item_widget::reload_icon_img(ui::nanovg_context ctx) {
     icon_img = ctx.imageFromSVG(svg, ctx.rt->dpi_scale);
   } else {
     icon_img = std::nullopt;
+  }
+}
+void mb_shell::menu_widget::close() {
+  if (menu_data.is_top_level) {
+    auto current = menu_render::current;
+    if (current) {
+      (*current)->rt->hide_as_close();
+    }
+  } else {
+    dying_time = 200;
+    if (parent_menu->current_submenu.get() == this) {
+      parent_menu->current_submenu = nullptr;
+    }
   }
 }

@@ -56,6 +56,7 @@ struct menu_widget : public ui::widget_flex {
   std::shared_ptr<ui::rect_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
+  menu_widget* parent_menu;
 
   std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;
@@ -72,6 +73,7 @@ struct menu_widget : public ui::widget_flex {
   void render(ui::nanovg_context ctx) override;
 
   bool check_hit(const ui::update_context &ctx) override;
+  void close();
 };
 
 struct mouse_menu_widget_main : public ui::widget {

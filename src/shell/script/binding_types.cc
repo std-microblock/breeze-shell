@@ -196,7 +196,8 @@ js_menu_data menu_item_controller::data() {
   }
 
   if (item->item.submenu) {
-    data.submenu = [submenu = item->item.submenu.value()](std::shared_ptr<menu_controller> ctl) {
+    data.submenu = [submenu = item->item.submenu.value()](
+                       std::shared_ptr<menu_controller> ctl) {
       submenu(ctl->$menu.lock());
     };
   }
@@ -265,10 +266,11 @@ menu_controller::get_items() {
   return items;
 }
 void menu_controller::close() {
-  auto current = menu_render::current;
-  if (current) {
-    (*current)->rt->hide_as_close();
-  }
+  auto menu = $menu.lock();
+  if (!menu)
+    return;
+
+  menu->close();
 }
 std::string clipboard::get_text() {
   if (!OpenClipboard(nullptr))
