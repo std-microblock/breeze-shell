@@ -215,5 +215,15 @@ shell.menu_controller.add_menu_listener(ctx => {
             }
         })
     }
+
+    // fixtures
+    for(const items of ctx.menu.get_items()) {
+        const data = items.data()
+        if (data.name_resid === '10580@SHELL32.dll' /* 清空回收站 */) {
+            items.set_data({
+                disabled: false
+            })
+        }
+    }
 })
 
