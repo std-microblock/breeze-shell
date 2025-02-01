@@ -70,13 +70,12 @@ menu_render menu_render::create(int x, int y, menu menu) {
       menu,
       // convert the x and y to the window coordinates
       x - monitor_info.rcMonitor.left, y - monitor_info.rcMonitor.top);
-
   rt->root->children.push_back(menu_wid);
-
   js::menu_info_basic_js menu_info{
       .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
       .context = current_js_context};
 
+  std::println("[perf] JS plugins start");
   auto before_js = rt->clock.now();
   for (auto &listener : menu_callbacks_js) {
     listener->operator()(menu_info);

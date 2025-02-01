@@ -25,7 +25,7 @@ struct acrylic_background_widget : public rect_widget {
   ~acrylic_background_widget();
   bool use_dwm = true;
   NVGcolor acrylic_bg_color = nvgRGBAf(1, 0, 0, 0);
-  std::thread render_thread;
+  std::optional<std::thread> render_thread;
   std::condition_variable cv;
   std::mutex cv_m;
   bool to_close = false;

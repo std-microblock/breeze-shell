@@ -64,7 +64,8 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     if (!icon_unfold_img) {
       static auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
 
-      this->icon_unfold_img = ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
+      this->icon_unfold_img =
+          ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);

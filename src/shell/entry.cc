@@ -9,6 +9,7 @@
 #include "script/script.h"
 #include "ui.h"
 #include "utils.h"
+#include "error_handler.h"
 
 #include "./contextmenu/contextmenu.h"
 #include "./contextmenu/menu_render.h"
@@ -46,6 +47,8 @@ void main() {
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);
   ShowWindow(GetConsoleWindow(), SW_HIDE);
+
+  install_error_handlers();
   config::run_config_loader();
 
   static std::atomic_bool has_active_menu = false;

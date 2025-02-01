@@ -33,6 +33,7 @@ void render_target::start_loop() {
     glfwSwapBuffers(window);
     resize(0, 0);
     hide();
+    glfwMakeContextCurrent(nullptr);
   }
 }
 std::expected<bool, std::string> render_target::init() {
@@ -131,7 +132,6 @@ std::expected<bool, std::string> render_target::init() {
     rt->width = width / rt->dpi_scale;
     rt->height = height / rt->dpi_scale;
     rt->reset_view();
-    // rt->render();
   });
 
   glfwSetWindowFocusCallback(window, [](GLFWwindow *window, int focused) {
@@ -270,6 +270,7 @@ void render_target::render() {
   ctx.mouse_up = !ctx.mouse_down && mouse_down;
   mouse_down = ctx.mouse_down;
   right_mouse_down = ctx.right_mouse_down;
+  glfwMakeContextCurrent(window);
   time_checkpoints("Update context");
   root->update(ctx);
   time_checkpoints("Update root");
@@ -307,6 +308,7 @@ void render_target::post_main_thread_task(std::function<void()> task) {
 void render_target::show() { ShowWindow(glfwGetWin32Window(window), SW_SHOW); }
 void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
+  glfwMakeContextCurrent(nullptr);
   should_loop_stop_hide_as_close = true;
   root->children.clear();
 }
