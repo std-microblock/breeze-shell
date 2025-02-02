@@ -594,7 +594,7 @@ void fs::write_binary(std::string path, std::vector<uint8_t> data) {
   std::ofstream file(path, std::ios::binary);
   file.write(reinterpret_cast<const char *>(data.data()), data.size());
 }
-std::string breeze::version() { return "0.1.0"; }
+std::string breeze::version() { return "0.1.1"; }
 std::string breeze::data_directory() {
   return config::data_directory().generic_string();
 }
