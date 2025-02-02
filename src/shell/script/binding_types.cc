@@ -142,6 +142,8 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     } else {
       data.icon_bitmap = {};
     }
+
+    data.icon_updated = true;
   }
 
   if (js_data.icon_svg) {
@@ -150,6 +152,8 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     } else {
       data.icon_svg = {};
     }
+
+    data.icon_updated = true;
   }
 
   if (js_data.disabled.has_value()) {
