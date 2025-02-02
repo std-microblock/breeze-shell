@@ -59,6 +59,7 @@ target("inject")
     add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32")
     add_files("src/inject/*.cc")
     add_deps("ui")
+    set_basename("breeze")
     set_encodings("utf-8")
     add_rules("utils.bin2c", {
         extensions = {".png"}
