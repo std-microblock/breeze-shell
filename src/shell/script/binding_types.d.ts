@@ -973,6 +973,14 @@ export class breeze {
   */
   static is_light_theme: (() => boolean)
             
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static user_language: (() => string)
+            
 }
     
 export class win32 {

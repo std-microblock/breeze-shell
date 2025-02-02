@@ -624,4 +624,9 @@ std::string win32::resid_from_string(std::string str) {
 size_t win32::load_library(std::string path) {
   return reinterpret_cast<size_t>(LoadLibraryA(path.c_str()));
 }
+std::string breeze::user_language() {
+  wchar_t lang[10];
+  GetUserDefaultLocaleName(lang, 10);
+  return wstring_to_utf8(lang);
+}
 } // namespace mb_shell::js

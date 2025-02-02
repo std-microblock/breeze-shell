@@ -475,6 +475,7 @@ struct breeze {
   static std::string version();
   static std::string data_directory();
   static bool is_light_theme();
+  static std::string user_language();
 };
 
 struct win32 {
