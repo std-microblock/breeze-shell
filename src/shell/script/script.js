@@ -106,15 +106,32 @@ shell.menu_controller.add_menu_listener(ctx => {
                                 }
                             })
 
+                            sub.append_menu({
+                                type: 'spacer'
+                            })
+
                             const plugins_page = data.plugins.slice((page - 1) * 10, page * 10)
                             for (const plugin of plugins_page) {
-                                const installed = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)
-                                    || shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')
+                                let install_path = null;
+                                if (shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)) {
+                                    install_path = shell.breeze.data_directory() + '/scripts/' + plugin.local_path
+                                }
+
+                                if (shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')) {
+                                    install_path = shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled'
+                                }
+                                const installed = install_path !== null
+
+                                const local_version = installed ? shell.fs.read(install_path).match(/\/\/ @version:\s*(.*)/)[1] : '未安装'
+                                const have_update = installed && local_version !== plugin.version
+
+                                const disabled = installed && !have_update
+
                                 let preview_sub = null
                                 const m = sub.append_menu({
-                                    name: plugin.name,
+                                    name: plugin.name + (have_update ? ` (${local_version} -> ${plugin.version})` : ''),
                                     action() {
-                                        if (installed) return
+                                        if (disabled) return
                                         if (preview_sub) {
                                             preview_sub.close()
                                         }
@@ -127,14 +144,16 @@ shell.menu_controller.add_menu_listener(ctx => {
                                         const url = PLUGIN_SOURCES[current_source] + plugin.path
                                         get_async(url).then(data => {
                                             shell.fs.write(path, data)
-                                            reload_local()
-
                                             m.set_data({
                                                 name: plugin.name,
                                                 icon_svg: ICON_CHECKED,
                                                 action() { },
                                                 disabled: true
                                             })
+
+                                            shell.println('插件安装成功: ' + plugin.name)
+
+                                            reload_local()
                                         }).catch(e => {
                                             m.set_data({
                                                 name: plugin.name,
@@ -173,8 +192,8 @@ shell.menu_controller.add_menu_listener(ctx => {
                                             })
                                         }
                                     },
-                                    disabled: installed,
-                                    icon_svg: installed ? ICON_CHECKED : ICON_EMPTY,
+                                    disabled: disabled,
+                                    icon_svg: disabled ? ICON_CHECKED : ICON_EMPTY,
                                 })
                             }
 
