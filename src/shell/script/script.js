@@ -62,7 +62,7 @@ const languages = {
     }
 }
 
-
+let cached_plugin_index = null
 
 shell.menu_controller.add_menu_listener(ctx => {
     const currentLang = shell.breeze.user_language() === 'zh-CN' ? 'zh-CN' : 'en-US'
@@ -90,8 +90,11 @@ shell.menu_controller.add_menu_listener(ctx => {
                             sub.append_menu({
                                 name: t('加载中...')
                             })
-                            const res = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json');
-                            const data = JSON.parse(res)
+                            
+                            if (!cached_plugin_index) {
+                                cached_plugin_index = await get_async(PLUGIN_SOURCES[current_source] + 'index.json')
+                            }
+                            const data = JSON.parse(cached_plugin_index)
 
                             for (const m of sub.get_items().slice(1))
                                 m.remove()
@@ -233,7 +236,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                         name: key,
                                         action() {
                                             current_source = key
-
+                                            cached_plugin_index = null
                                             source.set_data({
                                                 name: t('当前源: ') + key
                                             })
