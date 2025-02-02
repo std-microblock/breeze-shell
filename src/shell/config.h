@@ -24,9 +24,9 @@ struct config {
       bool acrylic = true;
       float radius = 6;
       float font_size = 14;
-      float item_height = 25;
-      float item_gap = 5;
-      float item_radius = 100;
+      float item_height = 23;
+      float item_gap = 3;
+      float item_radius = 5;
       float margin = 5;
       float acrylic_opacity = 0.1;
 
