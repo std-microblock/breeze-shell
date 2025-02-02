@@ -99,6 +99,12 @@
                     gap: 1rem;
                     margin-top: 1rem;
 
+                    @media screen and (max-width: 800px) {
+                        flex-direction: column;
+                        width: 100%;
+                        text-align: center;
+                    }
+
                     .button {
                         padding: 0.5rem 1rem;
                         border-radius: 0.5rem;
@@ -140,6 +146,16 @@
                     background-size: cover;
                     width: 30em;
                     height: 20em;
+                    @media screen and (max-width: 800px) {
+                        width: 100%;
+                        height: auto;
+                        aspect-ratio: 16/9;
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        backdrop-filter: blur(20px) brightness(0.5);
+                    }
+
+                    
                     border-radius: 1rem;
                     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
                     border: 1px solid rgba(255, 255, 255, 0.1);
