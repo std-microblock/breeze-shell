@@ -20,7 +20,7 @@ Breeze is an **alternative context menu** for Windows 10 and Windows 11.
 
 Breeze is designed with animations in mind.
 
-<img src=https://github.com/user-attachments/assets/304fdd08-ef67-4cdb-94cc-83b47d41eb36 height=300 />
+<img src=https://github.com/user-attachments/assets/72de48fe-833c-453f-a90c-ce7816a70c58 height=300 />
 
 ## Extensible
 
@@ -57,10 +57,9 @@ interface in ~2MiB.
 
 # Try it out!
 
-Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`
-and click "注入一次" for testing.
+Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`.
 
-![image](https://github.com/user-attachments/assets/474e1fbb-b94c-49c2-afb1-18c84f9f2639)
+![image](./resources/inject-en.webp)
 
 
 # Building
