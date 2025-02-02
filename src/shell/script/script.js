@@ -240,6 +240,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     action() {
                                         shell.fs.remove(shell.breeze.data_directory() + '/scripts/' + plugin)
                                         m.remove()
+                                        sub.close()
                                     }
                                 })
 
