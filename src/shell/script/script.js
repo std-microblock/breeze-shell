@@ -21,7 +21,7 @@ const splitIntoLines = (str, maxLen) => {
     const lines = []
     // one chinese char = 2 english char
     const maxLenBytes = maxLen * 2
-    for (let i = 0; i < str.length; i += maxLenBytes) {
+    for (let i = 0; i < str.length; i) {
         let x = 0;
         let line = str.substr(i, maxLenBytes)
         while (x < maxLen && line.length > x) {
@@ -36,6 +36,7 @@ const splitIntoLines = (str, maxLen) => {
             x++
         }
         lines.push(line.substr(0, x))
+        i += x
     }
 
     return lines
