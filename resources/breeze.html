@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>breeze-shell | MicroBlock</title>
+</head>
+
+<body>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url("./bloom.webp") #1a1a1a;
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+            font-family: 'Noto Sans', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Source Han Sans SC', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', sans-serif;
+            user-select: none;
+        }
+
+        /* webkit scroller */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            top: 2rem;
+            position: absolute;
+
+            .info {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem 1.5rem;
+                border-radius: 1rem;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+
+                .icon {
+                    width: 100px;
+                    height: 100px;
+                    overflow: hidden;
+                    margin-bottom: 1rem;
+                    background: url(./icon.webp);
+                    background-size: cover;
+                    background-position: center;
+                    display: block;
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                }
+
+                .title {
+                    font-size: 3rem;
+                    font-weight: 700;
+                }
+
+                .subtitle {
+                    font-size: 1.5rem;
+                    font-weight: 300;
+                    opacity: 0.5;
+                }
+
+                .buttons {
+                    display: flex;
+                    gap: 1rem;
+                    margin-top: 1rem;
+
+                    .button {
+                        padding: 0.5rem 1rem;
+                        border-radius: 0.5rem;
+                        background: rgba(255, 255, 255, 0.1);
+                        color: #fff;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: 0.3s;
+
+                        &.recommend {
+                            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+                        }
+
+                        &:hover {
+                            background: rgba(255, 255, 255, 0.2);
+                        }
+
+                        &:active {
+                            background: rgba(255, 255, 255, 0.3);
+                        }
+                    }
+                }
+            }
+
+            .line {
+                display: flex;
+                gap: 2em;
+
+                &:nth-child(1),
+                &:nth-child(3) {
+                    flex-direction: row-reverse;
+                }
+
+                @media screen and (max-width: 800px) {
+                    flex-direction: column !important;
+                }
+
+                .img-preview {
+                    background-size: cover;
+                    width: 30em;
+                    height: 20em;
+                    border-radius: 1rem;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                    padding: 0 2rem;
+                    border-radius: 1rem;
+                    max-width: 20em;
+                    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8));
+
+                    .title {
+                        font-size: 3rem;
+                        font-weight: 700;
+                    }
+
+                    .subtitle {
+                        font-size: 1.5rem;
+                        font-weight: 300;
+                        opacity: 0.8;
+                    }
+                }
+            }
+
+            .footer {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin-top: 2rem;
+                margin-bottom: 2em;
+                font-size: 1.5rem;
+                font-weight: 300;
+                opacity: 0.8;
+
+                .shell {
+                    font-weight: 700;
+                }
+
+                .author {
+                    font-weight: 500;
+                    font-size: 1rem;
+                }
+            }
+        }
+    </style>
+
+    <div class="main">
+        <div class="info">
+            <div class="icon">
+            </div>
+            <div class="title">
+                breeze-shell
+            </div>
+            <div class="subtitle">
+                Bring fluency & dedication back to Windows
+            </div>
+
+            <div class="buttons">
+                <div class="button download recommend">
+                    Download Now [密码: br]
+                </div>
+
+                <div class="button download-github">
+                    Download from Github
+                </div>
+
+                <div class="button github">
+                    Give me ⭐
+                </div>
+            </div>
+        </div>
+
+        <div class="line">
+            <div class="content">
+                <div class="title">
+                    Flexible
+                </div>
+                <div class="subtitle">
+                    Try once or inject consistently, it's your choice.
+                </div>
+            </div>
+
+            <div class="img-preview" style="background-image: url(./inject.webp);">
+            </div>
+        </div>
+
+        <div class="line">
+            <div class="content">
+                <div class="title">
+                    Extensible
+                </div>
+                <div class="subtitle">
+                    Extend your context menu in a few lines of code.
+                </div>
+            </div>
+            <div class="img-preview" style="background-image: url(./code.webp);">
+            </div>
+        </div>
+
+        <div class="line">
+            <div class="content">
+                <div class="title">
+                    Fluent
+                </div>
+                <div class="subtitle">
+                    Beautiful and customizable UI with fluent animation.
+                </div>
+            </div>
+            <div class="img-preview" style="background-image: url(./animated-preview1.webp);">
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="shell">
+                breeze-shell
+            </div>
+            <div class="author">
+                MicroBlock
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        const downloadButton = $('.download');
+        const downloadGithubButton = $('.download-github');
+        const githubButton = $('.github');
+
+        downloadButton.addEventListener('click', () => {
+            window.open('https://microblock.lanzouo.com/b026xegc5a')
+        });
+
+        downloadGithubButton.addEventListener('click', () => {
+            window.open('https://github.com/std-microblock/breeze-shell/releases/latest')
+        });
+
+        githubButton.addEventListener('click', () => {
+            window.open('https://github.com/std-microblock/breeze-shell/')
+        });
+    </script>
+</body>
+
+</html>

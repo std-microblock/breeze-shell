@@ -42,7 +42,32 @@ const splitIntoLines = (str, maxLen) => {
 
 globalThis.on_plugin_menu = {};
 
+const languages = {
+    'zh-CN': {
+    },
+    'en-US': {
+        '管理 Breeze Shell': 'Manage Breeze Shell',
+        '插件市场 / 更新本体': 'Plugin Market / Update Shell',
+        '加载中...': 'Loading...',
+        '更新中...': 'Updating...',
+        '新版本已下载，将于下次重启资源管理器生效': 'New version downloaded, will take effect next time the file manager is restarted',
+        '更新失败: ': 'Update failed: ',
+        '插件安装成功: ': 'Plugin installed: ',
+        '当前源: ': 'Current source: ',
+        '删除': 'Delete',
+        '版本: ': 'Version: ',
+        '作者: ': 'Author: '
+    }
+}
+
+
+
 shell.menu_controller.add_menu_listener(ctx => {
+    const currentLang = shell.breeze.user_language() === 'zh-CN' ? 'zh-CN' : 'en-US'
+    const t = (key) => {
+        return languages[currentLang][key] || key
+    }
+
     const color = shell.breeze.is_light_theme() ? 'black' : 'white'
     const ICON_EMPTY = new shell.value_reset()
     const ICON_CHECKED = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path fill="currentColor" d="M9.765 3.205a.75.75 0 0 1 .03 1.06l-4.25 4.5a.75.75 0 0 1-1.075.015L2.22 6.53a.75.75 0 0 1 1.06-1.06l1.705 1.704l3.72-3.939a.75.75 0 0 1 1.06-.03"/></svg>`.replaceAll('currentColor', color)
@@ -51,17 +76,17 @@ shell.menu_controller.add_menu_listener(ctx => {
 
     if (ctx.context.folder_view?.current_path.startsWith(shell.breeze.data_directory().replaceAll('/', '\\'))) {
         ctx.menu.prepend_menu({
-            name: "管理 Breeze Shell",
+            name: t("管理 Breeze Shell"),
             submenu(sub) {
                 sub.append_menu({
-                    name: "插件市场 / 更新本体",
+                    name: t("插件市场 / 更新本体"),
                     submenu(sub) {
                         const updatePlugins = async (page) => {
                             for (const m of sub.get_items().slice(1))
                                 m.remove()
 
                             sub.append_menu({
-                                name: '加载中...'
+                                name: t('加载中...')
                             })
                             const res = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json');
                             const data = JSON.parse(res)
@@ -79,19 +104,19 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     const path = shell.breeze.data_directory() + '/shell_new.dll'
                                     const url = PLUGIN_SOURCES[current_source] + data.shell.path
                                     upd.set_data({
-                                        name: '更新中...',
+                                        name: t('更新中...'),
                                         icon_svg: ICON_REPAIR,
                                         disabled: true
                                     })
                                     shell.network.download_async(url, path, () => {
                                         upd.set_data({
-                                            name: '新版本已下载，将于下次重启资源管理器生效',
+                                            name: t('新版本已下载，将于下次重启资源管理器生效'),
                                             icon_svg: ICON_CHECKED,
                                             disabled: true
                                         })
                                     }, e => {
                                         upd.set_data({
-                                            name: '更新失败: ' + e,
+                                            name: t('更新失败: ') + e,
                                             icon_svg: ICON_REPAIR,
                                             disabled: false
                                         })
@@ -151,7 +176,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                                 disabled: true
                                             })
 
-                                            shell.println('插件安装成功: ' + plugin.name)
+                                            shell.println(t('插件安装成功: ') + plugin.name)
 
                                             reload_local()
                                         }).catch(e => {
@@ -180,10 +205,10 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     submenu(sub) {
                                         preview_sub = sub
                                         sub.append_menu({
-                                            name: '版本: ' + plugin.version
+                                            name: t('版本: ') + plugin.version
                                         })
                                         sub.append_menu({
-                                            name: '作者: ' + plugin.author
+                                            name: t('作者: ') + plugin.author
                                         })
 
                                         for (const line of splitIntoLines(plugin.description, 40)) {
@@ -199,7 +224,7 @@ shell.menu_controller.add_menu_listener(ctx => {
 
                         }
                         const source = sub.append_menu({
-                            name: '当前源: ' + current_source,
+                            name: t('当前源: ') + current_source,
                             submenu(sub) {
                                 for (const key in PLUGIN_SOURCES) {
                                     sub.append_menu({
@@ -208,7 +233,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                             current_source = key
 
                                             source.set_data({
-                                                name: '当前源: ' + key
+                                                name: t('当前源: ') + key
                                             })
                                             updatePlugins(1)
                                         },
@@ -255,7 +280,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             },
                             submenu(sub) {
                                 sub.append_menu({
-                                    name: '删除',
+                                    name: t('删除'),
                                     action() {
                                         shell.fs.remove(shell.breeze.data_directory() + '/scripts/' + plugin)
                                         m.remove()
