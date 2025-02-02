@@ -20,7 +20,7 @@ Breeze is an **alternative context menu** for Windows 10 and Windows 11.
 
 Breeze is designed with animations in mind.
 
-<img src=https://github.com/user-attachments/assets/304fdd08-ef67-4cdb-94cc-83b47d41eb36 height=300 />
+<img src=https://github.com/user-attachments/assets/72de48fe-833c-453f-a90c-ce7816a70c58 height=300 />
 
 ## Extensible
 
