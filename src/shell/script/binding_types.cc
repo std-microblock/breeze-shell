@@ -9,6 +9,8 @@
 #include <regex>
 #include <variant>
 
+// Resid
+#include "../res_string_loader.h"
 // Context menu
 #include "../contextmenu/menu_render.h"
 #include "../contextmenu/menu_widget.h"
@@ -615,5 +617,11 @@ void network::download_async(std::string url, std::string path,
       error_callback(e.what());
     }
   }).detach();
+}
+std::string win32::resid_from_string(std::string str) {
+  return res_string_loader::string_to_id_string(utf8_to_wstring(str));
+}
+size_t win32::load_library(std::string path) {
+  return reinterpret_cast<size_t>(LoadLibraryA(path.c_str()));
 }
 } // namespace mb_shell::js

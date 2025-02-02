@@ -477,6 +477,11 @@ struct breeze {
   static bool is_light_theme();
 };
 
+struct win32 {
+  static std::string resid_from_string(std::string str);
+  static size_t load_library(std::string path);
+};
+
 } // namespace mb_shell::js
 
 namespace mb_shell {

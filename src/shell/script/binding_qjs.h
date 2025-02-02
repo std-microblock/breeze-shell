@@ -691,6 +691,30 @@ template<> struct js_bind<mb_shell::js::breeze> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::win32> {
+    static mb_shell::js::win32 unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::win32 obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::win32 &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::win32> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::win32>("win32")
+            .constructor<>()
+                .static_fun<&mb_shell::js::win32::resid_from_string>("resid_from_string")
+                .static_fun<&mb_shell::js::win32::load_library>("load_library")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -726,5 +750,7 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::fs>::bind(mod);
 
     js_bind<mb_shell::js::breeze>::bind(mod);
+
+    js_bind<mb_shell::js::win32>::bind(mod);
 
 }

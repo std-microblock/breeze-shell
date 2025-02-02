@@ -194,9 +194,9 @@ const generateForRecordDecl = (node_struct: ClangASTD) => {
         }
     }
 
-    console.log({
-        structName, fields, methods
-    });
+    // console.log({
+    //     structName, fields, methods
+    // });
 
     binding += `
 template <> struct qjs::js_traits<${currentNamespace}::${structName}> {

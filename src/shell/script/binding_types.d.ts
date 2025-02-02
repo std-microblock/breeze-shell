@@ -975,6 +975,26 @@ export class breeze {
             
 }
     
+export class win32 {
+	
+	
+/**
+  * 
+  * @param str: string
+  * @returns string
+  */
+  static resid_from_string: ((arg1: string) => string)
+            
+	
+/**
+  * 
+  * @param path: string
+  * @returns size_t
+  */
+  static load_library: ((arg1: string) => size_t)
+            
+}
+    
 }
 declare module "mshell" {
     export function println(...args: any[]);
