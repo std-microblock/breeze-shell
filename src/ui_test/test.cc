@@ -244,23 +244,47 @@ struct dying_widget_test : public ui::widget {
 
 int main() {
 
-  if (auto res = ui::render_target::init_global(); !res) {
-    std::println("Failed to initialize global render target: {}", res.error());
-    return 1;
+  // if (auto res = ui::render_target::init_global(); !res) {
+  //   std::println("Failed to initialize global render target: {}", res.error());
+  //   return 1;
+  // }
+
+  // ui::render_target rt;
+  // rt.decorated = false;
+  // rt.topmost = true;
+  // rt.transparent = true;
+
+  // if (auto res = rt.init(); !res) {
+  //   std::println("Failed to initialize render target: {}", res.error());
+  //   return 1;
+  // }
+  // nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+
+  // rt.start_loop();
+
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+  glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+
+  auto window = glfwCreateWindow(800, 600, "UI", nullptr, nullptr);
+  glfwMakeContextCurrent(window);
+
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    std::cerr << "Failed to initialize GLAD" << std::endl;
+    return -1;
+  }
+  
+  while (!glfwWindowShouldClose(window)) {
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
 
-  ui::render_target rt;
-
-  if (auto res = rt.init(); !res) {
-    std::println("Failed to initialize render target: {}", res.error());
-    return 1;
-  }
-
-  rt.root->emplace_child<menu_widget>(items, 20, 20);
-  rt.root->emplace_child<dying_widget_test>();
-
-  nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
-  rt.start_loop();
   return 0;
 }
