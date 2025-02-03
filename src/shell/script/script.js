@@ -8,6 +8,7 @@ const PLUGIN_SOURCES = {
 
 let current_source = 'Enlysure'
 const get_async = url => {
+    url = url.replaceAll('//', '/').replaceAll(':/', '://')
     return new Promise((resolve, reject) => {
         shell.network.get_async(encodeURI(url), data => {
             resolve(data)
