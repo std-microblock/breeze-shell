@@ -30,10 +30,12 @@ struct menu_item_parent_widget : public menu_item_widget {
 struct menu_item_normal_widget : public menu_item_widget {
   using super = menu_item_widget;
   ui::sp_anim_float opacity = anim_float(0, 200);
-  float text_padding = 8;
+  float text_padding = config::current->context_menu.theme.text_padding;
   float margin = config::current->context_menu.theme.margin;
   bool has_icon_padding = false;
-  float icon_padding = 3;
+  float padding = config::current->context_menu.theme.padding;
+  float icon_padding = config::current->context_menu.theme.icon_padding;
+  float right_icon_padding = config::current->context_menu.theme.right_icon_padding;
   menu_item_normal_widget(menu_item item);
   void reset_appear_animation(float delay) override;
 

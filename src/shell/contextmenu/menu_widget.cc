@@ -16,8 +16,7 @@
 void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   auto icon_width = config::current->context_menu.theme.font_size + 2;
-  if (!has_icon_padding && item.name)
-    icon_width = 0;
+  auto has_icon = has_icon_padding || icon_img;
   auto c = menu_render::current.value()->light_color ? 0 : 1;
   if (item.type == menu_item::type::spacer) {
     ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
@@ -39,7 +38,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     item.icon_updated = false;
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto imageX = *x + margin + icon_padding;
+    auto imageX = *x + padding + margin + icon_padding;
     auto paint = ctx.imagePattern(imageX, paintY, icon_width, icon_width, 0,
                                   icon_img->id, *opacity / 255.f);
 
@@ -55,7 +54,9 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   ctx.fontSize(font_size);
   ctx.textAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
   if (item.name)
-    ctx.text(round(*x + text_padding + icon_width + icon_padding * 2),
+    ctx.text(round(*x + padding +
+                   (has_icon ? (icon_width + icon_padding * 2) : 0) +
+                   text_padding + margin),
              round(*y + *height / 2), item.name->c_str(), nullptr);
 
   if (item.submenu) {
@@ -72,25 +73,13 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto paint2 = nvgImagePattern(ctx.ctx,
-                                  *x + *width - icon_padding - margin -
-                                      icon_width + ctx.offset_x,
-                                  paintY + ctx.offset_y, icon_width, icon_width,
-                                  0, icon_unfold_img->id, *opacity / 255.f);
-
+    auto paintX = *x + padding + *width - right_icon_padding - icon_width;
+    auto paint2 = ctx.imagePattern(paintX, paintY, icon_width, icon_width, 0,
+                                   icon_unfold_img->id, *opacity / 255.f);
     ctx.beginPath();
-    ctx.rect(*x + *width - icon_padding - margin - icon_width, paintY,
-             icon_width, icon_width);
+    ctx.rect(paintX, paintY, icon_width, icon_width);
     ctx.fillPaint(paint2);
     ctx.fill();
-  }
-
-  if (item.type == menu_item::type::toggle) {
-    if ((!item.icon_bitmap && !item.icon_svg) && item.checked) {
-      item.icon_svg = std::format(
-          R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
-          c ? "white" : "black");
-    }
   }
 }
 void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
@@ -192,6 +181,16 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
     }
   }
 
+  if (item.type == menu_item::type::toggle) {
+    auto c = menu_render::current.value()->light_color ? 0 : 1;
+    if ((!item.icon_bitmap && !item.icon_svg) && item.checked) {
+      item.icon_svg = std::format(
+          R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
+          c ? "white" : "black");
+      item.icon_updated = true;
+    }
+  }
+
   if (submenu_wid && submenu_wid->dying_time.has_value) {
     submenu_wid = nullptr;
   }
@@ -202,16 +201,25 @@ float mb_shell::menu_item_normal_widget::measure_width(
     return 1;
   }
   auto font_size = config::current->context_menu.theme.font_size;
-  ctx.vg.fontSize(font_size);
-  auto text_width =
-      item.name
-          ? (ctx.vg.measureText(item.name->c_str()).first + text_padding * 2)
-          : 0;
-  auto icon_width = (has_icon_padding || icon_img) ? (icon_padding * 2) : 0;
+  float width = 0;
+
+  // left icon
+  if (has_icon_padding || icon_img)
+    width += icon_padding * 2;
   if (icon_img)
-    icon_width += font_size + 2;
-  return text_width + margin * 2 + icon_width +
-         (item.submenu ? font_size + 2 : 0);
+    width += font_size + 2;
+
+  // text
+  ctx.vg.fontSize(font_size);
+  if (item.name)
+    width += ctx.vg.measureText(item.name->c_str()).first + text_padding * 2;
+
+  // right icon
+  if (item.submenu) {
+    width += font_size + 2 + right_icon_padding * 2;
+  }
+
+  return width + margin * 2 + padding * 2;
 }
 
 std::shared_ptr<ui::rect_widget>
@@ -494,7 +502,7 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
   auto top_overflow = y < padding_horizontal;
   auto bottom_overflow = y + menu_height * ctx.rt.dpi_scale >
                          ctx.screen.height - padding_horizontal;
-                         
+
   if (top_overflow && bottom_overflow) {
     y = padding_horizontal;
     menu_wid->max_height = ctx.screen.height - padding_horizontal * 2;
@@ -600,7 +608,9 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
 
 bool mb_shell::menu_item_normal_widget::check_hit(
     const ui::update_context &ctx) {
-  return ui::widget::check_hit(ctx) ||
+  return (ui::widget::check_hit(ctx) &&
+          (ctx.mouse_x > ctx.offset_x + *x + margin &&
+           ctx.mouse_x < ctx.offset_x + *x + *width - margin)) ||
          (submenu_wid && submenu_wid->check_hit(ctx));
 }
 
@@ -657,6 +667,10 @@ void mb_shell::menu_item_normal_widget::reload_icon_img(
   } else {
     icon_img = std::nullopt;
   }
+
+  if (auto pa = parent->downcast<menu_widget>()) {
+    pa->update_icon_width();
+  }
 }
 void mb_shell::menu_widget::close() {
   if (menu_data.is_top_level) {
@@ -679,7 +693,7 @@ void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
 void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
   super::update(ctx);
   float x = 0;
-  float gap = 5;
+  float gap = config::current->context_menu.theme.multibutton_line_gap;
   float max_height = 0;
   for (auto &item : children) {
     item->x->reset_to(x);
