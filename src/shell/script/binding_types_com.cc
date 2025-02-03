@@ -32,13 +32,27 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
 }
 
 IShellBrowser *GetIShellBrowser(HWND hWnd) {
-  auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
-  if (!res) {
+  __try {
+    auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
+    if (!res) {
+      return nullptr;
+    }
+
+    MEMORY_BASIC_INFORMATION mbi;
+    if (VirtualQuery(res, &mbi, sizeof(mbi)) == 0) {
+      return nullptr;
+    }
+
+    IShellView *psv;
+    if (SUCCEEDED(res->QueryActiveShellView(&psv))) {
+      psv->Release();
+      return res;
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
     return nullptr;
   }
-  res->AddRef();
-  res->Release();
-  return res;
+
+  return nullptr;
 }
 
 IShellBrowser *GetIShellBrowserRecursive(HWND hWnd) {
@@ -79,7 +93,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
-      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
+      if (IShellBrowser *psb = GetIShellBrowser(hWnd)) {
         IShellView *psv;
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
