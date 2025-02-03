@@ -22,8 +22,8 @@ struct update_context {
   // only true for one frame
   bool mouse_clicked, right_mouse_clicked;
   bool mouse_up;
-
   screen_info screen;
+  float scroll_y;
 
   // hit test, lifetime is not guaranteed
   std::shared_ptr<std::vector<widget *>> hovered_widgets =
@@ -119,6 +119,7 @@ struct widget : std::enable_shared_from_this<widget> {
                 height = anim_float();
 
   float _debug_offset_cache[2];
+  bool enable_child_clipping = false;
 
   virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);
@@ -190,6 +191,8 @@ struct widget_flex : public widget {
   bool horizontal = false;
   bool auto_size = true;
 
+  void reposition_children_flex(update_context &ctx,
+                            std::vector<std::shared_ptr<widget>> &children);
   void update(update_context &ctx) override;
 };
 

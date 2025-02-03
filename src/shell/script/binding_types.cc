@@ -43,13 +43,13 @@ menu_controller::append_menu_after(js_menu_data data, int after_index) {
   ctl->set_data(data);
 
   while (after_index < 0) {
-    after_index = m->children.size() + after_index + 1;
+    after_index = m->item_widgets.size() + after_index + 1;
   }
 
-  if (after_index >= m->children.size()) {
-    m->children.push_back(new_item);
+  if (after_index >= m->item_widgets.size()) {
+    m->item_widgets.push_back(new_item);
   } else {
-    m->children.insert(m->children.begin() + after_index, new_item);
+    m->item_widgets.insert(m->item_widgets.begin() + after_index, new_item);
   }
 
   m->update_icon_width();
@@ -86,15 +86,15 @@ void menu_item_controller::set_position(int new_index) {
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
 
-  if (new_index >= m->children.size())
+  if (new_index >= m->item_widgets.size())
     return;
 
   auto item = $item.lock();
 
-  m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
-                    m->children.end());
+  m->item_widgets.erase(std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
+                    m->item_widgets.end());
 
-  m->children.insert(m->children.begin() + new_index, item);
+  m->item_widgets.insert(m->item_widgets.begin() + new_index, item);
 }
 
 static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
@@ -192,8 +192,8 @@ void menu_item_controller::remove() {
 
   auto item = $item.lock();
 
-  m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
-                    m->children.end());
+  m->item_widgets.erase(std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
+                    m->item_widgets.end());
 }
 bool menu_item_controller::valid() {
   return !$item.expired() && !$menu.expired();
@@ -256,10 +256,10 @@ std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
 
-  if (index >= m->children.size())
+  if (index >= m->item_widgets.size())
     return nullptr;
 
-  auto item = m->children[index]->downcast<menu_item_widget>();
+  auto item = m->item_widgets[index]->downcast<menu_item_widget>();
 
   auto controller = std::make_shared<menu_item_controller>();
   controller->$item = item;
@@ -280,8 +280,8 @@ menu_controller::get_items() {
 
   std::vector<std::shared_ptr<menu_item_controller>> items;
 
-  for (int i = 0; i < m->children.size(); i++) {
-    auto item = m->children[i]->downcast<menu_item_widget>();
+  for (int i = 0; i < m->item_widgets.size(); i++) {
+    auto item = m->item_widgets[i]->downcast<menu_item_widget>();
 
     auto controller = std::make_shared<menu_item_controller>();
     controller->$item = item;
@@ -540,7 +540,7 @@ void menu_controller::clear() {
   std::unique_lock lock(m->data_lock, std::defer_lock);
   std::ignore = lock.try_lock();
 
-  m->children.clear();
+  m->item_widgets.clear();
   m->menu_data.items.clear();
 }
 

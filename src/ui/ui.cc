@@ -147,6 +147,12 @@ std::expected<bool, std::string> render_target::init() {
     rt->dpi_scale = x;
   });
 
+  glfwSetScrollCallback(window, [](GLFWwindow *window, double xoffset,
+                                   double yoffset) {
+    auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
+    rt->scroll_y += yoffset;
+  });
+
   glfwGetWindowContentScale(window, &dpi_scale, nullptr);
   reset_view();
 
@@ -262,9 +268,11 @@ void render_target::render() {
                   monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
               .dpi_scale = dpi_scale,
           },
+      .scroll_y = scroll_y,
       .rt = *this,
       .vg = vg,
   };
+  scroll_y = 0;
   ctx.mouse_clicked = !ctx.mouse_down && mouse_down;
   ctx.right_mouse_clicked = !ctx.right_mouse_down && right_mouse_down;
   ctx.mouse_up = !ctx.mouse_down && mouse_down;

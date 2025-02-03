@@ -34,6 +34,7 @@ struct render_target {
   static std::atomic_int view_cnt;
   int view_id = view_cnt++;
   float dpi_scale = 1;
+  float scroll_y = 0;
   std::expected<bool, std::string> init();
 
   static std::vector<std::function<void()>> main_thread_tasks;

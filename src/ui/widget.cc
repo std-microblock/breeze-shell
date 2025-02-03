@@ -2,6 +2,7 @@
 #include "ui.h"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <print>
 #include <thread>
 
@@ -21,10 +22,22 @@ void ui::widget::render_child_basic(nanovg_context ctx,
                                     std::shared_ptr<widget> &w) {
   if (!w)
     return;
-  ctx.save();
-  ctx.scissor(*w->x, *w->y, *w->width, *w->height);
-  w->render(ctx);
-  ctx.restore();
+
+  constexpr float big_number = 1e5;
+  auto can_render_width =
+           enable_child_clipping
+               ? std::max(std::min(**w->width, **width - *w->x), 0.f)
+               : big_number,
+       can_render_height =
+           enable_child_clipping
+               ? std::max(std::min(**w->height, **height - *w->y), 0.f)
+               : big_number;
+
+  if (can_render_width > 0 && can_render_height > 0) {
+    ctx.save();
+    w->render(ctx);
+    ctx.restore();
+  }
 }
 
 void ui::widget::render(nanovg_context ctx) {
@@ -83,6 +96,11 @@ float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
 float ui::widget::measure_width(update_context &ctx) { return width->dest(); }
 void ui::widget_flex::update(update_context &ctx) {
   widget::update(ctx);
+  auto forkctx = ctx.with_offset(*x, *y);
+  reposition_children_flex(forkctx, children);
+}
+void ui::widget_flex::reposition_children_flex(
+    update_context &ctx, std::vector<std::shared_ptr<widget>> &children) {
   float x = 0, y = 0;
   float target_width = 0, target_height = 0;
 
@@ -122,6 +140,7 @@ void ui::widget_flex::update(update_context &ctx) {
     }
   }
 }
+
 void ui::update_context::set_hit_hovered(widget *w) {
   hovered_widgets->push_back(w);
 }

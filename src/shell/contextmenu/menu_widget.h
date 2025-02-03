@@ -51,12 +51,17 @@ enum class popup_direction {
 struct menu_widget : public ui::widget_flex {
   using super = ui::widget_flex;
   float bg_padding_vertical = 6;
+
+  float max_height = 99999;
+  float actual_height = 0;
+  ui::sp_anim_float scroll_top = anim_float(0, 200);
   std::shared_ptr<ui::rect_widget> bg;
 
   std::shared_ptr<ui::rect_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
-  menu_widget* parent_menu;
+  std::vector<std::shared_ptr<widget>> item_widgets;
+  menu_widget *parent_menu;
 
   std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;

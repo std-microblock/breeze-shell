@@ -7,9 +7,10 @@
 #include "menu_render.h"
 #include "nanovg.h"
 #include "ui.h"
+#include <algorithm>
 #include <iostream>
 #include <print>
-#include <stacktrace>
+#include <ranges>
 #include <vector>
 
 void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
@@ -249,6 +250,8 @@ mb_shell::menu_widget::create_bg(bool is_main) {
 
 mb_shell::menu_widget::menu_widget() : super() {
   gap = config::current->context_menu.theme.item_gap;
+  width->set_easing(ui::easing_type::mutation);
+  height->set_easing(ui::easing_type::mutation);
 }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   std::lock_guard lock(data_lock);
@@ -310,7 +313,17 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     bg_submenu->update(c);
   }
 
+  if (ctx.hovered(this)) {
+    scroll_top->animate_to(std::clamp(scroll_top->dest() + ctx.scroll_y * 100,
+                                      height->dest() - actual_height, 0.f));
+  }
+
   super::update(ctx);
+  auto forkctx = ctx.with_offset(*x, *y + *scroll_top);
+  update_children(forkctx, item_widgets);
+  reposition_children_flex(forkctx, item_widgets);
+  actual_height = height->dest();
+  height->reset_to(std::min(max_height, height->dest()));
 
   if (bg) {
     ctx.mouse_clicked_on_hit(bg.get());
@@ -340,6 +353,8 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   }
 
   super::render(ctx);
+  ctx.scissor(*x, *y, *width, *height);
+  render_children(ctx.with_offset(*x, *y + *scroll_top), item_widgets);
 
   if (bg_submenu) {
     bg_submenu->render(ctx.with_reset_offset());
@@ -419,19 +434,23 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
     return;
 
   animate_appear_started = true;
-  auto children = get_children<menu_item_widget>();
+  auto children = item_widgets | std::ranges::views::transform([](auto &w) {
+                    return std::dynamic_pointer_cast<menu_item_widget>(w);
+                  });
 
   // the show duration for the menu should be within 200ms
   float delay = std::min(200.f / children.size(), 30.f);
 
   for (size_t i = 0; i < children.size(); i++) {
-    auto &child = children[i];
+    auto child = children[i];
     child->reset_appear_animation(delay * (reverse ? children.size() - i : i));
   }
 }
 std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     menu_widget *menu_wid, ui::update_context &ctx, float anchor_x,
     float anchor_y, popup_direction direction) {
+
+  menu_wid->update(ctx);
   auto menu_width = menu_wid->measure_width(ctx);
   auto menu_height = menu_wid->measure_height(ctx);
 
@@ -464,11 +483,17 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
              ctx.screen.width - padding_vertical) {
     x = ctx.screen.width - menu_width * ctx.rt.dpi_scale - padding_vertical;
   }
+  std::println("menu_height: {}", menu_height);
+  auto top_overflow = y - menu_height * ctx.rt.dpi_scale < padding_horizontal;
+  auto bottom_overflow = y + menu_height * ctx.rt.dpi_scale >
+                         ctx.screen.height - padding_horizontal;
 
-  if (y < padding_horizontal) {
+  if (top_overflow && bottom_overflow) {
     y = padding_horizontal;
-  } else if (y + menu_height * ctx.rt.dpi_scale >
-             ctx.screen.height - padding_horizontal) {
+    menu_wid->max_height = ctx.screen.height - padding_horizontal * 2;
+  } else if (top_overflow) {
+    y = padding_horizontal;
+  } else if (bottom_overflow) {
     y = ctx.screen.height - menu_height * ctx.rt.dpi_scale - padding_horizontal;
   }
 
@@ -587,20 +612,20 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
     auto mi = std::make_shared<menu_item_widget>(item, this);
-    children.push_back(mi);
+    item_widgets.push_back(mi);
   }
 
   update_icon_width();
   this->menu_data = menu_data;
 }
 void mb_shell::menu_widget::update_icon_width() {
-  bool has_icon = std::ranges::any_of(children, [](auto &item) {
+  bool has_icon = std::ranges::any_of(item_widgets, [](auto &item) {
     auto i = item->template downcast<menu_item_widget>()->item;
     return i.icon_bitmap.has_value() || i.icon_svg.has_value() ||
            i.type == menu_item::type::toggle;
   });
 
-  for (auto &item : children) {
+  for (auto &item : item_widgets) {
     auto mi = item->template downcast<menu_item_widget>();
     if (!has_icon) {
       mi->has_icon_padding = 0;
