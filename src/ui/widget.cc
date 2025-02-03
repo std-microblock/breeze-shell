@@ -22,6 +22,7 @@ void ui::widget::render_child_basic(nanovg_context ctx,
   if (!w)
     return;
   ctx.save();
+  ctx.scissor(*w->x, *w->y, *w->width, *w->height);
   w->render(ctx);
   ctx.restore();
 }
@@ -137,7 +138,7 @@ bool ui::update_context::mouse_clicked_on_hit(widget *w, bool hittest) {
   }
   return false;
 }
-bool ui::update_context::hovered_hit(widget *w,  bool hittest) {
+bool ui::update_context::hovered_hit(widget *w, bool hittest) {
   if (hovered(w, hittest)) {
     set_hit_hovered(w);
     return true;
