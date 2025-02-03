@@ -639,4 +639,13 @@ std::optional<std::string> win32::env(std::string name) {
   return mb_shell::env(name);
 }
 
+std::string breeze::hash() {
+  return BREEZE_GIT_COMMIT_HASH;
+}
+std::string breeze::branch() {
+  return BREEZE_GIT_BRANCH_NAME;
+}
+std::string breeze::build_date() {
+  return BREEZE_BUILD_DATE_TIME;
+}
 } // namespace mb_shell::js

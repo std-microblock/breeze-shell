@@ -963,6 +963,30 @@ export class breeze {
   * @param 
   * @returns string
   */
+  static hash: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static branch: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  static build_date: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
   static data_directory: (() => string)
             
 	

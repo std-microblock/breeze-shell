@@ -473,6 +473,9 @@ struct fs {
 
 struct breeze {
   static std::string version();
+  static std::string hash();
+  static std::string branch();
+  static std::string build_date();
   static std::string data_directory();
   static bool is_light_theme();
   static std::string user_language();
