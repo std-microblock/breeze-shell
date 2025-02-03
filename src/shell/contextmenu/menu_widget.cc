@@ -491,11 +491,10 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
              ctx.screen.width - padding_vertical) {
     x = ctx.screen.width - menu_width * ctx.rt.dpi_scale - padding_vertical;
   }
-  std::println("menu_height: {}", menu_height);
-  auto top_overflow = y - menu_height * ctx.rt.dpi_scale < padding_horizontal;
+  auto top_overflow = y < padding_horizontal;
   auto bottom_overflow = y + menu_height * ctx.rt.dpi_scale >
                          ctx.screen.height - padding_horizontal;
-
+                         
   if (top_overflow && bottom_overflow) {
     y = padding_horizontal;
     menu_wid->max_height = ctx.screen.height - padding_horizontal * 2;
