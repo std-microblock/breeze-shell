@@ -450,6 +450,31 @@ struct data_dir_btn : public button_widget {
   }
 };
 
+struct restore_btn : public button_widget {
+  restore_btn() : button_widget("还原") {}
+
+  void on_click() override {
+    // reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f
+    // reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f
+
+    HKEY key;
+    RegOpenKeyExW(HKEY_CURRENT_USER,
+                  L"HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
+                  L"50c905bae2a2}\\InprocServer32",
+                  0, KEY_SET_VALUE, &key);
+    RegDeleteValueW(key, L"");
+    RegCloseKey(key);
+
+    RegOpenKeyExW(HKEY_CURRENT_USER,
+                  L"HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
+                  L"50c905bae2a2}",
+                  0, KEY_SET_VALUE, &key);
+
+    RegDeleteValueW(key, L"");
+    RegCloseKey(key);
+  }
+};
+
 struct breeze_icon : public ui::widget {
   std::optional<int> image;
   breeze_icon() {
@@ -491,6 +516,7 @@ struct injector_ui_main : public ui::widget_flex {
     switches->horizontal = true;
     switches->emplace_child<start_when_startup_switch>();
     switches->emplace_child<restart_explorer_btn>();
+    switches->emplace_child<restore_btn>();
   }
   void render(ui::nanovg_context ctx) override {
     ctx.fillColor(nvgRGB(32, 32, 32));
