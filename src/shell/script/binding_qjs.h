@@ -418,6 +418,33 @@ template<> struct js_bind<mb_shell::js::menu_item_controller> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::menu_item_parent_item_controller> {
+    static mb_shell::js::menu_item_parent_item_controller unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::menu_item_parent_item_controller obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_item_parent_item_controller &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::menu_item_parent_item_controller> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::menu_item_parent_item_controller>("menu_item_parent_item_controller")
+            .constructor<>()
+                .fun<&mb_shell::js::menu_item_parent_item_controller::children>("children")
+                .fun<&mb_shell::js::menu_item_parent_item_controller::set_position>("set_position")
+                .fun<&mb_shell::js::menu_item_parent_item_controller::remove>("remove")
+                .fun<&mb_shell::js::menu_item_parent_item_controller::valid>("valid")
+                .fun<&mb_shell::js::menu_item_parent_item_controller::append_child_after>("append_child_after")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::js_menu_context> {
     static mb_shell::js::js_menu_context unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::js_menu_context obj;
@@ -505,14 +532,21 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
         mod.class_<mb_shell::js::menu_controller>("menu_controller")
             .constructor<>()
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
-                .fun<&mb_shell::js::menu_controller::append_menu_after>("append_menu_after")
-                .fun<&mb_shell::js::menu_controller::append_menu>("append_menu")
-                .fun<&mb_shell::js::menu_controller::prepend_menu>("prepend_menu")
+                .fun<&mb_shell::js::menu_controller::append_item_after>("append_item_after")
+                .fun<&mb_shell::js::menu_controller::append_parent_item_after>("append_parent_item_after")
+                .fun<&mb_shell::js::menu_controller::append_parent_item>("append_parent_item")
+                .fun<&mb_shell::js::menu_controller::prepend_parent_item>("prepend_parent_item")
+                .fun<&mb_shell::js::menu_controller::append_item>("append_item")
+                .fun<&mb_shell::js::menu_controller::prepend_item>("prepend_item")
+                .fun<&mb_shell::js::menu_controller::prepend_spacer>("prepend_spacer")
+                .fun<&mb_shell::js::menu_controller::append_spacer>("append_spacer")
                 .fun<&mb_shell::js::menu_controller::close>("close")
                 .fun<&mb_shell::js::menu_controller::clear>("clear")
                 .fun<&mb_shell::js::menu_controller::get_items>("get_items")
                 .fun<&mb_shell::js::menu_controller::get_item>("get_item")
                 .static_fun<&mb_shell::js::menu_controller::add_menu_listener>("add_menu_listener")
+                .fun<&mb_shell::js::menu_controller::prepend_menu>("prepend_menu")
+                .fun<&mb_shell::js::menu_controller::append_menu>("append_menu")
             ;
     }
 
@@ -737,6 +771,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::js_menu_data>::bind(mod);
 
     js_bind<mb_shell::js::menu_item_controller>::bind(mod);
+
+    js_bind<mb_shell::js::menu_item_parent_item_controller>::bind(mod);
 
     js_bind<mb_shell::js::js_menu_context>::bind(mod);
 

@@ -239,6 +239,12 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
                       float height) {
     drawSVG(image.image, x, y, width, height);
   }
+
+  inline auto imagePattern(float cx, float cy, float w, float h, float angle,
+                           int image, float alpha) {
+    return nvgImagePattern(ctx, cx + offset_x, cy + offset_y, w, h, angle,
+                           image, alpha);
+  }
 };
 
 struct GLTexture {

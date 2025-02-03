@@ -604,6 +604,50 @@ export class menu_item_controller {
             
 }
     
+export class menu_item_parent_item_controller {
+	
+	
+/**
+  * 
+  * @param 
+  * @returns Array<menu_item_controller>
+  */
+  children: (() => Array<menu_item_controller>)
+            
+	
+/**
+  * 
+  * @param new_index: number
+  * @returns void
+  */
+  set_position: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  remove: (() => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns boolean
+  */
+  valid: (() => boolean)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data, after_index: number
+  * @returns menu_item_controller
+  */
+  append_child_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+            
+}
+    
 export class js_menu_context {
 	folder_view?: folder_view_controller | undefined
 	window_titlebar?: window_titlebar_controller | undefined
@@ -634,7 +678,31 @@ export class menu_controller {
   * @param data: js_menu_data, after_index: number
   * @returns menu_item_controller
   */
-  append_menu_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+  append_item_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param after_index: number
+  * @returns menu_item_parent_item_controller
+  */
+  append_parent_item_after: ((arg1: number) => menu_item_parent_item_controller)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns menu_item_parent_item_controller
+  */
+  append_parent_item: (() => menu_item_parent_item_controller)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns menu_item_parent_item_controller
+  */
+  prepend_parent_item: (() => menu_item_parent_item_controller)
             
 	
 /**
@@ -642,7 +710,7 @@ export class menu_controller {
   * @param data: js_menu_data
   * @returns menu_item_controller
   */
-  append_menu: ((arg1: js_menu_data) => menu_item_controller)
+  append_item: ((arg1: js_menu_data) => menu_item_controller)
             
 	
 /**
@@ -650,7 +718,25 @@ export class menu_controller {
   * @param data: js_menu_data
   * @returns menu_item_controller
   */
-  prepend_menu: ((arg1: js_menu_data) => menu_item_controller)
+  prepend_item: ((arg1: js_menu_data) => menu_item_controller)
+            
+	
+/**
+  * 在开头添加 Spacer
+  *  Prepend Spacer
+  * @param 
+  * @returns void
+  */
+  prepend_spacer: (() => void)
+            
+	
+/**
+  * 在末尾添加 Spacer
+  *  Append Spacer
+  * @param 
+  * @returns void
+  */
+  append_spacer: (() => void)
             
 	
 /**
@@ -696,6 +782,22 @@ export class menu_controller {
   * @returns (() => void)
   */
   static add_menu_listener: ((arg1: ((arg1: menu_info_basic_js) => void)) => (() => void))
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  prepend_menu: ((arg1: js_menu_data) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  append_menu: ((arg1: js_menu_data) => menu_item_controller)
             
 }
     

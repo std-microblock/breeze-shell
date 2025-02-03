@@ -11,6 +11,8 @@
 namespace mb_shell {
 struct mouse_menu_widget_main;
 struct menu_item_widget;
+struct menu_item_normal_widget;
+struct menu_item_parent_widget;
 struct menu_widget;
 } // namespace mb_shell
 
@@ -83,7 +85,8 @@ struct folder_view_controller {
 // special flag struct to indicate that the corresponding
 // value should be reset to none instead of unchanged
 struct value_reset {};
-#define WITH_RESET_OPTION(x) std::optional<std::variant<x, std::shared_ptr<mb_shell::js::value_reset>>>
+#define WITH_RESET_OPTION(x)                                                   \
+  std::optional<std::variant<x, std::shared_ptr<mb_shell::js::value_reset>>>
 
 // 窗口标题栏控制器
 // Window titlebar controller
@@ -246,12 +249,12 @@ struct js_menu_data {
   // 子菜单回调函数
   // Submenu callback function
   WITH_RESET_OPTION(
-          std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>)
+      std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>)
   submenu;
   // 菜单动作回调函数
   // Menu action callback function
   WITH_RESET_OPTION(
-             std::function<void(mb_shell::js::js_menu_action_event_data)>)
+      std::function<void(mb_shell::js::js_menu_action_event_data)>)
   action;
   // SVG图标
   // SVG icon
@@ -270,12 +273,26 @@ struct js_menu_data {
 
 struct menu_item_controller {
   std::weak_ptr<mb_shell::menu_item_widget> $item;
-  std::weak_ptr<mb_shell::menu_widget> $menu;
+  std::variant<std::weak_ptr<mb_shell::menu_widget>,
+               std::weak_ptr<mb_shell::menu_item_parent_widget>>
+      $parent;
   void set_position(int new_index);
   void set_data(mb_shell::js::js_menu_data data);
   js_menu_data data();
   void remove();
   bool valid();
+};
+
+struct menu_item_parent_item_controller {
+  std::weak_ptr<mb_shell::menu_item_parent_widget> $item;
+  std::weak_ptr<mb_shell::menu_widget> $menu;
+  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> children();
+  void set_position(int new_index);
+  void remove();
+  bool valid();
+
+  std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_child_after(mb_shell::js::js_menu_data data, int after_index);
 };
 
 struct js_menu_context {
@@ -304,17 +321,41 @@ struct menu_controller {
   // 在指定索引后添加菜单项
   // Append menu item after specified index
   std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_menu_after(mb_shell::js::js_menu_data data, int after_index);
+  append_item_after(mb_shell::js::js_menu_data data, int after_index);
+
+  // 在指定索引后添加水平菜单母项
+  std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  append_parent_item_after(int after_index);
+
+  // 在末尾添加水平菜单母项
+  inline std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  append_parent_item() {
+    return append_parent_item_after(-1);
+  }
+
+  // 在开头添加水平菜单母项
+  inline std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  prepend_parent_item() {
+    return append_parent_item_after(0);
+  }
 
   // 在末尾添加菜单项
   // Append menu item at end
   std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_menu(mb_shell::js::js_menu_data data);
+  append_item(mb_shell::js::js_menu_data data);
 
   // 在开头添加菜单项
   // Prepend menu item at beginning
   std::shared_ptr<mb_shell::js::menu_item_controller>
-  prepend_menu(mb_shell::js::js_menu_data data);
+  prepend_item(mb_shell::js::js_menu_data data);
+
+  // 在开头添加 Spacer
+  // Prepend Spacer
+  inline void prepend_spacer() { prepend_item({.type = "spacer"}); }
+
+  // 在末尾添加 Spacer
+  // Append Spacer
+  inline void append_spacer() { append_item({.type = "spacer"}); }
 
   // 关闭菜单
   // Close menu
@@ -336,6 +377,16 @@ struct menu_controller {
   // Add menu event listener
   static std::function<void()> add_menu_listener(
       std::function<void(mb_shell::js::menu_info_basic_js)> listener);
+
+  // Only for compatibility
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  prepend_menu(mb_shell::js::js_menu_data data) {
+    return append_item_after(data, 0);
+  }
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_menu(mb_shell::js::js_menu_data data) {
+    return append_item_after(data, -1);
+  }
 
   ~menu_controller();
 };

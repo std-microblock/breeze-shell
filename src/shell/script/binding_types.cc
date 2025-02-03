@@ -26,7 +26,7 @@ namespace mb_shell::js {
 
 bool menu_controller::valid() { return !$menu.expired(); }
 std::shared_ptr<mb_shell::js::menu_item_controller>
-menu_controller::append_menu_after(js_menu_data data, int after_index) {
+menu_controller::append_item_after(js_menu_data data, int after_index) {
   if (!valid())
     return nullptr;
   auto m = $menu.lock();
@@ -37,9 +37,9 @@ menu_controller::append_menu_after(js_menu_data data, int after_index) {
   std::ignore = lock.try_lock();
 
   menu_item item;
-  auto new_item = std::make_shared<menu_item_widget>(item, m.get());
+  auto new_item = std::make_shared<menu_item_normal_widget>(item);
   auto ctl = std::make_shared<menu_item_controller>(new_item, m);
-
+  new_item->parent = m.get();
   ctl->set_data(data);
 
   while (after_index < 0) {
@@ -78,23 +78,25 @@ menu_controller::~menu_controller() {}
 void menu_item_controller::set_position(int new_index) {
   if (!valid())
     return;
+  if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
+    auto m = $menu->lock();
+    if (!m)
+      return;
 
-  auto m = $menu.lock();
-  if (!m)
-    return;
+    std::unique_lock lock(m->data_lock, std::defer_lock);
+    std::ignore = lock.try_lock();
 
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
+    if (new_index >= m->item_widgets.size())
+      return;
 
-  if (new_index >= m->item_widgets.size())
-    return;
+    auto item = $item.lock();
 
-  auto item = $item.lock();
+    m->item_widgets.erase(
+        std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
+        m->item_widgets.end());
 
-  m->item_widgets.erase(std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
-                    m->item_widgets.end());
-
-  m->item_widgets.insert(m->item_widgets.begin() + new_index, item);
+    m->item_widgets.insert(m->item_widgets.begin() + new_index, item);
+  }
 }
 
 static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
@@ -166,37 +168,74 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
 void menu_item_controller::set_data(js_menu_data data) {
   if (!valid())
     return;
+  if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
+    auto m = $menu->lock();
+    if (!m)
+      return;
 
-  auto m = $menu.lock();
-  if (!m)
-    return;
+    std::unique_lock lock(m->data_lock, std::defer_lock);
+    std::ignore = lock.try_lock();
 
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
+    auto item = $item.lock();
 
-  auto item = $item.lock();
+    to_menu_item(item->item, data);
+    m->update_icon_width();
+  } else if (auto parent = std::get_if<std::weak_ptr<menu_item_parent_widget>>(
+                 &$parent)) {
+    auto m = parent->lock();
+    if (!m)
+      return;
 
-  to_menu_item(item->item, data);
-  m->update_icon_width();
+    std::unique_lock lock(m->parent->downcast<menu_widget>()->data_lock,
+                          std::defer_lock);
+    std::ignore = lock.try_lock();
+
+    auto item = $item.lock();
+
+    to_menu_item(item->item, data);
+  }
 }
 void menu_item_controller::remove() {
   if (!valid())
     return;
 
-  auto m = $menu.lock();
-  if (!m)
-    return;
+  if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
+    auto m = $menu->lock();
+    if (!m)
+      return;
 
-  std::unique_lock lock(m->data_lock, std::defer_lock);
-  std::ignore = lock.try_lock();
+    std::unique_lock lock(m->data_lock, std::defer_lock);
+    std::ignore = lock.try_lock();
 
-  auto item = $item.lock();
+    auto item = $item.lock();
 
-  m->item_widgets.erase(std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
-                    m->item_widgets.end());
+    m->item_widgets.erase(
+        std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
+        m->item_widgets.end());
+  } else if (auto parent = std::get_if<std::weak_ptr<menu_item_parent_widget>>(
+                 &$parent)) {
+    auto m = parent->lock();
+    if (!m)
+      return;
+
+    std::unique_lock lock(m->parent->downcast<menu_widget>()->data_lock,
+                          std::defer_lock);
+
+    std::ignore = lock.try_lock();
+
+    auto item = $item.lock();
+
+    m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
+                      m->children.end());
+  }
 }
 bool menu_item_controller::valid() {
-  return !$item.expired() && !$menu.expired();
+  if (auto a = std::get_if<0>(&$parent); a && a->expired())
+    return false;
+  else if (auto a = std::get_if<1>(&$parent); a && a->expired())
+    return false;
+
+  return !$item.expired();
 }
 js_menu_data menu_item_controller::data() {
   if (!valid())
@@ -263,7 +302,7 @@ std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
 
   auto controller = std::make_shared<menu_item_controller>();
   controller->$item = item;
-  controller->$menu = m;
+  controller->$parent = m;
 
   return controller;
 }
@@ -285,7 +324,7 @@ menu_controller::get_items() {
 
     auto controller = std::make_shared<menu_item_controller>();
     controller->$item = item;
-    controller->$menu = m;
+    controller->$parent = m;
 
     items.push_back(controller);
   }
@@ -639,13 +678,148 @@ std::optional<std::string> win32::env(std::string name) {
   return mb_shell::env(name);
 }
 
-std::string breeze::hash() {
-  return BREEZE_GIT_COMMIT_HASH;
+std::string breeze::hash() { return BREEZE_GIT_COMMIT_HASH; }
+std::string breeze::branch() { return BREEZE_GIT_BRANCH_NAME; }
+std::string breeze::build_date() { return BREEZE_BUILD_DATE_TIME; }
+std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
+menu_item_parent_item_controller::children() {
+  if (!valid())
+    return {};
+
+  auto item = $item.lock();
+  if (!item)
+    return {};
+
+  std::unique_lock lock(item->parent->downcast<menu_widget>()->data_lock,
+                        std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> items;
+
+  for (int i = 0; i < item->children.size(); i++) {
+    auto subitem = item->children[i]->downcast<menu_item_widget>();
+
+    auto controller = std::make_shared<menu_item_controller>();
+    controller->$item = subitem;
+    controller->$parent = item;
+
+    items.push_back(controller);
+  }
+
+  return items;
 }
-std::string breeze::branch() {
-  return BREEZE_GIT_BRANCH_NAME;
+void menu_item_parent_item_controller::set_position(int new_index) {
+  if (!valid())
+    return;
+
+  auto item = $item.lock();
+  if (!item)
+    return;
+
+  auto parent = item->parent->downcast<menu_widget>();
+
+  std::unique_lock lock(parent->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  if (new_index >= parent->item_widgets.size())
+    return;
+
+  parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
+                                         parent->item_widgets.end(), item),
+                             parent->item_widgets.end());
+
+  parent->item_widgets.insert(parent->item_widgets.begin() + new_index, item);
+
+  parent->update_icon_width();
 }
-std::string breeze::build_date() {
-  return BREEZE_BUILD_DATE_TIME;
+void menu_item_parent_item_controller::remove() {
+  if (!valid())
+    return;
+
+  auto item = $item.lock();
+  if (!item)
+    return;
+
+  auto parent = item->parent->downcast<menu_widget>();
+
+  std::unique_lock lock(parent->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
+                                         parent->item_widgets.end(), item),
+                             parent->item_widgets.end());
+}
+bool menu_item_parent_item_controller::valid() {
+  return !$item.expired() && !$menu.expired();
+}
+
+std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+menu_controller::append_parent_item_after(int after_index) {
+  if (!valid())
+    return nullptr;
+  auto m = $menu.lock();
+  if (!m)
+    return nullptr;
+
+  std::unique_lock lock(m->data_lock, std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  auto new_item = std::make_shared<menu_item_parent_widget>();
+  auto ctl = std::make_shared<menu_item_parent_item_controller>(new_item, m);
+  new_item->parent = m.get();
+  while (after_index < 0) {
+    after_index = m->item_widgets.size() + after_index + 1;
+  }
+
+  if (after_index >= m->item_widgets.size()) {
+    m->item_widgets.push_back(new_item);
+  } else {
+    m->item_widgets.insert(m->item_widgets.begin() + after_index, new_item);
+  }
+  
+  m->update_icon_width();
+
+  if (m->animate_appear_started) {
+    new_item->reset_appear_animation(0);
+  }
+
+  return ctl;
+}
+std::shared_ptr<mb_shell::js::menu_item_controller>
+menu_item_parent_item_controller::append_child_after(
+    mb_shell::js::js_menu_data data, int after_index) {
+  if (!valid())
+    return nullptr;
+
+  auto parent = $item.lock();
+  if (!parent)
+    return nullptr;
+
+  std::unique_lock lock(parent->parent->downcast<menu_widget>()->data_lock,
+                        std::defer_lock);
+  std::ignore = lock.try_lock();
+
+  menu_item item;
+  auto new_item = std::make_shared<menu_item_normal_widget>(item);
+  auto ctl = std::make_shared<menu_item_controller>(
+      menu_item_controller{new_item->downcast<menu_item_widget>(), parent});
+  new_item->parent = parent.get();
+  ctl->set_data(data);
+
+  while (after_index < 0) {
+    after_index = parent->children.size() + after_index + 1;
+  }
+
+  if (after_index >= parent->children.size()) {
+    parent->children.push_back(new_item);
+  } else {
+    parent->children.insert(parent->children.begin() + after_index, new_item);
+  }
+
+  if (parent->parent->downcast<menu_widget>()->animate_appear_started) {
+    new_item->reset_appear_animation(0);
+  }
+
+  return ctl;
 }
 } // namespace mb_shell::js

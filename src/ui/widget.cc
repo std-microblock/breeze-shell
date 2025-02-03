@@ -15,6 +15,7 @@ void ui::widget::update_child_basic(update_context &ctx,
     w = nullptr;
     return;
   }
+  w->parent = this;
   w->update(ctx);
 }
 

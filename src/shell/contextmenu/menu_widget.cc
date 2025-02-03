@@ -13,9 +13,11 @@
 #include <ranges>
 #include <vector>
 
-void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
+void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   auto icon_width = config::current->context_menu.theme.font_size + 2;
+  if (!has_icon_padding && item.name)
+    icon_width = 0;
   auto c = menu_render::current.value()->light_color ? 0 : 1;
   if (item.type == menu_item::type::spacer) {
     ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
@@ -37,13 +39,12 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     item.icon_updated = false;
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto paint =
-        nvgImagePattern(ctx.ctx, *x + icon_padding + margin + ctx.offset_x,
-                        paintY + ctx.offset_y, icon_width, icon_width, 0,
-                        icon_img->id, *opacity / 255.f);
+    auto imageX = *x + margin + icon_padding;
+    auto paint = ctx.imagePattern(imageX, paintY, icon_width, icon_width, 0,
+                                  icon_img->id, *opacity / 255.f);
 
     ctx.beginPath();
-    ctx.rect(*x + icon_padding + margin, paintY, icon_width, icon_width);
+    ctx.rect(imageX, paintY, icon_width, icon_width);
     ctx.fillPaint(paint);
     ctx.fill();
   }
@@ -53,8 +54,9 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
   auto font_size = config::current->context_menu.theme.font_size;
   ctx.fontSize(font_size);
   ctx.textAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-  ctx.text(round(*x + text_padding + icon_width + icon_padding * 2),
-           round(*y + *height / 2), item.name->c_str(), nullptr);
+  if (item.name)
+    ctx.text(round(*x + text_padding + icon_width + icon_padding * 2),
+             round(*y + *height / 2), item.name->c_str(), nullptr);
 
   if (item.submenu) {
     static auto icon_unfold = std::format(
@@ -91,10 +93,10 @@ void mb_shell::menu_item_widget::render(ui::nanovg_context ctx) {
     }
   }
 }
-void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
+void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
   super::update(ctx);
 
-  if (parent_menu->dying_time) {
+  if (parent->dying_time) {
     bg_opacity->animate_to(0);
     opacity->animate_to(0);
     return;
@@ -153,7 +155,8 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 
         submenu_wid->update(ctx);
         auto direction = mouse_menu_widget_main::calculate_direction(
-            submenu_wid.get(), ctx, anchor_x, anchor_y, parent_menu->direction);
+            submenu_wid.get(), ctx, anchor_x, anchor_y,
+            popup_direction::bottom_right);
 
         if (direction == popup_direction::top_left ||
             direction == popup_direction::bottom_left) {
@@ -169,10 +172,12 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
 
         submenu_wid->reset_animation(direction == popup_direction::top_left ||
                                      direction == popup_direction::top_right);
-
+        auto parent_menu = parent->downcast<menu_widget>();
+        if (!parent_menu)
+          parent_menu = parent->parent->downcast<menu_widget>();
         parent_menu->current_submenu = submenu_wid;
-        submenu_wid->parent_menu = parent_menu;
         parent_menu->rendering_submenus.push_back(submenu_wid);
+        submenu_wid->parent_menu = parent_menu.get();
       }
     } else {
       if (submenu_wid) {
@@ -191,17 +196,22 @@ void mb_shell::menu_item_widget::update(ui::update_context &ctx) {
     submenu_wid = nullptr;
   }
 }
-float mb_shell::menu_item_widget::measure_width(ui::update_context &ctx) {
+float mb_shell::menu_item_normal_widget::measure_width(
+    ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
   }
   auto font_size = config::current->context_menu.theme.font_size;
-  return ctx.vg.measureText(item.name->c_str()).first + text_padding * 2 +
-         margin * 2 +
-         (font_size + 2
-          /* icon_width */
-          ) +
-         +icon_padding * 2 + (item.submenu ? font_size + 2 : 0);
+  ctx.vg.fontSize(font_size);
+  auto text_width =
+      item.name
+          ? (ctx.vg.measureText(item.name->c_str()).first + text_padding * 2)
+          : 0;
+  auto icon_width = (has_icon_padding || icon_img) ? (icon_padding * 2) : 0;
+  if (icon_img)
+    icon_width += font_size + 2;
+  return text_width + margin * 2 + icon_width +
+         (item.submenu ? font_size + 2 : 0);
 }
 
 std::shared_ptr<ui::rect_widget>
@@ -371,7 +381,7 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   auto rst = ctx.with_reset_offset();
   render_children(rst, rendering_submenus);
 }
-void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
+void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
     this->opacity->set_delay(0);
   };
@@ -591,14 +601,14 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
                                                             : "unknown");
 }
 
-bool mb_shell::menu_item_widget::check_hit(const ui::update_context &ctx) {
+bool mb_shell::menu_item_normal_widget::check_hit(
+    const ui::update_context &ctx) {
   return ui::widget::check_hit(ctx) ||
          (submenu_wid && submenu_wid->check_hit(ctx));
 }
 
-mb_shell::menu_item_widget::menu_item_widget(menu_item item,
-                                             menu_widget *parent_menu)
-    : super(), parent_menu(parent_menu) {
+mb_shell::menu_item_normal_widget::menu_item_normal_widget(menu_item item)
+    : super() {
   opacity->reset_to(0);
   this->item = item;
 }
@@ -611,7 +621,7 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
-    auto mi = std::make_shared<menu_item_widget>(item, this);
+    auto mi = std::make_shared<menu_item_normal_widget>(item);
     item_widgets.push_back(mi);
   }
 
@@ -620,13 +630,17 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 }
 void mb_shell::menu_widget::update_icon_width() {
   bool has_icon = std::ranges::any_of(item_widgets, [](auto &item) {
-    auto i = item->template downcast<menu_item_widget>()->item;
+    if (!item->template downcast<menu_item_normal_widget>())
+      return false;
+    auto i = item->template downcast<menu_item_normal_widget>()->item;
     return i.icon_bitmap.has_value() || i.icon_svg.has_value() ||
            i.type == menu_item::type::toggle;
   });
 
   for (auto &item : item_widgets) {
-    auto mi = item->template downcast<menu_item_widget>();
+    auto mi = item->template downcast<menu_item_normal_widget>();
+    if (!mi)
+      continue;
     if (!has_icon) {
       mi->has_icon_padding = 0;
     } else {
@@ -634,7 +648,8 @@ void mb_shell::menu_widget::update_icon_width() {
     }
   }
 };
-void mb_shell::menu_item_widget::reload_icon_img(ui::nanovg_context ctx) {
+void mb_shell::menu_item_normal_widget::reload_icon_img(
+    ui::nanovg_context ctx) {
   if (item.icon_bitmap)
     icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
   else if (item.icon_svg) {
@@ -658,4 +673,26 @@ void mb_shell::menu_widget::close() {
       parent_menu->current_submenu = nullptr;
     }
   }
+}
+mb_shell::menu_item_widget::menu_item_widget() {}
+void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
+  for (auto &child : get_children<menu_item_widget>())
+    child->reset_appear_animation(delay);
+}
+void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
+  super::update(ctx);
+  float x = 0;
+  float gap = 5;
+  float max_height = 0;
+  for (auto &item : children) {
+    item->x->reset_to(x);
+    item->y->reset_to(0);
+    auto item_width = item->measure_width(ctx);
+    item->width->reset_to(item_width);
+    x += item_width + gap;
+    max_height = std::max(max_height, item->measure_height(ctx));
+  }
+
+  width->reset_to(x - gap);
+  height->reset_to(max_height);
 }

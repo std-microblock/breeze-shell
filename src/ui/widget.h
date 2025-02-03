@@ -121,6 +121,15 @@ struct widget : std::enable_shared_from_this<widget> {
   float _debug_offset_cache[2];
   bool enable_child_clipping = false;
 
+  // Time until the widget is removed from the tree
+  // in milliseconds
+  // Widget itself will update this value
+  // And its parent is responsible for removing it
+  // when the time is up
+  dying_time dying_time;
+
+  widget* parent = nullptr;
+
   virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);
   virtual ~widget() = default;
@@ -176,13 +185,6 @@ struct widget : std::enable_shared_from_this<widget> {
     }
     return res;
   }
-
-  // Time until the widget is removed from the tree
-  // in milliseconds
-  // Widget itself will update this value
-  // And its parent is responsible for removing it
-  // when the time is up
-  dying_time dying_time;
 };
 
 // A widget with child which lays out children in a row or column

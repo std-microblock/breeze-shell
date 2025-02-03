@@ -4,5 +4,4 @@ foreach ($pidx in $pids) {
 }
 
 xmake b inject
-xmake b shell
-xmake r inject new
+xmake b shell && xmake r inject new

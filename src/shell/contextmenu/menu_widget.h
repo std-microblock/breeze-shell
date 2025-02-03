@@ -13,17 +13,29 @@
 namespace mb_shell {
 
 struct menu_widget;
+
 struct menu_item_widget : public ui::widget {
   using super = ui::widget;
   menu_item item;
   ui::sp_anim_float opacity = anim_float(0, 200);
+  menu_item_widget();
+  virtual void reset_appear_animation(float delay);
+};
+
+struct menu_item_parent_widget : public menu_item_widget {
+  using super = menu_item_widget;
+  void update(ui::update_context &ctx) override;
+};
+
+struct menu_item_normal_widget : public menu_item_widget {
+  using super = menu_item_widget;
+  ui::sp_anim_float opacity = anim_float(0, 200);
   float text_padding = 8;
   float margin = config::current->context_menu.theme.margin;
   bool has_icon_padding = false;
-  float icon_padding = 10;
-  menu_widget *parent_menu;
-  menu_item_widget(menu_item item, menu_widget *parent_menu);
-  void reset_appear_animation(float delay);
+  float icon_padding = 3;
+  menu_item_normal_widget(menu_item item);
+  void reset_appear_animation(float delay) override;
 
   std::optional<ui::NVGImage> icon_img{};
   std::optional<ui::NVGImage> icon_unfold_img{};
@@ -61,7 +73,7 @@ struct menu_widget : public ui::widget_flex {
   std::shared_ptr<menu_widget> current_submenu;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
   std::vector<std::shared_ptr<widget>> item_widgets;
-  menu_widget *parent_menu;
+  menu_widget *parent_menu = nullptr;
 
   std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;
