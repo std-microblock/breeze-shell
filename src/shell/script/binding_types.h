@@ -481,6 +481,7 @@ struct breeze {
 struct win32 {
   static std::string resid_from_string(std::string str);
   static size_t load_library(std::string path);
+  static std::optional<std::string> env(std::string name);
 };
 
 } // namespace mb_shell::js

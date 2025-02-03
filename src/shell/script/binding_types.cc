@@ -633,4 +633,8 @@ std::string breeze::user_language() {
   GetUserDefaultLocaleName(lang, 10);
   return wstring_to_utf8(lang);
 }
+std::optional<std::string> win32::env(std::string name) {
+  return mb_shell::env(name);
+}
+
 } // namespace mb_shell::js
