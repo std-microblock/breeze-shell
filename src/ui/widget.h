@@ -129,6 +129,7 @@ struct widget : std::enable_shared_from_this<widget> {
   dying_time dying_time;
 
   widget* parent = nullptr;
+  render_target *owner_rt = nullptr;
 
   virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);

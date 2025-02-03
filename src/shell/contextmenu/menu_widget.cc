@@ -264,7 +264,6 @@ mb_shell::menu_widget::menu_widget() : super() {
   height->set_easing(ui::easing_type::mutation);
 }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
-  std::lock_guard lock(data_lock);
   if (dying_time) {
     if (dying_time.changed()) {
       y->animate_to(*y - 10);
@@ -350,7 +349,6 @@ bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
 }
 
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
-  std::lock_guard lock(data_lock);
   if (bg) {
     bg->render(ctx);
     ctx.transaction([&]() {

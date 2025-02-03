@@ -79,7 +79,6 @@ struct menu_widget : public ui::widget_flex {
   menu menu_data;
   menu_widget();
   popup_direction direction = popup_direction::bottom_right;
-  std::mutex data_lock;
   void init_from_data(menu menu_data);
   bool animate_appear_started = false;
   void reset_animation(bool reverse = false);

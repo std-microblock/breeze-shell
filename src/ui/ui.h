@@ -54,6 +54,7 @@ struct render_target {
   bool should_loop_stop_hide_as_close = false;
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::high_resolution_clock clock{};
+  std::mutex rt_lock{};
   decltype(clock.now()) last_time = clock.now();
   bool mouse_down = false, right_mouse_down = false;
   void* parent = nullptr;

@@ -204,6 +204,7 @@ std::expected<bool, std::string> render_target::init_global() {
   return future.get();
 }
 void render_target::render() {
+  std::lock_guard lock(rt_lock);
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);

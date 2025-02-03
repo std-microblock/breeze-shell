@@ -799,6 +799,14 @@ export class menu_controller {
   */
   append_menu: ((arg1: js_menu_data) => menu_item_controller)
             
+	
+/**
+  * 
+  * @param data: js_menu_data, after_index: number
+  * @returns menu_item_controller
+  */
+  append_menu_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+            
 }
     
 export class clipboard {

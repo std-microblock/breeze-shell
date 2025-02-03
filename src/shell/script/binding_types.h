@@ -341,13 +341,17 @@ struct menu_controller {
 
   // 在末尾添加菜单项
   // Append menu item at end
-  std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_item(mb_shell::js::js_menu_data data);
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_item(mb_shell::js::js_menu_data data) {
+    return append_item_after(data, -1);
+  }
 
   // 在开头添加菜单项
   // Prepend menu item at beginning
-  std::shared_ptr<mb_shell::js::menu_item_controller>
-  prepend_item(mb_shell::js::js_menu_data data);
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  prepend_item(mb_shell::js::js_menu_data data) {
+    return append_item_after(data, 0);
+  }
 
   // 在开头添加 Spacer
   // Prepend Spacer
@@ -386,6 +390,10 @@ struct menu_controller {
   inline std::shared_ptr<mb_shell::js::menu_item_controller>
   append_menu(mb_shell::js::js_menu_data data) {
     return append_item_after(data, -1);
+  }
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_menu_after(mb_shell::js::js_menu_data data, int after_index) {
+    return append_item_after(data, after_index);
   }
 
   ~menu_controller();
