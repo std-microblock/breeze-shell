@@ -9,6 +9,7 @@ const PLUGIN_SOURCES = {
 let current_source = 'Enlysure'
 const get_async = url => {
     url = url.replaceAll('//', '/').replaceAll(':/', '://')
+    shell.println(url)
     return new Promise((resolve, reject) => {
         shell.network.get_async(encodeURI(url), data => {
             resolve(data)
@@ -31,6 +32,7 @@ const splitIntoLines = (str, maxLen) => {
             }
 
             if (line.charAt(x) === '\n') {
+                x++;
                 break
             }
 
@@ -93,7 +95,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             })
                             
                             if (!cached_plugin_index) {
-                                cached_plugin_index = await get_async(PLUGIN_SOURCES[current_source] + 'index.json')
+                                cached_plugin_index = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json')
                             }
                             const data = JSON.parse(cached_plugin_index)
 
