@@ -280,7 +280,7 @@ int main() {
   }
   
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0, 0, 0, 0.3);
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
     glfwPollEvents();
