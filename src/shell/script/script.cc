@@ -56,7 +56,9 @@ void script_context::bind() {
 script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
+  bool has_update = false;
 
+  std::optional<std::thread> js_thread;
   auto reload_all = [&]() {
     std::println("Reloading all scripts");
     menu_callbacks_js.clear();
@@ -64,8 +66,12 @@ void script_context::watch_folder(const std::filesystem::path &path,
     *stop_signal = true;
     stop_signal = std::make_shared<int>(false);
 
+    if (js_thread)
+      js_thread->join();
+
     static std::mutex m;
-    std::thread([&, this, ss = stop_signal]() {
+
+    js_thread = std::thread([&, this, ss = stop_signal]() {
       std::lock_guard<std::mutex> lock(m);
       is_thread_js_main = true;
       std::setlocale(LC_CTYPE, ".UTF-8");
@@ -98,7 +104,8 @@ void script_context::watch_folder(const std::filesystem::path &path,
         auto a_pos = std::ranges::find(plugin_load_order, a_name);
         auto b_pos = std::ranges::find(plugin_load_order, b_name);
 
-        if (a_pos == plugin_load_order.end() && b_pos == plugin_load_order.end()) {
+        if (a_pos == plugin_load_order.end() &&
+            b_pos == plugin_load_order.end()) {
           return a_name < b_name;
         }
 
@@ -126,7 +133,21 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
       while (auto ptr = js) {
         if (ptr->ctx) {
-          auto r = js_std_loop(ptr->ctx, ss.get());
+          auto r = [&] {
+            __try {
+              return js_std_loop(ptr->ctx, ss.get());
+            } __except (EXCEPTION_EXECUTE_HANDLER) {
+              std::cerr << "Error in JS loop" << std::endl;
+              return -999;
+            }
+          }();
+
+          if (r == -999) {
+            has_update = true;
+            std::println("JS loop critical error! Restarting...");
+            return;
+          }
+
           js->has_pending_job = false;
           if (r) {
             js_std_dump_error(ptr->ctx);
@@ -141,12 +162,10 @@ void script_context::watch_folder(const std::filesystem::path &path,
         if (!js->has_pending_job)
           js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(30));
       }
-    }).detach();
+    });
   };
 
   reload_all();
-
-  bool has_update = false;
 
   filewatch::FileWatch<std::string> watch(
       path.generic_string(),
