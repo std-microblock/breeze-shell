@@ -8,7 +8,13 @@
 #include "Windows.h"
 
 void show_console () {
+    if (!GetConsoleWindow()) {
+        AllocConsole();
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+    }
     ShowWindow(GetConsoleWindow(), SW_SHOW);
+    SetForegroundWindow(GetConsoleWindow());
 }
 
 void mb_shell::install_error_handlers() {
@@ -16,6 +22,7 @@ void mb_shell::install_error_handlers() {
         show_console();
         std::cerr << "Unhandled exception: " << std::hex << ex->ExceptionRecord->ExceptionCode << std::endl;
         std::cerr << std::stacktrace::current() << std::endl;
+        Sleep(5000);
         return EXCEPTION_CONTINUE_EXECUTION;
     });
     
@@ -28,5 +35,6 @@ void mb_shell::install_error_handlers() {
         } catch (...) {
             std::cerr << "Uncaught exception of unknown type" << std::endl;
         }
+        Sleep(5000);
     });
 }
