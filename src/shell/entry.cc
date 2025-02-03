@@ -12,7 +12,6 @@
 #include "ui.h"
 #include "utils.h"
 
-
 #include "./contextmenu/contextmenu.h"
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
@@ -52,7 +51,7 @@ void main() {
 
   install_error_handlers();
   config::run_config_loader();
-  
+
   res_string_loader::init();
 
   static std::atomic_bool has_active_menu = false;
@@ -111,6 +110,12 @@ void main() {
     menu_render.rt->start_loop();
 
     has_active_menu = false;
+
+    if (menu_render.selected_menu) {
+      PostMessageW(hWnd, WM_COMMAND, *menu_render.selected_menu, 0);
+      PostMessageW(hWnd, WM_NULL, 0, 0);
+    }
+
     return menu_render.selected_menu.value_or(0);
   });
 
