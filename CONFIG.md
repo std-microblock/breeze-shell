@@ -1,6 +1,3 @@
-以下是基于 `config` 对象的 JSON 配置文件格式的 Markdown 文档：
-
-````markdown
 # 配置文件格式说明
 
 本项目的配置文件采用 JSON
@@ -62,7 +59,6 @@
   "debug_console": false
 }
 ```
-````
 
 ## 字段说明
 
