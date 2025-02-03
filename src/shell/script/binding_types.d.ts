@@ -1001,6 +1001,14 @@ export class win32 {
   */
   static load_library: ((arg1: string) => size_t)
             
+	
+/**
+  * 
+  * @param name: string
+  * @returns string | undefined
+  */
+  static env: ((arg1: string) => string | undefined)
+            
 }
     
 }

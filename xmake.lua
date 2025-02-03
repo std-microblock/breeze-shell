@@ -1,6 +1,8 @@
 set_project("shell")
 set_policy("compatibility.version", "3.0")
 
+local version = "0.1.2"
+
 set_languages("c++23")
 set_warnings("all") 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
@@ -41,8 +43,18 @@ target("shell")
     add_rules("utils.bin2c", {
         extensions = {".js"}
     })
+    set_version(version)
+    set_configdir("src/shell")
+    add_configfiles("src/shell/build_info.h.in")
+    on_config(function (package)
+        local git_commit_hash = os.iorun("git rev-parse --short HEAD"):trim()
+        local git_branch_name = os.iorun("git describe --all"):trim()
+        local build_date_time = os.date("%Y-%m-%d %H:%M:%S")
+        package:set("configvar", "GIT_COMMIT_HASH", git_commit_hash or "null")
+        package:set("configvar", "GIT_BRANCH_NAME", git_branch_name or "null")
+        package:set("configvar", "BUILD_DATE_TIME", build_date_time)
+    end)
     add_files("src/shell/script/script.js")
-
     add_files("src/shell/**/*.cc", "src/shell/*.cc", "src/shell/**/*.c")
     set_encodings("utf-8")
 

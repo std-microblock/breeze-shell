@@ -711,6 +711,7 @@ template<> struct js_bind<mb_shell::js::win32> {
             .constructor<>()
                 .static_fun<&mb_shell::js::win32::resid_from_string>("resid_from_string")
                 .static_fun<&mb_shell::js::win32::load_library>("load_library")
+                .static_fun<&mb_shell::js::win32::env>("env")
             ;
     }
 
