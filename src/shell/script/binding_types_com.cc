@@ -38,16 +38,14 @@ IShellBrowser *GetIShellBrowser(HWND hWnd) {
       return nullptr;
     }
 
-    MEMORY_BASIC_INFORMATION mbi;
+    MEMORY_BASIC_INFORMATION mbi = {};
     if (VirtualQuery(res, &mbi, sizeof(mbi)) == 0) {
       return nullptr;
     }
 
-    IShellView *psv;
-    if (SUCCEEDED(res->QueryActiveShellView(&psv))) {
-      psv->Release();
-      return res;
-    }
+    res->AddRef();
+    res->Release();
+    return res;
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     return nullptr;
   }
@@ -93,7 +91,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
-      if (IShellBrowser *psb = GetIShellBrowser(hWnd)) {
+      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
         IShellView *psv;
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
