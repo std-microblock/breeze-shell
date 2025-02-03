@@ -2,3 +2,4 @@ build
 compile_commands.json
 .xmake
 .cache
+build_info.h

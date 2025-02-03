@@ -249,7 +249,7 @@ mb_shell::menu_widget::create_bg(bool is_main) {
   } else {
     bg = std::make_shared<ui::rect_widget>();
     auto c = menu_render::current.value()->light_color ? 1 : 25 / 255.f;
-    bg->bg_color = nvgRGBAf(c, c, c, 0.9);
+    bg->bg_color = nvgRGBAf(c, c, c, 1);
   }
 
   bg->radius->reset_to(config::current->context_menu.theme.radius);
@@ -360,7 +360,7 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   if (bg) {
     bg->render(ctx);
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      ctx.globalCompositeOperation(NVG_DESTINATION_OUT);
       auto cl = bg->bg_color;
       cl.a = 1 - *bg->opacity / 255.f;
       ctx.fillColor(cl);
@@ -368,14 +368,17 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     });
   }
 
-  super::render(ctx);
-  ctx.scissor(*x, *y, *width, *height);
-  render_children(ctx.with_offset(*x, *y + *scroll_top), item_widgets);
+  ctx.transaction([&] {
+    super::render(ctx);
+    ctx.scissor(*x, *y, *width, *height);
+    render_children(ctx.with_offset(*x, *y + *scroll_top), item_widgets);
+  });
 
   if (bg_submenu) {
     bg_submenu->render(ctx.with_reset_offset());
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      ctx.globalCompositeOperation(NVG_DESTINATION_OUT);
+      ctx.resetScissor();
       auto cl = bg_submenu->bg_color;
       cl.a = 1 - *bg_submenu->opacity / 255.f;
       ctx.fillColor(cl);

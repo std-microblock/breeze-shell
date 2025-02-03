@@ -1,7 +1,0 @@
-#pragma once
-#define BREEZE_VERSION "0.1.2"
-#define BREEZE_VERSION_MAJOR 0
-#define BREEZE_VERSION_MINOR 1
-#define BREEZE_GIT_COMMIT_HASH "7006fe7"
-#define BREEZE_GIT_BRANCH_NAME "heads/master"
-#define BREEZE_BUILD_DATE_TIME "2025-02-03 18:02:11"
