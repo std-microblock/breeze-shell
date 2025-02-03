@@ -363,14 +363,13 @@ bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
 
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   if (bg) {
-    bg->render(ctx);
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_DESTINATION_OUT);
-      auto cl = bg->bg_color;
-      cl.a = 1 - *bg->opacity / 255.f;
+      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      auto cl = nvgRGBAf(0, 0, 0, 1 - *bg->opacity / 255.f);
       ctx.fillColor(cl);
       ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height, *bg->radius);
     });
+    bg->render(ctx);
   }
 
   ctx.transaction([&] {
@@ -380,17 +379,16 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   });
 
   if (bg_submenu) {
-    bg_submenu->render(ctx.with_reset_offset());
     ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_DESTINATION_OUT);
+      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
       ctx.resetScissor();
-      auto cl = bg_submenu->bg_color;
-      cl.a = 1 - *bg_submenu->opacity / 255.f;
+      auto cl = nvgRGBAf(0, 0, 0, 1 - *bg_submenu->opacity / 255.f);
       ctx.fillColor(cl);
       ctx.with_reset_offset().fillRoundedRect(
           *bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
           *bg_submenu->height, *bg_submenu->radius);
     });
+    bg_submenu->render(ctx.with_reset_offset());
   }
   auto rst = ctx.with_reset_offset();
   render_children(rst, rendering_submenus);

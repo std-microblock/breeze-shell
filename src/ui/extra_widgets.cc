@@ -179,6 +179,7 @@ void acrylic_background_widget::update_color() {
   pSetWindowCompositionAttribute((HWND)hwnd, &data);
 }
 void rect_widget::render(nanovg_context ctx) {
+  bg_color.a = *opacity / 255.f;
   ctx.fillColor(bg_color);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
 }
