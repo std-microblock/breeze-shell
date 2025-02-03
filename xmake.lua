@@ -1,7 +1,7 @@
 set_project("shell")
 set_policy("compatibility.version", "3.0")
 
-local version = "0.1.5"
+local version = "0.1.6"
 
 set_languages("c++23")
 set_warnings("all") 
