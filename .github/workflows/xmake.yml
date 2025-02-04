@@ -26,8 +26,8 @@ jobs:
     
     - name: build
       run: |
-        xmake f --toolchain=clang-cl
         xmake c -m releasedbg
+        xmake f --toolchain=clang-cl
         xmake b -y --verbose inject
         xmake b -y --verbose shell
 

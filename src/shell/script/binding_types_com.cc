@@ -7,13 +7,15 @@
 #include <optional>
 #include <print>
 
-#include "Windows.h"
-
-#include "atlalloc.h"
+#include <atlalloc.h>
 #include <atlbase.h>
 #include <exdisp.h>
+#include <shellapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <stdio.h>
+
+#include <windows.h>
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];
