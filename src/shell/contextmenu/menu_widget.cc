@@ -224,13 +224,12 @@ mb_shell::menu_widget::create_bg(bool is_main) {
   std::shared_ptr<ui::rect_widget> bg;
 
   if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
-    auto op = config::current->context_menu.theme.acrylic_opacity;
-    auto acrylic_color = nvgRGBAf(op, op, op, 0.5);
-    auto light_color = menu_render::current.value()->light_color;
 
-    if (light_color) {
-      acrylic_color = nvgRGBAf(1 - op, 1 - op, 1 - op, 0.5);
-    }
+    auto light_color = menu_render::current.value()->light_color;
+    auto acrylic_color = light_color ?
+      parse_color(config::current->context_menu.theme.acrylic_color_light) :
+      parse_color(config::current->context_menu.theme.acrylic_color_dark);
+      
     auto acrylic = std::make_shared<ui::acrylic_background_widget>(
         config::current->context_menu.theme.use_dwm_if_available
             ? is_win11_or_later()

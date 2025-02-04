@@ -29,11 +29,16 @@ struct config {
       float item_radius = 5;
       float margin = 5;
       float padding = 6;
-      float acrylic_opacity = 0.1;
       float text_padding = 8;
       float icon_padding = 4;
       float right_icon_padding = 20;
       float multibutton_line_gap = -6;
+
+      std::string acrylic_color_light = "#fefefe00";
+      std::string acrylic_color_dark = "#28282800";
+
+      // unused, only for backward compatibility
+      float acrylic_opacity = 0.1;
 
       struct animation {
         struct item {

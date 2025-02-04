@@ -1,4 +1,5 @@
 #pragma once
+#include "nanovg.h"
 #include <optional>
 #include <string>
 
@@ -10,4 +11,5 @@ bool is_light_mode();
 bool is_acrylic_available();
 std::optional<std::string> env(const std::string &name);
 bool is_memory_readable(const void *ptr);
+NVGcolor parse_color(const std::string &str);
 } // namespace mb_shell

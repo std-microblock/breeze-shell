@@ -1,8 +1,10 @@
 #include "utils.h"
 #include <dwmapi.h>
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 #include <codecvt>
 #include <iostream>
+#include <vector>
+#include <sstream>
 
 #include "windows.h"
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
@@ -72,4 +74,72 @@ bool mb_shell::is_memory_readable(const void *ptr) {
   }
   DWORD mask = PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
   return (mbi.Protect & mask) != 0;
+}
+NVGcolor mb_shell::parse_color(const std::string &str) {
+  // allowed:
+  // #RRGGBB
+  // #RRGGBBAA
+  // #RGB
+  // #RGBA
+  // RRGGBB
+  // RRGGBBAA
+  // RGB
+  // RGBA
+  // r, g,b
+  // r,g, b,a
+
+    std::string s = str;
+    if (s.empty()) return nvgRGBA(0, 0, 0, 255);
+
+    // Remove leading '#' if present
+    if (s[0] == '#') s = s.substr(1);
+
+    // Handle comma-separated values
+    if (s.find(',') != std::string::npos) {
+      std::vector<int> components;
+      std::stringstream ss(s);
+      std::string item;
+      while (std::getline(ss, item, ',')) {
+        components.push_back(std::stoi(item));
+      }
+      
+      if (components.size() == 3) {
+        return nvgRGB(components[0], components[1], components[2]);
+      }
+      if (components.size() == 4) {
+        return nvgRGBA(components[0], components[1], components[2], components[3]);
+      }
+    }
+
+    // Handle hex values
+    switch (s.length()) {
+      case 3: // RGB
+        return nvgRGB(
+          17 * std::stoi(s.substr(0, 1), nullptr, 16),
+          17 * std::stoi(s.substr(1, 1), nullptr, 16),
+          17 * std::stoi(s.substr(2, 1), nullptr, 16)
+        );
+      case 4: // RGBA
+        return nvgRGBA(
+          17 * std::stoi(s.substr(0, 1), nullptr, 16),
+          17 * std::stoi(s.substr(1, 1), nullptr, 16),
+          17 * std::stoi(s.substr(2, 1), nullptr, 16),
+          17 * std::stoi(s.substr(3, 1), nullptr, 16)
+        );
+      case 6: // RRGGBB
+        return nvgRGB(
+          std::stoi(s.substr(0, 2), nullptr, 16),
+          std::stoi(s.substr(2, 2), nullptr, 16),
+          std::stoi(s.substr(4, 2), nullptr, 16)
+        );
+      case 8: // RRGGBBAA
+        return nvgRGBA(
+          std::stoi(s.substr(0, 2), nullptr, 16),
+          std::stoi(s.substr(2, 2), nullptr, 16),
+          std::stoi(s.substr(4, 2), nullptr, 16),
+          std::stoi(s.substr(6, 2), nullptr, 16)
+        );
+    }
+
+    return nvgRGBA(0, 0, 0, 255); // Default black
 }

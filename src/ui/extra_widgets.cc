@@ -1,15 +1,15 @@
 #include "extra_widgets.h"
-#include "GLFW/glfw3.h"
 #include "widget.h"
 #include <future>
 #include <iostream>
-#include <thread>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "GLFW/glfw3native.h"
 #include <print>
+#include <thread>
 
 #include "swcadef.h"
 #include "ui.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "GLFW/glfw3.h"
+#include "GLFW/glfw3native.h"
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   if (msg == WM_MOUSEACTIVATE) {
     return MA_NOACTIVATE;
@@ -34,8 +34,9 @@ namespace ui {
 void acrylic_background_widget::update(update_context &ctx) {
   if (!render_thread) {
     auto win = glfwGetCurrentContext();
-    if(!win) {
-      std::cerr << "[acrylic window] Failed to get current context" << std::endl;
+    if (!win) {
+      std::cerr << "[acrylic window] Failed to get current context"
+                << std::endl;
       return;
     }
     auto handle = glfwGetWin32Window(win);
@@ -167,12 +168,17 @@ acrylic_background_widget::~acrylic_background_widget() {
   if (render_thread)
     render_thread->join();
 }
+
+// b a r g
+// r g b a
+
 void acrylic_background_widget::update_color() {
   ACCENT_POLICY accent = {
       ACCENT_ENABLE_ACRYLICBLURBEHIND,
       Flags::GradientColor | Flags::AllBorder | Flags::AllowSetWindowRgn,
-      RGB(acrylic_bg_color.r * 255, acrylic_bg_color.g * 255,
-          acrylic_bg_color.b * 255),
+      // GradientColor uses BGRA
+      ARGB(acrylic_bg_color.a * 255, acrylic_bg_color.b * 255,
+           acrylic_bg_color.g * 255, acrylic_bg_color.r * 255),
       0};
   WINDOWCOMPOSITIONATTRIBDATA data = {WCA_ACCENT_POLICY, &accent,
                                       sizeof(accent)};

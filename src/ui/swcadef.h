@@ -45,6 +45,10 @@ enum Flags : UINT {
   FullScreen1 = 0xFFFFFFFF
 };
 
+inline constexpr DWORD ARGB(DWORD a, DWORD r, DWORD g, DWORD b) {
+  return (a << 24) | (r << 16) | (g << 8) | b;
+}
+
 // UserDefinedType: ACCENT_POLICY
 // Data           :   this+0x0, Member, Type: enum ACCENT_STATE, AccentState
 // Data           :   this+0x4, Member, Type: unsigned int, AccentFlags
