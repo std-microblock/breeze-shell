@@ -69,16 +69,22 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       continue;
     }
 
-    if (info.fType & MFT_RADIOCHECK) {
-      item.type = menu_item::type::toggle;
-      item.checked = info.fState & MFS_CHECKED;
+    if (info.fType & MFT_RADIOCHECK || info.fState & MFS_CHECKED) {
+      auto c = is_light_mode() ? 0 : 1;
+      if ((!item.icon_bitmap && !item.icon_svg)) {
+        item.icon_svg = std::format(
+            R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
+            c ? "white" : "black");
+      }
     }
 
     if (info.hSubMenu) {
-      item.submenu = [data = menu::construct_with_hmenu(info.hSubMenu, hWnd, false)](std::shared_ptr<menu_widget> mw) {
-                        std::println("init from data");
-        mw->init_from_data(data);
-      };
+      item.submenu =
+          [data = menu::construct_with_hmenu(info.hSubMenu, hWnd, false)](
+              std::shared_ptr<menu_widget> mw) {
+            std::println("init from data");
+            mw->init_from_data(data);
+          };
     } else {
       item.action = [=]() mutable {
         menu_render::current.value()->selected_menu = info.wID;
@@ -95,7 +101,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       item.name = wstring_to_utf8(strip_extra_infos(buffer));
       auto id_stripped = res_string_loader::string_to_id(buffer);
       if (std::get_if<size_t>(&id_stripped)) {
-        item.name_resid = res_string_loader::string_to_id_string(strip_extra_infos(buffer));
+        item.name_resid =
+            res_string_loader::string_to_id_string(strip_extra_infos(buffer));
       } else {
         item.name_resid = res_string_loader::string_to_id_string(buffer);
       }

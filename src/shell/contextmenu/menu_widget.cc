@@ -190,16 +190,6 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
     }
   }
 
-  if (item.type == menu_item::type::toggle) {
-    auto c = menu_render::current.value()->light_color ? 0 : 1;
-    if ((!item.icon_bitmap && !item.icon_svg) && item.checked) {
-      item.icon_svg = std::format(
-          R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
-          c ? "white" : "black");
-      item.icon_updated = true;
-    }
-  }
-
   if (submenu_wid && submenu_wid->dying_time.has_value) {
     submenu_wid = nullptr;
   }
@@ -648,8 +638,7 @@ void mb_shell::menu_widget::update_icon_width() {
     if (!item->template downcast<menu_item_normal_widget>())
       return false;
     auto i = item->template downcast<menu_item_normal_widget>()->item;
-    return i.icon_bitmap.has_value() || i.icon_svg.has_value() ||
-           i.type == menu_item::type::toggle;
+    return i.icon_bitmap.has_value() || i.icon_svg.has_value();
   });
 
   for (auto &item : item_widgets) {

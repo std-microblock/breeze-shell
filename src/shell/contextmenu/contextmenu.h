@@ -24,14 +24,12 @@ struct menu {
 struct menu_item {
   enum class type {
     button,
-    toggle,
     spacer,
   } type = type::button;
 
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
-  bool checked = false;
   std::optional<size_t> icon_bitmap;
   std::optional<std::string> icon_svg;
   bool icon_updated = false;
