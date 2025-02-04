@@ -22,6 +22,7 @@
 #include <windows.h>
 
 #include <psapi.h>
+#include <winuser.h>
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];
@@ -41,6 +42,30 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
   return nullptr;
 }
 
+std::optional<std::pair<HWND, CComPtr<IShellBrowser>>>
+hwnd_from_disp(CComPtr<IDispatch> spdisp) {
+  if (!spdisp)
+    return {};
+  CComPtr<IServiceProvider> spServiceProvider;
+
+  if (FAILED(spdisp->QueryInterface(IID_PPV_ARGS(&spServiceProvider))))
+    return {};
+
+  CComPtr<IShellBrowser> spBrowser;
+  if (FAILED(spServiceProvider->QueryService(SID_STopLevelBrowser,
+                                             IID_PPV_ARGS(&spBrowser))))
+    return {};
+
+  if (!spBrowser)
+    return {};
+
+  HWND hwnd;
+  if (FAILED(spBrowser->GetWindow(&hwnd)))
+    return {};
+
+  return std::make_pair(hwnd, spBrowser);
+}
+
 std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> GetIShellBrowsers() {
   std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> res;
   CComPtr<IShellWindows> spShellWindows;
@@ -50,44 +75,33 @@ std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> GetIShellBrowsers() {
   CComVariant vtEmpty;
 
   // iterate through all shell windows
-  long lhwnd;
   CComPtr<IDispatch> spdisp;
+
   long cnt = 0;
   spShellWindows->get_Count(&cnt);
-
   for (long i = 0; i < cnt; i++) {
     CComVariant index(i);
-    if (spShellWindows->Item(index, &spdisp) == S_OK) {
-      CComPtr<IShellBrowser> spBrowser;
-    } else {
-      spShellWindows->FindWindowSW(&vtLoc, &vtEmpty, SWC_DESKTOP, &lhwnd,
-                                   SWFO_NEEDDISPATCH, &spdisp);
-    }
-
-    if (!spdisp)
-      continue;
-
-    CComPtr<IServiceProvider> spServiceProvider;
-
-    if (FAILED(spdisp->QueryInterface(IID_PPV_ARGS(&spServiceProvider))))
-      continue;
-
-    CComPtr<IShellBrowser> spBrowser;
-    if (FAILED(spServiceProvider->QueryService(SID_STopLevelBrowser,
-                                               IID_PPV_ARGS(&spBrowser))))
-      continue;
-
-    if (!spBrowser)
-      continue;
-
-    HWND hwnd;
-    if (FAILED(spBrowser->GetWindow(&hwnd)))
-      continue;
-
-    res.push_back({hwnd, spBrowser});
+    spShellWindows->Item(index, &spdisp);
+    if (auto r = hwnd_from_disp(spdisp))
+      res.push_back(*r);
   }
 
   return res;
+}
+
+auto GetDesktopIShellBrowser() {
+  auto spShellWindows = CComPtr<IShellWindows>();
+  spShellWindows.CoCreateInstance(CLSID_ShellWindows);
+
+  CComVariant vtLoc(CSIDL_DESKTOP);
+  CComVariant vtEmpty;
+
+  long lhwnd;
+  CComPtr<IDispatch> spdisp;
+  spShellWindows->FindWindowSW(&vtLoc, &vtEmpty, SWC_DESKTOP, &lhwnd,
+                               SWFO_NEEDDISPATCH, &spdisp);
+
+  return hwnd_from_disp(spdisp);
 }
 
 CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
@@ -132,15 +146,9 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
   auto res = dfs(hWnd);
 
   if (!res) {
-    // if the window is shell window, check GetShellWindow
-    // get class name
-    std::string class_name(256, '\0');
-    if (GetClassNameA(hWnd, class_name.data(), class_name.size())) {
-      class_name.resize(strlen(class_name.c_str()));
-      if (class_name == "WorkerW" || class_name == "Progman") {
-        res = GetIShellBrowser(GetShellWindow());
-      }
-    }
+    // if the window is shell window, we assume it's the desktop
+    if (auto res = GetDesktopIShellBrowser())
+      return res->second;
   }
 
   return res;
@@ -167,8 +175,9 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       return event_data;
     }
 
-    if (class_name == "SysListView32" || class_name == "DirectUIHWND" || true) {
-      std::printf("Focused window is a folder view\n");
+    if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
+        class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
+      std::printf("Focused window is a folder view(hwnd: %p)\n", focused_hwnd);
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
