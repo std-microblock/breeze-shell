@@ -108,10 +108,10 @@ std::expected<bool, std::string> render_target::init() {
   }
 
   if (no_focus) {
-    ShowWindow(h, SW_SHOWNOACTIVATE);
     SetWindowLongPtr(h, GWL_EXSTYLE,
                      GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                          WS_EX_NOACTIVATE);
+    ShowWindow(h, SW_SHOWNOACTIVATE);
   } else {
     ShowWindow(h, SW_SHOWNORMAL);
   }
@@ -314,7 +314,13 @@ void render_target::post_main_thread_task(std::function<void()> task) {
   main_thread_tasks.push_back(std::move(task));
   glfwPostEmptyEvent();
 }
-void render_target::show() { ShowWindow(glfwGetWin32Window(window), SW_SHOW); }
+void render_target::show() {
+  if (no_focus) {
+    ShowWindow(glfwGetWin32Window(window), SW_SHOWNOACTIVATE);
+  } else {
+    ShowWindow(glfwGetWin32Window(window), SW_SHOWNORMAL);
+  }
+}
 void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
   glfwMakeContextCurrent(nullptr);
