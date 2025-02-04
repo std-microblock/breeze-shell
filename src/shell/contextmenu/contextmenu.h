@@ -17,7 +17,6 @@ struct menu {
   std::vector<menu_item> items;
   void *parent_window = nullptr;
   bool is_top_level = false;
-  bool is_owner_draw = false;
 
   static menu construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true);
 };

@@ -103,12 +103,15 @@ void main() {
 
   NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
                                HWND hWnd, LPTPMPARAMS lptpm) {
-    has_active_menu = true;
-    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-    if (menu.is_owner_draw) {
+    if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
+        config::current->context_menu.ignore_owner_draw) {
       return NtUserTrackHook->call_trampoline<size_t>(hMenu, uFlags, x, y, hWnd,
                                                       lptpm);
     }
+
+    
+    has_active_menu = true;
+    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
 
     menu_render.rt->last_time = menu_render.rt->clock.now();

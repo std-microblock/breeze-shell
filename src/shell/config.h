@@ -47,6 +47,7 @@ struct config {
     } theme;
 
     bool vsync = true;
+    bool ignore_owner_draw = true;
 
     struct position {
       int padding_vertical = 20;
