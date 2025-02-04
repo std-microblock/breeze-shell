@@ -3,15 +3,17 @@
 
 #include <filesystem>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <print>
 
-#include "shlobj_core.h"
-#include <memory>
-#include <oleacc.h>
-#include <optional>
-#include <shobjidl_core.h>
-#include <windows.h>
-#include <winuser.h>
+#include "Windows.h"
+
+#include "atlalloc.h"
+#include <atlbase.h>
+#include <exdisp.h>
+#include <shlobj.h>
+#include <shlwapi.h>
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];
@@ -31,38 +33,106 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
   return nullptr;
 }
 
-IShellBrowser *GetIShellBrowser(HWND hWnd) {
-  __try {
-    auto res = (IShellBrowser *)::SendMessageW(hWnd, WM_USER + 7, 0, 0);
-    if (!res) {
-      return nullptr;
-    }
-
-    MEMORY_BASIC_INFORMATION mbi = {};
-    if (VirtualQuery(res, &mbi, sizeof(mbi)) == 0) {
-      return nullptr;
-    }
-
-    res->AddRef();
-    res->Release();
-    return res;
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
+CComPtr<IShellBrowser> GetIShellBrowser(HWND hWnd) {
+  if (!hWnd)
     return nullptr;
+  CComPtr<IShellWindows> spShellWindows;
+  spShellWindows.CoCreateInstance(CLSID_ShellWindows);
+
+  CComVariant vtLoc(CSIDL_DESKTOP);
+  CComVariant vtEmpty;
+
+  // iterate through all shell windows
+  long lhwnd;
+  CComPtr<IDispatch> spdisp;
+  long cnt = 0;
+  spShellWindows->get_Count(&cnt);
+
+  for (long i = 0; i < cnt; i++) {
+    CComVariant index(i);
+    if (spShellWindows->Item(index, &spdisp) == S_OK) {
+      CComPtr<IShellBrowser> spBrowser;
+    } else {
+      spShellWindows->FindWindowSW(&vtLoc, &vtEmpty, SWC_DESKTOP, &lhwnd,
+                                   SWFO_NEEDDISPATCH, &spdisp);
+    }
+
+    if (!spdisp)
+      continue;
+
+    CComPtr<IServiceProvider> spServiceProvider;
+
+    if (FAILED(spdisp->QueryInterface(IID_PPV_ARGS(&spServiceProvider))))
+      continue;
+
+    CComPtr<IShellBrowser> spBrowser;
+    if (FAILED(spServiceProvider->QueryService(SID_STopLevelBrowser,
+                                               IID_PPV_ARGS(&spBrowser))))
+      continue;
+
+    if (!spBrowser)
+      continue;
+
+    HWND hwnd;
+    if (FAILED(spBrowser->GetWindow(&hwnd)))
+      continue;
+    std::println("hwnd: {}\n", (void *)hwnd);
+
+    if (hwnd == hWnd) {
+      return spBrowser;
+    } else {
+      std::println("hwnd: {} != {}\n", (void *)hwnd, (void *)hWnd);
+    }
   }
 
   return nullptr;
 }
 
-IShellBrowser *GetIShellBrowserRecursive(HWND hWnd) {
-  if (IShellBrowser *psb = GetIShellBrowser(hWnd)) {
-    return psb;
-  }
-
-  if (GetParent(hWnd) == NULL || GetParent(hWnd) == hWnd) {
+CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
+  if (!hWnd)
     return nullptr;
+
+  std::unordered_set<HWND> recorded_hwnds;
+
+  auto dfs = [&](this auto &self, HWND hwnd) -> CComPtr<IShellBrowser> {
+    if (!hwnd || recorded_hwnds.count(hwnd))
+      return nullptr;
+    recorded_hwnds.insert(hwnd);
+
+    if (CComPtr<IShellBrowser> psb = GetIShellBrowser(hwnd))
+      return psb;
+
+    // iterate through child windows
+    for (HWND hwnd = GetWindow(hWnd, GW_CHILD); hwnd != NULL;
+         hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+      CComPtr<IShellBrowser> psb = self(hwnd);
+      if (psb)
+        return psb;
+    }
+    // iterate through parent windows
+    for (HWND hwnd = GetParent(hWnd); hwnd; hwnd = GetParent(hwnd)) {
+      CComPtr<IShellBrowser> psb = self(hwnd);
+      if (psb)
+        return psb;
+    }
+    return nullptr;
+  };
+
+  auto res = dfs(hWnd);
+
+  if (!res) {
+    // if the window is shell window, check GetShellWindow
+    // get class name
+    std::string class_name(256, '\0');
+    if (GetClassNameA(hWnd, class_name.data(), class_name.size())) {
+      class_name.resize(strlen(class_name.c_str()));
+      if (class_name == "WorkerW" || class_name == "Progman") {
+        res = GetIShellBrowser(GetShellWindow());
+      }
+    }
   }
 
-  return GetIShellBrowserRecursive(GetParent(hWnd));
+  return res;
 }
 
 namespace mb_shell::js {
@@ -91,7 +161,22 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
-      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
+      IShellBrowser *psb = GetIShellBrowserRecursive(hWnd);
+
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetActiveWindow());
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetAncestor(hWnd, GA_ROOT));
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetFocus());
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetForegroundWindow());
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetShellWindow());
+      if (!psb)
+        psb = GetIShellBrowserRecursive(GetDesktopWindow());
+
+      if (psb) {
         IShellView *psv;
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
@@ -149,6 +234,8 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
           }
           psv->Release();
         }
+      } else {
+        std::printf("Failed to get IShellBrowser\n");
       }
     }
   }
