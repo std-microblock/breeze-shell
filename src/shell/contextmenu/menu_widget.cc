@@ -13,6 +13,10 @@
 #include <ranges>
 #include <vector>
 
+/*
+| padding | icon_padding | icon | icon_padding | text_padding | text |
+text_padding | right_icon_padding | right_icon | right_icon_padding |
+*/
 void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
   auto icon_width = config::current->context_menu.theme.font_size + 2;
@@ -210,9 +214,7 @@ float mb_shell::menu_item_normal_widget::measure_width(
 
   // left icon
   if (has_icon_padding || icon_img)
-    width += icon_padding * 2;
-  if (icon_img)
-    width += font_size + 2;
+    width += icon_padding * 2 + font_size + 2;
 
   // text
   ctx.vg.fontSize(font_size);
