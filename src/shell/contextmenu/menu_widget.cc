@@ -470,9 +470,11 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
   }
 
   auto padding_vertical =
-           config::current->context_menu.position.padding_horizontal,
+           config::current->context_menu.position.padding_horizontal *
+           ctx.rt.dpi_scale,
        padding_horizontal =
-           config::current->context_menu.position.padding_vertical;
+           config::current->context_menu.position.padding_vertical *
+           ctx.rt.dpi_scale;
 
   if (x < padding_vertical) {
     x = padding_vertical;
@@ -487,7 +489,8 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
   if (menu_height * ctx.rt.dpi_scale >
       ctx.screen.height - padding_horizontal * 2) {
     y = padding_horizontal;
-    menu_wid->max_height = ctx.screen.height - padding_horizontal * 2;
+    menu_wid->max_height =
+        ctx.screen.height / ctx.rt.dpi_scale - padding_horizontal * 2;
   } else if (top_overflow) {
     y = padding_horizontal;
   } else if (bottom_overflow) {
