@@ -1,12 +1,15 @@
 #include "../utils.h"
 #include "binding_types.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <print>
+#include <ranges>
 
+// Windows Headers
 #include <atlalloc.h>
 #include <atlbase.h>
 #include <exdisp.h>
@@ -15,7 +18,10 @@
 #include <shlwapi.h>
 #include <stdio.h>
 
+#include <unordered_map>
 #include <windows.h>
+
+#include <psapi.h>
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];
@@ -35,8 +41,7 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
   return nullptr;
 }
 
-std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>>
-GetIShellBrowsers() {
+std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> GetIShellBrowsers() {
   std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> res;
   CComPtr<IShellWindows> spShellWindows;
   spShellWindows.CoCreateInstance(CLSID_ShellWindows);
@@ -231,8 +236,58 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     }
   }
 
-  event_data.window_titlebar = std::make_shared<window_titlebar_controller>();
-  (*event_data.window_titlebar)->$hwnd = hWnd;
+  if (hWnd) {
+
+    // get window position
+    RECT rect;
+    GetWindowRect(hWnd, &rect);
+    caller_window_data window_info;
+    window_info.x = rect.left;
+    window_info.y = rect.top;
+    window_info.width = rect.right - rect.left;
+    window_info.height = rect.bottom - rect.top;
+    // get window title
+    wchar_t title[256];
+    GetWindowTextW(hWnd, title, sizeof(title));
+    window_info.title = mb_shell::wstring_to_utf8(title);
+
+    // get executable path
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                  FALSE, pid);
+
+    if (hProcess) {
+      wchar_t path[MAX_PATH];
+      if (GetModuleFileNameExW(hProcess, NULL, path, MAX_PATH)) {
+        window_info.executable_path = mb_shell::wstring_to_utf8(path);
+      }
+      CloseHandle(hProcess);
+    }
+
+    // get props
+    // EnumProps
+    static std::unordered_map<std::string, size_t> prop_map;
+    prop_map = {};
+    EnumPropsW(hWnd, [](HWND hWnd, auto lpszString, HANDLE hData) -> BOOL {
+      if (is_memory_readable(lpszString))
+        prop_map[mb_shell::wstring_to_utf8(lpszString)] = (size_t)hData;
+      else
+        prop_map[std::to_string((size_t)lpszString)] = (size_t)hData;
+      return TRUE;
+    });
+
+    std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
+                        return window_prop_data{pair.first, pair.second};
+                      }),
+                      std::back_inserter(window_info.props));
+
+    event_data.window_info = window_info;
+  }
+
+  // event_data.window_titlebar =
+  // std::make_shared<window_titlebar_controller>();
+  // (*event_data.window_titlebar)->$hwnd = hWnd;
 
   return event_data;
 }

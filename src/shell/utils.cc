@@ -65,3 +65,11 @@ std::optional<std::string> mb_shell::env(const std::string &name) {
   }
   return wstring_to_utf8(buffer);
 }
+bool mb_shell::is_memory_readable(const void *ptr) {
+  MEMORY_BASIC_INFORMATION mbi;
+  if (!VirtualQuery(ptr, &mbi, sizeof(mbi))) {
+    return false;
+  }
+  DWORD mask = PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+  return (mbi.Protect & mask) != 0;
+}

@@ -445,6 +445,110 @@ template<> struct js_bind<mb_shell::js::menu_item_parent_item_controller> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::window_prop_data> {
+    static mb_shell::js::window_prop_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::window_prop_data obj;
+    
+        obj.key = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "key"));
+        
+        obj.value = js_traits<std::variant<size_t, std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "value"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::window_prop_data &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "key", js_traits<std::string>::wrap(ctx, val.key));
+        
+        JS_SetPropertyStr(ctx, obj, "value", js_traits<std::variant<size_t, std::string>>::wrap(ctx, val.value));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::window_prop_data> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::window_prop_data>("window_prop_data")
+            .constructor<>()
+                .fun<&mb_shell::js::window_prop_data::key>("key")
+                .fun<&mb_shell::js::window_prop_data::value>("value")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::caller_window_data> {
+    static mb_shell::js::caller_window_data unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::caller_window_data obj;
+    
+        obj.props = js_traits<std::vector<mb_shell::js::window_prop_data>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "props"));
+        
+        obj.x = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "x"));
+        
+        obj.y = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "y"));
+        
+        obj.width = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "width"));
+        
+        obj.height = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "height"));
+        
+        obj.maximized = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "maximized"));
+        
+        obj.minimized = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "minimized"));
+        
+        obj.focused = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "focused"));
+        
+        obj.visible = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "visible"));
+        
+        obj.executable_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "executable_path"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::caller_window_data &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "props", js_traits<std::vector<mb_shell::js::window_prop_data>>::wrap(ctx, val.props));
+        
+        JS_SetPropertyStr(ctx, obj, "x", js_traits<int>::wrap(ctx, val.x));
+        
+        JS_SetPropertyStr(ctx, obj, "y", js_traits<int>::wrap(ctx, val.y));
+        
+        JS_SetPropertyStr(ctx, obj, "width", js_traits<int>::wrap(ctx, val.width));
+        
+        JS_SetPropertyStr(ctx, obj, "height", js_traits<int>::wrap(ctx, val.height));
+        
+        JS_SetPropertyStr(ctx, obj, "maximized", js_traits<bool>::wrap(ctx, val.maximized));
+        
+        JS_SetPropertyStr(ctx, obj, "minimized", js_traits<bool>::wrap(ctx, val.minimized));
+        
+        JS_SetPropertyStr(ctx, obj, "focused", js_traits<bool>::wrap(ctx, val.focused));
+        
+        JS_SetPropertyStr(ctx, obj, "visible", js_traits<bool>::wrap(ctx, val.visible));
+        
+        JS_SetPropertyStr(ctx, obj, "executable_path", js_traits<std::string>::wrap(ctx, val.executable_path));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::caller_window_data> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::caller_window_data>("caller_window_data")
+            .constructor<>()
+                .fun<&mb_shell::js::caller_window_data::props>("props")
+                .fun<&mb_shell::js::caller_window_data::x>("x")
+                .fun<&mb_shell::js::caller_window_data::y>("y")
+                .fun<&mb_shell::js::caller_window_data::width>("width")
+                .fun<&mb_shell::js::caller_window_data::height>("height")
+                .fun<&mb_shell::js::caller_window_data::maximized>("maximized")
+                .fun<&mb_shell::js::caller_window_data::minimized>("minimized")
+                .fun<&mb_shell::js::caller_window_data::focused>("focused")
+                .fun<&mb_shell::js::caller_window_data::visible>("visible")
+                .fun<&mb_shell::js::caller_window_data::executable_path>("executable_path")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::js_menu_context> {
     static mb_shell::js::js_menu_context unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::js_menu_context obj;
@@ -454,6 +558,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_context> {
         obj.window_titlebar = js_traits<std::optional<std::shared_ptr<mb_shell::js::window_titlebar_controller>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "window_titlebar"));
         
         obj.input_box = js_traits<std::optional<std::shared_ptr<mb_shell::js::input_box_controller>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "input_box"));
+        
+        obj.window_info = js_traits<mb_shell::js::caller_window_data>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "window_info"));
         
         return obj;
     }
@@ -467,6 +573,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_context> {
         
         JS_SetPropertyStr(ctx, obj, "input_box", js_traits<std::optional<std::shared_ptr<mb_shell::js::input_box_controller>>>::wrap(ctx, val.input_box));
         
+        JS_SetPropertyStr(ctx, obj, "window_info", js_traits<mb_shell::js::caller_window_data>::wrap(ctx, val.window_info));
+        
         return obj;
     }
 };
@@ -477,6 +585,7 @@ template<> struct js_bind<mb_shell::js::js_menu_context> {
                 .fun<&mb_shell::js::js_menu_context::folder_view>("folder_view")
                 .fun<&mb_shell::js::js_menu_context::window_titlebar>("window_titlebar")
                 .fun<&mb_shell::js::js_menu_context::input_box>("input_box")
+                .fun<&mb_shell::js::js_menu_context::window_info>("window_info")
             ;
     }
 
@@ -774,6 +883,10 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::menu_item_controller>::bind(mod);
 
     js_bind<mb_shell::js::menu_item_parent_item_controller>::bind(mod);
+
+    js_bind<mb_shell::js::window_prop_data>::bind(mod);
+
+    js_bind<mb_shell::js::caller_window_data>::bind(mod);
 
     js_bind<mb_shell::js::js_menu_context>::bind(mod);
 

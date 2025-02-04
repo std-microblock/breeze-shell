@@ -9,4 +9,5 @@ bool is_win11_or_later();
 bool is_light_mode();
 bool is_acrylic_available();
 std::optional<std::string> env(const std::string &name);
+bool is_memory_readable(const void *ptr);
 } // namespace mb_shell

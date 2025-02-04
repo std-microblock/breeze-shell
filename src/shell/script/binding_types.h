@@ -295,12 +295,32 @@ struct menu_item_parent_item_controller {
   append_child_after(mb_shell::js::js_menu_data data, int after_index);
 };
 
+struct window_prop_data {
+  std::string key;
+  std::variant<size_t, std::string> value;
+};
+
+struct caller_window_data {
+  std::vector<mb_shell::js::window_prop_data> props;
+  int x;
+  int y;
+  int width;
+  int height;
+  bool maximized;
+  bool minimized;
+  bool focused;
+  bool visible;
+  std::string executable_path;
+  std::string title;
+};
+
 struct js_menu_context {
   std::optional<std::shared_ptr<mb_shell::js::folder_view_controller>>
       folder_view;
   std::optional<std::shared_ptr<mb_shell::js::window_titlebar_controller>>
       window_titlebar;
   std::optional<std::shared_ptr<mb_shell::js::input_box_controller>> input_box;
+  mb_shell::js::caller_window_data window_info;
   // 获取当前活动的窗口或指针下的窗口的数据
   static js_menu_context $from_window(void *hwnd);
 };

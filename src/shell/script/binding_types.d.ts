@@ -648,10 +648,31 @@ export class menu_item_parent_item_controller {
             
 }
     
+export class window_prop_data {
+	key: string
+	value: size_t | string
+	
+}
+    
+export class caller_window_data {
+	props: Array<window_prop_data>
+	x: number
+	y: number
+	width: number
+	height: number
+	maximized: boolean
+	minimized: boolean
+	focused: boolean
+	visible: boolean
+	executable_path: string
+	
+}
+    
 export class js_menu_context {
 	folder_view?: folder_view_controller | undefined
 	window_titlebar?: window_titlebar_controller | undefined
 	input_box?: input_box_controller | undefined
+	window_info: caller_window_data
 	
 }
     
