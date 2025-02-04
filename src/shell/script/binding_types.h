@@ -293,6 +293,16 @@ struct menu_item_parent_item_controller {
 
   std::shared_ptr<mb_shell::js::menu_item_controller>
   append_child_after(mb_shell::js::js_menu_data data, int after_index);
+
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  append_child(mb_shell::js::js_menu_data data) {
+    return append_child_after(data, -1);
+  }
+
+  inline std::shared_ptr<mb_shell::js::menu_item_controller>
+  prepend_child(mb_shell::js::js_menu_data data) {
+    return append_child_after(data, 0);
+  }
 };
 
 struct window_prop_data {

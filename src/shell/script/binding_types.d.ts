@@ -646,6 +646,22 @@ export class menu_item_parent_item_controller {
   */
   append_child_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
             
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  append_child: ((arg1: js_menu_data) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param data: js_menu_data
+  * @returns menu_item_controller
+  */
+  prepend_child: ((arg1: js_menu_data) => menu_item_controller)
+            
 }
     
 export class window_prop_data {
@@ -665,6 +681,7 @@ export class caller_window_data {
 	focused: boolean
 	visible: boolean
 	executable_path: string
+	title: string
 	
 }
     
