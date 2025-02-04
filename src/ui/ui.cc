@@ -320,6 +320,10 @@ void render_target::show() {
   } else {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNORMAL);
   }
+
+  if (topmost)
+    SetWindowPos(glfwGetWin32Window(window), HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
