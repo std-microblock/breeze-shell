@@ -163,7 +163,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
   // Check if the foreground window is an edit control
   char className[256];
+  auto activeWindowHandle = GetForegroundWindow();
+  auto activeWindowThread =
+      GetWindowThreadProcessId(activeWindowHandle, nullptr);
+  auto thisWindowThread = GetCurrentThreadId();
+  AttachThreadInput(activeWindowThread, thisWindowThread, true);
   auto focused_hwnd = GetFocus();
+  AttachThreadInput(activeWindowThread, thisWindowThread, false);
   if (GetClassNameA(focused_hwnd, className, sizeof(className))) {
     std::string class_name = className;
     std::printf("Focused window class name: %s\n", class_name.c_str());
@@ -174,10 +180,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       (*event_data.input_box)->$hwnd = focused_hwnd;
       return event_data;
     }
+  }
 
+  if (GetClassNameA(hWnd, className, sizeof(className))) {
+    std::string class_name = className;
     if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
         class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
-      std::printf("Focused window is a folder view(hwnd: %p)\n", focused_hwnd);
+      std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
