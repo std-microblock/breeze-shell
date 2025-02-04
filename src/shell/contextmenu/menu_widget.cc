@@ -7,6 +7,7 @@
 #include "menu_render.h"
 #include "nanovg.h"
 #include "ui.h"
+#include "widget.h"
 #include <algorithm>
 #include <iostream>
 #include <print>
@@ -129,6 +130,12 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
       } catch (std::exception &e) {
         std::cerr << "Error in action: " << e.what() << std::endl;
       }
+    } else if (item.submenu) {
+      if (submenu_wid) {
+        hide_submenu();
+      } else {
+        show_submenu(ctx);
+      }
     }
   }
 
@@ -142,52 +149,13 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
 
     if (show_submenu_timer >= 250.f) {
       if (!submenu_wid) {
-        submenu_wid = std::make_shared<menu_widget>();
-        item.submenu.value()(submenu_wid);
-
-        auto anchor_x = *width + *x + ctx.offset_x;
-        auto anchor_y = **y + ctx.offset_y;
-
-        anchor_x *= ctx.rt.dpi_scale;
-        anchor_y *= ctx.rt.dpi_scale;
-
-        submenu_wid->update(ctx);
-        auto direction = mouse_menu_widget_main::calculate_direction(
-            submenu_wid.get(), ctx, anchor_x, anchor_y,
-            popup_direction::bottom_right);
-
-        if (direction == popup_direction::top_left ||
-            direction == popup_direction::bottom_left) {
-          anchor_x -= *width;
-        }
-
-        auto [x, y] = mouse_menu_widget_main::calculate_position(
-            submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
-
-        submenu_wid->direction = direction;
-        submenu_wid->x->reset_to(x / ctx.rt.dpi_scale);
-        submenu_wid->y->reset_to(y / ctx.rt.dpi_scale);
-
-        submenu_wid->reset_animation(direction == popup_direction::top_left ||
-                                     direction == popup_direction::top_right);
-        auto parent_menu = parent->downcast<menu_widget>();
-        if (!parent_menu)
-          parent_menu = parent->parent->downcast<menu_widget>();
-        parent_menu->current_submenu = submenu_wid;
-        parent_menu->rendering_submenus.push_back(submenu_wid);
-        submenu_wid->parent_menu = parent_menu.get();
+        show_submenu(ctx);
       }
     } else {
-      if (submenu_wid) {
-        submenu_wid->close();
-        submenu_wid = nullptr;
-      }
+      hide_submenu();
     }
   } else {
-    if (submenu_wid) {
-      submenu_wid->close();
-      submenu_wid = nullptr;
-    }
+    hide_submenu();
   }
 
   if (submenu_wid && submenu_wid->dying_time.has_value) {
@@ -397,7 +365,7 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   };
   opacity->reset_to(0);
   this->x->reset_to(-20);
-  
+
   config::current->context_menu.theme.animation.item.opacity(opacity, delay);
   config::current->context_menu.theme.animation.item.x(x, delay);
   config::current->context_menu.theme.animation.item.width(width);
@@ -728,4 +696,48 @@ void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
   x->animate_to(0);
   opacity->reset_to(0);
   opacity->animate_to(255);
+}
+void mb_shell::menu_item_normal_widget::hide_submenu() {
+  if (submenu_wid) {
+    submenu_wid->close();
+    submenu_wid = nullptr;
+  }
+}
+void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
+  if (submenu_wid)
+    return;
+  submenu_wid = std::make_shared<menu_widget>();
+  item.submenu.value()(submenu_wid);
+
+  auto anchor_x = *width + *x + ctx.offset_x;
+  auto anchor_y = **y + ctx.offset_y;
+
+  anchor_x *= ctx.rt.dpi_scale;
+  anchor_y *= ctx.rt.dpi_scale;
+
+  submenu_wid->update(ctx);
+  auto direction = mouse_menu_widget_main::calculate_direction(
+      submenu_wid.get(), ctx, anchor_x, anchor_y,
+      popup_direction::bottom_right);
+
+  if (direction == popup_direction::top_left ||
+      direction == popup_direction::bottom_left) {
+    anchor_x -= *width;
+  }
+
+  auto [x, y] = mouse_menu_widget_main::calculate_position(
+      submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
+
+  submenu_wid->direction = direction;
+  submenu_wid->x->reset_to(x / ctx.rt.dpi_scale);
+  submenu_wid->y->reset_to(y / ctx.rt.dpi_scale);
+
+  submenu_wid->reset_animation(direction == popup_direction::top_left ||
+                               direction == popup_direction::top_right);
+  auto parent_menu = parent->downcast<menu_widget>();
+  if (!parent_menu)
+    parent_menu = parent->parent->downcast<menu_widget>();
+  parent_menu->current_submenu = submenu_wid;
+  parent_menu->rendering_submenus.push_back(submenu_wid);
+  submenu_wid->parent_menu = parent_menu.get();
 }

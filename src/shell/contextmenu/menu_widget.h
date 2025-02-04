@@ -36,7 +36,8 @@ struct menu_item_normal_widget : public menu_item_widget {
   bool has_icon_padding = false;
   float padding = config::current->context_menu.theme.padding;
   float icon_padding = config::current->context_menu.theme.icon_padding;
-  float right_icon_padding = config::current->context_menu.theme.right_icon_padding;
+  float right_icon_padding =
+      config::current->context_menu.theme.right_icon_padding;
   menu_item_normal_widget(menu_item item);
   void reset_appear_animation(float delay) override;
 
@@ -52,6 +53,8 @@ struct menu_item_normal_widget : public menu_item_widget {
   float measure_width(ui::update_context &ctx) override;
   bool check_hit(const ui::update_context &ctx) override;
 
+  void hide_submenu();
+  void show_submenu(ui::update_context &ctx);
   void reload_icon_img(ui::nanovg_context ctx);
 };
 
