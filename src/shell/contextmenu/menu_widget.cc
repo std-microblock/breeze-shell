@@ -630,6 +630,8 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
     item_widgets.push_back(mi);
   }
 
+  std::println("Menu widget init from data: {}", menu_data.items.size());
+
   update_icon_width();
   this->menu_data = menu_data;
 }

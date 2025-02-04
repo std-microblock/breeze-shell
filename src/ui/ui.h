@@ -2,6 +2,7 @@
 #include <atomic>
 #include <chrono>
 #include <expected>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -40,7 +41,7 @@ struct render_target {
   static std::vector<std::function<void()>> main_thread_tasks;
   static std::mutex main_thread_tasks_mutex;
   static void post_main_thread_task(std::function<void()> task);
-  
+
   static std::expected<bool, std::string> init_global();
   void start_loop();
   void render();
@@ -55,9 +56,18 @@ struct render_target {
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::high_resolution_clock clock{};
   std::mutex rt_lock{};
+  std::mutex loop_thread_tasks_lock{};
+  std::vector<std::function<void()>> loop_thread_tasks{};
+  void post_loop_thread_task(std::function<void()> task);
+  template <typename T>
+  T inline post_loop_thread_task(std::function<T()> task) {
+    std::promise<T> p;
+    post_loop_thread_task([&]() { p.set_value(task()); });
+    return p.get_future().get();
+  }
   decltype(clock.now()) last_time = clock.now();
   bool mouse_down = false, right_mouse_down = false;
-  void* parent = nullptr;
+  void *parent = nullptr;
 
   render_target() = default;
   ~render_target();

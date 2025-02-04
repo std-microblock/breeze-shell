@@ -21,10 +21,20 @@
 
 namespace ui {
 std::atomic_int render_target::view_cnt = 0;
+thread_local static bool is_in_loop_thread = false;
+
 void render_target::start_loop() {
+  is_in_loop_thread = true;
   glfwMakeContextCurrent(window);
   while (!glfwWindowShouldClose(window) && !should_loop_stop_hide_as_close) {
     render();
+    {
+      std::lock_guard lock(loop_thread_tasks_lock);
+      while (!loop_thread_tasks.empty()) {
+        loop_thread_tasks.back()();
+        loop_thread_tasks.pop_back();
+      }
+    }
   }
   if (should_loop_stop_hide_as_close) {
     should_loop_stop_hide_as_close = false;
@@ -330,5 +340,13 @@ void render_target::hide_as_close() {
   glfwMakeContextCurrent(nullptr);
   should_loop_stop_hide_as_close = true;
   root->children.clear();
+}
+void render_target::post_loop_thread_task(std::function<void()> task) {
+  if (is_in_loop_thread) {
+    task();
+    return;
+  }
+  std::lock_guard lock(loop_thread_tasks_lock);
+  loop_thread_tasks.push_back(std::move(task));
 }
 } // namespace ui
