@@ -35,6 +35,7 @@
 #include <consoleapi.h>
 #include <debugapi.h>
 #include <type_traits>
+#include <winreg.h>
 #include <winuser.h>
 
 #define NOMINMAX
@@ -109,7 +110,6 @@ void main() {
                                                       lptpm);
     }
 
-    
     has_active_menu = true;
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     auto menu_render = menu_render::create(x, y, menu);
