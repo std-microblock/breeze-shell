@@ -23,11 +23,10 @@ jobs:
         xmake-version: latest
         actions-cache-folder: '.xmake-cache'
         actions-cache-key: 'ci'
-    - name: Install LLVM19
-      run: |
-        Remove-Item -Recurse -Force "C:\Program Files\LLVM"
-        winget install --id=LLVM.LLVM -e
-
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v2
+      with:
+        version: "19.1.7"
 
     - name: build
       run: |
