@@ -21,6 +21,7 @@
 #include <codecvt>
 #include <condition_variable>
 #include <consoleapi3.h>
+#include <cstddef>
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -104,6 +105,10 @@ void main() {
                                HWND hWnd, LPTPMPARAMS lptpm) {
     has_active_menu = true;
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
+    if (menu.is_owner_draw) {
+      return NtUserTrackHook->call_trampoline<size_t>(hMenu, uFlags, x, y, hWnd,
+                                                      lptpm);
+    }
     auto menu_render = menu_render::create(x, y, menu);
 
     menu_render.rt->last_time = menu_render.rt->clock.now();

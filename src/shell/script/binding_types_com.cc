@@ -35,9 +35,9 @@ PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
   return nullptr;
 }
 
-CComPtr<IShellBrowser> GetIShellBrowser(HWND hWnd) {
-  if (!hWnd)
-    return nullptr;
+std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>>
+GetIShellBrowsers() {
+  std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> res;
   CComPtr<IShellWindows> spShellWindows;
   spShellWindows.CoCreateInstance(CLSID_ShellWindows);
 
@@ -78,16 +78,11 @@ CComPtr<IShellBrowser> GetIShellBrowser(HWND hWnd) {
     HWND hwnd;
     if (FAILED(spBrowser->GetWindow(&hwnd)))
       continue;
-    std::println("hwnd: {}\n", (void *)hwnd);
 
-    if (hwnd == hWnd) {
-      return spBrowser;
-    } else {
-      std::println("hwnd: {} != {}\n", (void *)hwnd, (void *)hWnd);
-    }
+    res.push_back({hwnd, spBrowser});
   }
 
-  return nullptr;
+  return res;
 }
 
 CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
@@ -95,6 +90,15 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
     return nullptr;
 
   std::unordered_set<HWND> recorded_hwnds;
+
+  auto browsers = GetIShellBrowsers();
+  auto GetIShellBrowser = [&](HWND hwnd) -> CComPtr<IShellBrowser> {
+    for (auto &[h, b] : browsers) {
+      if (h == hwnd)
+        return b;
+    }
+    return nullptr;
+  };
 
   auto dfs = [&](this auto &self, HWND hwnd) -> CComPtr<IShellBrowser> {
     if (!hwnd || recorded_hwnds.count(hwnd))
@@ -163,22 +167,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
-      IShellBrowser *psb = GetIShellBrowserRecursive(hWnd);
-
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetActiveWindow());
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetAncestor(hWnd, GA_ROOT));
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetFocus());
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetForegroundWindow());
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetShellWindow());
-      if (!psb)
-        psb = GetIShellBrowserRecursive(GetDesktopWindow());
-
-      if (psb) {
+      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
         IShellView *psv;
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {

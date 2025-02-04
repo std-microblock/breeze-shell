@@ -63,7 +63,5 @@ struct render_target {
   ~render_target();
   render_target operator=(const render_target &) = delete;
   render_target(const render_target &) = delete;
-  render_target(render_target &&) = default;
-  render_target &operator=(render_target &&) = default;
 };
 } // namespace ui

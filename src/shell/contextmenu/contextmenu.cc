@@ -52,8 +52,25 @@ std::wstring strip_extra_infos(std::wstring_view str) {
 
 menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
   menu m;
+
   SendMessageW(hWnd, WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
                0xFFFFFFFF);
+
+  {
+    MENUITEMINFOW info = {sizeof(MENUITEMINFO)};
+
+    if (!GetMenuItemInfoW(hMenu, 0, TRUE, &info)) {
+      std::cout << "Failed to get menu item info: " << GetLastError()
+                << std::endl;
+      return m;
+    }
+
+    m.is_owner_draw = info.fType & MFT_OWNERDRAW;
+
+    if (m.is_owner_draw) {
+      return m;
+    }
+  }
 
   for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
     menu_item item;
