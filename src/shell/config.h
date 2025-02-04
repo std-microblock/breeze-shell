@@ -44,6 +44,7 @@ struct config {
         struct item {
           animated_float_conf opacity;
           animated_float_conf x;
+          animated_float_conf width;
         } item;
         struct bg {
           animated_float_conf opacity;

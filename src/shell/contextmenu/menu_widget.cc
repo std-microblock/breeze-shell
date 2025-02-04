@@ -395,15 +395,17 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
     this->opacity->set_delay(0);
   };
+  opacity->reset_to(0);
+  this->x->reset_to(-20);
+  
   config::current->context_menu.theme.animation.item.opacity(opacity, delay);
   config::current->context_menu.theme.animation.item.x(x, delay);
+  config::current->context_menu.theme.animation.item.width(width);
 
-  opacity->reset_to(0);
   opacity->animate_to(255);
   this->y->progress = 1;
   this->y->easing = ui::easing_type::mutation;
 
-  this->x->reset_to(-20);
   this->x->animate_to(0);
 }
 mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
