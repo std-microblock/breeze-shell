@@ -24,7 +24,7 @@ jobs:
         actions-cache-folder: '.xmake-cache'
         actions-cache-key: 'ci'
     - name: Install LLVM and Clang
-      uses: std-microblock/install-llvm-action
+      uses: std-microblock/install-llvm-action@master
       with:
         version: "19.1.7"
 
