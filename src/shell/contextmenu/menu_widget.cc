@@ -399,6 +399,8 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   opacity->reset_to(0);
   opacity->animate_to(255);
   this->y->progress = 1;
+  this->y->easing = ui::easing_type::mutation;
+
   this->x->reset_to(-20);
   this->x->animate_to(0);
 }
@@ -459,7 +461,7 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
   // the show duration for the menu should be within 200ms
   float delay = std::min(200.f / children.size(), 30.f);
 
-  if (config::current->context_menu.reverse_if_open_to_up)
+  if (config::current->context_menu.reverse_if_open_to_up && reverse)
     reverse = !reverse;
 
   for (size_t i = 0; i < children.size(); i++) {
