@@ -28,16 +28,25 @@ jobs:
       with:
         version: "19.1.7"
 
-    - name: build
+    - name: build-releasedbg
+      if: github.event_name != 'release'
       run: |
         xmake f --toolchain=clang-cl -m releasedbg -y --verbose
+        xmake b -y --verbose inject
+        xmake b -y --verbose shell
+
+    - name: build-release
+      if: github.event_name == 'release'
+      run: |
+        xmake f --toolchain=clang-cl -m release -y --verbose
         xmake b -y --verbose inject
         xmake b -y --verbose shell
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:
-        path: ./build/windows/
+        path: ./build/windows/x64/
+        name: windows-build
 
     - name: Create Archive
       if: github.event_name == 'release'
