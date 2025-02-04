@@ -715,3 +715,8 @@ void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
   width->reset_to(x - gap);
   height->reset_to(max_height);
 }
+void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
+  y->set_easing(ui::easing_type::mutation);
+  for (auto &child : get_children<menu_item_widget>())
+    child->reset_appear_animation(delay);
+}
