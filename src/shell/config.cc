@@ -113,4 +113,7 @@ std::filesystem::path config::default_main_font() {
 std::filesystem::path config::default_fallback_font() {
     return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
 }
+std::string config::dump_config() {
+  return rfl::json::write(*config::current);
+}
 } // namespace mb_shell

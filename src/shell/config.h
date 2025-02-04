@@ -75,6 +75,7 @@ struct config {
   static void read_config();
   static void write_config();
   static void run_config_loader();
+  static std::string dump_config();
 
   static std::filesystem::path data_directory();
 };
