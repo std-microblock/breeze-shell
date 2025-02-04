@@ -48,6 +48,7 @@ struct config {
 
     bool vsync = true;
     bool ignore_owner_draw = true;
+    bool search_large_dwItemData_range = false;
 
     struct position {
       int padding_vertical = 20;

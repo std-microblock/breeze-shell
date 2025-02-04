@@ -8,12 +8,14 @@
 
 #include "menu_render.h"
 
+#include "../config.h"
 #include "../res_string_loader.h"
 
 #include <consoleapi.h>
 #include <debugapi.h>
 #include <future>
 #include <iostream>
+#include <print>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -124,18 +126,20 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     if (info.dwItemData) {
       HBITMAP result{};
 
-      auto is_valid_ptr = [](void *ptr) {
-        MEMORY_BASIC_INFORMATION mbi;
-        if (VirtualQuery(ptr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
-          if (mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS)
-            return true;
-        }
-        return false;
-      };
       if (!IS_INTRESOURCE(info.dwItemData)) {
-        for (int offset : {0x018, 0x220, 0x020, 0x000}) {
+        auto offsets =
+            config::current->context_menu.search_large_dwItemData_range
+                ? ([]() -> std::vector<int> {
+                    std::vector<int> offsets;
+                    for (int i = 0; i <= 0xfff; i++) {
+                      offsets.push_back(i);
+                    }
+                    return offsets;
+                  }())
+                : std::vector<int>{0x018, 0x220, 0x020, 0x000};
+        for (int offset : offsets) {
           auto pHBitmap = reinterpret_cast<HBITMAP *>(info.dwItemData + offset);
-          if (!is_valid_ptr(pHBitmap)) {
+          if (!is_memory_readable(pHBitmap)) {
             continue;
           }
 
@@ -152,6 +156,9 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
                   bitmap.bmWidth >= 4 && bitmap.bmWidth <= 64 &&
                   bitmap.bmHeight >= 4 && bitmap.bmHeight <= 64) {
                 item.icon_bitmap = (size_t)result;
+                if (config::current->context_menu.search_large_dwItemData_range) {
+                  std::println("Found icon at offset: {}", offset);
+                }
                 break;
               }
             }
