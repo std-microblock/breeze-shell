@@ -317,6 +317,10 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     }
   }
 
+  reverse = (direction == popup_direction::top_left ||
+             direction == popup_direction::top_right) &&
+            config::current->context_menu.reverse_if_open_to_up;
+
   auto rst = ctx.with_reset_offset();
   update_children(rst, rendering_submenus);
 

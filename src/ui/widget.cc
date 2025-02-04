@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <print>
+#include <ranges>
 #include <thread>
 
 void ui::widget::update_child_basic(update_context &ctx,
@@ -105,7 +106,12 @@ void ui::widget_flex::reposition_children_flex(
   float x = 0, y = 0;
   float target_width = 0, target_height = 0;
 
-  for (auto &child : children) {
+  auto children_rev =
+      reverse ? children | std::views::reverse |
+                    std::ranges::to<std::vector<std::shared_ptr<widget>>>()
+              : children;
+
+  for (auto &child : children_rev) {
     if (horizontal) {
       child->x->animate_to(x);
       x += child->measure_width(ctx) + gap;
