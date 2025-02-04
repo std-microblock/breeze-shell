@@ -254,8 +254,8 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     // get executable path
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                                  FALSE, pid);
+    HANDLE hProcess =
+        OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 
     if (hProcess) {
       wchar_t path[MAX_PATH];
@@ -327,7 +327,8 @@ void folder_view_controller::focus_file(std::string file_path) {
 }
 
 void folder_view_controller::open_file(std::string file_path) {
-  ShellExecuteA(NULL, "open", file_path.c_str(), NULL, NULL, SW_SHOW);
+  ShellExecuteW(NULL, L"open", mb_shell::utf8_to_wstring(file_path).c_str(),
+                NULL, NULL, SW_SHOW);
 }
 
 void folder_view_controller::open_folder(std::string folder_path) {

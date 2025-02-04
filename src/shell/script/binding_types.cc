@@ -495,7 +495,7 @@ subproc_result_data subproc::run(std::string cmd) {
   if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
     return result;
 
-  STARTUPINFO si;
+  STARTUPINFOW si;
   PROCESS_INFORMATION pi;
   ZeroMemory(&si, sizeof(si));
   si.cb = sizeof(si);
@@ -503,7 +503,7 @@ subproc_result_data subproc::run(std::string cmd) {
   si.hStdOutput = hWritePipe;
   si.dwFlags |= STARTF_USESTDHANDLES;
 
-  if (!CreateProcessA(nullptr, (LPSTR)cmd.c_str(), nullptr, nullptr, TRUE, 0,
+  if (!CreateProcessW(nullptr, utf8_to_wstring(cmd).data(), nullptr, nullptr, TRUE, 0,
                       nullptr, nullptr, &si, &pi)) {
     CloseHandle(hReadPipe);
     CloseHandle(hWritePipe);
@@ -639,7 +639,7 @@ std::string win32::resid_from_string(std::string str) {
   return res_string_loader::string_to_id_string(utf8_to_wstring(str));
 }
 size_t win32::load_library(std::string path) {
-  return reinterpret_cast<size_t>(LoadLibraryA(path.c_str()));
+  return reinterpret_cast<size_t>(LoadLibraryW(utf8_to_wstring(path).c_str()));
 }
 std::string breeze::user_language() {
   wchar_t lang[10];
