@@ -510,7 +510,8 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
   auto bottom_overflow = y + menu_height * ctx.rt.dpi_scale >
                          ctx.screen.height - padding_horizontal;
 
-  if (menu_height * ctx.rt.dpi_scale > ctx.screen.height - padding_horizontal * 2) {
+  if (menu_height * ctx.rt.dpi_scale >
+      ctx.screen.height - padding_horizontal * 2) {
     y = padding_horizontal;
     menu_wid->max_height = ctx.screen.height - padding_horizontal * 2;
   } else if (top_overflow) {
@@ -717,6 +718,8 @@ void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
 }
 void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
   y->set_easing(ui::easing_type::mutation);
-  for (auto &child : get_children<menu_item_widget>())
-    child->reset_appear_animation(delay);
+  x->reset_to(-20);
+  x->animate_to(0);
+  opacity->reset_to(0);
+  opacity->animate_to(255);
 }
