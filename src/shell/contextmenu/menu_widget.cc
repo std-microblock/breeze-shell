@@ -226,10 +226,13 @@ mb_shell::menu_widget::create_bg(bool is_main) {
   if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
 
     auto light_color = menu_render::current.value()->light_color;
-    auto acrylic_color = light_color ?
-      parse_color(config::current->context_menu.theme.acrylic_color_light) :
-      parse_color(config::current->context_menu.theme.acrylic_color_dark);
-      
+    auto acrylic_color =
+        light_color
+            ? parse_color(
+                  config::current->context_menu.theme.acrylic_color_light)
+            : parse_color(
+                  config::current->context_menu.theme.acrylic_color_dark);
+
     auto acrylic = std::make_shared<ui::acrylic_background_widget>(
         config::current->context_menu.theme.use_dwm_if_available
             ? is_win11_or_later()
@@ -439,8 +442,10 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
   }
 
-  // esc to close
-  if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+  // esc/alt to close
+  if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) ||
+      (GetAsyncKeyState(VK_MENU) & 0x8000) ||
+      (GetAsyncKeyState(VK_LMENU) & 0x8000)) {
     ctx.rt.hide_as_close();
   }
 }
