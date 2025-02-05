@@ -42,6 +42,10 @@ void render_target::start_loop() {
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
     hide();
+    {
+      std::lock_guard lock(rt_lock);
+      root->children.clear();
+    }
     glfwMakeContextCurrent(nullptr);
   }
 }
@@ -338,7 +342,6 @@ void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
   glfwMakeContextCurrent(nullptr);
   should_loop_stop_hide_as_close = true;
-  root->children.clear();
 }
 void render_target::post_loop_thread_task(std::function<void()> task) {
   if (is_in_loop_thread) {
