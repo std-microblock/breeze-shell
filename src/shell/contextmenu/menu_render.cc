@@ -29,8 +29,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
     rt->topmost = true;
     rt->vsync = config::current->context_menu.vsync;
 
-    if (config::current->avoid_resize_ui)
-      rt->resize(3840, 2159);
+    if (config::current->avoid_resize_ui) {
+      rt->width = 3840;
+      rt->height = 2159;
+    }
 
     if (auto res = rt->init(); !res) {
       MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
