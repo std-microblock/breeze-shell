@@ -503,8 +503,8 @@ subproc_result_data subproc::run(std::string cmd) {
   si.hStdOutput = hWritePipe;
   si.dwFlags |= STARTF_USESTDHANDLES;
 
-  if (!CreateProcessW(nullptr, utf8_to_wstring(cmd).data(), nullptr, nullptr, TRUE, 0,
-                      nullptr, nullptr, &si, &pi)) {
+  if (!CreateProcessW(nullptr, utf8_to_wstring(cmd).data(), nullptr, nullptr,
+                      TRUE, 0, nullptr, nullptr, &si, &pi)) {
     CloseHandle(hReadPipe);
     CloseHandle(hWritePipe);
     return result;
@@ -796,5 +796,21 @@ menu_item_parent_item_controller::append_child_after(
   }
 
   return ctl;
+}
+void subproc::open(std::string path, std::string args) {
+  std::wstring wpath = utf8_to_wstring(path);
+  std::wstring wargs = utf8_to_wstring(args);
+  ShellExecuteW(nullptr, L"open", wpath.c_str(), wargs.c_str(), nullptr,
+                SW_SHOWNORMAL);
+}
+void subproc::open_async(std::string path, std::string args, std::function<void()> callback) {
+  std::thread([path, callback]() {
+    try {
+      open(path, args);
+      callback();
+    } catch (std::exception &e) {
+      std::cerr << "Error in subproc::open_async: " << e.what() << std::endl;
+    }
+  }).detach();
 }
 } // namespace mb_shell::js

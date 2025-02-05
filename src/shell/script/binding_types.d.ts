@@ -963,6 +963,24 @@ export class subproc {
   */
   static run_async: ((arg1: string, arg2: ((arg1: subproc_result_data) => void)) => void)
             
+	
+/**
+  * 同步打开东西
+  *  Open something synchronously
+  * @param path: string, args: string
+  * @returns void
+  */
+  static open: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 异步打开东西
+  *  Open something asynchronously
+  * @param path: string, args: string, callback: (() => void)
+  * @returns void
+  */
+  static open_async: ((arg1: string, arg2: string, arg3: (() => void)) => void)
+            
 }
     
 export class fs {

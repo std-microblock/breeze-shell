@@ -776,6 +776,8 @@ template<> struct js_bind<mb_shell::js::subproc> {
             .constructor<>()
                 .static_fun<&mb_shell::js::subproc::run>("run")
                 .static_fun<&mb_shell::js::subproc::run_async>("run_async")
+                .static_fun<&mb_shell::js::subproc::open>("open")
+                .static_fun<&mb_shell::js::subproc::open_async>("open_async")
             ;
     }
 

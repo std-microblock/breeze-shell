@@ -498,6 +498,14 @@ struct subproc {
   // Run command asynchronously
   static void run_async(std::string cmd,
                         std::function<void(subproc_result_data)> callback);
+
+  // 同步打开东西
+  // Open something synchronously
+  static void open(std::string path, std::string args = "");
+
+  // 异步打开东西
+  // Open something asynchronously
+  static void open_async(std::string path, std::string args, std::function<void()> callback);
 };
 
 // 文件系统操作
