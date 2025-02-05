@@ -29,6 +29,9 @@ menu_render menu_render::create(int x, int y, menu menu) {
     rt->topmost = true;
     rt->vsync = config::current->context_menu.vsync;
 
+    if (config::current->avoid_resize_ui)
+      rt->resize(3840, 2159);
+
     if (auto res = rt->init(); !res) {
       MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                   MB_ICONERROR);
@@ -58,9 +61,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
                monitor_info.rcMonitor.bottom);
 
   rt->set_position(monitor_info.rcMonitor.left, monitor_info.rcMonitor.top);
-  rt->resize(monitor_info.rcMonitor.right - monitor_info.rcMonitor.left + l_pad,
-             monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top +
-                 t_pad);
+  if (!config::current->avoid_resize_ui)
+    rt->resize(
+        monitor_info.rcMonitor.right - monitor_info.rcMonitor.left + l_pad,
+        monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top + t_pad);
 
   glfwMakeContextCurrent(rt->window);
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);

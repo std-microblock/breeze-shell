@@ -41,7 +41,6 @@ void render_target::start_loop() {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
-    resize(0, 0);
     hide();
     glfwMakeContextCurrent(nullptr);
   }

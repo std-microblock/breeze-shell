@@ -69,6 +69,7 @@ struct config {
   std::filesystem::path font_path_main = default_main_font();
   std::filesystem::path font_path_fallback = default_fallback_font();
   bool res_string_loader_use_hook = false;
+  bool avoid_resize_ui = false;
   std::vector<std::string> plugin_load_order = {};
 
   static std::unique_ptr<config> current;
