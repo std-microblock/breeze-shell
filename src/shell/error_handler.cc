@@ -38,7 +38,7 @@ inline void output_crash_header(std::stringstream &ss) {
      << std::endl;
   ss << "----------------------------------------" << std::endl;
   ss << "Config:" << std::endl;
-  ss << mb_shell::config::dump_config();
+  ss << mb_shell::config::dump_config() << std::endl;
   ss << "----------------------------------------" << std::endl;
 }
 
