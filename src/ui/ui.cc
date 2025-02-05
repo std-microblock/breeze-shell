@@ -39,7 +39,9 @@ void render_target::start_loop() {
   if (should_loop_stop_hide_as_close) {
     should_loop_stop_hide_as_close = false;
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glFlush();
+    glfwSwapBuffers(window);
     glfwSwapBuffers(window);
     hide();
     {
