@@ -804,7 +804,7 @@ void subproc::open(std::string path, std::string args) {
                 SW_SHOWNORMAL);
 }
 void subproc::open_async(std::string path, std::string args, std::function<void()> callback) {
-  std::thread([path, callback]() {
+  std::thread([path, callback, args]() {
     try {
       open(path, args);
       callback();
