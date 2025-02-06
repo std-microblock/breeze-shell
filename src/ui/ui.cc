@@ -42,7 +42,7 @@ void render_target::start_loop() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glFlush();
     glfwSwapBuffers(window);
-    glfwSwapBuffers(window);
+    resize(0, 0);
     hide();
     {
       std::lock_guard lock(rt_lock);
