@@ -225,9 +225,14 @@ mb_shell::menu_widget::create_bg(bool is_main) {
   if (is_main)
     config::current->context_menu.theme.animation.main_bg.opacity(bg->opacity,
                                                                   0);
-  else
+  else {
     config::current->context_menu.theme.animation.submenu_bg.opacity(
         bg->opacity, 0);
+    config::current->context_menu.theme.animation.submenu_bg.x(bg->x, 0);
+    config::current->context_menu.theme.animation.submenu_bg.y(bg->y, 0);
+    config::current->context_menu.theme.animation.submenu_bg.w(bg->width, 0);
+    config::current->context_menu.theme.animation.submenu_bg.h(bg->height, 0);
+  }
   bg->opacity->animate_to(
       255 * config::current->context_menu.theme.background_opacity);
   return bg;

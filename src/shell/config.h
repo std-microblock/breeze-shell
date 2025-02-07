@@ -48,6 +48,7 @@ struct config {
         } item;
         struct bg {
           animated_float_conf opacity;
+          animated_float_conf x, y, w, h;
         } main_bg, submenu_bg;
       } animation;
     } theme;
