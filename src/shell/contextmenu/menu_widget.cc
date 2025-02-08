@@ -730,7 +730,7 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
 
   if (direction == popup_direction::top_left ||
       direction == popup_direction::bottom_left) {
-    anchor_x -= *width;
+    anchor_x -= *width * ctx.rt.dpi_scale;
   }
 
   auto [x, y] = mouse_menu_widget_main::calculate_position(
