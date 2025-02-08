@@ -82,10 +82,10 @@ std::filesystem::path config::data_directory() {
   return path.value();
 }
 void config::run_config_loader() {
-  std::thread([]() {
-    auto config_path = config::data_directory() / "config.json";
-    std::println("config file: {}", config_path.string());
-    config::read_config();
+  auto config_path = config::data_directory() / "config.json";
+  std::println("config file: {}", config_path.string());
+  config::read_config();
+  std::thread([config_path]() {
     auto last_mod = std::filesystem::last_write_time(config_path);
     while (true) {
       if (std::filesystem::last_write_time(config_path) != last_mod) {
@@ -108,12 +108,10 @@ void config::animated_float_conf::operator()(ui::sp_anim_float &anim,
 }
 
 std::filesystem::path config::default_main_font() {
-    return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "segoeui.ttf";
+  return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "segoeui.ttf";
 }
 std::filesystem::path config::default_fallback_font() {
-    return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
+  return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
 }
-std::string config::dump_config() {
-  return rfl::json::write(*config::current);
-}
+std::string config::dump_config() { return rfl::json::write(*config::current); }
 } // namespace mb_shell
