@@ -219,7 +219,6 @@ std::expected<bool, std::string> render_target::init_global() {
   return future.get();
 }
 void render_target::render() {
-  std::lock_guard lock(rt_lock);
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
@@ -295,11 +294,14 @@ void render_target::render() {
   mouse_down = ctx.mouse_down;
   right_mouse_down = ctx.right_mouse_down;
   glfwMakeContextCurrent(window);
-  time_checkpoints("Update context");
-  root->update(ctx);
-  time_checkpoints("Update root");
-  root->render(vg);
-  time_checkpoints("Render root");
+  {
+    std::lock_guard lock(rt_lock);
+    time_checkpoints("Update context");
+    root->update(ctx);
+    time_checkpoints("Update root");
+    root->render(vg);
+    time_checkpoints("Render root");
+  }
   vg.endFrame();
   glFlush();
   glfwSwapBuffers(window);

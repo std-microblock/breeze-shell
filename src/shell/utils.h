@@ -12,4 +12,5 @@ bool is_acrylic_available();
 std::optional<std::string> env(const std::string &name);
 bool is_memory_readable(const void *ptr);
 NVGcolor parse_color(const std::string &str);
+void set_thread_locale_utf8();
 } // namespace mb_shell

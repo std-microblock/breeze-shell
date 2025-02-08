@@ -44,8 +44,9 @@
 namespace mb_shell {
 
 void main() {
+  set_thread_locale_utf8();
+  
   AllocConsole();
-  SetConsoleCP(CP_UTF8);
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
   freopen("CONIN$", "r", stdin);

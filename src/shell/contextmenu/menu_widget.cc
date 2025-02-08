@@ -131,10 +131,8 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
         std::cerr << "Error in action: " << e.what() << std::endl;
       }
     } else if (item.submenu) {
-      if (submenu_wid) {
-        hide_submenu();
-      } else {
-        show_submenu(ctx);
+      if (submenu_wid == nullptr) {
+        show_submenu_timer = 500.f;
       }
     }
   }
@@ -148,7 +146,7 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
     }
 
     if (show_submenu_timer >= 250.f) {
-      if (!submenu_wid) {
+      if (submenu_wid == nullptr) {
         show_submenu(ctx);
       }
     } else {
@@ -706,13 +704,13 @@ void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
   opacity->animate_to(255);
 }
 void mb_shell::menu_item_normal_widget::hide_submenu() {
-  if (submenu_wid) {
+  if (submenu_wid != nullptr) {
     submenu_wid->close();
     submenu_wid = nullptr;
   }
 }
 void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
-  if (submenu_wid)
+  if (submenu_wid != nullptr)
     return;
   submenu_wid = std::make_shared<menu_widget>();
   item.submenu.value()(submenu_wid);
