@@ -22,6 +22,7 @@ Breeze is designed with animations in mind.
 
 <img src=https://github.com/user-attachments/assets/72de48fe-833c-453f-a90c-ce7816a70c58 height=300 />
 
+All animations are configurable and can be scaled and disabled as you want.
 ## Extensible
 
 Empowered by the embedded JavaScript script api, Breeze enables you to extend
