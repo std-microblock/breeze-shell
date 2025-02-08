@@ -26,6 +26,11 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
+#include <latch>
+
+#define NOMINMAX
+#include "Windows.h"
 extern thread_local bool is_thread_js_main;
 #if defined(__cpp_rtti)
 #define QJSPP_TYPENAME(...) (typeid(__VA_ARGS__).name())
@@ -1804,70 +1809,62 @@ template <> struct js_traits<Value> {
 template <typename R, typename... Args>
 struct js_traits<std::function<R(Args...)>, int> {
   static auto unwrap(JSContext *ctx, JSValueConst fun_obj) {
-    const int argc = sizeof...(Args);
-    if constexpr (argc == 0) {
-      return [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}]() -> R {
-        auto &ctx = Context::get(jsfun_obj.ctx);
+    return
+        [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
+          auto &ctx = Context::get(jsfun_obj.ctx);
+          std::promise<std::expected<JSValue, exception>> promise;
+          auto future = promise.get_future();
+          auto work = [&]() {
+            const int argc = sizeof...(Args);
+            JSValue argv[argc];
+            detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
+            JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED,
+                                     argc, const_cast<JSValueConst *>(argv));
+            for (int i = 0; i < argc; i++)
+              JS_FreeValue(jsfun_obj.ctx, argv[i]);
+            promise.set_value(result);
 
-        std::promise<std::expected<JSValue, exception>> promise;
-        auto future = promise.get_future();
-        auto work = [&]() {
-          JSValue result =
-              JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, 0, nullptr);
-          promise.set_value(result);
+            if (JS_IsException(result))
+              promise.set_exception(
+                  std::make_exception_ptr(exception{jsfun_obj.ctx}));
+          };
 
-          if (JS_IsException(result))
-            promise.set_exception(
-                std::make_exception_ptr(exception{jsfun_obj.ctx}));
+          if (!is_thread_js_main) {
+            /*
+              If we put these latches on the stack, we will get a deadlock
+              but fucking why??
+              This is a workaround for the issue with std::latch on the stack
+            */
+            auto init_latch = std::make_shared<std::latch>(1);
+            auto done_latch = std::make_shared<std::latch>(1);
+
+            ctx.enqueueJob([=]() {
+              is_thread_js_main = false;
+              init_latch->count_down();
+              done_latch->wait();
+              is_thread_js_main = true;
+              JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
+            });
+
+            while (!init_latch->try_wait()) {
+              std::this_thread::yield();
+            }
+
+            is_thread_js_main = true;
+            JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
+            work();
+            is_thread_js_main = false;
+            done_latch->count_down();
+          } else {
+            work();
+          }
+
+          auto result = future.get();
+          if (!result)
+            throw result.error();
+
+          return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
         };
-
-        if (!is_thread_js_main) {
-          ctx.enqueueJob(work);
-        } else {
-          work();
-        }
-
-        auto result = future.get();
-
-        if (!result)
-          throw result.error();
-
-        return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
-      };
-    } else {
-      return [jsfun_obj =
-                  Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
-        auto &ctx = Context::get(jsfun_obj.ctx);
-        std::promise<std::expected<JSValue, exception>> promise;
-        auto future = promise.get_future();
-
-        auto work = [&]() {
-          const int argc = sizeof...(Args);
-          JSValue argv[argc];
-          detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
-          JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED,
-                                   argc, const_cast<JSValueConst *>(argv));
-          for (int i = 0; i < argc; i++)
-            JS_FreeValue(jsfun_obj.ctx, argv[i]);
-          promise.set_value(result);
-
-          if (JS_IsException(result))
-            promise.set_exception(
-                std::make_exception_ptr(exception{jsfun_obj.ctx}));
-        };
-        if (!is_thread_js_main) {
-          ctx.enqueueJob(work);
-        } else {
-          work();
-        }
-
-        auto result = future.get();
-        if (!result)
-          throw result.error();
-
-        return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
-      };
-    }
   }
 
   /** Convert from function object functor to JSValue.
@@ -2061,7 +2058,10 @@ template <typename Function> void Context::enqueueJob(Function &&job) {
         return JS_UNDEFINED;
       },
       1, &arg);
-  has_pending_job = true;
+  {
+    std::lock_guard<std::mutex> lock(js_job_start_mutex);
+    has_pending_job = true;
+  }
   js_job_start_cv.notify_all();
   JS_FreeValue(ctx, job_val);
   if (err < 0)

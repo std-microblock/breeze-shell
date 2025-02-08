@@ -61,7 +61,6 @@ void script_context::watch_folder(const std::filesystem::path &path,
   std::optional<std::thread> js_thread;
   auto reload_all = [&]() {
     std::println("Reloading all scripts");
-    menu_callbacks_js.clear();
 
     *stop_signal = true;
     stop_signal = std::make_shared<int>(false);
@@ -69,17 +68,15 @@ void script_context::watch_folder(const std::filesystem::path &path,
     if (js_thread)
       js_thread->join();
 
-    static std::mutex m;
+    menu_callbacks_js.clear();
 
     js_thread = std::thread([&, this, ss = stop_signal]() {
-      std::lock_guard<std::mutex> lock(m);
       is_thread_js_main = true;
       set_thread_locale_utf8();
       rt = std::make_shared<qjs::Runtime>();
       JS_UpdateStackTop(rt->rt);
       js = std::make_shared<qjs::Context>(*rt);
       bind();
-
       try {
         js->eval(breeze_script_js, "breeze-script.js", JS_EVAL_TYPE_MODULE);
       } catch (std::exception &e) {
@@ -132,6 +129,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
       while (auto ptr = js) {
         if (ptr->ctx) {
+
           auto r = [&] {
             __try {
               return js_std_loop(ptr->ctx, ss.get());
@@ -146,20 +144,20 @@ void script_context::watch_folder(const std::filesystem::path &path,
             std::println("JS loop critical error! Restarting...");
             return;
           }
-
-          js->has_pending_job = false;
           if (r) {
             js_std_dump_error(ptr->ctx);
           }
+          std::lock_guard lock(ptr->js_job_start_mutex);
+          ptr->has_pending_job = JS_IsJobPending(rt->rt);
         }
 
         if (*ss)
           break;
 
-        std::this_thread::yield();
         std::unique_lock lock(js->js_job_start_mutex);
-        if (!js->has_pending_job)
-          js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(30));
+        if (js->has_pending_job)
+          continue;
+        js->js_job_start_cv.wait(lock);
       }
     });
   };
@@ -172,6 +170,8 @@ void script_context::watch_folder(const std::filesystem::path &path,
         if (!path.ends_with(".js")) {
           return;
         }
+
+        std::println("File change detected: {}", path);
         has_update = true;
       });
 

@@ -161,6 +161,7 @@ struct widget : std::enable_shared_from_this<widget> {
 
   void add_child(std::shared_ptr<widget> child);
   std::vector<std::shared_ptr<widget>> children;
+  bool children_dirty = false;
   template <typename T, typename... Args>
   inline std::shared_ptr<T> emplace_child(Args &&...args) {
     auto child = std::make_shared<T>(std::forward<Args>(args)...);

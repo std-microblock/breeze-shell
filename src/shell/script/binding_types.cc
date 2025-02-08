@@ -34,13 +34,12 @@ menu_controller::append_item_after(js_menu_data data, int after_index) {
     return nullptr;
 
   std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
+  m->children_dirty = true;
   menu_item item;
   auto new_item = std::make_shared<menu_item_normal_widget>(item);
   auto ctl = std::make_shared<menu_item_controller>(new_item, m);
   new_item->parent = m.get();
   ctl->set_data(data);
-
   while (after_index < 0) {
     after_index = m->item_widgets.size() + after_index + 1;
   }
@@ -50,7 +49,6 @@ menu_controller::append_item_after(js_menu_data data, int after_index) {
   } else {
     m->item_widgets.insert(m->item_widgets.begin() + after_index, new_item);
   }
-
   m->update_icon_width();
 
   if (m->animate_appear_started) {
@@ -77,22 +75,34 @@ menu_controller::~menu_controller() {}
 void menu_item_controller::set_position(int new_index) {
   if (!valid())
     return;
+
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
+
   if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
     auto m = $menu->lock();
     if (!m)
       return;
 
-    std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
     if (new_index >= m->item_widgets.size())
       return;
-
     auto item = $item.lock();
-
     m->item_widgets.erase(
         std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
         m->item_widgets.end());
 
     m->item_widgets.insert(m->item_widgets.begin() + new_index, item);
+    m->children_dirty = true;
+  } else if (auto parent =
+                 std::get_if<std::weak_ptr<menu_item_parent_widget>>(&$parent);
+             auto m = parent->lock()) {
+    if (new_index >= m->children.size())
+      return;
+    auto item = $item.lock();
+    m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
+                      m->children.end());
+
+    m->children.insert(m->children.begin() + new_index, item);
+    m->children_dirty = true;
   }
 }
 
@@ -166,35 +176,32 @@ void menu_item_controller::set_data(js_menu_data data) {
   if (!valid())
     return;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   auto item = $item.lock();
-
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
   to_menu_item(item->item, data);
-
-  if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
-    auto m = $menu->lock();
-    m->update_icon_width();
-  }
+  if (auto menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent))
+    if (auto m = menu->lock()) {
+      m->update_icon_width();
+    }
 }
 void menu_item_controller::remove() {
   if (!valid())
     return;
-
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   auto item = $item.lock();
-
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
   if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent);
       auto m = $menu->lock()) {
     m->item_widgets.erase(
         std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
         m->item_widgets.end());
+
+    m->children_dirty = true;
   } else if (auto parent =
                  std::get_if<std::weak_ptr<menu_item_parent_widget>>(&$parent);
              auto m = parent->lock()) {
     m->children.erase(std::remove(m->children.begin(), m->children.end(), item),
                       m->children.end());
+    m->children_dirty = true;
   }
 }
 bool menu_item_controller::valid() {
@@ -533,9 +540,8 @@ void menu_controller::clear() {
   auto m = $menu.lock();
   if (!m)
     return;
-
   std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
+  m->children_dirty = true;
   m->item_widgets.clear();
   m->menu_data.items.clear();
 }
@@ -683,7 +689,7 @@ void menu_item_parent_item_controller::set_position(int new_index) {
                              parent->item_widgets.end());
 
   parent->item_widgets.insert(parent->item_widgets.begin() + new_index, item);
-
+  parent->children_dirty = true;
   parent->update_icon_width();
 }
 void menu_item_parent_item_controller::remove() {
@@ -693,11 +699,9 @@ void menu_item_parent_item_controller::remove() {
   auto item = $item.lock();
   if (!item)
     return;
-
-  auto parent = item->parent->downcast<menu_widget>();
-
   std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
+  auto parent = item->parent->downcast<menu_widget>();
+  parent->children_dirty = true;
   parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
                                          parent->item_widgets.end(), item),
                              parent->item_widgets.end());
@@ -713,12 +717,13 @@ menu_controller::append_parent_item_after(int after_index) {
   auto m = $menu.lock();
   if (!m)
     return nullptr;
-
+  m->children_dirty = true;
   std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   auto new_item = std::make_shared<menu_item_parent_widget>();
   auto ctl = std::make_shared<menu_item_parent_item_controller>(new_item, m);
   new_item->parent = m.get();
+
   while (after_index < 0) {
     after_index = m->item_widgets.size() + after_index + 1;
   }

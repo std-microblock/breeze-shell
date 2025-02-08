@@ -2364,7 +2364,7 @@ static int js_os_poll(JSContext *ctx)
             }
         }
     } else {
-        Sleep(min_delay);
+        // Sleep(min_delay);
     }
     return 0;
 }

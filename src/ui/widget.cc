@@ -65,6 +65,7 @@ void ui::widget::render(nanovg_context ctx) {
   render_children(ctx.with_offset(*x, *y), children);
 }
 void ui::widget::update(update_context &ctx) {
+  children_dirty = false;
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
   }
@@ -182,6 +183,8 @@ void ui::widget::update_children(
     update_context &ctx, std::vector<std::shared_ptr<widget>> &children) {
   for (auto &child : children) {
     update_child_basic(ctx, child);
+    if (children_dirty)
+      break;
   }
 
   // Remove dead children
