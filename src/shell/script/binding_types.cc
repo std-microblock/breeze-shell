@@ -33,9 +33,7 @@ menu_controller::append_item_after(js_menu_data data, int after_index) {
   if (!m)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   menu_item item;
   auto new_item = std::make_shared<menu_item_normal_widget>(item);
@@ -84,10 +82,7 @@ void menu_item_controller::set_position(int new_index) {
     if (!m)
       return;
 
-    std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                          std::defer_lock);
-    std::ignore = lock.try_lock();
-
+    std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
     if (new_index >= m->item_widgets.size())
       return;
 
@@ -171,9 +166,7 @@ void menu_item_controller::set_data(js_menu_data data) {
   if (!valid())
     return;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   auto item = $item.lock();
 
@@ -188,9 +181,7 @@ void menu_item_controller::remove() {
   if (!valid())
     return;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   auto item = $item.lock();
 
@@ -269,9 +260,7 @@ std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
   if (!m)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   if (index >= m->item_widgets.size())
     return nullptr;
@@ -292,9 +281,7 @@ menu_controller::get_items() {
   if (!m)
     return {};
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   std::vector<std::shared_ptr<menu_item_controller>> items;
 
@@ -547,9 +534,7 @@ void menu_controller::clear() {
   if (!m)
     return;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   m->item_widgets.clear();
   m->menu_data.items.clear();
@@ -662,9 +647,7 @@ menu_item_parent_item_controller::children() {
   if (!item)
     return {};
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> items;
 
@@ -690,9 +673,7 @@ void menu_item_parent_item_controller::set_position(int new_index) {
 
   auto parent = item->parent->downcast<menu_widget>();
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   if (new_index >= parent->item_widgets.size())
     return;
@@ -715,9 +696,7 @@ void menu_item_parent_item_controller::remove() {
 
   auto parent = item->parent->downcast<menu_widget>();
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
                                          parent->item_widgets.end(), item),
@@ -735,9 +714,7 @@ menu_controller::append_parent_item_after(int after_index) {
   if (!m)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   auto new_item = std::make_shared<menu_item_parent_widget>();
   auto ctl = std::make_shared<menu_item_parent_item_controller>(new_item, m);
@@ -770,9 +747,7 @@ menu_item_parent_item_controller::append_child_after(
   if (!parent)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock,
-                        std::defer_lock);
-  std::ignore = lock.try_lock();
+  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   menu_item item;
   auto new_item = std::make_shared<menu_item_normal_widget>(item);
@@ -803,7 +778,8 @@ void subproc::open(std::string path, std::string args) {
   ShellExecuteW(nullptr, L"open", wpath.c_str(), wargs.c_str(), nullptr,
                 SW_SHOWNORMAL);
 }
-void subproc::open_async(std::string path, std::string args, std::function<void()> callback) {
+void subproc::open_async(std::string path, std::string args,
+                         std::function<void()> callback) {
   std::thread([path, callback, args]() {
     try {
       open(path, args);

@@ -55,7 +55,7 @@ struct render_target {
   bool should_loop_stop_hide_as_close = false;
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::high_resolution_clock clock{};
-  std::mutex rt_lock{};
+  std::recursive_mutex rt_lock{};
   std::mutex loop_thread_tasks_lock{};
   std::vector<std::function<void()>> loop_thread_tasks{};
   void post_loop_thread_task(std::function<void()> task);
