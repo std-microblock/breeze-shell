@@ -2037,6 +2037,8 @@ template <typename Key> property_proxy<Key>::operator Value() const {
 } // namespace detail
 
 template <typename Function> void Context::enqueueJob(Function &&job) {
+  std::lock_guard<std::mutex> lock(js_job_start_mutex);
+  
   JSValue job_val =
       js_traits<std::function<void()>>::wrap(ctx, std::forward<Function>(job));
   JSValueConst arg = job_val;
@@ -2058,10 +2060,8 @@ template <typename Function> void Context::enqueueJob(Function &&job) {
         return JS_UNDEFINED;
       },
       1, &arg);
-  {
-    std::lock_guard<std::mutex> lock(js_job_start_mutex);
-    has_pending_job = true;
-  }
+
+  has_pending_job = true;
   js_job_start_cv.notify_all();
   JS_FreeValue(ctx, job_val);
   if (err < 0)
