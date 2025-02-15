@@ -4183,14 +4183,15 @@ int js_std_loop(JSContext *ctx, JS_BOOL* stop_signal)
         /* execute the pending jobs */
         for(;;) {
             err = JS_ExecutePendingJob(JS_GetRuntime(ctx), &ctx1);
+            
+            if (stop_signal && *stop_signal) {
+                goto done;
+            }
+            
             if (err <= 0) {
                 if (err < 0)
                     goto done;
                 break;
-            }
-
-            if (stop_signal && *stop_signal) {
-                goto done;
             }
         }
 

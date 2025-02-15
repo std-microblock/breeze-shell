@@ -159,6 +159,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
           continue;
         js->js_job_start_cv.wait(lock);
       }
+      is_thread_js_main = false;
     });
   };
 
