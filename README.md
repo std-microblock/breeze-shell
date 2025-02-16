@@ -76,4 +76,5 @@ development. Install clangd plugin for full intellisense.
 
 # Credits
 [@lipraty](https://github.com/lipraty) - Icon Design
+
 [moudey/Shell](https://github.com/moudey/Shell) - Inspiration
