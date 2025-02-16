@@ -38,7 +38,7 @@ const splitIntoLines = (str, maxLen) => {
 
             x++
         }
-        lines.push(line.substr(0, x))
+        lines.push(line.substr(0, x).trim())
         i += x
     }
 
