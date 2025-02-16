@@ -1,0 +1,212 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Config",
+    "definitions": {
+        "Config": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "context_menu": {
+                    "$ref": "#/definitions/ContextMenu"
+                },
+                "debug_console": {
+                    "type": "boolean"
+                },
+                "font_path_main": {
+                    "type": "string"
+                },
+                "font_path_fallback": {
+                    "type": "string"
+                },
+                "res_string_loader_use_hook": {
+                    "type": "boolean"
+                },
+                "avoid_resize_ui": {
+                    "type": "boolean"
+                },
+                "plugin_load_order": {
+                    "type": "array",
+                    "items": {}
+                }
+            },
+            "required": [],
+            "title": "Config"
+        },
+        "ContextMenu": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "theme": {
+                    "$ref": "#/definitions/Theme"
+                },
+                "vsync": {
+                    "type": "boolean"
+                },
+                "ignore_owner_draw": {
+                    "type": "boolean"
+                },
+                "reverse_if_open_to_up": {
+                    "type": "boolean"
+                },
+                "search_large_dwItemData_range": {
+                    "type": "boolean"
+                },
+                "position": {
+                    "$ref": "#/definitions/Position"
+                }
+            },
+            "required": [],
+            "title": "ContextMenu"
+        },
+        "Position": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "padding_vertical": {
+                    "type": "integer"
+                },
+                "padding_horizontal": {
+                    "type": "integer"
+                }
+            },
+            "required": [],
+            "title": "Position"
+        },
+        "Theme": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "use_dwm_if_available": {
+                    "type": "boolean"
+                },
+                "background_opacity": {
+                    "type": "integer"
+                },
+                "acrylic": {
+                    "type": "boolean"
+                },
+                "radius": {
+                    "type": "integer"
+                },
+                "font_size": {
+                    "type": "integer"
+                },
+                "item_height": {
+                    "type": "integer"
+                },
+                "item_gap": {
+                    "type": "integer"
+                },
+                "item_radius": {
+                    "type": "integer"
+                },
+                "margin": {
+                    "type": "integer"
+                },
+                "padding": {
+                    "type": "integer"
+                },
+                "text_padding": {
+                    "type": "integer"
+                },
+                "icon_padding": {
+                    "type": "integer"
+                },
+                "right_icon_padding": {
+                    "type": "integer"
+                },
+                "multibutton_line_gap": {
+                    "type": "integer"
+                },
+                "acrylic_color_light": {
+                    "type": "string"
+                },
+                "acrylic_color_dark": {
+                    "type": "string"
+                },
+                "acrylic_opacity": {
+                    "type": "number"
+                },
+                "animation": {
+                    "$ref": "#/definitions/Animation"
+                }
+            },
+            "required": [],
+            "title": "Theme"
+        },
+        "Animation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "item": {
+                    "$ref": "#/definitions/Item"
+                },
+                "main_bg": {
+                    "$ref": "#/definitions/Bg"
+                },
+                "submenu_bg": {
+                    "$ref": "#/definitions/Bg"
+                }
+            },
+            "required": [],
+            "title": "Animation"
+        },
+        "Item": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "opacity": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "x": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "width": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                }
+            },
+            "required": [],
+            "title": "Item"
+        },
+        "AnimFloatConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "easing": {
+                    "type": "string"
+                },
+                "delay_scale": {
+                    "type": "integer"
+                }
+            },
+            "required": [],
+            "title": "AnimFloatConfig"
+        },
+        "Bg": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "opacity": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "x": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "y": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "w": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "h": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                }
+            },
+            "required": [],
+            "title": "Bg"
+        }
+    }
+}

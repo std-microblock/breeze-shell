@@ -10,7 +10,7 @@ struct config {
   static std::filesystem::path default_main_font();
   static std::filesystem::path default_fallback_font();
   struct animated_float_conf {
-    float duration = 200;
+    float duration = 150;
     ui::easing_type easing = ui::easing_type::ease_in_out;
     float delay_scale = 1;
 
@@ -72,7 +72,8 @@ struct config {
   bool res_string_loader_use_hook = false;
   bool avoid_resize_ui = false;
   std::vector<std::string> plugin_load_order = {};
-
+  
+  std::string $schema;
   static std::unique_ptr<config> current;
   static void read_config();
   static void write_config();

@@ -1,266 +1,195 @@
 # 配置文件格式说明
 
-本项目的配置文件采用 JSON
-格式，用于定义应用程序的运行时配置。以下是配置文件的详细说明。
+本项目的配置文件采用 JSON 格式，推荐使用 VSCode 进行编辑。
 
-## 配置文件结构
+本项目配置文件默认位于 `%USERPROFILE%/.breeze-shell/config.json`。
+
+编辑配置文件并保存后，插件将会自动重载配置，无需重新启动。
+
+**如果保存后弹出了黑窗口，这大概是因为你的配置文件有错误，请阅读黑窗口内的报错信息并修复错误**
+
+## Schema
+
+Breeze Shell 配置文件的 JSON Schema 位于
+[resources/schema.json](./resources/schema.json)，在配置文件内写入
 
 ```json
 {
-  "default_main_font": "<path_to_main_font>",
-  "default_fallback_font": "<path_to_fallback_font>",
+  "$schema": "https://raw.githubusercontent.com/std-microblock/breeze-shell/refs/heads/master/resources/schema.json"
+}
+```
+
+即可在 VSCode 中看到配置文件类型检查及补全。
+
+## 配置文件结构
+
+以下为一份带有注释的完整默认 JSON 配置，注意其**不能**直接填入 config.json
+当中，因为配置文件解析当前不支持注释
+
+```json5
+{
   "context_menu": {
     "theme": {
+      // 在 Windows 11 下使用 DWM 圆角而不是 SetWindowRgn 圆角
       "use_dwm_if_available": true,
-      "background_opacity": 1.0,
+      // 启用亚克力背景效果
       "acrylic": true,
+      // 圆角大小，仅在不使用 DWM 圆角时生效
       "radius": 6.0,
+      // 字体大小，可调整此项以对齐缩放后的整数倍率字体大小以避免模糊
       "font_size": 14.0,
-      "item_height": 25.0,
-      "item_gap": 5.0,
-      "item_radius": 100.0,
+      // 项高度
+      "item_height": 23.0,
+      // 项间距
+      "item_gap": 3.0,
+      // 项圆角大小
+      "item_radius": 5.0,
+      // 外边距
       "margin": 5.0,
-      "acrylic_opacity": 0.1,
+      // 内边距
+      "padding": 6.0,
+      // 文笔内边距
+      "text_padding": 8.0,
+      // 图标内边距
+      "icon_padding": 4.0,
+      // 右侧图标（展开图标）边距
+      "right_icon_padding": 20.0,
+      // 横排按钮间距（此处为负值以抵消项边距的效果）
+      "multibutton_line_gap": -6.0,
+      // 在亮色主题下的亚克力背景颜色
+      "acrylic_color_light": "#fefefe00",
+      // 在暗色主题下的亚克力背景颜色
+      "acrylic_color_dark": "#28282800",
+      // 背景透明度
+      "background_opacity":1.0,
+      // 动画相关
+      "animation": {
+        // 菜单项动画
+        "item": {
+          // animated_float_conf: 通用动画配置
+          "opacity": {
+            // 持续时长
+            "duration": 200.0,
+            // 动画曲线
+            // 可为：
+            // mutation (关闭动画)
+            // linear (线性)
+            // ease_in, ease_out, ease_in_out (三种缓动曲线)
+            "easing": "ease_in_out",
+            // 对延迟时间的缩放
+            // 即：如果本来是在开始总动画 50ms 后显示该动画，
+            //     若 delay_scale 为 2 则在 100ms 后才显示
+            "delay_scale": 1.0
+          },
+          // 同 opacity，以下均省略
+          "x": animated_float_conf,
+          "width": animated_float_conf
+        },
+        // 主菜单的背景
+        "main_bg": {
+          "opacity": animated_float_conf,
+          "x": animated_float_conf,
+          "y": animated_float_conf,
+          "w": animated_float_conf,
+          "h": animated_float_conf
+        },
+        // 子菜单的背景，同主菜单
+        "submenu_bg": {
+          ...
+        }
+      }
+    },
+    // 启用垂直同步
+    "vsync": true,
+    // 不替换 owner draw 的菜单
+    "ignore_owner_draw": true,
+    // 在向上展开时将所有项反向
+    "reverse_if_open_to_up": true,
+    // 调试选项，搜索更大范围的图标，不建议打开
+    "search_large_dwItemData_range": false,
+    // 定位相关
+    "position": {
+      // 竖直边距
+      "padding_vertical": 20,
+      // 水平边距
+      "padding_horizontal": 0
+    }
+  },
+
+  // 开启调试窗口
+  "debug_console": false,
+
+  // 主字体
+  "font_path_main": "C:\\WINDOWS\\Fonts\\segoeui.ttf",
+  // 副字体
+  "font_path_fallback": "C:\\WINDOWS\\Fonts\\msyh.ttc",
+  // 使用 hook 方式加载更多 resid
+  "res_string_loader_use_hook": false,
+  // 调试选项，避免更改 UI 窗口大小
+  "avoid_resize_ui": false,
+  // 插件加载顺序，在越前面的越先加载
+  // 格式为插件的无拓展名文件名
+  // 如：Windows 11 Icon Pack
+  "plugin_load_order": []
+}
+```
+
+## 示例配置文件
+
+#### 禁用所有动画
+
+```json
+{
+  "context_menu": {
+    "theme": {
       "animation": {
         "item": {
           "opacity": {
-            "duration": 200.0,
-            "easing": "ease_in_out",
-            "delay_scale": 1.0
+            "easing": "mutation"
           },
           "x": {
-            "duration": 200.0,
-            "easing": "ease_in_out",
-            "delay_scale": 1.0
+            "easing": "mutation"
+          },
+          "width": {
+            "easing": "mutation"
           }
         },
         "main_bg": {
           "opacity": {
-            "duration": 200.0,
-            "easing": "ease_in_out",
-            "delay_scale": 1.0
+            "easing": "mutation"
+          },
+          "x": {
+            "easing": "mutation"
+          },
+          "y": {
+            "easing": "mutation"
+          },
+          "w": {
+            "easing": "mutation"
+          },
+          "h": {
+            "easing": "mutation"
           }
         },
         "submenu_bg": {
           "opacity": {
-            "duration": 200.0,
-            "easing": "ease_in_out",
-            "delay_scale": 1.0
+            "easing": "mutation"
+          },
+          "x": {
+            "easing": "mutation"
+          },
+          "y": {
+            "easing": "mutation"
+          },
+          "w": {
+            "easing": "mutation"
+          },
+          "h": {
+            "easing": "mutation"
           }
         }
       }
-    },
-    "vsync": true,
-    "position": {
-      "padding_vertical": 20,
-      "padding_horizontal": 0
     }
-  },
-  "debug_console": false
+  }
 }
-```
-
-## 字段说明
-
-### `default_main_font`
-
-- **类型**: 字符串 (文件路径)
-- **说明**: 默认主字体文件的路径。
-
-### `default_fallback_font`
-
-- **类型**: 字符串 (文件路径)
-- **说明**: 默认备用字体文件的路径。
-
-### `context_menu`
-
-- **类型**: 对象
-- **说明**: 上下文菜单的配置。
-
-#### `theme`
-
-- **类型**: 对象
-- **说明**: 上下文菜单的主题配置。
-
-##### `use_dwm_if_available`
-
-- **类型**: 布尔值
-- **说明**: 是否在可用时使用 DWM（Desktop Window Manager）效果。
-
-##### `background_opacity`
-
-- **类型**: 浮点数
-- **说明**: 背景透明度，取值范围为 `0.0` 到 `1.0`。
-
-##### `acrylic`
-
-- **类型**: 布尔值
-- **说明**: 是否启用亚克力效果。
-
-##### `radius`
-
-- **类型**: 浮点数
-- **说明**: 圆角半径。
-
-##### `font_size`
-
-- **类型**: 浮点数
-- **说明**: 字体大小。
-
-##### `item_height`
-
-- **类型**: 浮点数
-- **说明**: 菜单项的高度。
-
-##### `item_gap`
-
-- **类型**: 浮点数
-- **说明**: 菜单项之间的间距。
-
-##### `item_radius`
-
-- **类型**: 浮点数
-- **说明**: 菜单项的圆角半径。
-
-##### `margin`
-
-- **类型**: 浮点数
-- **说明**: 菜单的外边距。
-
-##### `acrylic_opacity`
-
-- **类型**: 浮点数
-- **说明**: 亚克力效果的透明度，取值范围为 `0.0` 到 `1.0`。
-
-##### `animation`
-
-- **类型**: 对象
-- **说明**: 动画效果的配置。
-
-###### `item`
-
-- **类型**: 对象
-- **说明**: 菜单项的动画配置。
-
-####### `opacity`
-
-- **类型**: 对象
-- **说明**: 透明度动画配置。
-
-######## `duration`
-
-- **类型**: 浮点数
-- **说明**: 动画持续时间（毫秒）。
-
-######## `easing`
-
-- **类型**: 字符串
-- **说明**: 动画缓动类型，可选值为 `ease_in_out` 等。
-
-######## `delay_scale`
-
-- **类型**: 浮点数
-- **说明**: 动画延迟比例。
-
-####### `x`
-
-- **类型**: 对象
-- **说明**: X 轴位移动画配置。
-
-######## `duration`
-
-- **类型**: 浮点数
-- **说明**: 动画持续时间（毫秒）。
-
-######## `easing`
-
-- **类型**: 字符串
-- **说明**: 动画缓动类型，可选值为 `ease_in_out` 等。
-
-######## `delay_scale`
-
-- **类型**: 浮点数
-- **说明**: 动画延迟比例。
-
-###### `bg`
-
-- **类型**: 对象
-- **说明**: 背景动画配置。
-
-####### `main_bg`
-
-- **类型**: 对象
-- **说明**: 主背景的动画配置。
-
-######## `opacity`
-
-- **类型**: 对象
-- **说明**: 透明度动画配置。
-
-######### `duration`
-
-- **类型**: 浮点数
-- **说明**: 动画持续时间（毫秒）。
-
-######### `easing`
-
-- **类型**: 字符串
-- **说明**: 动画缓动类型，可选值为 `ease_in_out` 等。
-
-######### `delay_scale`
-
-- **类型**: 浮点数
-- **说明**: 动画延迟比例。
-
-####### `submenu_bg`
-
-- **类型**: 对象
-- **说明**: 子菜单背景的动画配置。
-
-######## `opacity`
-
-- **类型**: 对象
-- **说明**: 透明度动画配置。
-
-######### `duration`
-
-- **类型**: 浮点数
-- **说明**: 动画持续时间（毫秒）。
-
-######### `easing`
-
-- **类型**: 字符串
-- **说明**: 动画缓动类型，可选值为 `ease_in_out` 等。
-
-######### `delay_scale`
-
-- **类型**: 浮点数
-- **说明**: 动画延迟比例。
-
-#### `vsync`
-
-- **类型**: 布尔值
-- **说明**: 是否启用垂直同步。
-
-#### `position`
-
-- **类型**: 对象
-- **说明**: 菜单位置的配置。
-
-##### `padding_vertical`
-
-- **类型**: 整数
-- **说明**: 垂直方向的内边距。
-
-##### `padding_horizontal`
-
-- **类型**: 整数
-- **说明**: 水平方向的内边距。
-
-### `debug_console`
-
-- **类型**: 布尔值
-- **说明**: 是否启用调试控制台。
-
-```
 ```
