@@ -45,7 +45,7 @@ namespace mb_shell {
 
 void main() {
   set_thread_locale_utf8();
-  
+
   AllocConsole();
   freopen("CONOUT$", "w", stdout);
   freopen("CONOUT$", "w", stderr);
@@ -103,8 +103,8 @@ void main() {
     }
   }).detach();
 
-  NtUserTrackHook->install((void*)+[](HMENU hMenu, UINT uFlags, int x, int y,
-                               HWND hWnd, LPTPMPARAMS lptpm) {
+  NtUserTrackHook->install((void *)+[](HMENU hMenu, UINT uFlags, int x, int y,
+                                       HWND hWnd, LPTPMPARAMS lptpm) {
     if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
         config::current->context_menu.ignore_owner_draw) {
       return NtUserTrackHook->call_trampoline<size_t>(hMenu, uFlags, x, y, hWnd,
@@ -120,7 +120,7 @@ void main() {
 
     has_active_menu = false;
 
-    if (menu_render.selected_menu) {
+    if (menu_render.selected_menu && !(uFlags & TPM_NONOTIFY)) {
       PostMessageW(hWnd, WM_COMMAND, *menu_render.selected_menu, 0);
       PostMessageW(hWnd, WM_NULL, 0, 0);
     }
