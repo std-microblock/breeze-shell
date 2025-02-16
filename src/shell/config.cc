@@ -27,8 +27,8 @@ void config::write_config() {
 void config::read_config() {
   auto config_file = data_directory() / "config.json";
 
+#ifdef __llvm__
   std::ifstream ifs(config_file);
-
   if (!std::filesystem::exists(config_file)) {
     auto config_file = data_directory() / "config.json";
     std::ofstream ofs(config_file);
@@ -58,6 +58,14 @@ void config::read_config() {
       config::current->debug_console = true;
     }
   }
+#else
+#pragma message                                                                \
+    "We don't support loading config file on MSVC because of a bug in MSVC."
+  std::println("We don't support loading config file when compiled with MSVC "
+               "because of a bug in MSVC.");
+  config::current = std::make_unique<config>();
+  config::current->debug_console = true;
+#endif
 
   if (config::current->debug_console) {
     ShowWindow(GetConsoleWindow(), SW_SHOW);

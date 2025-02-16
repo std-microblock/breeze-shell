@@ -873,6 +873,32 @@ template<> struct js_bind<mb_shell::js::win32> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::infra> {
+    static mb_shell::js::infra unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::infra obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::infra &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::infra> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::infra>("infra")
+            .constructor<>()
+                .static_fun<&mb_shell::js::infra::setTimeout>("setTimeout")
+                .static_fun<&mb_shell::js::infra::clearTimeout>("clearTimeout")
+                .static_fun<&mb_shell::js::infra::setInterval>("setInterval")
+                .static_fun<&mb_shell::js::infra::clearInterval>("clearInterval")
+            ;
+    }
+
+};
+    
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
@@ -916,5 +942,7 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze>::bind(mod);
 
     js_bind<mb_shell::js::win32>::bind(mod);
+
+    js_bind<mb_shell::js::infra>::bind(mod);
 
 }

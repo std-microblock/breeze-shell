@@ -1,7 +1,6 @@
 #include "script.h"
 #include "../contextmenu/contextmenu.h"
 #include "binding_qjs.h"
-#include "quickjs/quickjs-libc.h"
 
 #include "../config.h"
 #include "../utils.h"
@@ -18,7 +17,8 @@
 #include <unordered_set>
 
 #include "FileWatch.hpp"
-#include "quickjs/quickjs.h"
+#include "quickjs.h"
+#include "quickjspp.hpp"
 
 thread_local bool is_thread_js_main = false;
 
@@ -48,12 +48,9 @@ void script_context::bind() {
   module.function("println", println);
 
   bindAll(module);
-  js_std_init_handlers(rt->rt);
-  js_init_module_std(js->ctx, "qjs:std");
-  js_init_module_os(js->ctx, "qjs:os");
-  js_init_module_bjson(js->ctx, "qjs:bjson");
 }
-script_context::script_context() : rt{}, js{} {}
+script_context::script_context() : rt{}, js{} {
+}
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
   bool has_update = false;
@@ -67,7 +64,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
     if (js_thread)
       js_thread->join();
-
+    std::println("Creating JS thread");
     menu_callbacks_js.clear();
 
     js_thread = std::thread([&, this, ss = stop_signal]() {
@@ -129,35 +126,27 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
       while (auto ptr = js) {
         if (ptr->ctx) {
-
-          auto r = [&] {
-            __try {
-              return js_std_loop(ptr->ctx, ss.get());
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
-              std::cerr << "Error in JS loop" << std::endl;
-              return -999;
+          while (JS_IsJobPending(rt->rt) && !*ss) {
+            auto ctx = ptr->ctx;
+            auto ctx1 = ctx;
+            auto res = JS_ExecutePendingJob(rt->rt, &ctx1);
+            if (res == -999) {
+              has_update = true;
+              std::println("JS loop critical error! Restarting...");
+              return;
             }
-          }();
-
-          if (r == -999) {
-            has_update = true;
-            std::println("JS loop critical error! Restarting...");
-            return;
+            std::lock_guard lock(ptr->js_job_start_mutex);
+            ptr->has_pending_job = JS_IsJobPending(rt->rt);
           }
-          if (r) {
-            js_std_dump_error(ptr->ctx);
-          }
-          std::lock_guard lock(ptr->js_job_start_mutex);
-          ptr->has_pending_job = JS_IsJobPending(rt->rt);
         }
-
         if (*ss)
           break;
-
         std::unique_lock lock(js->js_job_start_mutex);
         if (js->has_pending_job)
           continue;
-        js->js_job_start_cv.wait(lock);
+        js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(100),
+                                     [&]() { return js->has_pending_job || *ss; });
+
       }
       is_thread_js_main = false;
     });
@@ -184,4 +173,5 @@ void script_context::watch_folder(const std::filesystem::path &path,
     }
   }
 }
+
 } // namespace mb_shell

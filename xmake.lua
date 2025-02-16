@@ -6,7 +6,7 @@ local version = "0.1.11"
 set_languages("c++2b")
 set_warnings("all") 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
-add_rules("mode.debug", "mode.release")
+add_rules("mode.releasedbg")
 
 includes("dependencies/blook.lua")
 includes("dependencies/glfw.lua")
@@ -14,8 +14,7 @@ includes("dependencies/reflect-cpp.lua")
 includes("dependencies/quickjs-ng.lua")
 add_requires("blook", "glfw", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp")
 set_runtimes("MT")
-add_rules("mode.releasedbg")
-add_rules("mode.minsizerel")
+
 
 target("ui")
     set_kind("static")

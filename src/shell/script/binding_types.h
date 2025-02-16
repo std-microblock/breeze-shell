@@ -584,6 +584,13 @@ struct win32 {
   static std::optional<std::string> env(std::string name);
 };
 
+struct infra {
+  static int setTimeout(std::function<void()> callback, int delay);
+  static void clearTimeout(int id);
+  static int setInterval(std::function<void()> callback, int delay);
+  static void clearInterval(int id);
+};
+
 } // namespace mb_shell::js
 
 namespace mb_shell {

@@ -119,8 +119,9 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
     return nullptr;
   };
 
-  auto dfs = [&](this auto &self, HWND hwnd) -> CComPtr<IShellBrowser> {
-    if (!hwnd || recorded_hwnds.count(hwnd))
+  auto dfs = [&](auto &self, HWND hwnd) -> CComPtr<IShellBrowser> {
+    auto rrecorded_hwnds = recorded_hwnds;
+    if (!hwnd || rrecorded_hwnds.count(hwnd))
       return nullptr;
     recorded_hwnds.insert(hwnd);
 
@@ -130,20 +131,20 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
     // iterate through child windows
     for (HWND hwnd = GetWindow(hWnd, GW_CHILD); hwnd != NULL;
          hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
-      CComPtr<IShellBrowser> psb = self(hwnd);
+      CComPtr<IShellBrowser> psb = self(self, hwnd);
       if (psb)
         return psb;
     }
     // iterate through parent windows
     for (HWND hwnd = GetParent(hWnd); hwnd; hwnd = GetParent(hwnd)) {
-      CComPtr<IShellBrowser> psb = self(hwnd);
+      CComPtr<IShellBrowser> psb = self(self, hwnd);
       if (psb)
         return psb;
     }
     return nullptr;
   };
 
-  auto res = dfs(hWnd);
+  auto res = dfs(dfs, hWnd);
 
   if (!res) {
     // if the window is shell window, we assume it's the desktop

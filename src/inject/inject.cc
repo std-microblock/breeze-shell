@@ -78,7 +78,7 @@ void GetDebugPrivilege() {
   CloseHandle(hToken);
 }
 
-int InjectToPID(int targetPID, std::wstring &dllPath) {
+int InjectToPID(int targetPID, std::wstring_view dllPath) {
 
   HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetPID);
   if (hProcess == NULL) {
@@ -95,7 +95,7 @@ int InjectToPID(int targetPID, std::wstring &dllPath) {
     return 1;
   }
 
-  if (!WriteProcessMemory(hProcess, remoteString, dllPath.c_str(),
+  if (!WriteProcessMemory(hProcess, remoteString, dllPath.data(),
                           (dllPath.size() + 1) * sizeof(wchar_t), NULL)) {
     std::cerr << "WriteProcessMemory failed: " << GetLastError() << std::endl;
     VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
@@ -181,6 +181,10 @@ int NewExplorerProcessAndInject() {
     return 1;
   }
 
+  auto asanPath = std::filesystem::path(dllPath).parent_path() / "clang_rt.asan_dynamic-x86_64.dll";
+  if (std::filesystem::exists(asanPath)) {
+    InjectToPID(targetPID, asanPath.wstring());
+  }
   InjectToPID(targetPID, dllPath);
   return 0;
 }

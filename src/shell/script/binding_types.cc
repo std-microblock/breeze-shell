@@ -7,6 +7,7 @@
 #include <print>
 #include <ranges>
 #include <regex>
+#include <thread>
 #include <variant>
 
 // Resid
@@ -17,6 +18,7 @@
 // Compile Information
 #include "../build_info.h"
 
+#include "script.h"
 #include "winhttp.h"
 
 std::unordered_set<
@@ -794,4 +796,95 @@ void subproc::open_async(std::string path, std::string args,
     }
   }).detach();
 }
+
+struct Timer {
+  std::function<void()> callback;
+  std::weak_ptr<qjs::Context> ctx;
+  int delay;
+  int elapsed = 0;
+  bool repeat;
+  int id;
+};
+
+std::vector<std::shared_ptr<Timer>> timers;
+std::optional<std::thread> timer_thread;
+
+void timer_thread_func() {
+  while (true) {
+    constexpr auto sleep_time = 30;
+    Sleep(sleep_time);
+    std::vector<std::shared_ptr<Timer>> to_remove;
+
+    for (auto &timer : timers) {
+      if (timer->ctx.expired()) {
+        to_remove.push_back(timer);
+        continue;
+      }
+      timer->elapsed += sleep_time;
+      if (timer->elapsed >= timer->delay) {
+        try {
+          timer->callback();
+          if (!timer->repeat) {
+            to_remove.push_back(timer);
+          } else {
+            timer->elapsed = 0;
+          }
+        } catch (std::exception &e) {
+          std::cerr << "Error in timer callback: " << e.what() << std::endl;
+          to_remove.push_back(timer);
+        }
+      }
+    }
+
+    for (auto &timer : to_remove) {
+      timers.erase(std::remove(timers.begin(), timers.end(), timer),
+                   timers.end());
+    }
+  }
+}
+
+void ensure_timer_thread() {
+  if (!timer_thread) {
+    timer_thread = std::thread(timer_thread_func);
+  }
+}
+
+int infra::setTimeout(std::function<void()> callback, int delay) {
+  ensure_timer_thread();
+
+  auto timer = std::make_shared<Timer>();
+  timer->callback = callback;
+  timer->delay = delay;
+  timer->repeat = false;
+  timer->ctx = qjs::Context::current->weak_from_this();
+  timer->id = timers.size() + 1;
+  timers.push_back(timer);
+
+  return timer->id;
+};
+void infra::clearTimeout(int id) {
+  timers.erase(
+      std::remove_if(timers.begin(), timers.end(),
+                     [id](const auto &timer) { return timer->id == id; }),
+      timers.end());
+};
+int infra::setInterval(std::function<void()> callback, int delay) {
+  ensure_timer_thread();
+
+  auto timer = std::make_shared<Timer>();
+  timer->callback = callback;
+  timer->delay = delay;
+  timer->repeat = true;
+  timer->ctx = qjs::Context::current->weak_from_this();
+  timer->id = timers.size() + 1;
+  timers.push_back(timer);
+
+  return timer->id;
+};
+void infra::clearInterval(int id) {
+  timers.erase(
+      std::remove_if(timers.begin(), timers.end(),
+                     [id](const auto &timer) { return timer->id == id; }),
+      timers.end());
+};
 } // namespace mb_shell::js

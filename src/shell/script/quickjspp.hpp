@@ -39,9 +39,11 @@ extern thread_local bool is_thread_js_main;
 #endif
 
 namespace qjs {
-
 class Context;
 class Value;
+inline void setCurrentContext(JSContext *);
+inline JSContext* getContextFromWrapped(Context *);
+inline std::weak_ptr<Context> weakFromContext(JSContext *);
 
 /** Exception type.
  * Indicates that exception has occured in JS context.
@@ -564,6 +566,7 @@ template <typename R, typename... Args, typename Callable>
 JSValue wrap_call(JSContext *ctx, Callable &&f, int argc,
                   JSValueConst *argv) noexcept {
   try {
+    setCurrentContext(ctx);
     if constexpr (std::is_same_v<R, void>) {
       std::apply(std::forward<Callable>(f),
                  unwrap_args<Args...>(ctx, argc, argv));
@@ -591,6 +594,7 @@ template <typename R, typename FirstArg, typename... Args, typename Callable>
 JSValue wrap_this_call(JSContext *ctx, Callable &&f, JSValueConst this_value,
                        int argc, JSValueConst *argv) noexcept {
   try {
+    setCurrentContext(ctx);
     if constexpr (std::is_same_v<R, void>) {
       std::apply(std::forward<Callable>(f),
                  std::tuple_cat(unwrap_args<FirstArg>(ctx, 1, &this_value),
@@ -1228,6 +1232,8 @@ class Value {
 public:
   JSValue v;
   JSContext *ctx = nullptr;
+  // if ctx_holder is expired, do not free v
+  std::optional<std::weak_ptr<Context>> ctx_holder;
 
 public:
   /** Use context.newValue(val) instead */
@@ -1235,6 +1241,14 @@ public:
     v = js_traits<std::decay_t<T>>::wrap(ctx, std::forward<T>(val));
     if (JS_IsException(v))
       throw exception{ctx};
+  }
+
+  Value(std::weak_ptr<Context> ctx, auto&& val) {
+    ctx_holder = ctx;
+    this->ctx = getContextFromWrapped(ctx.lock().get());
+    v = js_traits<std::decay_t<decltype(val)>>::wrap(this->ctx, std::forward<decltype(val)>(val));
+    if (JS_IsException(v))
+      throw exception{this->ctx};
   }
 
   Value(JSValue &&v) noexcept : v(std::move(v)), ctx(nullptr) {}
@@ -1269,7 +1283,7 @@ public:
   bool operator!=(const Value &rhs) const { return !((*this) == rhs); }
 
   ~Value() {
-    if (ctx)
+    if (ctx && (ctx_holder.has_value() && !ctx_holder.value().expired()))
       JS_FreeValue(ctx, v);
   }
 
@@ -1380,7 +1394,7 @@ public:
     assert(ctx);
     assert(!replacer.ctx || ctx == replacer.ctx);
     assert(!space.ctx || ctx == space.ctx);
-    return (std::string)Value{ctx,
+    return (std::string)Value{weakFromContext(ctx),
                               JS_JSONStringify(ctx, v, replacer.v, space.v)};
   }
 
@@ -1390,7 +1404,7 @@ public:
     assert(buffer.data()[buffer.size()] == '\0' &&
            "eval buffer is not null-terminated"); // JS_Eval requirement
     assert(ctx);
-    return Value{ctx, JS_EvalThis(ctx, v, buffer.data(), buffer.size(),
+    return Value{weakFromContext(ctx), JS_EvalThis(ctx, v, buffer.data(), buffer.size(),
                                   filename, flags)};
   }
 };
@@ -1468,13 +1482,13 @@ inline std::string toUri(std::string_view filename) {
  * Calls JS_SetContextOpaque(ctx, this); on construction and JS_FreeContext on
  * destruction
  */
-class Context {
+class Context : public std::enable_shared_from_this<Context> {
 public:
   JSContext *ctx;
-
+  thread_local static Context *current;
   // for starting jobs quickly
-  std::condition_variable js_job_start_cv;
-  std::mutex js_job_start_mutex;
+  std::condition_variable js_job_start_cv = {};
+  std::mutex js_job_start_mutex = {};
   bool has_pending_job = false;
   /** Module wrapper
    * Workaround for lack of opaque pointer for module load function by keeping a
@@ -1728,19 +1742,19 @@ public:
   }
 
   /** returns globalThis */
-  Value global() { return Value{ctx, JS_GetGlobalObject(ctx)}; }
+  Value global() { return Value{weakFromContext(ctx), JS_GetGlobalObject(ctx)}; }
 
   /** returns new Object() */
-  Value newObject() { return Value{ctx, JS_NewObject(ctx)}; }
+  Value newObject() { return Value{weakFromContext(ctx), JS_NewObject(ctx)}; }
 
   /** returns JS value converted from c++ object val */
   template <typename T> Value newValue(T &&val) {
-    return Value{ctx, std::forward<T>(val)};
+    return Value{weakFromContext(ctx), std::forward<T>(val)};
   }
 
   /** returns current exception associated with context and clears it. Should be
    * called when qjs::exception is caught */
-  Value getException() { return Value{ctx, JS_GetException(ctx)}; }
+  Value getException() { return Value{weakFromContext(ctx), JS_GetException(ctx)}; }
 
   /** Register class T for conversions to/from std::shared_ptr<T> to work.
    * Wherever possible module.class_<T>("T")... should be used instead.
@@ -1759,7 +1773,7 @@ public:
     assert(buffer.data()[buffer.size()] == '\0' &&
            "eval buffer is not null-terminated"); // JS_Eval requirement
     JSValue v = JS_Eval(ctx, buffer.data(), buffer.size(), filename, flags);
-    return Value{ctx, std::move(v)};
+    return Value{weakFromContext(ctx), std::move(v)};
   }
 
   Value evalFile(const char *filename, int flags = 0) {
@@ -1776,7 +1790,7 @@ public:
     assert(
         buffer.data()[buffer.size()] == '\0' &&
         "fromJSON buffer is not null-terminated"); // JS_ParseJSON requirement
-    return Value{ctx,
+    return Value{weakFromContext(ctx),
                  JS_ParseJSON(ctx, buffer.data(), buffer.size(), filename)};
   }
 
@@ -1792,7 +1806,7 @@ public:
  */
 template <> struct js_traits<Value> {
   static Value unwrap(JSContext *ctx, JSValueConst v) {
-    return Value{ctx, JS_DupValue(ctx, v)};
+    return Value{weakFromContext(ctx), JS_DupValue(ctx, v)};
   }
 
   static JSValue wrap(JSContext *ctx, Value v) noexcept {
@@ -1809,62 +1823,60 @@ template <> struct js_traits<Value> {
 template <typename R, typename... Args>
 struct js_traits<std::function<R(Args...)>, int> {
   static auto unwrap(JSContext *ctx, JSValueConst fun_obj) {
-    return
-        [jsfun_obj = Value{ctx, JS_DupValue(ctx, fun_obj)}](Args... args) -> R {
-          auto &ctx = Context::get(jsfun_obj.ctx);
-          std::promise<std::expected<JSValue, exception>> promise;
-          auto future = promise.get_future();
-          auto work = [&]() {
-            const int argc = sizeof...(Args);
-            JSValue argv[argc];
-            detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
-            JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED,
-                                     argc, const_cast<JSValueConst *>(argv));
-            for (int i = 0; i < argc; i++)
-              JS_FreeValue(jsfun_obj.ctx, argv[i]);
-            promise.set_value(result);
+    auto weak = Context::get(ctx).weak_from_this();
+    return [jsfun_obj = Value{weakFromContext(ctx), JS_DupValue(ctx, fun_obj)},
+            weak](Args... args) -> R {
+      if (weak.expired())
+        throw std::runtime_error{"qjs::Context is destroyed"};
+      auto &ctx = Context::get(jsfun_obj.ctx);
+      std::promise<std::expected<JSValue, exception>> promise;
+      auto future = promise.get_future();
+      auto work = [&]() {
+        const int argc = sizeof...(Args);
+        JSValue argv[std::max(1, argc)];
+        detail::wrap_args(jsfun_obj.ctx, argv, std::forward<Args>(args)...);
+        JSValue result = JS_Call(jsfun_obj.ctx, jsfun_obj.v, JS_UNDEFINED, argc,
+                                 const_cast<JSValueConst *>(argv));
+        for (int i = 0; i < argc; i++)
+          JS_FreeValue(jsfun_obj.ctx, argv[i]);
+        promise.set_value(result);
 
-            if (JS_IsException(result))
-              promise.set_exception(
-                  std::make_exception_ptr(exception{jsfun_obj.ctx}));
-          };
+        if (JS_IsException(result))
+          promise.set_exception(
+              std::make_exception_ptr(exception{jsfun_obj.ctx}));
+      };
 
-          if (!is_thread_js_main) {
-            /*
-              If we put these latches on the stack, we will get a deadlock
-              but fucking why??
-              This is a workaround for the issue with std::latch on the stack
-            */
-            auto init_latch = std::make_shared<std::latch>(1);
-            auto done_latch = std::make_shared<std::latch>(1);
+      if (!is_thread_js_main) {
+        auto init_latch = std::make_shared<std::latch>(1);
+        auto done_latch = std::make_shared<std::latch>(1);
 
-            ctx.enqueueJob([=]() {
-              is_thread_js_main = false;
-              init_latch->count_down();
-              done_latch->wait();
-              is_thread_js_main = true;
-              JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
-            });
+        ctx.enqueueJob([=]() {
+          is_thread_js_main = false;
+          init_latch->count_down();
+          done_latch->wait();
+          is_thread_js_main = true;
+          JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
+        });
 
-            while (!init_latch->try_wait()) {
-              std::this_thread::yield();
-            }
+        while (!init_latch->try_wait()) {
+          std::this_thread::yield();
+        }
 
-            is_thread_js_main = true;
-            JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
-            work();
-            is_thread_js_main = false;
-            done_latch->count_down();
-          } else {
-            work();
-          }
+        is_thread_js_main = true;
+        JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
+        work();
+        is_thread_js_main = false;
+        done_latch->count_down();
+      } else {
+        work();
+      }
 
-          auto result = future.get();
-          if (!result)
-            throw result.error();
+      auto result = future.get();
+      if (!result)
+        throw result.error();
 
-          return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
-        };
+      return detail::unwrap_free<R>(jsfun_obj.ctx, result.value());
+    };
   }
 
   /** Convert from function object functor to JSValue.
@@ -1933,7 +1945,7 @@ struct js_traits<Function, std::enable_if_t<detail::is_callable_v<Function>>> {
 template <class T> struct js_traits<std::vector<T>> {
   static JSValue wrap(JSContext *ctx, const std::vector<T> &arr) noexcept {
     try {
-      auto jsarray = Value{ctx, JS_NewArray(ctx)};
+      auto jsarray = Value{weakFromContext(ctx), JS_NewArray(ctx)};
       for (uint32_t i = 0; i < (uint32_t)arr.size(); i++)
         jsarray[i] = arr[i];
       return jsarray.release();
@@ -1967,7 +1979,7 @@ template <class T> struct js_traits<std::vector<T>> {
 template <typename U, typename V> struct js_traits<std::pair<U, V>> {
   static JSValue wrap(JSContext *ctx, std::pair<U, V> obj) noexcept {
     try {
-      auto jsarray = Value{ctx, JS_NewArray(ctx)};
+      auto jsarray = Value{weakFromContext(ctx), JS_NewArray(ctx)};
       jsarray[uint32_t(0)] = std::move(obj.first);
       jsarray[uint32_t(1)] = std::move(obj.second);
       return jsarray.release();
@@ -2038,7 +2050,7 @@ template <typename Key> property_proxy<Key>::operator Value() const {
 
 template <typename Function> void Context::enqueueJob(Function &&job) {
   std::lock_guard<std::mutex> lock(js_job_start_mutex);
-  
+
   JSValue job_val =
       js_traits<std::function<void()>>::wrap(ctx, std::forward<Function>(job));
   JSValueConst arg = job_val;
@@ -2150,4 +2162,15 @@ inline std::string exception::message(JSContext *ctx) const {
   return message;
 }
 
+inline void setCurrentContext(JSContext *ctx) {
+  Context::current = &Context::get(ctx);
+}
+
+inline JSContext* getContextFromWrapped(Context * ctx) {
+  return ctx->ctx;
+}
+
+inline std::weak_ptr<Context> weakFromContext(JSContext *ctx) {
+  return Context::get(ctx).weak_from_this();
+}
 } // namespace qjs

@@ -54,7 +54,7 @@ void res_string_loader::init_hook() {
 
   static auto LoadStringWHook =
       kernelbase->exports("LoadStringW")->inline_hook();
-  LoadStringWHook->install([](HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer,
+  LoadStringWHook->install(+[](HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer,
                               int cchBufferMax) -> int {
     auto res = LoadStringWHook->call_trampoline<int>(hInstance, uID, lpBuffer,
                                                      cchBufferMax);
@@ -71,7 +71,7 @@ void res_string_loader::init_hook() {
   static auto LoadStringAHook =
       kernelbase->exports("LoadStringA")->inline_hook();
 
-  LoadStringAHook->install([](HINSTANCE hInstance, UINT uID, LPSTR lpBuffer,
+  LoadStringAHook->install(+[](HINSTANCE hInstance, UINT uID, LPSTR lpBuffer,
                               int cchBufferMax) -> int {
     auto res = LoadStringAHook->call_trampoline<int>(hInstance, uID, lpBuffer,
                                                      cchBufferMax);

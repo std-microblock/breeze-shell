@@ -76,7 +76,7 @@ void main() {
   // hook NtUserTrackPopupMenu
 
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
-  auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
+  static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
   std::set_terminate([]() {
     auto eptr = std::current_exception();
@@ -103,7 +103,7 @@ void main() {
     }
   }).detach();
 
-  NtUserTrackHook->install([=](HMENU hMenu, UINT uFlags, int x, int y,
+  NtUserTrackHook->install((void*)+[](HMENU hMenu, UINT uFlags, int x, int y,
                                HWND hWnd, LPTPMPARAMS lptpm) {
     if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
         config::current->context_menu.ignore_owner_draw) {
@@ -145,8 +145,8 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
 
     std::ranges::transform(cmdline, cmdline.begin(), tolower);
 
+    mb_shell::main();
     if (cmdline.contains("explorer")) {
-      mb_shell::main();
     }
     break;
   }
