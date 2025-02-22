@@ -60,7 +60,7 @@ interface in ~2MiB.
 
 # Try it out!
 
-Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`.
+Download and extract the zip, and Run `breeze.exe`.
 
 ![image](https://github.com/user-attachments/assets/44324c0c-ea4e-4f45-a846-9c8ae2eab001)
 

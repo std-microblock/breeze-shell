@@ -41,7 +41,7 @@ Breeze 基于自研 breeze-ui 框架实现，这是一个跨平台、简洁优�
 
 # 立即体验
 
-将 `inject.exe` 和 `shell.dll` 置于同一目录，运行 `inject.exe`。
+从 Releases 下载，然后解压压缩包并运行 `breeze.exe`
 
 # 构建指南
 
