@@ -94,6 +94,5 @@ development. Install clangd plugin for full intellisense.
 - https://github.com/freetype/freetype
 
 #### Others
-[@lipraty](https://github.com/lipraty) - Icon Design
-
-[moudey/Shell](https://github.com/moudey/Shell) - Inspiration
+- [@lipraty](https://github.com/lipraty) - Icon Design
+- [moudey/Shell](https://github.com/moudey/Shell) - Inspiration
