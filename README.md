@@ -89,6 +89,7 @@ development. Install clangd plugin for full intellisense.
 - https://github.com/ftk/quickjspp
 - https://github.com/getml/reflect-cpp
 - https://github.com/glfw/glfw
+- https://github.com/Dav1dde/glad
 - https://github.com/memononen/nanovg
 - https://github.com/memononen/nanosvg
 - https://github.com/freetype/freetype
