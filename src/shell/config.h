@@ -41,9 +41,12 @@ struct config {
       float acrylic_opacity = 0.1;
 
       struct animation {
+        struct main {
+          animated_float_conf y;
+        } main;
         struct item {
           animated_float_conf opacity;
-          animated_float_conf x;
+          animated_float_conf x, y;
           animated_float_conf width;
         } item;
         struct bg {

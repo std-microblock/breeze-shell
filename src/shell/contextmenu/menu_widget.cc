@@ -240,6 +240,7 @@ mb_shell::menu_widget::menu_widget() : super() {
   gap = config::current->context_menu.theme.item_gap;
   width->set_easing(ui::easing_type::mutation);
   height->set_easing(ui::easing_type::mutation);
+  config::current->context_menu.theme.animation.main.y(y);
 }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
   if (dying_time) {
