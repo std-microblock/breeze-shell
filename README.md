@@ -54,6 +54,8 @@ Breeze shell exposed a bunch of configurations ranging from item height to backg
 
 [Configuration Document →](./CONFIG.md)
 
+The config menu of breeze-shell can be found as you open your `Data Folder` and right-click anywhere inside it.
+
 ## Lightweight & Fast
 
 Breeze uses breeze-ui, which is implemented to be a cross-platform, simple,
