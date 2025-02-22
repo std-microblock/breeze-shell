@@ -181,13 +181,16 @@ int NewExplorerProcessAndInject() {
     return 1;
   }
 
-  auto asanPath = std::filesystem::path(dllPath).parent_path() / "clang_rt.asan_dynamic-x86_64.dll";
+  auto asanPath = std::filesystem::path(dllPath).parent_path() /
+                  "clang_rt.asan_dynamic-x86_64.dll";
   if (std::filesystem::exists(asanPath)) {
     InjectToPID(targetPID, asanPath.wstring());
   }
   InjectToPID(targetPID, dllPath);
   return 0;
 }
+
+static bool english = GetUserDefaultUILanguage() != 2052;
 
 struct inject_ui_title : public ui::widget_flex {
   inject_ui_title() {
@@ -243,12 +246,14 @@ struct button_widget : public ui::padding_widget {
       bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
     }
   }
-
+  ui::update_context *ctx;
   void update(ui::update_context &ctx) override {
     padding_widget::update(ctx);
 
     if (ctx.mouse_clicked_on_hit(this)) {
+      this->ctx = &ctx;
       on_click();
+      this->ctx = nullptr;
     }
 
     update_colors(ctx.mouse_down_on(this), ctx.hovered(this));
@@ -295,7 +300,8 @@ struct start_when_startup_switch : public button_widget {
     RegCloseKey(hkey);
   }
 
-  start_when_startup_switch() : button_widget("开机自启") {
+  start_when_startup_switch()
+      : button_widget(english ? "Start on boot" : "开机自启") {
     start_when_startup = check_startup();
   }
 
@@ -305,9 +311,9 @@ struct start_when_startup_switch : public button_widget {
 
     if (!start_when_startup) {
       RegDeleteKeyValueW(HKEY_CURRENT_USER,
-        L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
-        L"50c905bae2a2}\\InprocServer32",
-        nullptr);
+                         L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
+                         L"50c905bae2a2}\\InprocServer32",
+                         nullptr);
     }
   }
 
@@ -324,20 +330,41 @@ struct start_when_startup_switch : public button_widget {
   }
 };
 
+void restart_explorer() {
+  std::vector<DWORD> pids = GetExplorerPIDs();
+  for (DWORD pid : pids) {
+    HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    if (hProcess) {
+      TerminateProcess(hProcess, 0);
+      CloseHandle(hProcess);
+    }
+  }
+
+  Sleep(1000);
+  if (GetExplorerPIDs().empty()) {
+    ShellExecuteW(NULL, L"open", L"explorer.exe", L"", NULL, SW_SHOW);
+  }
+}
+
 struct restart_explorer_btn : public button_widget {
-  restart_explorer_btn() : button_widget("重启资源管理器") {}
+  restart_explorer_btn()
+      : button_widget(english ? "Restart explorer" : "重启资源管理器") {}
 
   void on_click() override {
-    std::thread([]() {
-      std::vector<DWORD> pids = GetExplorerPIDs();
-      for (DWORD pid : pids) {
-        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-        if (hProcess) {
-          TerminateProcess(hProcess, 0);
-          CloseHandle(hProcess);
-        }
-      }
-    }).detach();
+    std::thread([]() { restart_explorer(); }).detach();
+  }
+};
+
+struct injector_ui_main;
+struct switch_lang_btn : public button_widget {
+  switch_lang_btn() : button_widget(english ? "中文" : "English") {}
+
+  void on_click() override {
+    english = !english;
+
+    auto old_i = ctx->rt.root->children.back();
+    auto new_i = ctx->rt.root->emplace_child<injector_ui_main>();
+    old_i->dying_time = 200;
   }
 };
 
@@ -380,7 +407,9 @@ void InjectAllConsistent() {
 
 struct inject_all_switch : public button_widget {
   bool injecting_all = false;
-  inject_all_switch() : button_widget("全局注入") { check_is_injecting_all(); }
+  inject_all_switch() : button_widget(english ? "Inject All" : "全局注入") {
+    check_is_injecting_all();
+  }
 
   void check_is_injecting_all() {
     HANDLE mutex = CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
@@ -431,7 +460,7 @@ struct inject_all_switch : public button_widget {
 };
 
 struct inject_once_switch : public button_widget {
-  inject_once_switch() : button_widget("注入一次") {}
+  inject_once_switch() : button_widget(english ? "Inject Once" : "注入一次") {}
 
   void on_click() override {
     std::thread([]() {
@@ -442,7 +471,7 @@ struct inject_once_switch : public button_widget {
 };
 
 struct data_dir_btn : public button_widget {
-  data_dir_btn() : button_widget("数据目录") {}
+  data_dir_btn() : button_widget(english ? "Data Folder" : "数据目录") {}
 
   void on_click() override {
     std::wstring path = data_directory().wstring();
@@ -469,9 +498,13 @@ struct breeze_icon : public ui::widget {
 };
 
 struct injector_ui_main : public ui::widget_flex {
+  ui::sp_anim_float opacity = anim_float(100);
   injector_ui_main() {
     x->reset_to(20);
     y->reset_to(5);
+    opacity->reset_to(0);
+    opacity->set_easing(ui::easing_type::ease_in_out);
+    opacity->animate_to(1);
     gap = 15;
     emplace_child<breeze_icon>();
     emplace_child<inject_ui_title>();
@@ -491,8 +524,12 @@ struct injector_ui_main : public ui::widget_flex {
     switches->horizontal = true;
     switches->emplace_child<start_when_startup_switch>();
     switches->emplace_child<restart_explorer_btn>();
+    switches->emplace_child<switch_lang_btn>();
   }
   void render(ui::nanovg_context ctx) override {
+    auto t = ctx.transaction();
+    ctx.globalAlpha(opacity->var());
+
     ctx.fillColor(nvgRGB(32, 32, 32));
     auto gradient_height = 130;
     ctx.fillRect(0, gradient_height, 999, 999);

@@ -195,7 +195,6 @@ struct widget_flex : public widget {
   bool horizontal = false;
   bool auto_size = true;
   bool reverse = false;
-
   void reposition_children_flex(update_context &ctx,
                             std::vector<std::shared_ptr<widget>> &children);
   void update(update_context &ctx) override;

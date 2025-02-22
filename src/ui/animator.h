@@ -23,7 +23,7 @@ struct animated_float {
   animated_float &operator=(const animated_float &) = delete;
 
   animated_float(float destination, float duration = 200.f,
-                 easing_type easing = easing_type::ease_in_out)
+                 easing_type easing = easing_type::mutation)
       : duration(duration), destination(destination), easing(easing) {}
 
   std::optional<std::function<void(float)>> before_animate = {};
@@ -52,7 +52,7 @@ struct animated_float {
   float progress = 0.f;
   float delay = 0.f, delay_timer = 0.f;
   bool _updated = true;
-  easing_type easing = easing_type::ease_in_out;
+  easing_type easing = easing_type::mutation;
 };
 
 using sp_anim_float = std::shared_ptr<animated_float>;

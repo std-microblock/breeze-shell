@@ -70,8 +70,18 @@ void ui::animated_float::animate_to(float destination) {
   if (before_animate) {
     before_animate.value()(destination);
   }
+
+  if (this->easing == easing_type::mutation) {
+    value = destination;
+    if (after_animate) {
+      after_animate.value()(destination);
+    }
+    _updated = true;
+  }
 }
-float ui::animated_float::var() const { return value; }
+float ui::animated_float::var() const { 
+  return value;
+}
 float ui::animated_float::prog() const { return progress; }
 void ui::animated_float::reset_to(float destination) {
   value = destination;
