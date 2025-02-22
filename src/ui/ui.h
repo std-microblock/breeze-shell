@@ -28,7 +28,7 @@ struct render_target {
   bool topmost = false;
   bool resizable = false;
   bool vsync = true;
-
+  std::string title = "Window";
   NVGcontext *nvg = nullptr;
   int width = 1280;
   int height = 720;

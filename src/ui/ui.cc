@@ -73,7 +73,7 @@ std::expected<bool, std::string> render_target::init() {
     glfwWindowHint(GLFW_DECORATED, decorated);
 
     glfwWindowHint(GLFW_VISIBLE, 0);
-    window = glfwCreateWindow(width, height, "UI", nullptr, nullptr);
+    window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     p.set_value();
   });
 

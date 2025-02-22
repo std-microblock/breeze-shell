@@ -559,6 +559,7 @@ void StartInjectUI() {
   rt.transparent = true;
   rt.width = 400;
   rt.height = 230;
+  rt.title = "";
   if (auto r = rt.init(); !r) {
     std::cerr << "Failed to initialize render target." << std::endl;
     return;
