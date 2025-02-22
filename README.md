@@ -2,6 +2,9 @@
 > This project is still in active development. File a bug report if you meet
 > any!\
 > 此项目仍在开发阶段，如果遇到问题请发送 Issue
+>
+> Both English and Chinese issues are accepted.
+> Issue 中使用中文或英文均可
 
 [中文](./README_zh.md)
 
