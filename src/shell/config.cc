@@ -14,6 +14,12 @@
 
 namespace mb_shell {
 std::unique_ptr<config> config::current;
+config::animated_float_conf config::_default_animation{
+    .duration = 150,
+    .easing = ui::easing_type::ease_in_out,
+    .delay_scale = 1,
+};
+
 void config::write_config() {
   auto config_file = data_directory() / "config.json";
   std::ofstream ofs(config_file);
@@ -36,9 +42,10 @@ void config::read_config() {
       std::cerr << "Failed to write config file." << std::endl;
     }
 
-    ofs << "{}";
+    ofs << R"({
+  "$schema": "https://raw.githubusercontent.com/std-microblock/breeze-shell/refs/heads/master/resources/schema.json"
+})";
   }
-
   if (!ifs) {
     std::cerr
         << "Config file could not be opened. Using default config instead."
@@ -46,9 +53,17 @@ void config::read_config() {
     config::current = std::make_unique<config>();
     config::current->debug_console = true;
   } else {
+    std::string json_str;
+    std::copy(std::istreambuf_iterator<char>(ifs),
+              std::istreambuf_iterator<char>(), std::back_inserter(json_str));
+
     if (auto json =
             rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(
-                ifs)) {
+                json_str)) {
+      // parse twice for default value
+      _default_animation = json.value().default_animation;
+      json = rfl::json::read<config, rfl::NoExtraFields, rfl::DefaultIfMissing>(
+          json_str);
       config::current = std::make_unique<config>(json.value());
       std::cout << "Config reloaded." << std::endl;
     } else {

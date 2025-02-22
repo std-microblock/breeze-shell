@@ -9,14 +9,16 @@ namespace mb_shell {
 struct config {
   static std::filesystem::path default_main_font();
   static std::filesystem::path default_fallback_font();
+
   struct animated_float_conf {
-    float duration = 150;
-    ui::easing_type easing = ui::easing_type::ease_in_out;
-    float delay_scale = 1;
+    float duration = _default_animation.duration;
+    ui::easing_type easing = _default_animation.easing;
+    float delay_scale = _default_animation.delay_scale;
 
     void apply_to(ui::sp_anim_float &anim, float delay = 0);
     void operator()(ui::sp_anim_float &anim, float delay = 0);
-  };
+  } default_animation;
+  static animated_float_conf _default_animation;
   struct context_menu {
     struct theme {
       bool use_dwm_if_available = true;

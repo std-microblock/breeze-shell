@@ -83,6 +83,7 @@ Breeze Shell 配置文件的 JSON Schema 位于
           },
           // 同 opacity，以下均省略
           "x": animated_float_conf,
+          "y": animated_float_conf,
           "width": animated_float_conf
         },
         // 主菜单的背景
@@ -130,7 +131,9 @@ Breeze Shell 配置文件的 JSON Schema 位于
   // 插件加载顺序，在越前面的越先加载
   // 格式为插件的无拓展名文件名
   // 如：Windows 11 Icon Pack
-  "plugin_load_order": []
+  "plugin_load_order": [],
+  // 全局默认动画效果
+  "default_animation": animated_float_conf
 }
 ```
 
@@ -140,56 +143,8 @@ Breeze Shell 配置文件的 JSON Schema 位于
 
 ```json
 {
-  "context_menu": {
-    "theme": {
-      "animation": {
-        "item": {
-          "opacity": {
-            "easing": "mutation"
-          },
-          "x": {
-            "easing": "mutation"
-          },
-          "width": {
-            "easing": "mutation"
-          }
-        },
-        "main_bg": {
-          "opacity": {
-            "easing": "mutation"
-          },
-          "x": {
-            "easing": "mutation"
-          },
-          "y": {
-            "easing": "mutation"
-          },
-          "w": {
-            "easing": "mutation"
-          },
-          "h": {
-            "easing": "mutation"
-          }
-        },
-        "submenu_bg": {
-          "opacity": {
-            "easing": "mutation"
-          },
-          "x": {
-            "easing": "mutation"
-          },
-          "y": {
-            "easing": "mutation"
-          },
-          "w": {
-            "easing": "mutation"
-          },
-          "h": {
-            "easing": "mutation"
-          }
-        }
-      }
+  "default_animation": {
+        "easing": "mutation"
     }
-  }
 }
 ```

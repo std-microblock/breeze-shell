@@ -27,6 +27,12 @@
                 "plugin_load_order": {
                     "type": "array",
                     "items": {}
+                },
+                "$schema": {
+                    "type": "string"
+                },
+                "default_animation": {
+                    "$ref": "#/definitions/AnimFloatConfig"
                 }
             },
             "required": [],
@@ -159,6 +165,9 @@
                     "$ref": "#/definitions/AnimFloatConfig"
                 },
                 "x": {
+                    "$ref": "#/definitions/AnimFloatConfig"
+                },
+                "y": {
                     "$ref": "#/definitions/AnimFloatConfig"
                 },
                 "width": {
