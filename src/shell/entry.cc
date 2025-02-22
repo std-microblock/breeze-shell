@@ -16,6 +16,8 @@
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
 
+#include "fix_win11_menu.h"
+
 #include <atomic>
 #include <chrono>
 #include <codecvt>
@@ -26,6 +28,7 @@
 #include <filesystem>
 #include <functional>
 #include <future>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -56,6 +59,7 @@ void main() {
   config::run_config_loader();
 
   res_string_loader::init();
+  fix_win11_menu::install();
 
   static std::atomic_bool has_active_menu = false;
   std::thread([]() {
@@ -73,7 +77,7 @@ void main() {
   auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");
   auto user32 = proc->module("user32.dll");
-  // hook NtUserTrackPopupMenu
+  
 
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
@@ -127,14 +131,6 @@ void main() {
 
     return menu_render.selected_menu.value_or(0);
   });
-
-  // reg.exe add
-  // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
-  // /f /ve
-  RegSetKeyValueW(HKEY_CURRENT_USER,
-                  L"Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-"
-                  L"50c905bae2a2}\\InprocServer32",
-                  nullptr, REG_SZ, L"", sizeof(L""));
 }
 } // namespace mb_shell
 
