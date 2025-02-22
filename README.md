@@ -62,7 +62,8 @@ interface in ~2MiB.
 
 Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`.
 
-![image](./resources/inject-en.webp)
+![image](https://github.com/user-attachments/assets/44324c0c-ea4e-4f45-a846-9c8ae2eab001)
+
 
 # Building
 
