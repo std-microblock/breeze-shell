@@ -42,7 +42,7 @@ namespace qjs {
 class Context;
 class Value;
 inline void setCurrentContext(JSContext *);
-inline JSContext* getContextFromWrapped(Context *);
+inline JSContext *getContextFromWrapped(Context *);
 inline std::weak_ptr<Context> weakFromContext(JSContext *);
 
 /** Exception type.
@@ -1243,10 +1243,11 @@ public:
       throw exception{ctx};
   }
 
-  Value(std::weak_ptr<Context> ctx, auto&& val) {
+  Value(std::weak_ptr<Context> ctx, auto &&val) {
     ctx_holder = ctx;
     this->ctx = getContextFromWrapped(ctx.lock().get());
-    v = js_traits<std::decay_t<decltype(val)>>::wrap(this->ctx, std::forward<decltype(val)>(val));
+    v = js_traits<std::decay_t<decltype(val)>>::wrap(
+        this->ctx, std::forward<decltype(val)>(val));
     if (JS_IsException(v))
       throw exception{this->ctx};
   }
@@ -1404,8 +1405,9 @@ public:
     assert(buffer.data()[buffer.size()] == '\0' &&
            "eval buffer is not null-terminated"); // JS_Eval requirement
     assert(ctx);
-    return Value{weakFromContext(ctx), JS_EvalThis(ctx, v, buffer.data(), buffer.size(),
-                                  filename, flags)};
+    return Value{
+        weakFromContext(ctx),
+        JS_EvalThis(ctx, v, buffer.data(), buffer.size(), filename, flags)};
   }
 };
 
@@ -1742,7 +1744,9 @@ public:
   }
 
   /** returns globalThis */
-  Value global() { return Value{weakFromContext(ctx), JS_GetGlobalObject(ctx)}; }
+  Value global() {
+    return Value{weakFromContext(ctx), JS_GetGlobalObject(ctx)};
+  }
 
   /** returns new Object() */
   Value newObject() { return Value{weakFromContext(ctx), JS_NewObject(ctx)}; }
@@ -1754,7 +1758,9 @@ public:
 
   /** returns current exception associated with context and clears it. Should be
    * called when qjs::exception is caught */
-  Value getException() { return Value{weakFromContext(ctx), JS_GetException(ctx)}; }
+  Value getException() {
+    return Value{weakFromContext(ctx), JS_GetException(ctx)};
+  }
 
   /** Register class T for conversions to/from std::shared_ptr<T> to work.
    * Wherever possible module.class_<T>("T")... should be used instead.
@@ -1847,18 +1853,22 @@ struct js_traits<std::function<R(Args...)>, int> {
       };
 
       if (!is_thread_js_main) {
-        auto init_latch = std::make_shared<std::latch>(1);
-        auto done_latch = std::make_shared<std::latch>(1);
+        std::latch init_latch(1);
+        std::latch done_latch(1);
 
-        ctx.enqueueJob([=]() {
+        ctx.enqueueJob([&]() {
           is_thread_js_main = false;
-          init_latch->count_down();
-          done_latch->wait();
+
+          while (!done_latch.try_wait()) {
+            if (!init_latch.try_wait())
+              init_latch.count_down();
+          }
+
           is_thread_js_main = true;
           JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
         });
 
-        while (!init_latch->try_wait()) {
+        while (!init_latch.try_wait()) {
           std::this_thread::yield();
         }
 
@@ -1866,7 +1876,7 @@ struct js_traits<std::function<R(Args...)>, int> {
         JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
         work();
         is_thread_js_main = false;
-        done_latch->count_down();
+        done_latch.count_down();
       } else {
         work();
       }
@@ -2166,9 +2176,7 @@ inline void setCurrentContext(JSContext *ctx) {
   Context::current = &Context::get(ctx);
 }
 
-inline JSContext* getContextFromWrapped(Context * ctx) {
-  return ctx->ctx;
-}
+inline JSContext *getContextFromWrapped(Context *ctx) { return ctx->ctx; }
 
 inline std::weak_ptr<Context> weakFromContext(JSContext *ctx) {
   return Context::get(ctx).weak_from_this();
