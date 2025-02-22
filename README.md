@@ -82,6 +82,25 @@ After building successfully once, you can oprn the project dir in VSCode for
 development. Install clangd plugin for full intellisense.
 
 # Credits
+
+#### Third-party libraries
+https://github.com/std-microblock/blook
+
+https://github.com/quickjs-ng/quickjs
+
+https://github.com/ftk/quickjspp
+
+https://github.com/getml/reflect-cpp
+
+https://github.com/glfw/glfw
+
+https://github.com/memononen/nanovg
+
+https://github.com/memononen/nanosvg/
+
+https://github.com/freetype/freetype
+
+#### Others
 [@lipraty](https://github.com/lipraty) - Icon Design
 
 [moudey/Shell](https://github.com/moudey/Shell) - Inspiration
