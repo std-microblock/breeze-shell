@@ -44,6 +44,8 @@ shell.menu_controller.add_menu_listener((e) => {
 
 [See full bindings →](./src/shell/script/binding_types.d.ts)
 
+Send pull requests to [this repo](https://github.com/breeze-shell/plugins) to add your script to the plugin market!
+
 ## Configurable
 Breeze shell exposed a bunch of configurations ranging from item height to background radius method. Customize them as you need.
 
@@ -61,7 +63,6 @@ interface in ~2MiB.
 Download `inject.exe` and `shell.dll` into the same directory. Run `inject.exe`.
 
 ![image](./resources/inject-en.webp)
-
 
 # Building
 
