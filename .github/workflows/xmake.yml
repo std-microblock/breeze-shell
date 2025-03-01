@@ -43,11 +43,15 @@ jobs:
     - name: Create Archive
       if: github.event_name == 'release'
       run: |
+        Compress-Archive -Path ./build/windows/* -DestinationPath windows-build-pdb.zip
+        Remove-Item -Path "./build/windows/*.pdb" -Recurse -Force
         Compress-Archive -Path ./build/windows/* -DestinationPath windows-build.zip
 
     - name: Upload Release Assets
       if: github.event_name == 'release'
       uses: softprops/action-gh-release@v1
       with:
-        files: windows-build.zip
+        files: |
+          windows-build.zip
+          windows-build-pdb.zip
         token: ${{ secrets.GITHUB_TOKEN }}
