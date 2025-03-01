@@ -73,6 +73,8 @@ TryAgain:
 }
 void mb_shell::fix_win11_menu::install() {
   auto proc = blook::Process::self();
+
+  // approch 1: simulated reg edit
   auto advapi32 = proc->module("kernelbase.dll");
 
   auto RegGetValueW = advapi32.value()->exports("RegGetValueW");
@@ -99,4 +101,20 @@ void mb_shell::fix_win11_menu::install() {
           return RegGetValueHook->call_trampoline<long>(
               hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
       });
+
+  // approch 2: patch the shell32.dll to predent the shift key is pressed
+  if (auto shell32 = proc->module("shell32.dll")) {
+    // mov ecx, 10
+    // call GetKeyState
+    // B9 10 00 00 00 48 FF 15 14 61 31 00
+    if (auto mem = shell32.value()->section(".text")->find_one(
+            {0xB9, 0x10, 0x00, 0x00, 0x00, 0x48, 0xFF, 0x15, 0x14, 0x61, 0x31,
+             0x00})) {
+      // mov ecx, 10
+      // mov rax, ffff
+      auto new_mem = std::vector<uint8_t>{0xB9, 0x10, 0x00, 0x00, 0x00, 0x48,
+                                          0xC7, 0xC0, 0xFF, 0xFF, 0x00, 0x00};
+      std::ignore = mem->write(nullptr, new_mem);
+    }
+  }
 }
