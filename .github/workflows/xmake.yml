@@ -29,19 +29,11 @@ jobs:
         version: "19.1.7"
 
     - name: build-releasedbg
-      if: github.event_name != 'release'
       run: |
         xmake f --toolchain=clang-cl -m releasedbg -y --verbose
         xmake b -y --verbose inject
         xmake b -y --verbose shell
-
-    - name: build-release
-      if: github.event_name == 'release'
-      run: |
-        xmake f --toolchain=clang-cl -m release -y --verbose
-        xmake b -y --verbose inject
-        xmake b -y --verbose shell
-
+        
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:
