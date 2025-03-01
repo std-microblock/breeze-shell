@@ -38,6 +38,16 @@ package("quickjs-ng")
 
         local configs = {}
         table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:is_debug() and "Debug" or "Release"))
+        if package:is_plat("windows") then
+            -- add /debug to link flags
+            table.insert(configs, "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
+            table.insert(configs, "-DCMAKE_SHARED_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
+
+            -- also add /DEBUG to cflags, and /Zi to cxxflags
+            table.insert(configs, "-DCMAKE_C_FLAGS_RELEASE=/Zi /DEBUG")
+            table.insert(configs, "-DCMAKE_CXX_FLAGS_RELEASE=/Zi /DEBUG")
+        end
+
         table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
         table.insert(configs, "-DCONFIG_ASAN=" .. (package:config("asan") and "ON" or "OFF"))
         table.insert(configs, "-DCONFIG_MSAN=" .. (package:config("msan") and "ON" or "OFF"))
