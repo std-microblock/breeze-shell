@@ -129,7 +129,7 @@ void main() {
       PostMessageW(hWnd, WM_NULL, 0, 0);
     }
 
-    return menu_render.selected_menu.value_or(0);
+    return (int32_t)menu_render.selected_menu.value_or(0);
   });
 }
 } // namespace mb_shell
