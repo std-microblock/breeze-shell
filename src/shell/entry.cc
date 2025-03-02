@@ -107,11 +107,11 @@ void main() {
     }
   }).detach();
 
-  NtUserTrackHook->install((void *)+[](HMENU hMenu, UINT uFlags, int x, int y,
-                                       HWND hWnd, LPTPMPARAMS lptpm) {
+  NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x, int64_t y,
+                                       HWND hWnd, int64_t lptpm) {
     if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
         config::current->context_menu.ignore_owner_draw) {
-      return NtUserTrackHook->call_trampoline<size_t>(hMenu, uFlags, x, y, hWnd,
+      return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x, y, hWnd,
                                                       lptpm);
     }
 
@@ -142,8 +142,6 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
     std::ranges::transform(cmdline, cmdline.begin(), tolower);
 
     mb_shell::main();
-    if (cmdline.contains("explorer")) {
-    }
     break;
   }
   }
