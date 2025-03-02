@@ -44,7 +44,7 @@ jobs:
       if: github.event_name == 'release'
       run: |
         Compress-Archive -Path ./build/windows/* -DestinationPath windows-build-pdb.zip
-        Remove-Item -Path "./build/windows/*.pdb" -Recurse -Force
+        Remove-Item -Path ./build/windows/x64/releasedbg/*.pdb -Force
         Compress-Archive -Path ./build/windows/* -DestinationPath windows-build.zip
 
     - name: Upload Release Assets
