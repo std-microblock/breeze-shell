@@ -317,7 +317,8 @@ void render_target::set_position(int x, int y) {
 void render_target::resize(int width, int height) {
   this->width = width;
   this->height = height;
-  glfwSetWindowSize(window, this->width, this->height);
+  post_main_thread_task(
+      [this] { glfwSetWindowSize(window, this->width, this->height); });
 }
 void render_target::close() {
   ShowWindow(glfwGetWin32Window(window), SW_HIDE);
