@@ -886,4 +886,101 @@ void infra::clearInterval(int id) {
                      [id](const auto &timer) { return timer->id == id; }),
       timers.end());
 };
+std::string infra::atob(std::string base64) {
+  std::string result;
+  result.reserve(base64.length() * 3 / 4);
+
+  const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "abcdefghijklmnopqrstuvwxyz"
+                                   "0123456789+/";
+
+  int val = 0, valb = -8;
+  for (unsigned char c : base64) {
+    if (c == '=')
+      break;
+
+    if (isspace(c))
+      continue;
+
+    val = (val << 6) + base64_chars.find(c);
+    valb += 6;
+    if (valb >= 0) {
+      result.push_back(char((val >> valb) & 0xFF));
+      valb -= 8;
+    }
+  }
+  return result;
+}
+
+std::string infra::btoa(std::string str) {
+  const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "abcdefghijklmnopqrstuvwxyz"
+                                   "0123456789+/";
+
+  std::string result;
+  int val = 0, valb = -6;
+  for (unsigned char c : str) {
+    val = (val << 8) + c;
+    valb += 8;
+    while (valb >= 0) {
+      result.push_back(base64_chars[(val >> valb) & 0x3F]);
+      valb -= 6;
+    }
+  }
+  if (valb > -6) {
+    result.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+  }
+  while (result.size() % 4) {
+    result.push_back('=');
+  }
+  return result;
+}
+
+void fs::copy_shfile(std::string src_path, std::string dest_path,
+                     std::function<void(bool)> callback) {
+  std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+    SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
+    std::wstring wsrc = utf8_to_wstring(src_path);
+    std::wstring wdest = utf8_to_wstring(dest_path);
+
+    FileOp.wFunc = FO_COPY;
+    FileOp.pFrom = wsrc.c_str();
+    FileOp.pTo = wdest.c_str();
+
+    auto res = SHFileOperationW(&FileOp);
+    std::lock_guard l(lock);
+    callback(res == 0);
+  }).detach();
+}
+
+void fs::move_shfile(std::string src_path, std::string dest_path,
+                     std::function<void(bool)> callback) {
+  std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+    SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
+    std::wstring wsrc = utf8_to_wstring(src_path);
+    std::wstring wdest = utf8_to_wstring(dest_path);
+
+    FileOp.wFunc = FO_MOVE;
+    FileOp.pFrom = wsrc.c_str();
+    FileOp.pTo = wdest.c_str();
+
+    auto res = SHFileOperationW(&FileOp);
+    std::lock_guard l(lock);
+    callback(res == 0);
+  }).detach();
+}
+size_t win32::load_file_icon(std::string path) {
+  // SHGetFileInfo
+  SHFILEINFOW sfi = {0};
+  DWORD_PTR ret =
+      SHGetFileInfoW(utf8_to_wstring(path).c_str(), 0, &sfi,
+                     sizeof(SHFILEINFOW), SHGFI_ICON | SHGFI_SMALLICON);
+  if (ret == 0)
+    return 0;
+
+  ICONINFO iconinfo;
+  GetIconInfo(sfi.hIcon, &iconinfo);
+
+  return (size_t)iconinfo.hbmColor;
+}
 } // namespace mb_shell::js

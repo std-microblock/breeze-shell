@@ -26,6 +26,63 @@ export class example_struct_jni {
             
 }
     
+export class folder_view_folder_item {
+	index: number
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  name: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  modify_date: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  path: (() => string)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns size_t
+  */
+  size: (() => size_t)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  type: (() => string)
+            
+	
+/**
+  * (0) 取消选择该项。
+  * (1) 选择该项。
+  * (3) 将项目置于编辑模式。
+  * (4) 取消选择除指定项的所有项。
+  * (8) 确保该项显示在视图中。
+  * (16) 为项目提供焦点。
+  * @param state: number
+  * @returns void
+  */
+  select: ((arg1: number) => void)
+            
+}
+    
 export class folder_view_controller {
 	
   /**
@@ -59,15 +116,6 @@ export class folder_view_controller {
             
 	
 /**
-  * 聚焦到指定文件
-  *  Focus on specified file
-  * @param file_path: string
-  * @returns void
-  */
-  focus_file: ((arg1: string) => void)
-            
-	
-/**
   * 打开文件
   *  Open a file
   * @param file_path: string
@@ -86,48 +134,12 @@ export class folder_view_controller {
             
 	
 /**
-  * 滚动到指定文件
-  *  Scroll to specified file
-  * @param file_path: string
-  * @returns void
-  */
-  scroll_to_file: ((arg1: string) => void)
-            
-	
-/**
   * 刷新视图
   *  Refresh view
   * @param 
   * @returns void
   */
   refresh: (() => void)
-            
-	
-/**
-  * 全选
-  *  Select all items
-  * @param 
-  * @returns void
-  */
-  select_all: (() => void)
-            
-	
-/**
-  * 取消全选
-  *  Deselect all items
-  * @param 
-  * @returns void
-  */
-  select_none: (() => void)
-            
-	
-/**
-  * 反选
-  *  Invert selection
-  * @param 
-  * @returns void
-  */
-  invert_selection: (() => void)
             
 	
 /**
@@ -155,6 +167,30 @@ export class folder_view_controller {
   * @returns void
   */
   paste: (() => void)
+            
+	
+/**
+  * 获取项列表
+  * @param 
+  * @returns Array<folder_view_folder_item>
+  */
+  items: (() => Array<folder_view_folder_item>)
+            
+	
+/**
+  * 
+  * @param index: number, state: number
+  * @returns void
+  */
+  select: ((arg1: number, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns void
+  */
+  select_none: (() => void)
             
 }
     
@@ -1111,6 +1147,26 @@ export class fs {
   */
   static readdir: ((arg1: string) => Array<string>)
             
+	
+/**
+  * 使用 SHFileOperation 拷贝文件/文件夹
+  *  Copy file with SHFileOperation
+  *  这会模拟资源管理器中“复制”的行为，即显示进度窗口，UAC请求窗口等
+  * @param src_path: string, dest_path: string, callback: ((arg1: boolean) => void)
+  * @returns void
+  */
+  static copy_shfile: ((arg1: string, arg2: string, arg3: ((arg1: boolean) => void)) => void)
+            
+	
+/**
+  * 使用 SHFileOperation 移动文件/文件夹
+  *  Move file with SHFileOperation
+  *  这会模拟资源管理器中“移动”的行为，即显示进度窗口，UAC请求窗口等
+  * @param src_path: string, dest_path: string, callback: ((arg1: boolean) => void)
+  * @returns void
+  */
+  static move_shfile: ((arg1: string, arg2: string, arg3: ((arg1: boolean) => void)) => void)
+            
 }
     
 export class breeze {
@@ -1199,6 +1255,14 @@ export class win32 {
   */
   static env: ((arg1: string) => string | undefined)
             
+	
+/**
+  * 
+  * @param path: string
+  * @returns size_t
+  */
+  static load_file_icon: ((arg1: string) => size_t)
+            
 }
     
 export class infra {
@@ -1234,6 +1298,22 @@ export class infra {
   * @returns void
   */
   static clearInterval: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param base64: string
+  * @returns string
+  */
+  static atob: ((arg1: string) => string)
+            
+	
+/**
+  * 
+  * @param str: string
+  * @returns string
+  */
+  static btoa: ((arg1: string) => string)
             
 }
     

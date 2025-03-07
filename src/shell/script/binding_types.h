@@ -28,6 +28,29 @@ struct example_struct_jni {
   std::string c;
 };
 
+struct folder_view_folder_item {
+  // FolderItem
+  void *$handler;
+  /* IShellView* */
+  void *$controller;
+  int index;
+
+  std::string name();
+  std::string modify_date();
+  std::string path();
+  size_t size();
+  std::string type();
+  /*
+    (0) 取消选择该项。
+    (1) 选择该项。
+    (3) 将项目置于编辑模式。
+    (4) 取消选择除指定项的所有项。
+    (8) 确保该项显示在视图中。
+    (16) 为项目提供焦点。
+  */
+  void select(int state);
+};
+
 // 文件夹视图控制器
 // Folder view controller
 struct folder_view_controller {
@@ -47,30 +70,15 @@ struct folder_view_controller {
   // 切换到新文件夹
   // Change to a new folder
   void change_folder(std::string new_folder_path);
-  // 聚焦到指定文件
-  // Focus on specified file
-  void focus_file(std::string file_path);
   // 打开文件
   // Open a file
   void open_file(std::string file_path);
   // 打开文件夹
   // Open a folder
   void open_folder(std::string folder_path);
-  // 滚动到指定文件
-  // Scroll to specified file
-  void scroll_to_file(std::string file_path);
   // 刷新视图
   // Refresh view
   void refresh();
-  // 全选
-  // Select all items
-  void select_all();
-  // 取消全选
-  // Deselect all items
-  void select_none();
-  // 反选
-  // Invert selection
-  void invert_selection();
   // 复制
   // Copy selected items
   void copy();
@@ -80,6 +88,12 @@ struct folder_view_controller {
   // 粘贴
   // Paste items
   void paste();
+  // 获取项列表
+  std::vector<std::shared_ptr<mb_shell::js::folder_view_folder_item>> items();
+
+  void select(int index, int state);
+
+  void select_none();
 };
 
 // special flag struct to indicate that the corresponding
@@ -505,7 +519,8 @@ struct subproc {
 
   // 异步打开东西
   // Open something asynchronously
-  static void open_async(std::string path, std::string args, std::function<void()> callback);
+  static void open_async(std::string path, std::string args,
+                         std::function<void()> callback);
 };
 
 // 文件系统操作
@@ -566,6 +581,18 @@ struct fs {
   // 读取目录
   // Read directory
   static std::vector<std::string> readdir(std::string path);
+
+  // 使用 SHFileOperation 拷贝文件/文件夹
+  // Copy file with SHFileOperation
+  // 这会模拟资源管理器中“复制”的行为，即显示进度窗口，UAC请求窗口等
+  static void copy_shfile(std::string src_path, std::string dest_path,
+                          std::function<void(bool)> callback);
+
+  // 使用 SHFileOperation 移动文件/文件夹
+  // Move file with SHFileOperation
+  // 这会模拟资源管理器中“移动”的行为，即显示进度窗口，UAC请求窗口等
+  static void move_shfile(std::string src_path, std::string dest_path,
+                          std::function<void(bool)> callback);
 };
 
 struct breeze {
@@ -582,6 +609,7 @@ struct win32 {
   static std::string resid_from_string(std::string str);
   static size_t load_library(std::string path);
   static std::optional<std::string> env(std::string name);
+  static size_t load_file_icon(std::string path);
 };
 
 struct infra {
@@ -589,6 +617,9 @@ struct infra {
   static void clearTimeout(int id);
   static int setInterval(std::function<void()> callback, int delay);
   static void clearInterval(int id);
+
+  static std::string atob(std::string base64);
+  static std::string btoa(std::string str);
 };
 
 } // namespace mb_shell::js

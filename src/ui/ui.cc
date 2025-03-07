@@ -31,8 +31,8 @@ void render_target::start_loop() {
     {
       std::lock_guard lock(loop_thread_tasks_lock);
       while (!loop_thread_tasks.empty()) {
-        loop_thread_tasks.back()();
-        loop_thread_tasks.pop_back();
+        loop_thread_tasks.front()();
+        loop_thread_tasks.pop();
       }
     }
   }
@@ -206,8 +206,8 @@ std::expected<bool, std::string> render_target::init_global() {
       {
         std::lock_guard lock(main_thread_tasks_mutex);
         if (!main_thread_tasks.empty()) {
-          auto task = std::move(main_thread_tasks.back());
-          main_thread_tasks.pop_back();
+          auto task = std::move(main_thread_tasks.front());
+          main_thread_tasks.pop();
           task();
         }
       }
@@ -335,7 +335,7 @@ std::vector<std::function<void()>> render_target::main_thread_tasks = {};
 std::mutex render_target::main_thread_tasks_mutex = {};
 void render_target::post_main_thread_task(std::function<void()> task) {
   std::lock_guard lock(main_thread_tasks_mutex);
-  main_thread_tasks.push_back(std::move(task));
+  main_thread_tasks.push(std::move(task));
   glfwPostEmptyEvent();
 }
 void render_target::show() {
@@ -360,6 +360,6 @@ void render_target::post_loop_thread_task(std::function<void()> task) {
     return;
   }
   std::lock_guard lock(loop_thread_tasks_lock);
-  loop_thread_tasks.push_back(std::move(task));
+  loop_thread_tasks.push(std::move(task));
 }
 } // namespace ui

@@ -50,6 +50,39 @@ template<> struct js_bind<mb_shell::js::example_struct_jni> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
+    static mb_shell::js::folder_view_folder_item unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::folder_view_folder_item obj;
+    
+        obj.index = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "index"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::folder_view_folder_item &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "index", js_traits<int>::wrap(ctx, val.index));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::folder_view_folder_item> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::folder_view_folder_item>("folder_view_folder_item")
+            .constructor<>()
+                .fun<&mb_shell::js::folder_view_folder_item::name>("name")
+                .fun<&mb_shell::js::folder_view_folder_item::modify_date>("modify_date")
+                .fun<&mb_shell::js::folder_view_folder_item::path>("path")
+                .fun<&mb_shell::js::folder_view_folder_item::size>("size")
+                .fun<&mb_shell::js::folder_view_folder_item::type>("type")
+                .fun<&mb_shell::js::folder_view_folder_item::select>("select")
+                .fun<&mb_shell::js::folder_view_folder_item::index>("index")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::folder_view_controller> {
     static mb_shell::js::folder_view_controller unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::folder_view_controller obj;
@@ -80,17 +113,15 @@ template<> struct js_bind<mb_shell::js::folder_view_controller> {
         mod.class_<mb_shell::js::folder_view_controller>("folder_view_controller")
             .constructor<>()
                 .fun<&mb_shell::js::folder_view_controller::change_folder>("change_folder")
-                .fun<&mb_shell::js::folder_view_controller::focus_file>("focus_file")
                 .fun<&mb_shell::js::folder_view_controller::open_file>("open_file")
                 .fun<&mb_shell::js::folder_view_controller::open_folder>("open_folder")
-                .fun<&mb_shell::js::folder_view_controller::scroll_to_file>("scroll_to_file")
                 .fun<&mb_shell::js::folder_view_controller::refresh>("refresh")
-                .fun<&mb_shell::js::folder_view_controller::select_all>("select_all")
-                .fun<&mb_shell::js::folder_view_controller::select_none>("select_none")
-                .fun<&mb_shell::js::folder_view_controller::invert_selection>("invert_selection")
                 .fun<&mb_shell::js::folder_view_controller::copy>("copy")
                 .fun<&mb_shell::js::folder_view_controller::cut>("cut")
                 .fun<&mb_shell::js::folder_view_controller::paste>("paste")
+                .fun<&mb_shell::js::folder_view_controller::items>("items")
+                .fun<&mb_shell::js::folder_view_controller::select>("select")
+                .fun<&mb_shell::js::folder_view_controller::select_none>("select_none")
                 .fun<&mb_shell::js::folder_view_controller::current_path>("current_path")
                 .fun<&mb_shell::js::folder_view_controller::focused_file_path>("focused_file_path")
                 .fun<&mb_shell::js::folder_view_controller::selected_files>("selected_files")
@@ -814,6 +845,8 @@ template<> struct js_bind<mb_shell::js::fs> {
                 .static_fun<&mb_shell::js::fs::read_binary>("read_binary")
                 .static_fun<&mb_shell::js::fs::write_binary>("write_binary")
                 .static_fun<&mb_shell::js::fs::readdir>("readdir")
+                .static_fun<&mb_shell::js::fs::copy_shfile>("copy_shfile")
+                .static_fun<&mb_shell::js::fs::move_shfile>("move_shfile")
             ;
     }
 
@@ -868,6 +901,7 @@ template<> struct js_bind<mb_shell::js::win32> {
                 .static_fun<&mb_shell::js::win32::resid_from_string>("resid_from_string")
                 .static_fun<&mb_shell::js::win32::load_library>("load_library")
                 .static_fun<&mb_shell::js::win32::env>("env")
+                .static_fun<&mb_shell::js::win32::load_file_icon>("load_file_icon")
             ;
     }
 
@@ -894,6 +928,8 @@ template<> struct js_bind<mb_shell::js::infra> {
                 .static_fun<&mb_shell::js::infra::clearTimeout>("clearTimeout")
                 .static_fun<&mb_shell::js::infra::setInterval>("setInterval")
                 .static_fun<&mb_shell::js::infra::clearInterval>("clearInterval")
+                .static_fun<&mb_shell::js::infra::atob>("atob")
+                .static_fun<&mb_shell::js::infra::btoa>("btoa")
             ;
     }
 
@@ -902,6 +938,8 @@ template<> struct js_bind<mb_shell::js::infra> {
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
+
+    js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_controller>::bind(mod);
 
