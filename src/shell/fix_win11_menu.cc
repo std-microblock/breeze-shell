@@ -2,10 +2,15 @@
 
 #include <print>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "blook/blook.h"
+#include "blook/memo.h"
 #include "utils.h"
+#include "zasm/base/immediate.hpp"
+#include "zasm/x86/mnemonic.hpp"
+#include "zasm/x86/register.hpp"
 
 // https://stackoverflow.com/questions/937044/determine-path-to-registry-key-from-hkey-handle-in-c
 #include <ntstatus.h>
@@ -81,10 +86,12 @@ void mb_shell::fix_win11_menu::install() {
   static auto RegGetValueHook = RegGetValueW->inline_hook();
 
   RegGetValueHook->install(
-      (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
+      (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD
+      dwFlags,
                   LPDWORD pdwType, PVOID pvData, LPDWORD pcbData) {
         // simulate
         // reg.exe add
+        //
         // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
         // /f /ve
         auto path = wstring_to_utf8(RegQueryKeyPath(hkey));
@@ -103,18 +110,34 @@ void mb_shell::fix_win11_menu::install() {
       });
 
   // approch 2: patch the shell32.dll to predent the shift key is pressed
-  if (auto shell32 = proc->module("shell32.dll")) {
-    // mov ecx, 10
-    // call GetKeyState
-    // B9 10 00 00 00 48 FF 15 14 61 31 00
-    if (auto mem = shell32.value()->section(".text")->find_one(
-            {0xB9, 0x10, 0x00, 0x00, 0x00, 0x48, 0xFF, 0x15, 0x14, 0x61, 0x31,
-             0x00})) {
+  std::thread([=]() {
+    if (auto shell32 = proc->module("shell32.dll")) {
       // mov ecx, 10
-      // mov rax, ffff
-      auto new_mem = std::vector<uint8_t>{0xB9, 0x10, 0x00, 0x00, 0x00, 0x48,
-                                          0xC7, 0xC0, 0xFF, 0xFF, 0x00, 0x00};
-      std::ignore = mem->write(nullptr, new_mem);
+      // call GetKeyState/GetAsyncKeyState
+      auto disasm = shell32.value()->section(".text")->disassembly();
+
+      for (auto it = disasm.begin(); it != disasm.end(); ++it) {
+        auto &insn = *it;
+        if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
+          if (insn->getOperand(0) == zasm::x86::ecx &&
+              insn->getOperand(1).holds<zasm::Imm>() &&
+              insn->getOperand(1).get<zasm::Imm>().value<int>() == 0x10) {
+            auto &next = *std::next(it);
+            if (next->getMnemonic() == zasm::x86::Mnemonic::Call &&
+                next->getOperand(0).holds<zasm::Mem>()) {
+              // seems that we don't have to check call target currently.
+              insn.ptr()
+                  .reassembly([](auto a) {
+                    a.mov(zasm::x86::ecx, 0x10);
+                    a.mov(zasm::x86::eax, 0xffff);
+                    a.nop();
+                    a.nop();
+                  })
+                  .patch();
+            }
+          }
+        }
+      }
     }
-  }
+  }).detach();
 }
