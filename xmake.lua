@@ -39,7 +39,7 @@ target("shell")
     set_kind("shared")
     add_packages("blook", "quickjs-ng", "reflect-cpp")
     add_deps("ui")
-    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp")
+    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
         extensions = {".js"}
     })
