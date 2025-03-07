@@ -35,7 +35,6 @@ menu_controller::append_item_after(js_menu_data data, int after_index) {
   if (!m)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
   m->children_dirty = true;
   menu_item item;
   auto new_item = std::make_shared<menu_item_normal_widget>(item);
@@ -77,8 +76,6 @@ menu_controller::~menu_controller() {}
 void menu_item_controller::set_position(int new_index) {
   if (!valid())
     return;
-
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
     auto m = $menu->lock();
@@ -179,7 +176,7 @@ void menu_item_controller::set_data(js_menu_data data) {
     return;
 
   auto item = $item.lock();
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
+
   to_menu_item(item->item, data);
   if (auto menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent))
     if (auto m = menu->lock()) {
@@ -190,7 +187,7 @@ void menu_item_controller::remove() {
   if (!valid())
     return;
   auto item = $item.lock();
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
+
   if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent);
       auto m = $menu->lock()) {
     m->item_widgets.erase(
@@ -269,8 +266,6 @@ std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
   if (!m)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   if (index >= m->item_widgets.size())
     return nullptr;
 
@@ -289,8 +284,6 @@ menu_controller::get_items() {
   auto m = $menu.lock();
   if (!m)
     return {};
-
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   std::vector<std::shared_ptr<menu_item_controller>> items;
 
@@ -458,9 +451,12 @@ std::string network::get(std::string url) { return post(url, ""); }
 void network::get_async(std::string url,
                         std::function<void(std::string)> callback,
                         std::function<void(std::string)> error_callback) {
-  std::thread([url, callback, error_callback]() {
+  std::thread([url, callback, error_callback,
+               &lock = menu_render::current.value()->rt->rt_lock]() {
     try {
-      callback(get(url));
+      auto res = get(url);
+      std::lock_guard l(lock);
+      callback(res);
     } catch (std::exception &e) {
       std::cerr << "Error in network::get_async: " << e.what() << std::endl;
       error_callback(e.what());
@@ -471,9 +467,12 @@ void network::get_async(std::string url,
 void network::post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback) {
-  std::thread([url, data, callback, error_callback]() {
+  std::thread([url, data, callback, error_callback,
+               &lock = menu_render::current.value()->rt->rt_lock]() {
     try {
-      callback(post(url, data));
+      auto res = post(url, data);
+      std::lock_guard l(lock);
+      callback(res);
     } catch (std::exception &e) {
       std::cerr << "Error in network::post_async: " << e.what() << std::endl;
       error_callback(e.what());
@@ -528,9 +527,12 @@ subproc_result_data subproc::run(std::string cmd) {
 }
 void subproc::run_async(std::string cmd,
                         std::function<void(subproc_result_data)> callback) {
-  std::thread([cmd, callback]() {
+  std::thread([cmd, callback,
+               &lock = menu_render::current.value()->rt->rt_lock]() {
     try {
-      callback(run(cmd));
+      auto res = run(cmd);
+      std::lock_guard l(lock);
+      callback(res);
     } catch (std::exception &e) {
       std::cerr << "Error in subproc::run_async: " << e.what() << std::endl;
     }
@@ -542,7 +544,7 @@ void menu_controller::clear() {
   auto m = $menu.lock();
   if (!m)
     return;
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
+
   m->children_dirty = true;
   m->item_widgets.clear();
   m->menu_data.items.clear();
@@ -618,10 +620,12 @@ void network::download_async(std::string url, std::string path,
                              std::function<void()> callback,
                              std::function<void(std::string)> error_callback) {
 
-  std::thread([url, path, callback, error_callback]() {
+  std::thread([url, path, callback, error_callback,
+               &lock = menu_render::current.value()->rt->rt_lock]() {
     try {
       auto data = get(url);
       fs::write_binary(path, std::vector<uint8_t>(data.begin(), data.end()));
+      std::lock_guard l(lock);
       callback();
     } catch (std::exception &e) {
       error_callback(e.what());
@@ -655,8 +659,6 @@ menu_item_parent_item_controller::children() {
   if (!item)
     return {};
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> items;
 
   for (int i = 0; i < item->children.size(); i++) {
@@ -681,8 +683,6 @@ void menu_item_parent_item_controller::set_position(int new_index) {
 
   auto parent = item->parent->downcast<menu_widget>();
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   if (new_index >= parent->item_widgets.size())
     return;
 
@@ -701,7 +701,7 @@ void menu_item_parent_item_controller::remove() {
   auto item = $item.lock();
   if (!item)
     return;
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
+
   auto parent = item->parent->downcast<menu_widget>();
   parent->children_dirty = true;
   parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
@@ -720,7 +720,6 @@ menu_controller::append_parent_item_after(int after_index) {
   if (!m)
     return nullptr;
   m->children_dirty = true;
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
 
   auto new_item = std::make_shared<menu_item_parent_widget>();
   auto ctl = std::make_shared<menu_item_parent_item_controller>(new_item, m);
@@ -754,8 +753,6 @@ menu_item_parent_item_controller::append_child_after(
   if (!parent)
     return nullptr;
 
-  std::unique_lock lock(menu_render::current.value()->rt->rt_lock);
-
   menu_item item;
   auto new_item = std::make_shared<menu_item_normal_widget>(item);
   auto ctl = std::make_shared<menu_item_controller>(
@@ -787,9 +784,11 @@ void subproc::open(std::string path, std::string args) {
 }
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
-  std::thread([path, callback, args]() {
+  std::thread([path, callback, args,
+               &lock = menu_render::current.value()->rt->rt_lock]() {
     try {
       open(path, args);
+      std::lock_guard l(lock);
       callback();
     } catch (std::exception &e) {
       std::cerr << "Error in subproc::open_async: " << e.what() << std::endl;

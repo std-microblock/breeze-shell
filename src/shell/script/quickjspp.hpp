@@ -1853,30 +1853,7 @@ struct js_traits<std::function<R(Args...)>, int> {
       };
 
       if (!is_thread_js_main) {
-        std::latch init_latch(1);
-        std::latch done_latch(1);
-
-        ctx.enqueueJob([&]() {
-          is_thread_js_main = false;
-
-          while (!done_latch.try_wait()) {
-            if (!init_latch.try_wait())
-              init_latch.count_down();
-          }
-
-          is_thread_js_main = true;
-          JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
-        });
-
-        while (!init_latch.try_wait()) {
-          std::this_thread::yield();
-        }
-
-        is_thread_js_main = true;
-        JS_UpdateStackTop(JS_GetRuntime(jsfun_obj.ctx));
-        work();
-        is_thread_js_main = false;
-        done_latch.count_down();
+        ctx.enqueueJob(work);
       } else {
         work();
       }
