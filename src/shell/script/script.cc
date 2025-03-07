@@ -49,8 +49,7 @@ void script_context::bind() {
 
   bindAll(module);
 }
-script_context::script_context() : rt{}, js{} {
-}
+script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
   bool has_update = false;
@@ -144,9 +143,9 @@ void script_context::watch_folder(const std::filesystem::path &path,
         std::unique_lock lock(js->js_job_start_mutex);
         if (js->has_pending_job)
           continue;
-        js->js_job_start_cv.wait_for(lock, std::chrono::milliseconds(100),
-                                     [&]() { return js->has_pending_job || *ss; });
-
+        js->js_job_start_cv.wait_for(
+            lock, std::chrono::milliseconds(100),
+            [&]() { return js->has_pending_job || *ss; });
       }
       is_thread_js_main = false;
     });
