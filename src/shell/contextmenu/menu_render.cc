@@ -39,17 +39,11 @@ menu_render menu_render::create(int x, int y, menu menu) {
                   MB_ICONERROR);
     }
 
-    nvgCreateFont(rt->nvg, "main",
-                  config::current->font_path_main.string().c_str());
-    nvgCreateFont(rt->nvg, "fallback",
-                  config::current->font_path_fallback.string().c_str());
-    nvgAddFallbackFont(rt->nvg, "main", "fallback");
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
 
   rt->parent = menu.parent_window;
-
   // get the monitor in which the menu is being shown
   auto monitor = MonitorFromPoint({x, y}, MONITOR_DEFAULTTONEAREST);
   MONITORINFOEX monitor_info;
@@ -57,6 +51,14 @@ menu_render menu_render::create(int x, int y, menu menu) {
   GetMonitorInfo(monitor, &monitor_info);
 
   // set the position of the window to fullscreen in this monitor + padding
+  glfwMakeContextCurrent(rt->window);
+  rt->reset_view();
+
+  nvgCreateFont(rt->nvg, "main",
+                config::current->font_path_main.string().c_str());
+  nvgCreateFont(rt->nvg, "fallback",
+                config::current->font_path_fallback.string().c_str());
+  nvgAddFallbackFont(rt->nvg, "main", "fallback");
 
   std::println("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
                monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
@@ -68,7 +70,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
         monitor_info.rcMonitor.right - monitor_info.rcMonitor.left + l_pad,
         monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top + t_pad);
 
-  glfwMakeContextCurrent(rt->window);
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
 
   rt->show();

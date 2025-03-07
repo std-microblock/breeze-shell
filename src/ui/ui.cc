@@ -48,6 +48,8 @@ void render_target::start_loop() {
       std::lock_guard lock(rt_lock);
       root->children.clear();
     }
+    nvgDeleteGL3(nvg);
+    nvg = nullptr;
     glfwMakeContextCurrent(nullptr);
   }
 }
