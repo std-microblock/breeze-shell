@@ -834,6 +834,7 @@ template<> struct js_bind<mb_shell::js::fs> {
                 .static_fun<&mb_shell::js::fs::cwd>("cwd")
                 .static_fun<&mb_shell::js::fs::chdir>("chdir")
                 .static_fun<&mb_shell::js::fs::exists>("exists")
+                .static_fun<&mb_shell::js::fs::isdir>("isdir")
                 .static_fun<&mb_shell::js::fs::mkdir>("mkdir")
                 .static_fun<&mb_shell::js::fs::rmdir>("rmdir")
                 .static_fun<&mb_shell::js::fs::rename>("rename")
