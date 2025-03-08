@@ -538,6 +538,10 @@ struct fs {
   // Check if path exists
   static bool exists(std::string path);
 
+  // 判断路径是否为目录
+  // Check if path is directory
+  static bool isdir(std::string path);
+
   // 创建目录
   // Create directory
   static void mkdir(std::string path);

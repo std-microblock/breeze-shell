@@ -1050,6 +1050,15 @@ export class fs {
             
 	
 /**
+  * 判断路径是否为目录
+  *  Check if path is directory
+  * @param path: string
+  * @returns boolean
+  */
+  static isdir: ((arg1: string) => boolean)
+            
+	
+/**
   * 创建目录
   *  Create directory
   * @param path: string

@@ -556,6 +556,8 @@ std::string fs::cwd() { return std::filesystem::current_path().string(); }
 
 bool fs::exists(std::string path) { return std::filesystem::exists(path); }
 
+bool fs::isdir(std::string path) { return std::filesystem::is_directory(path); }
+
 void fs::mkdir(std::string path) {
   try {
     std::filesystem::create_directories(path);
