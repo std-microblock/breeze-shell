@@ -946,6 +946,7 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
     FileOp.wFunc = FO_COPY;
     FileOp.pFrom = wsrc.c_str();
     FileOp.pTo = wdest.c_str();
+    FileOp.fFlags = FOF_RENAMEONCOLLISION | FOF_ALLOWUNDO | FOF_NOCONFIRMMKDIR | FOF_NOCOPYSECURITYATTRIBS | FOF_WANTMAPPINGHANDLE;
 
     auto res = SHFileOperationW(&FileOp);
     std::lock_guard l(lock);
