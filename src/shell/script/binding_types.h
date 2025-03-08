@@ -586,7 +586,7 @@ struct fs {
   // Copy file with SHFileOperation
   // 这会模拟资源管理器中“复制”的行为，即显示进度窗口，UAC请求窗口等
   static void copy_shfile(std::string src_path, std::string dest_path,
-                          std::function<void(bool)> callback);
+                          std::function<void(bool, std::string)> callback);
 
   // 使用 SHFileOperation 移动文件/文件夹
   // Move file with SHFileOperation

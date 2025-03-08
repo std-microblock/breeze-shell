@@ -937,21 +937,45 @@ std::string infra::btoa(std::string str) {
 }
 
 void fs::copy_shfile(std::string src_path, std::string dest_path,
-                     std::function<void(bool)> callback) {
-  std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
-    SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
-    std::wstring wsrc = utf8_to_wstring(src_path);
-    std::wstring wdest = utf8_to_wstring(dest_path);
-
-    FileOp.wFunc = FO_COPY;
-    FileOp.pFrom = wsrc.c_str();
-    FileOp.pTo = wdest.c_str();
-
-    auto res = SHFileOperationW(&FileOp);
-    std::lock_guard l(lock);
-    callback(res == 0);
-  }).detach();
-}
+                      std::function<void(bool, std::string)> callback) {
+   std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+     SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
+     std::wstring wsrc = utf8_to_wstring(src_path);
+     std::wstring wdest = utf8_to_wstring(dest_path);
+ 
+     std::vector<wchar_t> from_buf(wsrc.size() + 2, 0);
+     std::vector<wchar_t> to_buf(wdest.size() + 2, 0);
+     wcsncpy_s(from_buf.data(), from_buf.size(), wsrc.c_str(), _TRUNCATE);
+     wcsncpy_s(to_buf.data(), to_buf.size(), wdest.c_str(), _TRUNCATE);
+ 
+     FileOp.wFunc = FO_COPY;
+     FileOp.pFrom = from_buf.data();
+     FileOp.pTo = to_buf.data();
+     FileOp.fFlags = FOF_RENAMEONCOLLISION | FOF_ALLOWUNDO | FOF_NOCONFIRMMKDIR | FOF_NOCOPYSECURITYATTRIBS | FOF_WANTMAPPINGHANDLE;
+ 
+     auto res = SHFileOperationW(&FileOp);
+     std::wstring final_path;
+     bool success = (res == 0) && !FileOp.fAnyOperationsAborted;
+     if (success) {
+       if (FileOp.hNameMappings) {
+        LPSHNAMEMAPPINGW* ppMapping = reinterpret_cast<LPSHNAMEMAPPINGW*>(&FileOp.hNameMappings);
+        SHNAMEMAPPINGW* pMapping = *ppMapping;
+        
+        // 直接访问第一个映射项
+        final_path = pMapping->pszNewPath;
+        SHFreeNameMappings(FileOp.hNameMappings);
+       } else {
+         std::filesystem::path dest(wdest);
+         std::filesystem::path src(wsrc);
+         final_path = (dest / src.filename()).wstring();
+       }
+     }
+ 
+     std::string utf8_path = wstring_to_utf8(final_path);
+     std::lock_guard l(lock);
+     callback(success, utf8_path);
+   }).detach();
+ }
 
 void fs::move_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool)> callback) {
