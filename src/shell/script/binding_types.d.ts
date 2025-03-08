@@ -1152,10 +1152,10 @@ export class fs {
   * 使用 SHFileOperation 拷贝文件/文件夹
   *  Copy file with SHFileOperation
   *  这会模拟资源管理器中“复制”的行为，即显示进度窗口，UAC请求窗口等
-  * @param src_path: string, dest_path: string, callback: ((arg1: boolean) => void)
+  * @param src_path: string, dest_path: string, callback: ((arg1: boolean, arg2: string) => void)
   * @returns void
   */
-  static copy_shfile: ((arg1: string, arg2: string, arg3: ((arg1: boolean) => void)) => void)
+  static copy_shfile: ((arg1: string, arg2: string, arg3: ((arg1: boolean, arg2: string) => void)) => void)
             
 	
 /**
