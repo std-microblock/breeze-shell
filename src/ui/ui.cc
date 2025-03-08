@@ -331,7 +331,7 @@ void render_target::close() {
   glfwSetWindowShouldClose(window, true);
 }
 
-std::vector<std::function<void()>> render_target::main_thread_tasks = {};
+std::queue<std::function<void()>> render_target::main_thread_tasks = {};
 std::mutex render_target::main_thread_tasks_mutex = {};
 void render_target::post_main_thread_task(std::function<void()> task) {
   std::lock_guard lock(main_thread_tasks_mutex);
