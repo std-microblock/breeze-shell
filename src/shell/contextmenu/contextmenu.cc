@@ -83,13 +83,18 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
 
     if (info.hSubMenu) {
       item.submenu = [info, hWnd](std::shared_ptr<menu_widget> mw) {
-        menu_render::current.value()->rt->post_loop_thread_task([=]() {
-          PostMessageW(hWnd, WM_INITMENUPOPUP,
-                       reinterpret_cast<WPARAM>(info.hSubMenu), 0xFFFFFFFF);
+        std::promise<void> taskCompletedPromise;
+auto taskCompletedFuture = taskCompletedPromise.get_future();
 
-          mw->init_from_data(
-              menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
-        });
+menu_render::current.value()->rt->post_loop_thread_task([=, &taskCompletedPromise]() {
+    PostMessageW(hWnd, WM_INITMENUPOPUP,
+                 reinterpret_cast<WPARAM>(info.hSubMenu), 0xFFFFFFFF);
+
+    mw->init_from_data(
+        menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
+    taskCompletedPromise.set_value();
+});
+taskCompletedFuture.wait();
       };
     } else {
       item.action = [=]() mutable {
