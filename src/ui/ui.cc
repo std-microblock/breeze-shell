@@ -317,14 +317,13 @@ void render_target::set_position(int x, int y) {
 void render_target::resize(int width, int height) {
   this->width = width;
   this->height = height;
-  post_main_thread_task(
-      [this] { 
-        glfwSetWindowSize(window, this->width, this->height);
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glFlush();
-        glfwSwapBuffers(window);
-      });
+  post_main_thread_task([this] {
+    glfwSetWindowSize(window, this->width, this->height);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glFlush();
+    glfwSwapBuffers(window);
+  });
 }
 void render_target::close() {
   ShowWindow(glfwGetWin32Window(window), SW_HIDE);

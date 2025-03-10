@@ -82,20 +82,17 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     }
 
     if (info.hSubMenu) {
-      item.submenu = [info, hWnd](std::shared_ptr<menu_widget> mw) {
-        std::promise<void> taskCompletedPromise;
-auto taskCompletedFuture = taskCompletedPromise.get_future();
+      item.submenu =
+          [info, hWnd,
+           data = menu::construct_with_hmenu(info.hSubMenu, hWnd, false)](
+              std::shared_ptr<menu_widget> mw) {
+            menu_render::current.value()->rt->post_loop_thread_task([=]() {
+              PostMessageW(hWnd, WM_INITMENUPOPUP,
+                           reinterpret_cast<WPARAM>(info.hSubMenu), 0xFFFFFFFF);
 
-menu_render::current.value()->rt->post_loop_thread_task([=, &taskCompletedPromise]() {
-    PostMessageW(hWnd, WM_INITMENUPOPUP,
-                 reinterpret_cast<WPARAM>(info.hSubMenu), 0xFFFFFFFF);
-
-    mw->init_from_data(
-        menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
-    taskCompletedPromise.set_value();
-});
-taskCompletedFuture.wait();
-      };
+              mw->init_from_data(data);
+            });
+          };
     } else {
       item.action = [=]() mutable {
         menu_render::current.value()->selected_menu = info.wID;
@@ -161,7 +158,8 @@ taskCompletedFuture.wait();
                   bitmap.bmWidth >= 4 && bitmap.bmWidth <= 64 &&
                   bitmap.bmHeight >= 4 && bitmap.bmHeight <= 64) {
                 item.icon_bitmap = (size_t)result;
-                if (config::current->context_menu.search_large_dwItemData_range) {
+                if (config::current->context_menu
+                        .search_large_dwItemData_range) {
                   std::println("Found icon at offset: {}", offset);
                 }
                 break;
