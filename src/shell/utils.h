@@ -61,4 +61,12 @@ private:
   std::condition_variable condition;
   bool stop;
 };
+
+struct perf_counter {
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point last_end;
+    std::string name;
+    void end(std::optional<std::string> block_name = {});
+    perf_counter(std::string name);
+};
 } // namespace mb_shell

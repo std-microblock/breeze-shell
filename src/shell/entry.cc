@@ -117,10 +117,13 @@ void main() {
     entry::main_window_loop_hook.install(hWnd);
 
     has_active_menu = true;
-    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-    auto menu_render = menu_render::create(x, y, menu);
 
+    perf_counter perf("TrackPopupMenuEx");
+    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
+    perf.end("construct_with_hmenu");
+    auto menu_render = menu_render::create(x, y, menu);
     menu_render.rt->last_time = menu_render.rt->clock.now();
+    perf.end("menu_render::create");
     menu_render.rt->start_loop();
 
     has_active_menu = false;

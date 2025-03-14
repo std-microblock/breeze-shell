@@ -1,8 +1,8 @@
 #include "utils.h"
-#include <dwmapi.h>
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 #include <codecvt>
 #include <iostream>
+#include <print>
 #include <sstream>
 #include <vector>
 
@@ -10,6 +10,8 @@
 #include <locale>
 
 #include "windows.h"
+#include <dwmapi.h>
+
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
   std::wstring_convert<
       std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
@@ -184,4 +186,26 @@ void mb_shell::task_queue::run() {
 
     task();
   }
+}
+mb_shell::perf_counter::perf_counter(std::string name) : name(name) {
+  start = std::chrono::high_resolution_clock::now();
+  last_end = start;
+}
+void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
+  auto now = std::chrono::high_resolution_clock::now();
+  if (block_name) {
+    std::println(
+        "[perf] {}: {}ms / {} {}ms", block_name.value(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_end)
+            .count(),
+        name,
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
+            .count());
+  } else {
+    std::println(
+        "[perf] {}: {}ms", name,
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
+            .count());
+  }
+  last_end = now;
 }
