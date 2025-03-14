@@ -17,9 +17,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
   }
 
   constexpr int l_pad = 100, t_pad = -1;
-
-  auto current_js_context = std::make_shared<js::js_menu_context>(
-      js::js_menu_context::$from_window(menu.parent_window));
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
@@ -47,6 +44,8 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
+  auto current_js_context = std::make_shared<js::js_menu_context>(
+      js::js_menu_context::$from_window(menu.parent_window));
 
   rt->parent = menu.parent_window;
 

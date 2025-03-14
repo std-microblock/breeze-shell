@@ -4,6 +4,7 @@
 #include "../contextmenu/menu_render.h"
 
 #include <algorithm>
+#include <atlcomcli.h>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -209,6 +210,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
             auto fv = *event_data.folder_view;
             fv->$hwnd = hWnd;
             fv->$controller = psb;
+            fv->$render_target = menu_render::current.value()->rt.get();
 
             int focusIndex;
             pfv->GetFocusedItem(&focusIndex);
@@ -342,7 +344,7 @@ void folder_view_controller::open_folder(std::string folder_path) {
 void folder_view_controller::refresh() {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
 
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
+  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       view->Refresh();
@@ -371,6 +373,7 @@ folder_view_controller::items() {
             item->$controller = view;
             item->index = i;
             item->parent_path = current_path;
+            item->$render_target = $render_target;
             items.push_back(item);
           }
         }
@@ -387,12 +390,13 @@ folder_view_controller::items() {
 void folder_view_controller::select(int index, int state) {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
 
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
+  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       IFolderView *folder_view;
       if (SUCCEEDED(
-              view->QueryInterface(IID_IFolderView, (void **)&folder_view))) {
+              view->QueryInterface(IID_IFolderView, (void **)&folder_view)))
+              {
         folder_view->SelectItem(index, state);
       }
     }
@@ -401,7 +405,7 @@ void folder_view_controller::select(int index, int state) {
 
 void folder_view_controller::select_none() {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
+  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       view->SelectItem(nullptr, SVSI_DESELECTOTHERS);
@@ -507,9 +511,8 @@ std::string folder_view_folder_item::type() {
 }
 
 void folder_view_folder_item::select(int state) {
-  IShellView *sv = static_cast<IShellView *>($controller);
-
-  menu_render::current.value()->rt->post_loop_thread_task(
+  CComPtr<IShellView> sv = static_cast<IShellView *>($controller);
+  ((ui::render_target *)$render_target)->post_loop_thread_task(
       [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
 }
 
