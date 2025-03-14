@@ -119,7 +119,7 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
 
   std::unordered_set<HWND> recorded_hwnds;
 
-  auto browsers = GetIShellBrowsers();
+  static auto browsers = GetIShellBrowsers();
   auto GetIShellBrowser = [&](HWND hwnd) -> CComPtr<IShellBrowser> {
     for (auto &[h, b] : browsers) {
       if (h == hwnd)
@@ -156,7 +156,13 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
   auto res = dfs(dfs, hWnd);
 
   if (!res) {
-    // if the window is shell window, we assume it's the desktop
+    // first, we rescan all shell windows
+    browsers = GetIShellBrowsers();
+    res = dfs(dfs, hWnd);
+    if (res)
+      return res;
+
+    // if still no result and the window is shell window, we assume it's the desktop
     if (auto res = GetDesktopIShellBrowser())
       return res->second;
   }
@@ -168,7 +174,7 @@ namespace mb_shell::js {
 
 js_menu_context js_menu_context::$from_window(void *_hwnd) {
   js_menu_context event_data;
-
+  perf_counter perf("js_menu_context::$from_window");
   HWND hWnd = reinterpret_cast<HWND>(_hwnd);
 
   // Check if the foreground window is an edit control
@@ -192,6 +198,8 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     }
   }
 
+  perf.end("Edit");
+
   if (GetClassNameA(hWnd, className, sizeof(className))) {
     std::string class_name = className;
     if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
@@ -201,6 +209,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
       if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
         IShellView *psv;
+        perf.end("IShellBrowser - GetIShellBrowserRecursive");
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
           IFolderView *pfv;
@@ -264,8 +273,9 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     }
   }
 
-  if (hWnd) {
+  perf.end("IShellBrowser");
 
+  if (hWnd) {
     // get window position
     RECT rect;
     GetWindowRect(hWnd, &rect);
@@ -295,24 +305,25 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
     // get props
     // EnumProps
-    static std::unordered_map<std::string, size_t> prop_map;
-    prop_map = {};
-    EnumPropsW(hWnd, [](HWND hWnd, auto lpszString, HANDLE hData) -> BOOL {
-      if (is_memory_readable(lpszString))
-        prop_map[mb_shell::wstring_to_utf8(lpszString)] = (size_t)hData;
-      else
-        prop_map[std::to_string((size_t)lpszString)] = (size_t)hData;
-      return TRUE;
-    });
+    // static std::unordered_map<std::string, size_t> prop_map;
+    // prop_map = {};
+    // EnumPropsW(hWnd, [](HWND hWnd, auto lpszString, HANDLE hData) -> BOOL {
+    //   if (is_memory_readable(lpszString))
+    //     prop_map[mb_shell::wstring_to_utf8(lpszString)] = (size_t)hData;
+    //   else
+    //     prop_map[std::to_string((size_t)lpszString)] = (size_t)hData;
+    //   return TRUE;
+    // });
 
-    std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
-                        return window_prop_data{pair.first, pair.second};
-                      }),
-                      std::back_inserter(window_info.props));
+    // std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
+    //                     return window_prop_data{pair.first, pair.second};
+    //                   }),
+    //                   std::back_inserter(window_info.props));
 
     event_data.window_info = window_info;
   }
 
+  perf.end("Window");
   // event_data.window_titlebar =
   // std::make_shared<window_titlebar_controller>();
   // (*event_data.window_titlebar)->$hwnd = hWnd;
