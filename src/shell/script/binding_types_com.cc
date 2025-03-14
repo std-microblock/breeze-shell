@@ -370,6 +370,7 @@ folder_view_controller::items() {
             item->$handler = pidl;
             item->$controller = view;
             item->index = i;
+            item->parent_path = current_path;
             items.push_back(item);
           }
         }
@@ -451,16 +452,17 @@ std::string folder_view_folder_item::modify_date() {
 
 std::string folder_view_folder_item::path() {
   PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
-  IShellItem *item;
+
+  CComPtr<IShellItem> item;
   if (SUCCEEDED(SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
     LPWSTR path;
-    if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &path))) {
-      std::wstring wpath(path);
+    if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &path))) {
+      std::wstring name(path);
       CoTaskMemFree(path);
-      item->Release();
-      return mb_shell::wstring_to_utf8(wpath);
+      std::filesystem::path p(parent_path);
+      p /= name;
+      return p.string();
     }
-    item->Release();
   }
   return "";
 }

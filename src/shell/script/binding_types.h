@@ -34,6 +34,7 @@ struct folder_view_folder_item {
   /* IShellView* */
   void *$controller;
   int index;
+  std::string parent_path;
 
   std::string name();
   std::string modify_date();

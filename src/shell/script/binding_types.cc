@@ -973,7 +973,8 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
          final_path = (dest / src.filename()).wstring();
        }
 
-       SHChangeNotify(SHCNE_CREATE, SHCNF_PATH, final_path.c_str(), nullptr);
+       SHChangeNotify(SHCNE_CREATE, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(), nullptr);
+       SHChangeNotify(SHCNE_UPDATEDIR, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(), nullptr);
      }
  
      std::string utf8_path = wstring_to_utf8(final_path);
@@ -999,7 +1000,6 @@ void fs::move_shfile(std::string src_path, std::string dest_path,
   }).detach();
 }
 size_t win32::load_file_icon(std::string path) {
-  // SHGetFileInfo
   SHFILEINFOW sfi = {0};
   DWORD_PTR ret =
       SHGetFileInfoW(utf8_to_wstring(path).c_str(), 0, &sfi,
