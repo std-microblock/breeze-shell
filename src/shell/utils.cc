@@ -154,3 +154,34 @@ void mb_shell::set_thread_locale_utf8() {
   SetThreadLocale(
       MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT));
 }
+mb_shell::task_queue::task_queue() : stop(false) {
+  worker = std::thread(&task_queue::run, this);
+}
+mb_shell::task_queue::~task_queue() {
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    stop = true;
+  }
+  condition.notify_all();
+  if (worker.joinable()) {
+    worker.join();
+  }
+}
+void mb_shell::task_queue::run() {
+  while (true) {
+    std::function<void()> task;
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      condition.wait(lock, [this]() { return stop || !tasks.empty(); });
+
+      if (stop && tasks.empty()) {
+        return;
+      }
+
+      task = std::move(tasks.front());
+      tasks.pop();
+    }
+
+    task();
+  }
+}
