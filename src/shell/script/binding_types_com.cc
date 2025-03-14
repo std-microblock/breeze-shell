@@ -342,15 +342,7 @@ void folder_view_controller::open_folder(std::string folder_path) {
 }
 
 void folder_view_controller::refresh() {
-  IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-
-  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
-    IShellView *view;
-    if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
-      view->Refresh();
-      view->Release();
-    }
-  });
+  change_folder(current_path);
 }
 
 std::vector<std::shared_ptr<folder_view_folder_item>>
