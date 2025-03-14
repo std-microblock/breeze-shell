@@ -978,9 +978,7 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
          final_path = (dest / src.filename()).wstring();
        }
 
-
        SHChangeNotify(SHCNE_CREATE, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(), nullptr);
-       Sleep(1000);
      }
  
      std::string utf8_path = wstring_to_utf8(final_path);

@@ -2,6 +2,7 @@
 #include "binding_types.h"
 
 #include "../contextmenu/menu_render.h"
+#include "../entry.h"
 
 #include <algorithm>
 #include <atlcomcli.h>
@@ -196,7 +197,6 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
         class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
       std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
-      CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
       if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
@@ -341,9 +341,7 @@ void folder_view_controller::open_folder(std::string folder_path) {
   change_folder(folder_path);
 }
 
-void folder_view_controller::refresh() {
-  change_folder(current_path);
-}
+void folder_view_controller::refresh() { change_folder(current_path); }
 
 std::vector<std::shared_ptr<folder_view_folder_item>>
 folder_view_controller::items() {
@@ -382,13 +380,12 @@ folder_view_controller::items() {
 void folder_view_controller::select(int index, int state) {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
 
-  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
+  entry::main_window_loop_hook.add_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       IFolderView *folder_view;
       if (SUCCEEDED(
-              view->QueryInterface(IID_IFolderView, (void **)&folder_view)))
-              {
+              view->QueryInterface(IID_IFolderView, (void **)&folder_view))) {
         folder_view->SelectItem(index, state);
       }
     }
@@ -397,7 +394,7 @@ void folder_view_controller::select(int index, int state) {
 
 void folder_view_controller::select_none() {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-  ((ui::render_target *)$render_target)->post_loop_thread_task([=]() {
+  entry::main_window_loop_hook.add_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       view->SelectItem(nullptr, SVSI_DESELECTOTHERS);
@@ -504,8 +501,8 @@ std::string folder_view_folder_item::type() {
 
 void folder_view_folder_item::select(int state) {
   CComPtr<IShellView> sv = static_cast<IShellView *>($controller);
-  ((ui::render_target *)$render_target)->post_loop_thread_task(
-      [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
+  entry::main_window_loop_hook.add_task(
+          [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
 }
 
 constexpr UINT ID_EDIT_COPY = 0x0001;
