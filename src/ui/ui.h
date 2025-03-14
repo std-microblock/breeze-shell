@@ -37,6 +37,7 @@ struct render_target {
   int view_id = view_cnt++;
   float dpi_scale = 1;
   float scroll_y = 0;
+  float last_rerender = 0;
   std::expected<bool, std::string> init();
 
   static std::queue<std::function<void()>> main_thread_tasks;

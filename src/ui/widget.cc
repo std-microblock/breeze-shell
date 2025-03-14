@@ -68,6 +68,10 @@ void ui::widget::update(update_context &ctx) {
   children_dirty = false;
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
+
+    if (anim->_updated) {
+      ctx.need_rerender = true;
+    }
   }
 
   dying_time.update(ctx.delta_t);

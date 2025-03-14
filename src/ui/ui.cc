@@ -222,8 +222,6 @@ void render_target::render() {
   int fb_width, fb_height;
   glfwGetFramebufferSize(window, &fb_width, &fb_height);
   glViewport(0, 0, fb_width, fb_height);
-  glClearColor(0, 0, 0, 0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   auto now = clock.now();
   auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
@@ -266,7 +264,7 @@ void render_target::render() {
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof(MONITORINFOEX);
   GetMonitorInfo(monitor, &monitor_info);
-
+  bool need_rerender = false;
   update_context ctx{
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
@@ -284,6 +282,7 @@ void render_target::render() {
               .dpi_scale = dpi_scale,
           },
       .scroll_y = scroll_y,
+      .need_rerender = need_rerender,
       .rt = *this,
       .vg = vg,
   };
@@ -295,17 +294,31 @@ void render_target::render() {
   right_mouse_down = ctx.right_mouse_down;
   glfwMakeContextCurrent(window);
   {
-    std::lock_guard lock(rt_lock);
     time_checkpoints("Update context");
-    root->update(ctx);
+    {
+      std::lock_guard lock(rt_lock);
+      root->update(ctx);
+    }
     time_checkpoints("Update root");
-    root->render(vg);
+    if (need_rerender ||
+        (now.time_since_epoch().count() - last_rerender) > 1000) {
+      glClearColor(0, 0, 0, 0);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
+              GL_STENCIL_BUFFER_BIT);
+      last_rerender = now.time_since_epoch().count();
+      {
+        std::lock_guard lock(rt_lock);
+        root->render(vg);
+      }
+      vg.endFrame();
+      glFlush();
+      glfwSwapBuffers(window);
+    } else {
+      if (vsync)
+        Sleep(5);
+    }
     time_checkpoints("Render root");
   }
-  vg.endFrame();
-  glFlush();
-  glfwSwapBuffers(window);
-  time_checkpoints("Swap buffers");
 }
 void render_target::reset_view() {
   if (!nvg)
