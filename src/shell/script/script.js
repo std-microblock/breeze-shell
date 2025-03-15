@@ -45,7 +45,87 @@ const splitIntoLines = (str, maxLen) => {
     return lines
 }
 
+// Breeze infrastructure
+
 globalThis.on_plugin_menu = {};
+
+const plugin = (import_meta, default_config = {}) => {
+    const CONFIG_FILE = '/config.json'
+
+    const { name, url } = import_meta
+    const languages = {}
+
+    const nameNoExt = name.endsWith('.js') ? name.slice(0, -3) : name
+
+    let config = default_config
+
+    const plugin = {
+        i18n: {
+            define: (lang, data) => {
+                languages[lang] = data
+            },
+            t: (key) => {
+                return languages[shell.breeze.user_language()][key] || key
+            }
+        },
+        set_on_menu: (callback) => {
+            on_plugin_menu[nameNoExt] = callback
+        },
+        config_directory: shell.breeze.data_directory() + '/config/' + nameNoExt,
+        config: {
+            read_config() {
+                if (shell.fs.exists(plugin.config_directory + CONFIG_FILE)) {
+                    try {
+                        config = JSON.parse(shell.fs.read(config_dir + CONFIG_FILE))
+                    } catch (e) {
+                        shell.println(`[${name}] 配置文件解析失败: ${e}`)
+                    }
+                }
+            },
+            write_config() {
+                shell.fs.write(plugin.config_directory + CONFIG_FILE, JSON.stringify(config, null, 4))
+            },
+            get(key) {
+                const read = (keys, obj) => {
+                    if (keys.length === 1) {
+                        return obj[keys[0]]
+                    }
+                    if (!obj[keys[0]]) {
+                        return undefined
+                    }
+                    return read(keys.slice(1), obj[keys[0]])
+                }
+
+                return read(key.split('.'), config)
+            },
+            set(key, value) {
+                let obj = config
+
+                const keys = key.split('.')
+                for (let i = 0; i < keys.length - 1; i++) {
+                    if (!obj[keys[i]]) {
+                        obj[keys[i]] = {}
+                    }
+                    obj = obj[keys[i]]
+                }
+                obj[keys[keys.length - 1]] = value
+
+                plugin.config.write_config()
+            },
+            all() {
+                return config
+            }
+        },
+        log(...args) {
+            shell.println(`[${name}]`, ...args)
+        }
+    }
+
+    shell.fs.mkdir(plugin.config_directory)
+    return plugin
+}
+
+globalThis.plugin = plugin
 
 const languages = {
     'zh-CN': {
@@ -93,7 +173,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             sub.append_menu({
                                 name: t('加载中...')
                             })
-                            
+
                             if (!cached_plugin_index) {
                                 cached_plugin_index = await get_async(PLUGIN_SOURCES[current_source] + 'plugins-index.json')
                             }
