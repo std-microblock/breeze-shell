@@ -238,7 +238,7 @@ void render_target::render() {
   }
 
   auto begin = clock.now();
-
+  auto ms_steady = duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
   auto time_checkpoints = [&](const char *name) {
     if constexpr (false) {
       auto end = clock.now();
@@ -301,11 +301,11 @@ void render_target::render() {
     }
     time_checkpoints("Update root");
     if (need_rerender ||
-        (now.time_since_epoch().count() - last_rerender) > 1000) {
+        (ms_steady - last_rerender) > 1000) {
       glClearColor(0, 0, 0, 0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
               GL_STENCIL_BUFFER_BIT);
-      last_rerender = now.time_since_epoch().count();
+      last_rerender = ms_steady;
       {
         std::lock_guard lock(rt_lock);
         root->render(vg);
@@ -313,6 +313,7 @@ void render_target::render() {
       vg.endFrame();
       glFlush();
       glfwSwapBuffers(window);
+      
     } else {
       if (vsync)
         Sleep(5);

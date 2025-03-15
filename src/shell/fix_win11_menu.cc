@@ -129,7 +129,6 @@ void mb_shell::fix_win11_menu::install() {
               auto &next = *std::next(it);
               if (next->getMnemonic() == zasm::x86::Mnemonic::Call &&
                   next->getOperand(0).template holds<zasm::Mem>()) {
-                // seems that we don't have to check call target currently.
                 insn.ptr()
                     .reassembly([](auto a) {
                       a.mov(zasm::x86::ecx, 0x10);

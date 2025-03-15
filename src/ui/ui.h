@@ -37,7 +37,7 @@ struct render_target {
   int view_id = view_cnt++;
   float dpi_scale = 1;
   float scroll_y = 0;
-  float last_rerender = 0;
+  int64_t last_rerender = 0;
   std::expected<bool, std::string> init();
 
   static std::queue<std::function<void()>> main_thread_tasks;
@@ -56,7 +56,7 @@ struct render_target {
   void hide_as_close();
   bool should_loop_stop_hide_as_close = false;
   std::optional<std::function<void(bool)>> on_focus_changed;
-  std::chrono::high_resolution_clock clock{};
+  std::chrono::steady_clock clock{};
   std::recursive_mutex rt_lock{};
   std::mutex loop_thread_tasks_lock{};
   std::queue<std::function<void()>> loop_thread_tasks{};
