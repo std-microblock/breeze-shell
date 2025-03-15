@@ -1782,6 +1782,15 @@ public:
     return Value{weakFromContext(ctx), std::move(v)};
   }
 
+  /// @see JS_Eval
+  Value evalThis(std::string_view buffer, const char *filename = "<eval>",
+             int flags = 0, Value this_obj = JS_UNDEFINED) {
+    assert(buffer.data()[buffer.size()] == '\0' &&
+           "eval buffer is not null-terminated"); // JS_Eval requirement
+    JSValue v = JS_EvalThis(ctx, this_obj.v, buffer.data(), buffer.size(), filename, flags);
+    return Value{weakFromContext(ctx), std::move(v)};
+  }
+
   Value evalFile(const char *filename, int flags = 0) {
     auto buf = detail::readFile(filename);
     if (!buf)
