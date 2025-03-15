@@ -96,6 +96,13 @@ std::wstring GetBacktrace(CONTEXT *contextRecord) {
     wchar_t name[256] = {};
     SymGetSymFromAddr64(GetCurrentProcess(), stackFrame.AddrPC.Offset,
                         &displacement, symbol);
+
+    DWORD dwDisplacement;
+    IMAGEHLP_LINE64 line;
+
+    SymGetLineFromAddr64(GetCurrentProcess(), stackFrame.AddrPC.Offset,
+                         &dwDisplacement, &line);
+
     UnDecorateSymbolNameW(mb_shell::utf8_to_wstring(symbol->Name).c_str(), name,
                           256, UNDNAME_COMPLETE);
 
@@ -103,7 +110,7 @@ std::wstring GetBacktrace(CONTEXT *contextRecord) {
     wchar_t frameInfo[1024];
     swprintf_s(frameInfo, L"%s + %I64X", moduleName, offset);
     info += std::wstring(frameInfo) + std::wstring(L"(") + std::wstring(name) +
-            std::wstring(L")\n");
+            std::wstring(L") at line ") + std::to_wstring(line.LineNumber) + L"\n";
   }
 
   // Cleanup the symbol handler
