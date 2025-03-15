@@ -722,6 +722,8 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
   anchor_x *= ctx.rt.dpi_scale;
   anchor_y *= ctx.rt.dpi_scale;
 
+  ctx.mouse_clicked = false;
+  ctx.mouse_down = false;
   submenu_wid->update(ctx);
   auto direction = mouse_menu_widget_main::calculate_direction(
       submenu_wid.get(), ctx, anchor_x, anchor_y,
