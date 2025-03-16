@@ -193,6 +193,7 @@ mb_shell::perf_counter::perf_counter(std::string name) : name(name) {
 }
 void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
   auto now = std::chrono::high_resolution_clock::now();
+  return;
   if (block_name) {
     std::println(
         "[perf] {}: {}ms / {} {}ms", block_name.value(),
