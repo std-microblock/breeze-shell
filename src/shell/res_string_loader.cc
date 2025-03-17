@@ -12,6 +12,8 @@
 
 #include "blook/blook.h"
 
+#include "logger.h"
+
 #include "Windows.h"
 
 namespace mb_shell {
@@ -190,7 +192,7 @@ void res_string_loader::init_known_strings() {
   for (auto &dll : res_dlls) {
     load_all_res_strings(dll);
   }
-  std::println("[perf] init_known_strings took {}ms",
+  dbgout("[perf] init_known_strings took {}ms",
                std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::high_resolution_clock::now() - now)
                    .count());

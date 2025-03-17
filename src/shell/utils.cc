@@ -12,6 +12,8 @@
 #include "windows.h"
 #include <dwmapi.h>
 
+#include "logger.h"
+
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
   std::wstring_convert<
       std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
@@ -195,7 +197,7 @@ void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
   auto now = std::chrono::high_resolution_clock::now();
   return;
   if (block_name) {
-    std::println(
+    dbgout(
         "[perf] {}: {}ms / {} {}ms", block_name.value(),
         std::chrono::duration_cast<std::chrono::milliseconds>(now - last_end)
             .count(),
@@ -203,7 +205,7 @@ void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
         std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
             .count());
   } else {
-    std::println(
+    dbgout(
         "[perf] {}: {}ms", name,
         std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
             .count());

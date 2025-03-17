@@ -20,6 +20,8 @@
 #include "quickjs.h"
 #include "quickjspp.hpp"
 
+#include "../logger.h"
+
 thread_local bool is_thread_js_main = false;
 
 static unsigned char script_js_bytes[] = {
@@ -67,14 +69,14 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
   std::optional<std::thread> js_thread;
   auto reload_all = [&]() {
-    std::println("Reloading all scripts");
+    dbgout("Reloading all scripts");
 
     *stop_signal = true;
     stop_signal = std::make_shared<int>(false);
 
     if (js_thread)
       js_thread->join();
-    std::println("Creating JS thread");
+    dbgout("Creating JS thread");
     menu_callbacks_js.clear();
 
     js_thread = std::thread([&, this, ss = stop_signal]() {
@@ -180,7 +182,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
             auto res = JS_ExecutePendingJob(rt->rt, &ctx1);
             if (res == -999) {
               has_update = true;
-              std::println("JS loop critical error! Restarting...");
+              dbgout("JS loop critical error! Restarting...");
               return;
             }
             std::lock_guard lock(ptr->js_job_start_mutex);
@@ -209,7 +211,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
           return;
         }
 
-        std::println("File change detected: {}", path);
+        dbgout("File change detected: {}", path);
         has_update = true;
       });
 
