@@ -45,7 +45,7 @@
 #include <Windows.h>
 
 namespace mb_shell {
-
+window_proc_hook entry::main_window_loop_hook{};
 void main() {
   set_thread_locale_utf8();
 
@@ -77,7 +77,6 @@ void main() {
   auto proc = blook::Process::self();
   auto win32u = proc->module("win32u.dll");
   auto user32 = proc->module("user32.dll");
-  
 
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
@@ -107,19 +106,24 @@ void main() {
     }
   }).detach();
 
-  NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x, int64_t y,
-                                       HWND hWnd, int64_t lptpm) {
+  NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x,
+                               int64_t y, HWND hWnd, int64_t lptpm) {
     if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
         config::current->context_menu.ignore_owner_draw) {
-      return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x, y, hWnd,
-                                                      lptpm);
+      return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x, y,
+                                                       hWnd, lptpm);
     }
+    
+    entry::main_window_loop_hook.install(hWnd);
 
     has_active_menu = true;
-    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-    auto menu_render = menu_render::create(x, y, menu);
 
+    perf_counter perf("TrackPopupMenuEx");
+    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
+    perf.end("construct_with_hmenu");
+    auto menu_render = menu_render::create(x, y, menu);
     menu_render.rt->last_time = menu_render.rt->clock.now();
+    perf.end("menu_render::create");
     menu_render.rt->start_loop();
 
     has_active_menu = false;

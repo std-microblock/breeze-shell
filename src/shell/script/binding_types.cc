@@ -7,6 +7,7 @@
 #include <print>
 #include <ranges>
 #include <regex>
+#include <shlobj_core.h>
 #include <thread>
 #include <variant>
 
@@ -960,17 +961,24 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
      bool success = (res == 0) && !FileOp.fAnyOperationsAborted;
      if (success) {
        if (FileOp.hNameMappings) {
-        LPSHNAMEMAPPINGW* ppMapping = reinterpret_cast<LPSHNAMEMAPPINGW*>(&FileOp.hNameMappings);
-        SHNAMEMAPPINGW* pMapping = *ppMapping;
-        
-        // 直接访问第一个映射项
-        final_path = pMapping->pszNewPath;
+        struct file_operation_collision_mapping
+        {
+            int index;
+            SHNAMEMAPPINGW* mapping;
+        };
+    
+        file_operation_collision_mapping* mapping = static_cast<file_operation_collision_mapping*>(FileOp.hNameMappings);
+        SHNAMEMAPPINGW* map = &mapping->mapping[0];
+        final_path = map->pszNewPath;
+    
         SHFreeNameMappings(FileOp.hNameMappings);
        } else {
          std::filesystem::path dest(wdest);
          std::filesystem::path src(wsrc);
          final_path = (dest / src.filename()).wstring();
        }
+
+       SHChangeNotify(SHCNE_CREATE, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(), nullptr);
      }
  
      std::string utf8_path = wstring_to_utf8(final_path);
@@ -996,7 +1004,6 @@ void fs::move_shfile(std::string src_path, std::string dest_path,
   }).detach();
 }
 size_t win32::load_file_icon(std::string path) {
-  // SHGetFileInfo
   SHFILEINFOW sfi = {0};
   DWORD_PTR ret =
       SHGetFileInfoW(utf8_to_wstring(path).c_str(), 0, &sfi,

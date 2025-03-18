@@ -20,6 +20,8 @@
 #include "quickjs.h"
 #include "quickjspp.hpp"
 
+#include "../logger.h"
+
 thread_local bool is_thread_js_main = false;
 
 static unsigned char script_js_bytes[] = {
@@ -48,6 +50,17 @@ void script_context::bind() {
   module.function("println", println);
 
   bindAll(module);
+
+  auto g = js->global();
+  g["console"] = js->newObject();
+  qjs::Value println_fn = 
+  qjs::js_traits<std::function<void(qjs::rest<std::string>)>>::wrap(
+      js->ctx, println);
+  g["console"]["log"] = println_fn;
+  g["console"]["info"] = println_fn;
+  g["console"]["warn"] = println_fn;
+  g["console"]["error"] = println_fn;
+  g["console"]["debug"] = println_fn;
 }
 script_context::script_context() : rt{}, js{} {}
 void script_context::watch_folder(const std::filesystem::path &path,
@@ -56,14 +69,14 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
   std::optional<std::thread> js_thread;
   auto reload_all = [&]() {
-    std::println("Reloading all scripts");
+    dbgout("Reloading all scripts");
 
     *stop_signal = true;
     stop_signal = std::make_shared<int>(false);
 
     if (js_thread)
       js_thread->join();
-    std::println("Creating JS thread");
+    dbgout("Creating JS thread");
     menu_callbacks_js.clear();
 
     js_thread = std::thread([&, this, ss = stop_signal]() {
@@ -111,12 +124,50 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
         return a_pos < b_pos;
       });
+
       for (auto &path : files) {
         try {
           std::ifstream file(path);
           std::string script((std::istreambuf_iterator<char>(file)),
                              std::istreambuf_iterator<char>());
-          js->eval(script, path.generic_string().c_str(), JS_EVAL_TYPE_MODULE);
+
+          js->moduleLoader = [&](std::string_view module_name) {
+            auto module_path =
+                path.parent_path() / (std::string(module_name) + ".js");
+            if (!std::filesystem::exists(module_path)) {
+              return qjs::Context::ModuleData{};
+            }
+            std::ifstream file(module_path);
+            std::string script((std::istreambuf_iterator<char>(file)),
+                               std::istreambuf_iterator<char>());
+            return qjs::Context::ModuleData{script};
+          };
+          auto func = JS_Eval(js->ctx, script.c_str(), script.size(),
+                              path.generic_string().c_str(),
+                              JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+
+          if (JS_IsException(func)) {
+            std::cerr << "Error in file: " << path << std::endl;
+            JS_FreeValue(js->ctx, func);
+            continue;
+          }
+
+          JSModuleDef *m = (JSModuleDef *)JS_VALUE_GET_PTR(func);
+          auto meta_obj = JS_GetImportMeta(js->ctx, m);
+
+          JS_DefinePropertyValueStr(
+              js->ctx, meta_obj, "url",
+              JS_NewString(js->ctx, path.generic_string().c_str()),
+              JS_PROP_C_W_E);
+
+          JS_DefinePropertyValueStr(
+              js->ctx, meta_obj, "name",
+              JS_NewString(js->ctx, path.filename().generic_string().c_str()),
+              JS_PROP_C_W_E);
+
+          JS_FreeValue(js->ctx, meta_obj);
+
+          JS_EvalFunction(js->ctx, func);
         } catch (std::exception &e) {
           std::cerr << "Error in file: " << path << " " << e.what()
                     << std::endl;
@@ -131,7 +182,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
             auto res = JS_ExecutePendingJob(rt->rt, &ctx1);
             if (res == -999) {
               has_update = true;
-              std::println("JS loop critical error! Restarting...");
+              dbgout("JS loop critical error! Restarting...");
               return;
             }
             std::lock_guard lock(ptr->js_job_start_mutex);
@@ -160,7 +211,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
           return;
         }
 
-        std::println("File change detected: {}", path);
+        dbgout("File change detected: {}", path);
         has_update = true;
       });
 

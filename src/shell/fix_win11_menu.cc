@@ -1,5 +1,6 @@
 #include "fix_win11_menu.h"
 
+#include <cstdlib>
 #include <print>
 #include <string>
 #include <thread>
@@ -86,11 +87,11 @@ void mb_shell::fix_win11_menu::install() {
   static auto RegGetValueHook = RegGetValueW->inline_hook();
 
   RegGetValueHook->install(
-      (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD
-      dwFlags,
+      (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
                   LPDWORD pdwType, PVOID pvData, LPDWORD pcbData) {
         // simulate
         // reg.exe add
+        //
         //
         // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
         // /f /ve
@@ -116,25 +117,52 @@ void mb_shell::fix_win11_menu::install() {
       // call GetKeyState/GetAsyncKeyState
       auto disasm = shell32.value()->section(".text")->disassembly();
 
-      for (auto it = disasm.begin(); it != disasm.end(); ++it) {
-        auto &insn = *it;
-        if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
-          if (insn->getOperand(0) == zasm::x86::ecx &&
-              insn->getOperand(1).holds<zasm::Imm>() &&
-              insn->getOperand(1).get<zasm::Imm>().value<int>() == 0x10) {
-            auto &next = *std::next(it);
-            if (next->getMnemonic() == zasm::x86::Mnemonic::Call &&
-                next->getOperand(0).holds<zasm::Mem>()) {
-              // seems that we don't have to check call target currently.
-              insn.ptr()
-                  .reassembly([](auto a) {
-                    a.mov(zasm::x86::ecx, 0x10);
-                    a.mov(zasm::x86::eax, 0xffff);
-                    a.nop();
-                    a.nop();
-                  })
-                  .patch();
+      auto patch_area = [&](auto mem) {
+        for (auto it = mem.begin(); it != mem.end(); ++it) {
+          auto &insn = *it;
+          if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
+            if (insn->getOperand(0) == zasm::x86::ecx &&
+                insn->getOperand(1).template holds<zasm::Imm>() &&
+                insn->getOperand(1)
+                        .template get<zasm::Imm>()
+                        .template value<int>() == 0x10) {
+              auto &next = *std::next(it);
+              if (next->getMnemonic() == zasm::x86::Mnemonic::Call &&
+                  next->getOperand(0).template holds<zasm::Mem>()) {
+                insn.ptr()
+                    .reassembly([](auto a) {
+                      a.mov(zasm::x86::ecx, 0x10);
+                      a.mov(zasm::x86::eax, 0xffff);
+                      a.nop();
+                      a.nop();
+                    })
+                    .patch();
+
+                return true;
+              }
             }
+          }
+        }
+
+        return false;
+      };
+
+      // the function to determine if show win10 menu or win11 menu calls
+      // SetMessageExtraInfo, so we use it as a hint
+      auto extraInfo =
+          GetProcAddress(LoadLibraryA("user32.dll"), "SetMessageExtraInfo");
+      for (auto &ins : disasm) {
+        if (ins->getMnemonic() == zasm::x86::Mnemonic::Call) {
+          auto xrefs = ins.xrefs();
+          if (xrefs.empty())
+            continue;
+          if (auto ptr = xrefs[0].try_read<void *>();
+              ptr.has_value() && ptr.value() == extraInfo) {
+            if (patch_area(ins.ptr()
+                               .find_upwards({0x40, 0x55})
+                               ->range_size(0x150)
+                               .disassembly()))
+              break;
           }
         }
       }

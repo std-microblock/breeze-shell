@@ -56,6 +56,8 @@ template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
     
         obj.index = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "index"));
         
+        obj.parent_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "parent_path"));
+        
         return obj;
     }
 
@@ -63,6 +65,8 @@ template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
         JSValue obj = JS_NewObject(ctx);
     
         JS_SetPropertyStr(ctx, obj, "index", js_traits<int>::wrap(ctx, val.index));
+        
+        JS_SetPropertyStr(ctx, obj, "parent_path", js_traits<std::string>::wrap(ctx, val.parent_path));
         
         return obj;
     }
@@ -78,6 +82,7 @@ template<> struct js_bind<mb_shell::js::folder_view_folder_item> {
                 .fun<&mb_shell::js::folder_view_folder_item::type>("type")
                 .fun<&mb_shell::js::folder_view_folder_item::select>("select")
                 .fun<&mb_shell::js::folder_view_folder_item::index>("index")
+                .fun<&mb_shell::js::folder_view_folder_item::parent_path>("parent_path")
             ;
     }
 

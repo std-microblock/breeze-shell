@@ -33,7 +33,10 @@ struct folder_view_folder_item {
   void *$handler;
   /* IShellView* */
   void *$controller;
+  void *$render_target;
   int index;
+  std::string parent_path;
+  
 
   std::string name();
   std::string modify_date();
@@ -57,6 +60,7 @@ struct folder_view_controller {
   void *$hwnd;
   /* IShellBrowser* */
   void *$controller;
+  void *$render_target;
   // 当前文件夹路径
   // Current folder path
   std::string current_path;

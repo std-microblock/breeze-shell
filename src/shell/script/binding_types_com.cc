@@ -2,8 +2,10 @@
 #include "binding_types.h"
 
 #include "../contextmenu/menu_render.h"
+#include "../entry.h"
 
 #include <algorithm>
+#include <atlcomcli.h>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -117,7 +119,7 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
 
   std::unordered_set<HWND> recorded_hwnds;
 
-  auto browsers = GetIShellBrowsers();
+  static auto browsers = GetIShellBrowsers();
   auto GetIShellBrowser = [&](HWND hwnd) -> CComPtr<IShellBrowser> {
     for (auto &[h, b] : browsers) {
       if (h == hwnd)
@@ -154,7 +156,13 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
   auto res = dfs(dfs, hWnd);
 
   if (!res) {
-    // if the window is shell window, we assume it's the desktop
+    // first, we rescan all shell windows
+    browsers = GetIShellBrowsers();
+    res = dfs(dfs, hWnd);
+    if (res)
+      return res;
+
+    // if still no result and the window is shell window, we assume it's the desktop
     if (auto res = GetDesktopIShellBrowser())
       return res->second;
   }
@@ -166,7 +174,7 @@ namespace mb_shell::js {
 
 js_menu_context js_menu_context::$from_window(void *_hwnd) {
   js_menu_context event_data;
-
+  perf_counter perf("js_menu_context::$from_window");
   HWND hWnd = reinterpret_cast<HWND>(_hwnd);
 
   // Check if the foreground window is an edit control
@@ -190,16 +198,18 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     }
   }
 
+  perf.end("Edit");
+
   if (GetClassNameA(hWnd, className, sizeof(className))) {
     std::string class_name = className;
     if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
         class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
       std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
-      CoInitializeEx(NULL, COINIT_MULTITHREADED);
       // Check if the foreground window is an Explorer window
 
       if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
         IShellView *psv;
+        perf.end("IShellBrowser - GetIShellBrowserRecursive");
         std::printf("shell browser: %p\n", psb);
         if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
           IFolderView *pfv;
@@ -209,6 +219,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
             auto fv = *event_data.folder_view;
             fv->$hwnd = hWnd;
             fv->$controller = psb;
+            fv->$render_target = menu_render::current.value()->rt.get();
 
             int focusIndex;
             pfv->GetFocusedItem(&focusIndex);
@@ -262,8 +273,9 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     }
   }
 
-  if (hWnd) {
+  perf.end("IShellBrowser");
 
+  if (hWnd) {
     // get window position
     RECT rect;
     GetWindowRect(hWnd, &rect);
@@ -293,24 +305,25 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
     // get props
     // EnumProps
-    static std::unordered_map<std::string, size_t> prop_map;
-    prop_map = {};
-    EnumPropsW(hWnd, [](HWND hWnd, auto lpszString, HANDLE hData) -> BOOL {
-      if (is_memory_readable(lpszString))
-        prop_map[mb_shell::wstring_to_utf8(lpszString)] = (size_t)hData;
-      else
-        prop_map[std::to_string((size_t)lpszString)] = (size_t)hData;
-      return TRUE;
-    });
+    // static std::unordered_map<std::string, size_t> prop_map;
+    // prop_map = {};
+    // EnumPropsW(hWnd, [](HWND hWnd, auto lpszString, HANDLE hData) -> BOOL {
+    //   if (is_memory_readable(lpszString))
+    //     prop_map[mb_shell::wstring_to_utf8(lpszString)] = (size_t)hData;
+    //   else
+    //     prop_map[std::to_string((size_t)lpszString)] = (size_t)hData;
+    //   return TRUE;
+    // });
 
-    std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
-                        return window_prop_data{pair.first, pair.second};
-                      }),
-                      std::back_inserter(window_info.props));
+    // std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
+    //                     return window_prop_data{pair.first, pair.second};
+    //                   }),
+    //                   std::back_inserter(window_info.props));
 
     event_data.window_info = window_info;
   }
 
+  perf.end("Window");
   // event_data.window_titlebar =
   // std::make_shared<window_titlebar_controller>();
   // (*event_data.window_titlebar)->$hwnd = hWnd;
@@ -339,17 +352,7 @@ void folder_view_controller::open_folder(std::string folder_path) {
   change_folder(folder_path);
 }
 
-void folder_view_controller::refresh() {
-  IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
-    IShellView *view;
-    if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
-      view->Refresh();
-      view->Release();
-    }
-  });
-}
+void folder_view_controller::refresh() { change_folder(current_path); }
 
 std::vector<std::shared_ptr<folder_view_folder_item>>
 folder_view_controller::items() {
@@ -370,6 +373,8 @@ folder_view_controller::items() {
             item->$handler = pidl;
             item->$controller = view;
             item->index = i;
+            item->parent_path = current_path;
+            item->$render_target = $render_target;
             items.push_back(item);
           }
         }
@@ -386,7 +391,7 @@ folder_view_controller::items() {
 void folder_view_controller::select(int index, int state) {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
 
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
+  entry::main_window_loop_hook.add_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       IFolderView *folder_view;
@@ -400,7 +405,7 @@ void folder_view_controller::select(int index, int state) {
 
 void folder_view_controller::select_none() {
   IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-  menu_render::current.value()->rt->post_loop_thread_task([=]() {
+  entry::main_window_loop_hook.add_task([=]() {
     IShellView *view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
       view->SelectItem(nullptr, SVSI_DESELECTOTHERS);
@@ -451,16 +456,17 @@ std::string folder_view_folder_item::modify_date() {
 
 std::string folder_view_folder_item::path() {
   PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
-  IShellItem *item;
+
+  CComPtr<IShellItem> item;
   if (SUCCEEDED(SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
     LPWSTR path;
-    if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &path))) {
-      std::wstring wpath(path);
+    if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &path))) {
+      std::wstring name(path);
       CoTaskMemFree(path);
-      item->Release();
-      return mb_shell::wstring_to_utf8(wpath);
+      std::filesystem::path p(parent_path);
+      p /= name;
+      return p.string();
     }
-    item->Release();
   }
   return "";
 }
@@ -505,10 +511,9 @@ std::string folder_view_folder_item::type() {
 }
 
 void folder_view_folder_item::select(int state) {
-  IShellView *sv = static_cast<IShellView *>($controller);
-
-  menu_render::current.value()->rt->post_loop_thread_task(
-      [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
+  CComPtr<IShellView> sv = static_cast<IShellView *>($controller);
+  entry::main_window_loop_hook.add_task(
+          [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
 }
 
 constexpr UINT ID_EDIT_COPY = 0x0001;

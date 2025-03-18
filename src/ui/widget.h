@@ -25,6 +25,8 @@ struct update_context {
   screen_info screen;
   float scroll_y;
 
+  bool& need_rerender;
+
   // hit test, lifetime is not guaranteed
   std::shared_ptr<std::vector<widget *>> hovered_widgets =
       std::make_shared<std::vector<widget *>>();

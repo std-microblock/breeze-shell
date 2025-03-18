@@ -7,6 +7,8 @@
 #include <mutex>
 #include <thread>
 
+#include "../logger.h"
+
 namespace mb_shell {
 std::optional<menu_render *> menu_render::current{};
 menu_render menu_render::create(int x, int y, menu menu) {
@@ -17,9 +19,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
   }
 
   constexpr int l_pad = 100, t_pad = -1;
-
-  auto current_js_context = std::make_shared<js::js_menu_context>(
-      js::js_menu_context::$from_window(menu.parent_window));
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
@@ -47,6 +46,8 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
+  auto current_js_context = std::make_shared<js::js_menu_context>(
+      js::js_menu_context::$from_window(menu.parent_window));
 
   rt->parent = menu.parent_window;
 
@@ -58,7 +59,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   // set the position of the window to fullscreen in this monitor + padding
 
-  std::println("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
+  dbgout("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
                monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
                monitor_info.rcMonitor.bottom);
 
@@ -81,12 +82,12 @@ menu_render menu_render::create(int x, int y, menu menu) {
       .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
       .context = current_js_context};
 
-  std::println("[perf] JS plugins start");
+  dbgout("[perf] JS plugins start");
   auto before_js = rt->clock.now();
   for (auto &listener : menu_callbacks_js) {
     listener->operator()(menu_info);
   }
-  std::println("[perf] JS plugins costed {}ms",
+  dbgout("[perf] JS plugins costed {}ms",
                std::chrono::duration_cast<std::chrono::milliseconds>(
                    rt->clock.now() - before_js)
                    .count());
@@ -96,7 +97,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
     }
   };
 
-  std::println("Current menu: {}", menu_render::current.has_value());
+  dbgout("Current menu: {}", menu_render::current.has_value());
   return render;
 }
 

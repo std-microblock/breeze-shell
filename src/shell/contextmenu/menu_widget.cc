@@ -14,6 +14,7 @@
 #include <ranges>
 #include <vector>
 
+#include "../logger.h"
 /*
 | padding | icon_padding | icon | icon_padding | text_padding | text |
 text_padding | right_icon_padding | right_icon | right_icon_padding |
@@ -567,7 +568,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
   auto [x, y] =
       calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
-  std::println("Calibrated position: {} {} in screen {} {}", x, y,
+  dbgout("Calibrated position: {} {} in screen {} {}", x, y,
                ctx.screen.width, ctx.screen.height);
 
   if (animated) {
@@ -587,7 +588,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
   menu_wid->reset_animation(direction == popup_direction::top_left ||
                             direction == popup_direction::top_right);
 
-  std::println("Calibrated direction: {}",
+  dbgout("Calibrated direction: {}",
                direction == popup_direction::top_left       ? "top_left"
                : direction == popup_direction::top_right    ? "top_right"
                : direction == popup_direction::bottom_left  ? "bottom_left"
@@ -621,7 +622,7 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
     item_widgets.push_back(mi);
   }
 
-  std::println("Menu widget init from data: {}", menu_data.items.size());
+  dbgout("Menu widget init from data: {}", menu_data.items.size());
 
   update_icon_width();
   this->menu_data = menu_data;
@@ -722,6 +723,8 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
   anchor_x *= ctx.rt.dpi_scale;
   anchor_y *= ctx.rt.dpi_scale;
 
+  ctx.mouse_clicked = false;
+  ctx.mouse_down = false;
   submenu_wid->update(ctx);
   auto direction = mouse_menu_widget_main::calculate_direction(
       submenu_wid.get(), ctx, anchor_x, anchor_y,

@@ -1,8 +1,8 @@
 #include "utils.h"
-#include <dwmapi.h>
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 #include <codecvt>
 #include <iostream>
+#include <print>
 #include <sstream>
 #include <vector>
 
@@ -10,6 +10,10 @@
 #include <locale>
 
 #include "windows.h"
+#include <dwmapi.h>
+
+#include "logger.h"
+
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
   std::wstring_convert<
       std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
@@ -153,4 +157,58 @@ void mb_shell::set_thread_locale_utf8() {
 
   SetThreadLocale(
       MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT));
+}
+mb_shell::task_queue::task_queue() : stop(false) {
+  worker = std::thread(&task_queue::run, this);
+}
+mb_shell::task_queue::~task_queue() {
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    stop = true;
+  }
+  condition.notify_all();
+  if (worker.joinable()) {
+    worker.join();
+  }
+}
+void mb_shell::task_queue::run() {
+  while (true) {
+    std::function<void()> task;
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      condition.wait(lock, [this]() { return stop || !tasks.empty(); });
+
+      if (stop && tasks.empty()) {
+        return;
+      }
+
+      task = std::move(tasks.front());
+      tasks.pop();
+    }
+
+    task();
+  }
+}
+mb_shell::perf_counter::perf_counter(std::string name) : name(name) {
+  start = std::chrono::high_resolution_clock::now();
+  last_end = start;
+}
+void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
+  auto now = std::chrono::high_resolution_clock::now();
+  return;
+  if (block_name) {
+    dbgout(
+        "[perf] {}: {}ms / {} {}ms", block_name.value(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_end)
+            .count(),
+        name,
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
+            .count());
+  } else {
+    dbgout(
+        "[perf] {}: {}ms", name,
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
+            .count());
+  }
+  last_end = now;
 }
