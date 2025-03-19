@@ -72,7 +72,7 @@ struct menu_widget : public ui::widget_flex {
 
   float max_height = 99999;
   float actual_height = 0;
-  ui::sp_anim_float scroll_top = anim_float(0, 200);
+  ui::sp_anim_float scroll_top = anim_float(0, 200, ui::easing_type::ease_in_out);
   std::shared_ptr<ui::rect_widget> bg;
 
   std::shared_ptr<ui::rect_widget> bg_submenu;
