@@ -48,7 +48,7 @@ void acrylic_background_widget::update(update_context &ctx) {
                           nullptr, NULL, GetModuleHandleW(nullptr), NULL);
 
       if (!hwnd) {
-        std::println("Failed to create window: {}", GetLastError());
+        std::printf("Failed to create window %d\n", GetLastError());
       }
 
       SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
