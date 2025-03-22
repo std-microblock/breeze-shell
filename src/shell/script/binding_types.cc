@@ -642,9 +642,24 @@ size_t win32::load_library(std::string path) {
   return reinterpret_cast<size_t>(LoadLibraryW(utf8_to_wstring(path).c_str()));
 }
 std::string breeze::user_language() {
-  wchar_t lang[10];
-  GetUserDefaultLocaleName(lang, 10);
-  return wstring_to_utf8(lang);
+  wchar_t buffer[256];
+
+  /*
+  BOOL GetUserPreferredUILanguages(
+  [in]            DWORD   dwFlags,
+  [out]           PULONG  pulNumLanguages,
+  [out, optional] PZZWSTR pwszLanguagesBuffer,
+  [in, out]       PULONG  pcchLanguagesBuffer
+);
+*/
+
+  ULONG num_langs = 256;
+  if (GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &num_langs, buffer,
+                                  &num_langs)) {
+    return wstring_to_utf8(buffer);
+  }
+
+  return "en-US";
 }
 std::optional<std::string> win32::env(std::string name) {
   return mb_shell::env(name);
