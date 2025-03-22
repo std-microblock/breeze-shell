@@ -1,10 +1,11 @@
 #pragma once
 #include "nanovg.h"
+#include <array>
 #include <cmath>
 #include <functional>
 #include <optional>
 #include <print>
-#include <array>
+
 
 namespace ui {
 struct widget;
@@ -24,7 +25,7 @@ struct animated_float {
 
   animated_float(float destination, float duration = 200.f,
                  easing_type easing = easing_type::mutation)
-      : duration(duration), destination(destination), easing(easing) {}
+      : easing(easing), duration(duration), destination(destination) {}
 
   std::optional<std::function<void(float)>> before_animate = {};
   std::optional<std::function<void(float)>> after_animate = {};
@@ -45,14 +46,16 @@ struct animated_float {
   float dest() const;
   bool updated() const;
 
+  easing_type easing = easing_type::mutation;
+  float progress = 0.f;
+
+private:
   float duration = 200.f;
   float value = 0.f;
   float from = 0.f;
   float destination = value;
-  float progress = 0.f;
   float delay = 0.f, delay_timer = 0.f;
   bool _updated = true;
-  easing_type easing = easing_type::mutation;
 };
 
 using sp_anim_float = std::shared_ptr<animated_float>;
@@ -92,7 +95,6 @@ struct animated_color {
   inline void reset_to(const std::array<float, 4> &color) {
     reset_to(color[0], color[1], color[2], color[3]);
   }
-  
 
   inline NVGcolor nvg() const {
     return nvgRGBAf(r->var(), g->var(), b->var(), a->var());

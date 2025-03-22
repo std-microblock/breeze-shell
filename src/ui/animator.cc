@@ -1,8 +1,9 @@
 #include "animator.h"
 #include "widget.h"
+#include <array>
+#include <cstdio>
 #include <numbers>
 #include <print>
-#include <array>
 
 void ui::animated_float::update(float delta_t) {
   if (easing == easing_type::mutation) {
@@ -59,32 +60,37 @@ void ui::animated_float::update(float delta_t) {
 
   _updated = true;
 }
-void ui::animated_float::animate_to(float destination) {
-  if (this->destination == destination)
+void ui::animated_float::animate_to(float dest) {
+  if (this->destination == dest)
     return;
   this->from = value;
-  this->destination = destination;
+  this->destination = dest;
   progress = 0.f;
   delay_timer = 0.f;
 
   if (before_animate) {
-    before_animate.value()(destination);
+    before_animate.value()(dest);
   }
 }
-float ui::animated_float::var() const { 
-  return value;
-}
+float ui::animated_float::var() const { return value; }
 float ui::animated_float::prog() const { return progress; }
-void ui::animated_float::reset_to(float destination) {
-  if (value != destination)
+float ui::animated_float::dest() const {
+  static float* damn_dest = nullptr;
+  if (destination < 0 || damn_dest == &destination) {
+    std::printf("damn dest: %f %p\n", destination, &destination);
+    damn_dest = const_cast<float*>(&destination);
+  }
+  return destination;
+ }
+void ui::animated_float::reset_to(float dest) {
+  if (value != dest)
     _updated = true;
-  value = destination;
-  this->from = destination;
-  this->destination = destination;
+  value = dest;
+  this->from = dest;
+  this->destination = dest;
   progress = 1.f;
   delay_timer = 0.f;
 }
-float ui::animated_float::dest() const { return destination; }
 void ui::animated_float::set_easing(easing_type easing) {
   this->easing = easing;
 }
@@ -103,4 +109,3 @@ ui::animated_color::animated_color(ui::widget *thiz, float r, float g, float b,
                                    float a)
     : r(thiz->anim_float(r)), g(thiz->anim_float(g)), b(thiz->anim_float(b)),
       a(thiz->anim_float(a)) {}
-      

@@ -33,6 +33,7 @@ struct update_context {
   void set_hit_hovered(widget *w);
 
   bool hovered(widget *w, bool hittest = true) const;
+  void print_hover_info(widget *w) const;
   bool mouse_clicked_on(widget *w, bool hittest = true) const;
   bool mouse_down_on(widget *w, bool hittest = true) const;
 
@@ -56,6 +57,8 @@ struct update_context {
     copy.offset_y = y;
     return copy;
   }
+
+  update_context within(widget *w) const;
 };
 
 struct dying_time {
@@ -122,6 +125,8 @@ struct widget : std::enable_shared_from_this<widget> {
 
   float _debug_offset_cache[2];
   bool enable_child_clipping = false;
+
+  float last_offset_x = 0, last_offset_y = 0;
 
   // Time until the widget is removed from the tree
   // in milliseconds

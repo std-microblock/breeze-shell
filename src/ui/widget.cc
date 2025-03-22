@@ -69,7 +69,7 @@ void ui::widget::update(update_context &ctx) {
   for (auto anim : anim_floats) {
     anim->update(ctx.delta_t);
 
-    if (anim->_updated) {
+    if (anim->updated()) {
       ctx.need_rerender = true;
     }
   }
@@ -87,14 +87,26 @@ void ui::widget::update(update_context &ctx) {
     }
   _debug_offset_cache[0] = ctx.offset_x;
   _debug_offset_cache[1] = ctx.offset_y;
+
+  last_offset_x = ctx.offset_x;
+  last_offset_y = ctx.offset_y;
 }
 void ui::widget::add_child(std::shared_ptr<widget> child) {
   children.push_back(std::move(child));
 }
 
 bool ui::update_context::hovered(widget *w, bool hittest) const {
-  if (hittest && (!hovered_widgets->empty())) {
-    return false;
+  if (hittest) {
+    if (!hovered_widgets->empty()) {
+      // iterate through parent chain
+      auto p = hovered_widgets->back();
+      while (p) {
+        if (p == w)
+          return w->check_hit(*this);
+        p = p->parent;
+      }
+      return false;
+    }
   }
 
   return w->check_hit(*this);
@@ -240,4 +252,20 @@ void ui::padding_widget::render(nanovg_context ctx) {
   ctx.transaction();
   ctx.translate(**padding_left, **padding_top);
   widget::render(ctx);
+}
+ui::update_context ui::update_context::within(widget *w) const {
+  auto copy = *this;
+  copy.offset_x = w->last_offset_x;
+  copy.offset_y = w->last_offset_y;
+  return copy;
+}
+void ui::update_context::print_hover_info(widget *w) const {
+  std::printf("widget(%p)\n\t hovered: %d x: %f y: %f width: %f height: %f \n\t"
+              "mouse_x: %f mouse_y: %f (x: %d %d y: %d %d)\n",
+              w, hovered(w), w->x->dest(), w->y->dest(), w->width->dest(),
+              w->height->dest(), mouse_x, mouse_y,
+              mouse_x >= (w->x->dest() + offset_x),
+              mouse_x <= (w->x->dest() + w->width->dest() + offset_x),
+              mouse_y >= (w->y->dest() + offset_y),
+              mouse_y <= (w->y->dest() + w->height->dest() + offset_y));
 }

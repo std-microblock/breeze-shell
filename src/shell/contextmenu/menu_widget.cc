@@ -131,25 +131,19 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
       } catch (std::exception &e) {
         std::cerr << "Error in action: " << e.what() << std::endl;
       }
-    } else if (item.submenu) {
-      if (submenu_wid == nullptr) {
-        show_submenu_timer = 500.f;
-      }
     }
   }
 
   if (item.submenu) {
-    if (ctx.hovered(this) || (submenu_wid && ctx.with_reset_offset().hovered(
-                                                 submenu_wid.get(), false))) {
-      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 500.f);
-    } else {
+    if (ctx.hovered(this)) {
+      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 100.f);
+    } else if (ctx.within(parent)
+                   .hovered(parent)) {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
     }
 
-    if (show_submenu_timer >= 250.f) {
-      if (submenu_wid == nullptr) {
-        show_submenu(ctx);
-      }
+    if (show_submenu_timer >= 100) {
+      show_submenu(ctx);
     } else {
       hide_submenu();
     }
@@ -296,14 +290,11 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
              direction == popup_direction::top_right) &&
             config::current->context_menu.reverse_if_open_to_up;
 
-  auto rst = ctx.with_reset_offset();
-  update_children(rst, rendering_submenus);
+  auto forkctx_1 = ctx.with_offset(*x, *y);
+  update_children(forkctx_1, rendering_submenus);
 
   if (bg_submenu) {
-    auto c = ctx.with_reset_offset();
-    c.mouse_clicked_on_hit(bg_submenu.get());
-    c.hovered_hit(bg_submenu.get());
-    bg_submenu->update(c);
+    bg_submenu->update(forkctx_1);
   }
 
   if (ctx.hovered(this)) {
@@ -311,7 +302,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                                       height->dest() - actual_height, 0.f));
   }
 
-  super::update(ctx);
+  widget::update(ctx);
   auto forkctx = ctx.with_offset(*x, *y + *scroll_top);
   update_children(forkctx, item_widgets);
   reposition_children_flex(forkctx, item_widgets);
@@ -319,16 +310,14 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   height->reset_to(std::min(max_height, height->dest()));
 
   if (bg) {
-    ctx.mouse_clicked_on_hit(bg.get());
-    ctx.hovered_hit(bg.get());
+    bg->update(ctx);
   }
+
+  ctx.hovered_hit(this);
 }
 
 bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
-  auto hit =
-      ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx)) ||
-      (current_submenu && current_submenu->check_hit(ctx.with_reset_offset()));
-
+  auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx));
   return hit;
 }
 
@@ -349,20 +338,20 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     render_children(ctx.with_offset(*x, *y + *scroll_top), item_widgets);
   });
 
+  auto ctx2 = ctx.with_offset(*x, *y);
+
   if (bg_submenu) {
-    ctx.transaction([&]() {
-      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
-      ctx.resetScissor();
+    ctx2.transaction([&]() {
+      ctx2.globalCompositeOperation(NVG_DESTINATION_IN);
+      ctx2.resetScissor();
       auto cl = nvgRGBAf(0, 0, 0, 1 - *bg_submenu->opacity / 255.f);
-      ctx.fillColor(cl);
-      ctx.with_reset_offset().fillRoundedRect(
-          *bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
-          *bg_submenu->height, *bg_submenu->radius);
+      ctx2.fillColor(cl);
+      ctx2.fillRoundedRect(*bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
+                           *bg_submenu->height, *bg_submenu->radius);
     });
-    bg_submenu->render(ctx.with_reset_offset());
+    bg_submenu->render(ctx2);
   }
-  auto rst = ctx.with_reset_offset();
-  render_children(rst, rendering_submenus);
+  render_children(ctx2, rendering_submenus);
 }
 void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
@@ -406,7 +395,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   }
   menu_wid->update(ctx);
 
-  if (!ctx.hovered(menu_wid.get(), false)) {
+  if (ctx.hovered_widgets->empty()) {
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
     if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
         GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
@@ -598,9 +587,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
 
 bool mb_shell::menu_item_normal_widget::check_hit(
     const ui::update_context &ctx) {
-  return (ui::widget::check_hit(ctx) &&
-          (ctx.mouse_x > ctx.offset_x + *x + margin &&
-           ctx.mouse_x < ctx.offset_x + *x + *width - margin)) ||
+  return (ui::widget::check_hit(ctx)) ||
          (submenu_wid && submenu_wid->check_hit(ctx));
 }
 
@@ -674,6 +661,13 @@ void mb_shell::menu_widget::close() {
     if (parent_menu->current_submenu.get() == this) {
       parent_menu->current_submenu = nullptr;
     }
+
+    for (auto &item : item_widgets) {
+      auto mi = item->downcast<menu_item_normal_widget>();
+      if (mi) {
+        mi->hide_submenu();
+      }
+    }
   }
 }
 mb_shell::menu_item_widget::menu_item_widget() {}
@@ -717,6 +711,10 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
   submenu_wid = std::make_shared<menu_widget>();
   item.submenu.value()(submenu_wid);
 
+  // We calculate the position of the submenu in
+  // the screen space, then convert it to the
+  // window space.
+
   auto anchor_x = *width + *x + ctx.offset_x;
   auto anchor_y = **y + ctx.offset_y;
 
@@ -735,8 +733,16 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
     anchor_x -= *width * ctx.rt.dpi_scale;
   }
 
+  if (direction == popup_direction::top_left ||
+      direction == popup_direction::top_right) {
+    anchor_y += *height * ctx.rt.dpi_scale;
+  }
+
   auto [x, y] = mouse_menu_widget_main::calculate_position(
       submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
+
+  x -= ctx.offset_x * ctx.rt.dpi_scale;
+  y -= ctx.offset_y * ctx.rt.dpi_scale;
 
   submenu_wid->direction = direction;
   submenu_wid->x->reset_to(x / ctx.rt.dpi_scale);
