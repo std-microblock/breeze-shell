@@ -66,13 +66,13 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
              round(*y + *height / 2), item.name->c_str(), nullptr);
 
   if (item.submenu) {
-    static auto icon_unfold = std::format(
-        // point to right
-        R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
-        c ? "white" : "black");
 
     if (!icon_unfold_img) {
-      static auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
+      auto icon_unfold = std::format(
+          // point to right
+          R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
+          c ? "white" : "black");
+      auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
 
       this->icon_unfold_img =
           ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
@@ -568,8 +568,8 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
   auto [x, y] =
       calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
-  dbgout("Calibrated position: {} {} in screen {} {}", x, y,
-               ctx.screen.width, ctx.screen.height);
+  dbgout("Calibrated position: {} {} in screen {} {}", x, y, ctx.screen.width,
+         ctx.screen.height);
 
   if (animated) {
     this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
@@ -589,11 +589,11 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
                             direction == popup_direction::top_right);
 
   dbgout("Calibrated direction: {}",
-               direction == popup_direction::top_left       ? "top_left"
-               : direction == popup_direction::top_right    ? "top_right"
-               : direction == popup_direction::bottom_left  ? "bottom_left"
-               : direction == popup_direction::bottom_right ? "bottom_right"
-                                                            : "unknown");
+         direction == popup_direction::top_left       ? "top_left"
+         : direction == popup_direction::top_right    ? "top_right"
+         : direction == popup_direction::bottom_left  ? "bottom_left"
+         : direction == popup_direction::bottom_right ? "bottom_right"
+                                                      : "unknown");
 }
 
 bool mb_shell::menu_item_normal_widget::check_hit(
