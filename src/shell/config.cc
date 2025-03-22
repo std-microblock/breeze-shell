@@ -5,6 +5,7 @@
 #include <mutex>
 #include <thread>
 
+#include "logger.h"
 #include "rfl.hpp"
 #include "rfl/DefaultIfMissing.hpp"
 #include "rfl/json.hpp"
@@ -76,7 +77,7 @@ void config::read_config() {
 #else
 #pragma message                                                                \
     "We don't support loading config file on MSVC because of a bug in MSVC."
-  std::println("We don't support loading config file when compiled with MSVC "
+  dbgout("We don't support loading config file when compiled with MSVC "
                "because of a bug in MSVC.");
   config::current = std::make_unique<config>();
   config::current->debug_console = true;
@@ -106,7 +107,7 @@ std::filesystem::path config::data_directory() {
 }
 void config::run_config_loader() {
   auto config_path = config::data_directory() / "config.json";
-  std::println("config file: {}", config_path.string());
+  dbgout("config file: {}", config_path.string());
   config::read_config();
   std::thread([config_path]() {
     auto last_mod = std::filesystem::last_write_time(config_path);

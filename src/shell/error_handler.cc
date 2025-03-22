@@ -49,8 +49,16 @@ std::wstring GetBacktrace(CONTEXT *contextRecord) {
   wchar_t symbol_mem[sizeof(IMAGEHLP_SYMBOL64) + 256];
   auto symbol = (IMAGEHLP_SYMBOL64 *)symbol_mem;
 
+  std::string current_module_path = std::string(MAX_PATH, '\0');
+  GetModuleFileNameA(nullptr, current_module_path.data(),
+                     current_module_path.size()); 
+
+  std::filesystem::path current_module_path_fs = current_module_path;
+  auto current_module_folder = current_module_path_fs.parent_path();
+
   // Initialize the symbol handler
-  SymInitialize(GetCurrentProcess(), nullptr, TRUE);
+  SymInitializeW(GetCurrentProcess(), 
+                current_module_folder.c_str(), TRUE);
 
   // Initialize the stack frame
   STACKFRAME64 stackFrame = {0};

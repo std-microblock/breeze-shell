@@ -232,7 +232,7 @@ void render_target::render() {
     time_ctr += delta_t;
     if (time_ctr > 1000) {
       time_ctr = 0;
-      std::println("FPS: {}", counter);
+      std::printf("FPS: %f\n", counter);
       counter = 0;
     }
   }
@@ -243,7 +243,7 @@ void render_target::render() {
     if constexpr (false) {
       auto end = clock.now();
       auto delta = std::chrono::duration<float>(end - begin).count();
-      std::println("{}: {}ms", name, delta * 1000);
+      std::printf("%s: %fms\n", name, delta);
       begin = end;
     }
   };
