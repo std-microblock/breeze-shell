@@ -76,7 +76,7 @@ const plugin = (import_meta, default_config = {}) => {
             read_config() {
                 if (shell.fs.exists(plugin.config_directory + CONFIG_FILE)) {
                     try {
-                        config = JSON.parse(shell.fs.read(config_dir + CONFIG_FILE))
+                        config = JSON.parse(shell.fs.read(plugin.config_directory + CONFIG_FILE))
                     } catch (e) {
                         shell.println(`[${name}] 配置文件解析失败: ${e}`)
                     }
