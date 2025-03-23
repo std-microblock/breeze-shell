@@ -1,20 +1,20 @@
 package("blook")
-    add_deps("cmake")
-    add_syslinks("advapi32")
-    set_sourcedir(path.join(os.scriptdir(), "blook"))
-    on_install(function (package)
-        local fcdir = package:cachedir() .. "/fetchcontent"
-        import("package.tools.cmake").install(package, {
-                "-DCMAKE_INSTALL_PREFIX=" .. package:installdir(),
-                "-DCMAKE_PREFIX_PATH=" .. package:installdir(),
-                "-DFETCHCONTENT_QUIET=OFF",
-                "-DFETCHCONTENT_BASE_DIR=" .. fcdir,
-        })
-        
-        os.cp("include/blook/**", package:installdir("include/blook/"))
-        os.cp("external/zasm/zasm/include/**", package:installdir("include/zasm/"))
-        os.cp(fcdir .. "/zydis-src/dependencies/zycore/include/**", package:installdir("include/zycore/"))
-        os.cp(package:buildir() .. "/blook.lib", package:installdir("lib"))
-        os.cp(package:buildir() .. "/external/zasm/zasm.lib", package:installdir("lib"))
+    set_description("A modern C++ library for hacking.")
+    set_license("GPL-3.0")
+
+    add_urls("https://github.com/std-microblock/blook.git")
+
+    add_versions("2025.03.22", "b095c0be3817e1912e2eaa8af854d59fcdac6d14")
+
+    add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
+
+    if is_plat("windows") then
+        add_syslinks("advapi32")
+    end
+
+    add_deps("zasm edd30ff31d5a1d5f68002a61dca0ebf6e3c10ed0")
+
+    on_install("windows", function (package)
+        import("package.tools.xmake").install(package, {}, {target = "blook"})
+        os.cp("include", package:installdir())
     end)
-package_end()
