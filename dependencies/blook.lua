@@ -4,7 +4,7 @@ package("blook")
 
     add_urls("https://github.com/std-microblock/blook.git")
 
-    add_versions("2025.03.22", "b095c0be3817e1912e2eaa8af854d59fcdac6d14")
+    add_versions("2025.03.23", "aab6595fb505b4d11235e7fbceb4d572e95217d6")
 
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
 
@@ -16,5 +16,4 @@ package("blook")
 
     on_install("windows", function (package)
         import("package.tools.xmake").install(package, {}, {target = "blook"})
-        os.cp("include", package:installdir())
     end)
