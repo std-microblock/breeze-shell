@@ -11,29 +11,28 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    
+
     - uses: xmake-io/github-action-setup-xmake@v1
       with:
         xmake-version: latest
         actions-cache-folder: '.xmake-cache'
         actions-cache-key: 'ci'
-    - name: Install LLVM and Clang
-      uses: std-microblock/install-llvm-action@master
-      with:
-        version: "19.1.7"
+        package-cache: true
+        package-cache-key: windows-2025
+        # build-cache: true
+        # build-cache-key: ${{ matrix.os }}-${{ matrix.build_type }}
 
     - name: build-releasedbg
       run: |
         xmake f --toolchain=clang-cl -m releasedbg -y --verbose
-        xmake b -y --verbose inject
-        xmake b -y --verbose shell
-        
+        xmake --verbose
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:
