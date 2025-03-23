@@ -28,9 +28,12 @@ jobs:
         # build-cache: true
         # build-cache-key: ${{ matrix.os }}-${{ matrix.build_type }}
 
+    - name: Xmake configure
+      run: |
+        xmake config --yes --toolchain=clang-cl --mode=releasedbg
+
     - name: build-releasedbg
       run: |
-        xmake f --toolchain=clang-cl -m releasedbg -y --verbose
         xmake --verbose
 
     - name: Upload Artifacts
