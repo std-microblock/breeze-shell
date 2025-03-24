@@ -34,8 +34,8 @@ jobs:
 
     - name: build-releasedbg
       run: |
-        xmake b inject --yes --verbose
-        xmake b shell --yes --verbose
+        xmake b --yes --verbose inject
+        xmake b --yes --verbose shell
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4.6.0
