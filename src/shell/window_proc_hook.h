@@ -9,6 +9,7 @@ namespace mb_shell {
     struct window_proc_hook {
         void* hwnd;
         void* original_proc;
+        void* hooked_proc = nullptr;
         bool installed = false;
 
         std::vector<std::function<void(void*, void*, size_t, size_t, size_t)>> hooks;
