@@ -21,12 +21,18 @@ struct menu {
   static menu construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true);
 };
 
+struct owner_draw_menu_info {
+  HBITMAP bitmap;
+  int width, height;
+};
+
 struct menu_item {
   enum class type {
     button,
     spacer,
   } type = type::button;
 
+  std::optional<owner_draw_menu_info> owner_draw{};
   std::optional<std::string> name;
   std::optional<std::function<void()>> action;
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;

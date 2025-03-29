@@ -11,7 +11,6 @@
 #include "../config.h"
 #include "../res_string_loader.h"
 
-
 #include "../logger.h"
 
 #include <consoleapi.h>
@@ -26,6 +25,62 @@
 #include <winuser.h>
 
 namespace mb_shell {
+owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
+                                            HWND hwnd) {
+  owner_draw_menu_info result = {{}, 0, 0};
+  MEASUREITEMSTRUCT measureItem = {0};
+  measureItem.CtlType = ODT_MENU;
+  measureItem.CtlID = 0;
+  measureItem.itemID = menuItemInfo->wID;
+  measureItem.itemData = reinterpret_cast<ULONG_PTR>(menuItemInfo->dwItemData);
+
+  SendMessageW(hwnd, WM_MEASUREITEM, 0,
+                reinterpret_cast<LPARAM>(&measureItem));
+
+  result.width = measureItem.itemWidth;
+  result.height = measureItem.itemHeight;
+
+  if (result.width == 0 || result.height == 0) {
+    return result;
+  }
+
+  HDC hdc = GetDC(hwnd);
+  if (!hdc)
+    return result;
+
+  HDC memDC = CreateCompatibleDC(hdc);
+  if (!memDC) {
+    ReleaseDC(hwnd, hdc);
+    return result;
+  }
+
+  RECT rcItem = {0, 0, static_cast<LONG>(result.width),
+                 static_cast<LONG>(result.height)};
+  FillRect(memDC, &rcItem, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+  DRAWITEMSTRUCT drawItem = {0};
+  drawItem.CtlType = ODT_MENU;
+  drawItem.CtlID = 0;
+  drawItem.itemID = menuItemInfo->wID;
+  drawItem.itemAction = ODA_DRAWENTIRE;
+  drawItem.itemState = 0;
+  drawItem.hwndItem = (HWND)menuItemInfo->hSubMenu;
+  drawItem.hDC = memDC;
+  drawItem.rcItem = rcItem;
+  drawItem.itemData = reinterpret_cast<ULONG_PTR>(menuItemInfo->dwItemData);
+
+  SendMessageW(hwnd, WM_DRAWITEM, 0,
+                reinterpret_cast<LPARAM>(&drawItem)); // 发送绘制消息
+
+  result.bitmap = CreateCompatibleBitmap(hdc, result.width, result.height);
+  if (!result.bitmap) {
+    DeleteDC(memDC);
+    ReleaseDC(hwnd, hdc);
+    return result;
+  }
+  return result;
+}
+
 std::wstring strip_extra_infos(std::wstring_view str) {
   // 1. Test&C -> Test
   // 2. Test -> Test
@@ -73,6 +128,13 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       std::cout << "Failed to get menu item info: " << GetLastError()
                 << std::endl;
       continue;
+    }
+
+    if (info.fType & MFT_OWNERDRAW) {
+      auto od = getBitmapFromOwnerDraw(&info, hWnd);
+      if (od.width && od.height) {
+        item.owner_draw = od;
+      }
     }
 
     if (info.fType & MFT_RADIOCHECK || info.fState & MFS_CHECKED) {

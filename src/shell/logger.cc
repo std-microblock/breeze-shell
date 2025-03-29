@@ -13,15 +13,9 @@ void append_debug_string(const std::string &str) {
   static std::ofstream file(config::data_directory() / "debug.log",
                             std::ios::app);
   file << str;
-  file.close();
+  file.flush();
 
-  auto handle = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (handle == INVALID_HANDLE_VALUE) {
-    return;
-  }
-
-  DWORD written;
-  std::wstring wstr = utf8_to_wstring(str);
-  WriteConsoleW(handle, wstr.c_str(), wstr.size(), &written, nullptr);
+  printf("%s\n", str.c_str());
+  OutputDebugStringA(str.c_str());
 }
 } // namespace mb_shell

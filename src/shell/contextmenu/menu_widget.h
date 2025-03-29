@@ -22,6 +22,16 @@ struct menu_item_widget : public ui::widget {
   virtual void reset_appear_animation(float delay);
 };
 
+struct menu_item_ownerdraw_widget : public menu_item_widget {
+  using super = menu_item_widget;
+  owner_draw_menu_info owner_draw;
+  std::optional<ui::NVGImage> img{};
+  menu_item_ownerdraw_widget(menu_item item);
+  void update(ui::update_context &ctx) override;
+  void render(ui::nanovg_context ctx) override;
+  void reset_appear_animation(float delay) override;
+};
+
 struct menu_item_parent_widget : public menu_item_widget {
   using super = menu_item_widget;
   void update(ui::update_context &ctx) override;
@@ -72,7 +82,8 @@ struct menu_widget : public ui::widget_flex {
 
   float max_height = 99999;
   float actual_height = 0;
-  ui::sp_anim_float scroll_top = anim_float(0, 200, ui::easing_type::ease_in_out);
+  ui::sp_anim_float scroll_top =
+      anim_float(0, 200, ui::easing_type::ease_in_out);
   std::shared_ptr<ui::rect_widget> bg;
 
   std::shared_ptr<ui::rect_widget> bg_submenu;

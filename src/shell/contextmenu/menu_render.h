@@ -7,7 +7,7 @@
 namespace mb_shell {
 struct menu_render {
   std::shared_ptr<ui::render_target> rt;
-  std::optional<size_t> selected_menu;
+  std::optional<int32_t> selected_menu;
   bool light_color = is_light_mode();
   static std::optional<menu_render *> current;
 

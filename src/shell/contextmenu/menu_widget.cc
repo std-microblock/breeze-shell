@@ -137,8 +137,7 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
   if (item.submenu) {
     if (ctx.hovered(this)) {
       show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 300.f);
-    } else if (ctx.within(parent)
-                   .hovered(parent)) {
+    } else if (ctx.within(parent).hovered(parent)) {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
     }
 
@@ -605,8 +604,13 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 
   for (size_t i = 0; i < init_items.size(); i++) {
     auto &item = init_items[i];
-    auto mi = std::make_shared<menu_item_normal_widget>(item);
-    item_widgets.push_back(mi);
+    if (item.owner_draw) {
+      auto mi = std::make_shared<menu_item_ownerdraw_widget>(item);
+      item_widgets.push_back(mi);
+    } else {
+      auto mi = std::make_shared<menu_item_normal_widget>(item);
+      item_widgets.push_back(mi);
+    }
   }
 
   dbgout("Menu widget init from data: {}", menu_data.items.size());
@@ -756,4 +760,31 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
   parent_menu->current_submenu = submenu_wid;
   parent_menu->rendering_submenus.push_back(submenu_wid);
   submenu_wid->parent_menu = parent_menu.get();
+}
+void mb_shell::menu_item_ownerdraw_widget::update(ui::update_context &ctx) {
+  width->reset_to(owner_draw.width);
+  height->reset_to(owner_draw.height);
+}
+void mb_shell::menu_item_ownerdraw_widget::render(ui::nanovg_context ctx) {
+  if (!img)
+    img = ui::LoadBitmapImage(ctx, owner_draw.bitmap);
+  
+  auto paint = ctx.imagePattern(*x, y->dest(), owner_draw.width,
+                                owner_draw.height, 0, img->id, 1);
+
+  ctx.beginPath();
+  ctx.rect(*x, y->dest(), owner_draw.width, owner_draw.height);
+  ctx.fillPaint(paint);
+  ctx.fill();
+}
+void mb_shell::menu_item_ownerdraw_widget::reset_appear_animation(float delay) {
+}
+mb_shell::menu_item_ownerdraw_widget::menu_item_ownerdraw_widget(
+    menu_item item) {
+  this->item = item;
+  if (item.owner_draw) {
+    owner_draw = item.owner_draw.value();
+    width->reset_to(owner_draw.width);
+    height->reset_to(owner_draw.height);
+  }
 }
