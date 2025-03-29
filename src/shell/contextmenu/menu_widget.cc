@@ -136,13 +136,13 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
 
   if (item.submenu) {
     if (ctx.hovered(this)) {
-      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 100.f);
+      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 300.f);
     } else if (ctx.within(parent)
                    .hovered(parent)) {
       show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
     }
 
-    if (show_submenu_timer >= 100) {
+    if (show_submenu_timer >= 150.f) {
       show_submenu(ctx);
     } else {
       hide_submenu();
