@@ -162,7 +162,8 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
     if (res)
       return res;
 
-    // if still no result and the window is shell window, we assume it's the desktop
+    // if still no result and the window is shell window, we assume it's the
+    // desktop
     if (auto res = GetDesktopIShellBrowser())
       return res->second;
   }
@@ -200,79 +201,86 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
   perf.end("Edit");
 
-  if (GetClassNameA(hWnd, className, sizeof(className))) {
-    std::string class_name = className;
-    if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
-        class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
-      std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
-      // Check if the foreground window is an Explorer window
+  __try {
+    if (GetClassNameA(hWnd, className, sizeof(className))) {
+      std::string class_name = className;
+      if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
+          class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
+        std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
+        // Check if the foreground window is an Explorer window
 
-      if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
-        IShellView *psv;
-        perf.end("IShellBrowser - GetIShellBrowserRecursive");
-        std::printf("shell browser: %p\n", psb);
-        if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
-          IFolderView *pfv;
-          if (SUCCEEDED(psv->QueryInterface(IID_IFolderView, (void **)&pfv))) {
-            // It's an Explorer window
-            event_data.folder_view = std::make_shared<folder_view_controller>();
-            auto fv = *event_data.folder_view;
-            fv->$hwnd = hWnd;
-            fv->$controller = psb;
-            fv->$render_target = menu_render::current.value()->rt.get();
+        if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
+          IShellView *psv;
+          perf.end("IShellBrowser - GetIShellBrowserRecursive");
+          std::printf("shell browser: %p\n", psb);
+          if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
+            IFolderView *pfv;
+            if (SUCCEEDED(
+                    psv->QueryInterface(IID_IFolderView, (void **)&pfv))) {
+              // It's an Explorer window
+              event_data.folder_view =
+                  std::make_shared<folder_view_controller>();
+              auto fv = *event_data.folder_view;
+              fv->$hwnd = hWnd;
+              fv->$controller = psb;
+              fv->$render_target = menu_render::current.value()->rt.get();
 
-            int focusIndex;
-            pfv->GetFocusedItem(&focusIndex);
-            if (focusIndex >= 0) {
-              PIDLIST_ABSOLUTE pidl;
-              if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
-                fv->focused_file_path = folder_id_to_path(pidl);
-                CoTaskMemFree(pidl);
-              }
-            }
-
-            IShellItem *psi;
-            if (SUCCEEDED(pfv->GetFolder(IID_IShellItem, (void **)&psi))) {
-              PWSTR pszPath;
-              if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
-                fv->current_path = mb_shell::wstring_to_utf8(pszPath);
-                CoTaskMemFree(pszPath);
-              }
-              psi->Release();
-            }
-
-            IShellItemArray *psia;
-            if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray,
-                                     (void **)&psia))) {
-              DWORD count;
-              if (SUCCEEDED(psia->GetCount(&count))) {
-                for (DWORD i = 0; i < count; i++) {
-                  IShellItem *psi;
-                  if (SUCCEEDED(psia->GetItemAt(i, &psi))) {
-                    PWSTR pszPath;
-                    if (SUCCEEDED(
-                            psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
-                      fv->selected_files.push_back(
-                          mb_shell::wstring_to_utf8(pszPath));
-                      CoTaskMemFree(pszPath);
-                    }
-                    psi->Release();
-                  }
+              int focusIndex;
+              pfv->GetFocusedItem(&focusIndex);
+              if (focusIndex >= 0) {
+                PIDLIST_ABSOLUTE pidl;
+                if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
+                  fv->focused_file_path = folder_id_to_path(pidl);
+                  CoTaskMemFree(pidl);
                 }
               }
-              psia->Release();
-            }
 
-            pfv->Release();
+              IShellItem *psi;
+              if (SUCCEEDED(pfv->GetFolder(IID_IShellItem, (void **)&psi))) {
+                PWSTR pszPath;
+                if (SUCCEEDED(
+                        psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                  fv->current_path = mb_shell::wstring_to_utf8(pszPath);
+                  CoTaskMemFree(pszPath);
+                }
+                psi->Release();
+              }
+
+              IShellItemArray *psia;
+              if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray,
+                                       (void **)&psia))) {
+                DWORD count;
+                if (SUCCEEDED(psia->GetCount(&count))) {
+                  for (DWORD i = 0; i < count; i++) {
+                    IShellItem *psi;
+                    if (SUCCEEDED(psia->GetItemAt(i, &psi))) {
+                      PWSTR pszPath;
+                      if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH,
+                                                        &pszPath))) {
+                        fv->selected_files.push_back(
+                            mb_shell::wstring_to_utf8(pszPath));
+                        CoTaskMemFree(pszPath);
+                      }
+                      psi->Release();
+                    }
+                  }
+                }
+                psia->Release();
+              }
+
+              pfv->Release();
+            }
+            psv->Release();
           }
-          psv->Release();
+        } else {
+          std::printf("Failed to get IShellBrowser\n");
         }
-      } else {
-        std::printf("Failed to get IShellBrowser\n");
       }
     }
-  }
 
+  } __except (EXCEPTION_CONTINUE_EXECUTION) {
+    std::printf("Get IShellBrowser crashed!\n");
+  }
   perf.end("IShellBrowser");
 
   if (hWnd) {
@@ -315,7 +323,8 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     //   return TRUE;
     // });
 
-    // std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair) {
+    // std::ranges::copy(prop_map | std::ranges::views::transform([](auto &pair)
+    // {
     //                     return window_prop_data{pair.first, pair.second};
     //                   }),
     //                   std::back_inserter(window_info.props));
@@ -513,7 +522,7 @@ std::string folder_view_folder_item::type() {
 void folder_view_folder_item::select(int state) {
   CComPtr<IShellView> sv = static_cast<IShellView *>($controller);
   entry::main_window_loop_hook.add_task(
-          [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
+      [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
 }
 
 constexpr UINT ID_EDIT_COPY = 0x0001;
