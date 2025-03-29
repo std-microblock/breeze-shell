@@ -75,11 +75,6 @@ void ui::animated_float::animate_to(float dest) {
 float ui::animated_float::var() const { return value; }
 float ui::animated_float::prog() const { return progress; }
 float ui::animated_float::dest() const {
-  static float* damn_dest = nullptr;
-  if (destination < 0 || damn_dest == &destination) {
-    std::printf("damn dest: %f %p\n", destination, &destination);
-    damn_dest = const_cast<float*>(&destination);
-  }
   return destination;
  }
 void ui::animated_float::reset_to(float dest) {
