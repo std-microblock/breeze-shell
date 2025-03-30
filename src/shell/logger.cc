@@ -15,7 +15,7 @@ void append_debug_string(const std::string &str) {
   file << str;
   file.flush();
 
-  printf("%s\n", str.c_str());
+  printf("%s", str.c_str());
   OutputDebugStringA(str.c_str());
 }
 } // namespace mb_shell
