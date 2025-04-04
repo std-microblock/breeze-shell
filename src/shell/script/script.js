@@ -59,6 +59,35 @@ shell.fs.watch(config_directory_main, (event, filename) => {
     }
 })
 
+
+const getNestedValue = (obj, path) => {
+    const parts = path.split('.');
+    let current = obj;
+
+    for (const part of parts) {
+        if (current === undefined || current === null) return undefined;
+        current = current[part];
+    }
+
+    return current;
+};
+
+const setNestedValue = (obj, path, value) => {
+    const parts = path.split('.');
+    let current = obj;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i];
+        if (current[part] === undefined || current[part] === null) {
+            current[part] = {};
+        }
+        current = current[part];
+    }
+
+    current[parts[parts.length - 1]] = value;
+    return obj;
+};
+
 const plugin = (import_meta, default_config = {}) => {
     const CONFIG_FILE = 'config.json'
 
@@ -98,30 +127,10 @@ const plugin = (import_meta, default_config = {}) => {
                 shell.fs.write(plugin.config_directory + CONFIG_FILE, JSON.stringify(config, null, 4))
             },
             get(key) {
-                const read = (keys, obj) => {
-                    if (keys.length === 1) {
-                        return obj[keys[0]]
-                    }
-                    if (!obj[keys[0]]) {
-                        return undefined
-                    }
-                    return read(keys.slice(1), obj[keys[0]])
-                }
-
-                return read(key.split('.'), config)
+                return getNestedValue(config, key) || getNestedValue(default_config, key) || null
             },
             set(key, value) {
-                let obj = config
-
-                const keys = key.split('.')
-                for (let i = 0; i < keys.length - 1; i++) {
-                    if (!obj[keys[i]]) {
-                        obj[keys[i]] = {}
-                    }
-                    obj = obj[keys[i]]
-                }
-                obj[keys[keys.length - 1]] = value
-
+                setNestedValue(config, key, value)
                 plugin.config.write_config()
             },
             all() {
@@ -206,7 +215,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                     name: t("插件市场 / 更新本体"),
                     submenu(sub) {
                         const updatePlugins = async (page) => {
-                            for (const m of sub.get_items().slice(1))
+                            for (const m of sub.get_items().slice(3))
                                 m.remove()
 
                             sub.append_menu({
@@ -218,7 +227,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             }
                             const data = JSON.parse(cached_plugin_index)
 
-                            for (const m of sub.get_items().slice(1))
+                            for (const m of sub.get_items().slice(3))
                                 m.remove()
 
                             const current_version = shell.breeze.version();
@@ -238,13 +247,13 @@ shell.menu_controller.add_menu_listener(ctx => {
                                     const shellPath = shell.breeze.data_directory() + '/shell.dll'
                                     const shellOldPath = shell.breeze.data_directory() + '/shell_old.dll'
                                     const url = PLUGIN_SOURCES[current_source] + data.shell.path
-                                    
+
                                     upd.set_data({
                                         name: t('更新中...'),
                                         icon_svg: ICON_REPAIR,
                                         disabled: true
                                     })
-                                    
+
                                     const downloadNewShell = () => {
                                         shell.network.download_async(url, shellPath, () => {
                                             upd.set_data({
@@ -260,7 +269,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                             })
                                         })
                                     }
-                                    
+
                                     try {
                                         if (shell.fs.exists(shellPath)) {
                                             if (shell.fs.exists(shellOldPath)) {
@@ -414,13 +423,315 @@ shell.menu_controller.add_menu_listener(ctx => {
                         updatePlugins(1)
                     }
                 })
+                sub.append_menu({
+                    name: t("Breeze 设置"),
+                    submenu(sub) {
+                        const current_config_path = shell.breeze.data_directory() + '/config.json'
+                        const current_config = shell.fs.read(current_config_path)
+                        let config = JSON.parse(current_config);
+                        if (!config.plugin_load_order) {
+                            config.plugin_load_order = [];
+                        }
+
+                        const write_config = () => {
+                            shell.fs.write(current_config_path, JSON.stringify(config, null, 4))
+                        }
+
+                        sub.append_menu({
+                            name: "优先加载插件",
+                            submenu(sub) {
+                                const plugins = shell.fs.readdir(shell.breeze.data_directory() + '/scripts')
+                                    .map(v => v.split('/').pop())
+                                    .filter(v => v.endsWith('.js'))
+                                    .map(v => v.replace('.js', ''));
+
+                                const isInLoadOrder = {};
+                                config.plugin_load_order.forEach(name => {
+                                    isInLoadOrder[name] = true;
+                                });
+
+                                for (const plugin of plugins) {
+                                    const isPrioritized = isInLoadOrder[plugin] === true;
+
+                                    const btn = sub.append_menu({
+                                        name: plugin,
+                                        icon_svg: isPrioritized ? ICON_CHECKED : ICON_EMPTY,
+                                        action() {
+                                            if (isPrioritized) {
+                                                config.plugin_load_order = config.plugin_load_order.filter(name => name !== plugin);
+                                                isInLoadOrder[plugin] = false;
+                                                btn.set_data({
+                                                    icon_svg: ICON_EMPTY
+                                                });
+                                            } else {
+                                                config.plugin_load_order.unshift(plugin);
+                                                isInLoadOrder[plugin] = true;
+                                                btn.set_data({
+                                                    icon_svg: ICON_CHECKED
+                                                });
+                                            }
+                                            write_config();
+                                        }
+                                    });
+                                }
+                            }
+                        });
+
+                        const createBoolToggle = (sub, label, configPath, defaultValue = false) => {
+                            let currentValue = getNestedValue(config, configPath) ?? defaultValue;
+
+                            const toggle = sub.append_menu({
+                                name: label,
+                                icon_svg: currentValue ? ICON_CHECKED : ICON_EMPTY,
+                                action() {
+                                    currentValue = !currentValue;
+                                    setNestedValue(config, configPath, currentValue);
+                                    write_config();
+                                    toggle.set_data({
+                                        icon_svg: currentValue ? ICON_CHECKED : ICON_EMPTY,
+                                        disabled: false
+                                    });
+                                }
+                            });
+                            return toggle;
+                        };
+
+                        sub.append_spacer()
+
+                        const theme_presets = {
+                            "默认": null,
+                            "紧凑": {
+                                radius: 4.0,
+                                item_height: 20.0,
+                                item_gap: 2.0,
+                                item_radius: 3.0,
+                                margin: 4.0,
+                                padding: 4.0,
+                                text_padding: 6.0,
+                                icon_padding: 3.0,
+                                right_icon_padding: 16.0,
+                                multibutton_line_gap: -4.0
+                            },
+                            "宽松": {
+                                radius: 6.0,
+                                item_height: 24.0,
+                                item_gap: 4.0,
+                                item_radius: 8.0,
+                                margin: 6.0,
+                                padding: 6.0,
+                                text_padding: 8.0,
+                                icon_padding: 4.0,
+                                right_icon_padding: 20.0,
+                                multibutton_line_gap: -6.0
+                            },
+                            "圆角": {
+                                radius: 12.0,
+                                item_radius: 12.0
+                            },
+                            "方角": {
+                                radius: 0.0,
+                                item_radius: 0.0
+                            }
+                        };
+
+                        const anim_none = {
+                            easing: "mutation",
+                        }
+                        const animation_presets = {
+                            "默认": null,
+                            "快速": {
+                                "item": {
+                                    "opacity": {
+                                        "delay_scale": 0
+                                    },
+                                    "width": anim_none,
+                                    "x": anim_none,
+                                },
+                                "submenu_bg": {
+                                    "opacity": {
+                                        "delay_scale": 0,
+                                        "duration": 100
+                                    }
+                                },
+                                "main_bg": {
+                                    "opacity": anim_none,
+                                }
+                            },
+                            "无": {
+                                "item": {
+                                    "opacity": anim_none,
+                                    "width": anim_none,
+                                    "x": anim_none,
+                                    "y": anim_none
+                                },
+                                "submenu_bg": {
+                                    "opacity": anim_none,
+                                    "x": anim_none,
+                                    "y": anim_none,
+                                    "w": anim_none,
+                                    "h": anim_none
+                                },
+                                "main_bg": {
+                                    "opacity": anim_none,
+                                    "x": anim_none,
+                                    "y": anim_none,
+                                    "w": anim_none,
+                                    "h": anim_none
+                                }
+                            }
+                        };
+
+                        const getAllSubkeys = (presets) => {
+                            if (!presets) return []
+                            const keys = new Set();
+
+                            for (const v of Object.values(presets)) {
+                                if (v)
+                                    for (const key of Object.keys(v)) {
+                                        keys.add(key);
+                                    }
+                            }
+
+                            return [...keys]
+                        }
+
+                        const applyPreset = (preset, origin, presets) => {
+                            const allSubkeys = getAllSubkeys(presets);
+                            const newPreset = preset;
+                            for (let key in origin) {
+                                if (allSubkeys.includes(key)) continue;
+                                newPreset[key] = origin[key];
+                            }
+                            return newPreset;
+                        }
+
+                        const checkPresetMatch = (current, preset) => {
+                            if (!current) return false;
+                            if (!preset) return false;
+                            return Object.keys(preset).every(key => JSON.stringify(current[key]) === JSON.stringify(preset[key]))
+
+                        };
+
+                        const getCurrentPreset = (current, presets) => {
+                            if (!current) return "默认";
+                            for (const [name, preset] of Object.entries(presets)) {
+                                if (preset && checkPresetMatch(current, preset)) {
+                                    return name;
+                                }
+                            }
+                            return "自定义";
+                        };
+
+                        const updateIconStatus = (sub, current, presets) => {
+                            try {
+                                const currentPreset = getCurrentPreset(current, presets);
+                                for (const _item of sub.get_items()) {
+                                    const item = _item.data();
+                                    if (item.name === currentPreset) {
+                                        _item.set_data({
+                                            icon_svg: ICON_CHECKED,
+                                            disabled: true
+                                        });
+                                    } else {
+                                        _item.set_data({
+                                            icon_svg: ICON_EMPTY,
+                                            disabled: false
+                                        });
+                                    }
+                                }
+
+                                const lastItem = sub.get_items().pop()
+                                if (lastItem.data().name === "自定义" && currentPreset !== "自定义") {
+                                    lastItem.remove()
+                                } else if (currentPreset === "自定义") {
+                                    sub.append_menu({
+                                        name: "自定义",
+                                        disabled: true,
+                                        icon_svg: ICON_CHECKED,
+                                    });
+                                }
+                            } catch (e) {
+                                shell.println(e, e.stack)
+                            }
+                        }
+
+                        sub.append_menu({
+                            name: "主题",
+                            submenu(sub) {
+                                const currentTheme = config.context_menu?.theme;
+
+                                for (const [name, preset] of Object.entries(theme_presets)) {
+                                    sub.append_menu({
+                                        name,
+                                        action() {
+                                            try {
+                                                if (!preset) {
+                                                    delete config.context_menu.theme;
+                                                } else {
+                                                    config.context_menu.theme = applyPreset(preset, config.context_menu.theme, theme_presets);
+                                                }
+                                                write_config();
+                                                updateIconStatus(sub, config.context_menu.theme, theme_presets);
+                                            } catch (e) {
+                                                shell.println(e, e.stack)
+                                            }
+                                        }
+                                    });
+                                }
+
+                                updateIconStatus(sub, currentTheme, theme_presets);
+                            }
+                        });
+
+                        sub.append_menu({
+                            name: "动画",
+                            submenu(sub) {
+                                const currentAnimation = config.context_menu?.theme?.animation;
+
+                                for (const [name, preset] of Object.entries(animation_presets)) {
+                                    sub.append_menu({
+                                        name,
+                                        action() {
+                                            if (!preset) {
+                                                if (config.context_menu?.theme) {
+                                                    delete config.context_menu.theme.animation;
+                                                }
+                                            } else {
+                                                if (!config.context_menu) config.context_menu = {};
+                                                if (!config.context_menu.theme) config.context_menu.theme = {};
+                                                config.context_menu.theme.animation = preset;
+                                            }
+
+                                            updateIconStatus(sub, config.context_menu.theme?.animation, animation_presets);
+                                            write_config();
+                                        }
+                                    });
+                                }
+
+                                updateIconStatus(sub, currentAnimation, animation_presets);
+                            }
+                        });
+
+                        sub.append_spacer()
+
+                        createBoolToggle(sub, "调试控制台", "debug_console", false);
+                        createBoolToggle(sub, "垂直同步", "context_menu.vsync", true);
+                        createBoolToggle(sub, "忽略自绘菜单", "context_menu.ignore_owner_draw", true);
+                        createBoolToggle(sub, "向上展开时反向排列", "context_menu.reverse_if_open_to_up", true);
+                        createBoolToggle(sub, "尝试使用 Windows 11 圆角", "context_menu.theme.use_dwm_if_available", true);
+                        createBoolToggle(sub, "亚克力背景效果", "context_menu.theme.acrylic", true);
+                    }
+                })
+
+                sub.append_spacer()
+
 
                 const reload_local = () => {
                     const installed = shell.fs.readdir(shell.breeze.data_directory() + '/scripts')
                         .map(v => v.split('/').pop())
                         .filter(v => v.endsWith('.js') || v.endsWith('.disabled'))
 
-                    for (const m of sub.get_items().slice(1))
+                    for (const m of sub.get_items().slice(3))
                         m.remove()
 
                     for (const plugin of installed) {
