@@ -471,7 +471,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                                 });
                                             }
 
-                                            isPrioritized = false
+                                            isPrioritized = !isPrioritized
                                             write_config();
                                         }
                                     });
