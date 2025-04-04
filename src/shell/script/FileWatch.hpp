@@ -190,6 +190,12 @@ namespace filewatch {
 		FileWatch(StringType path, std::function<void(const StringType& file, const Event event_type)> callback) :
 			FileWatch<StringType>(path, UnderpinningRegex(_regex_all), callback) {}
 
+            FileWatch(StringType path) :
+                  FileWatch<StringType>(path, UnderpinningRegex(_regex_all), [](const StringType& file, const Event event_type) {}) {}
+
+            void set_callback(std::function<void(const StringType& file, const Event event_type)> callback) {
+                  _callback = callback;
+            }
 		~FileWatch() {
 			destroy();
 		}
@@ -1217,13 +1223,15 @@ namespace filewatch {
 		void callback_thread()
 		{
 			while (_destory == false) {
-				std::unique_lock<std::mutex> lock(_callback_mutex);
-				if (_callback_information.empty() && _destory == false) {
-					_cv.wait(lock, [this] { return _callback_information.size() > 0 || _destory; });
-				}
-				decltype(_callback_information) callback_information = {};
-				std::swap(callback_information, _callback_information);
-				lock.unlock();
+                        decltype(_callback_information) callback_information = {};
+
+				{
+                              std::unique_lock<std::mutex> lock(_callback_mutex);
+                              if (_callback_information.empty() && _destory == false) {
+                                    _cv.wait(lock, [this] { return _callback_information.size() > 0 || _destory; });
+                              }
+                              std::swap(callback_information, _callback_information);
+                        }
 
 				for (const auto& file : callback_information) {
 					if (_callback) {

@@ -601,6 +601,16 @@ struct fs {
   // 这会模拟资源管理器中“移动”的行为，即显示进度窗口，UAC请求窗口等
   static void move_shfile(std::string src_path, std::string dest_path,
                           std::function<void(bool)> callback);
+
+  // 监测文件/文件夹变动
+  // Watch file/folder changes
+  // added 0
+	// removed 1
+  // modified 2
+	// renamed_old 3
+	// renamed_new 4
+  static std::function<void()> watch(std::string path,
+                    std::function<void(std::string, int)> callback);
 };
 
 struct breeze {

@@ -1177,6 +1177,20 @@ export class fs {
   */
   static move_shfile: ((arg1: string, arg2: string, arg3: ((arg1: boolean) => void)) => void)
             
+	
+/**
+  * 监测文件/文件夹变动
+  *  Watch file/folder changes
+  *  added 0
+  *  removed 1
+  *  modified 2
+  *  renamed_old 3
+  *  renamed_new 4
+  * @param path: string, callback: ((arg1: string, arg2: number) => void)
+  * @returns (() => void)
+  */
+  static watch: ((arg1: string, arg2: ((arg1: string, arg2: number) => void)) => (() => void))
+            
 }
     
 export class breeze {

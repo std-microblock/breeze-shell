@@ -87,6 +87,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
       js = std::make_shared<qjs::Context>(*rt);
       bind();
       try {
+        JS_UpdateStackTop(rt->rt);
         js->eval(breeze_script_js, "breeze-script.js", JS_EVAL_TYPE_MODULE);
       } catch (std::exception &e) {
         std::cerr << "Error in breeze-script.js: " << e.what() << std::endl;

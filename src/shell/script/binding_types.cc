@@ -22,6 +22,8 @@
 #include "script.h"
 #include "winhttp.h"
 
+#include "FileWatch.hpp"
+
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
@@ -955,52 +957,55 @@ std::string infra::btoa(std::string str) {
 }
 
 void fs::copy_shfile(std::string src_path, std::string dest_path,
-                      std::function<void(bool, std::string)> callback) {
-   std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
-     SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
-     std::wstring wsrc = utf8_to_wstring(src_path);
-     std::wstring wdest = utf8_to_wstring(dest_path);
- 
-     std::vector<wchar_t> from_buf(wsrc.size() + 2, 0);
-     std::vector<wchar_t> to_buf(wdest.size() + 2, 0);
-     wcsncpy_s(from_buf.data(), from_buf.size(), wsrc.c_str(), _TRUNCATE);
-     wcsncpy_s(to_buf.data(), to_buf.size(), wdest.c_str(), _TRUNCATE);
- 
-     FileOp.wFunc = FO_COPY;
-     FileOp.pFrom = from_buf.data();
-     FileOp.pTo = to_buf.data();
-     FileOp.fFlags = FOF_RENAMEONCOLLISION | FOF_ALLOWUNDO | FOF_NOCONFIRMMKDIR | FOF_NOCOPYSECURITYATTRIBS | FOF_WANTMAPPINGHANDLE;
- 
-     auto res = SHFileOperationW(&FileOp);
-     std::wstring final_path;
-     bool success = (res == 0) && !FileOp.fAnyOperationsAborted;
-     if (success) {
-       if (FileOp.hNameMappings) {
-        struct file_operation_collision_mapping
-        {
-            int index;
-            SHNAMEMAPPINGW* mapping;
-        };
-    
-        file_operation_collision_mapping* mapping = static_cast<file_operation_collision_mapping*>(FileOp.hNameMappings);
-        SHNAMEMAPPINGW* map = &mapping->mapping[0];
-        final_path = map->pszNewPath;
-    
-        SHFreeNameMappings(FileOp.hNameMappings);
-       } else {
-         std::filesystem::path dest(wdest);
-         std::filesystem::path src(wsrc);
-         final_path = (dest / src.filename()).wstring();
-       }
+                     std::function<void(bool, std::string)> callback) {
+  std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+    SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
+    std::wstring wsrc = utf8_to_wstring(src_path);
+    std::wstring wdest = utf8_to_wstring(dest_path);
 
-       SHChangeNotify(SHCNE_CREATE, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(), nullptr);
-     }
- 
-     std::string utf8_path = wstring_to_utf8(final_path);
-     std::lock_guard l(lock);
-     callback(success, utf8_path);
-   }).detach();
- }
+    std::vector<wchar_t> from_buf(wsrc.size() + 2, 0);
+    std::vector<wchar_t> to_buf(wdest.size() + 2, 0);
+    wcsncpy_s(from_buf.data(), from_buf.size(), wsrc.c_str(), _TRUNCATE);
+    wcsncpy_s(to_buf.data(), to_buf.size(), wdest.c_str(), _TRUNCATE);
+
+    FileOp.wFunc = FO_COPY;
+    FileOp.pFrom = from_buf.data();
+    FileOp.pTo = to_buf.data();
+    FileOp.fFlags = FOF_RENAMEONCOLLISION | FOF_ALLOWUNDO | FOF_NOCONFIRMMKDIR |
+                    FOF_NOCOPYSECURITYATTRIBS | FOF_WANTMAPPINGHANDLE;
+
+    auto res = SHFileOperationW(&FileOp);
+    std::wstring final_path;
+    bool success = (res == 0) && !FileOp.fAnyOperationsAborted;
+    if (success) {
+      if (FileOp.hNameMappings) {
+        struct file_operation_collision_mapping {
+          int index;
+          SHNAMEMAPPINGW *mapping;
+        };
+
+        file_operation_collision_mapping *mapping =
+            static_cast<file_operation_collision_mapping *>(
+                FileOp.hNameMappings);
+        SHNAMEMAPPINGW *map = &mapping->mapping[0];
+        final_path = map->pszNewPath;
+
+        SHFreeNameMappings(FileOp.hNameMappings);
+      } else {
+        std::filesystem::path dest(wdest);
+        std::filesystem::path src(wsrc);
+        final_path = (dest / src.filename()).wstring();
+      }
+
+      SHChangeNotify(SHCNE_CREATE, SHCNF_PATH | SHCNF_FLUSH, final_path.c_str(),
+                     nullptr);
+    }
+
+    std::string utf8_path = wstring_to_utf8(final_path);
+    std::lock_guard l(lock);
+    callback(success, utf8_path);
+  }).detach();
+}
 
 void fs::move_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool)> callback) {
@@ -1030,5 +1035,31 @@ size_t win32::load_file_icon(std::string path) {
   GetIconInfo(sfi.hIcon, &iconinfo);
 
   return (size_t)iconinfo.hbmColor;
+}
+std::function<void()>
+fs::watch(std::string path, std::function<void(std::string, int)> callback) {
+  // TODO: fix memory leak
+
+  auto dispose = std::make_shared<bool>(false);
+  auto fw = new filewatch::FileWatch<std::string>(path);
+
+  fw->set_callback([dispose, callback, fw](const std::string &path,
+                                           const filewatch::Event change_type) {
+    if (*dispose)
+      return;
+    try {
+      callback(path, (int)change_type);
+    } catch (qjs::qjs_context_destroyed_exception &e) {
+      *dispose = true;
+    } catch (std::exception &e) {
+      std::cerr << "Error in file watch callback: " << e.what() << std::endl;
+    }
+
+    if (*dispose) {
+      delete fw;
+    }
+  });
+
+  return [dispose] { *dispose = true; };
 }
 } // namespace mb_shell::js

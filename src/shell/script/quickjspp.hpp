@@ -1784,10 +1784,11 @@ public:
 
   /// @see JS_Eval
   Value evalThis(std::string_view buffer, const char *filename = "<eval>",
-             int flags = 0, Value this_obj = JS_UNDEFINED) {
+                 int flags = 0, Value this_obj = JS_UNDEFINED) {
     assert(buffer.data()[buffer.size()] == '\0' &&
            "eval buffer is not null-terminated"); // JS_Eval requirement
-    JSValue v = JS_EvalThis(ctx, this_obj.v, buffer.data(), buffer.size(), filename, flags);
+    JSValue v = JS_EvalThis(ctx, this_obj.v, buffer.data(), buffer.size(),
+                            filename, flags);
     return Value{weakFromContext(ctx), std::move(v)};
   }
 
@@ -1830,6 +1831,12 @@ template <> struct js_traits<Value> {
   }
 };
 
+struct qjs_context_destroyed_exception : public std::exception {
+  const char *what() const noexcept override {
+    return "qjs::Context is destroyed";
+  }
+};
+
 /** Convert to/from std::function. Actually accepts/returns callable object that
  * is compatible with function<R (Args...)>.
  * @tparam R return type
@@ -1842,7 +1849,7 @@ struct js_traits<std::function<R(Args...)>, int> {
     return [jsfun_obj = Value{weakFromContext(ctx), JS_DupValue(ctx, fun_obj)},
             weak](Args... args) -> R {
       if (weak.expired())
-        throw std::runtime_error{"qjs::Context is destroyed"};
+        throw qjs_context_destroyed_exception{};
       auto &ctx = Context::get(jsfun_obj.ctx);
       std::promise<std::expected<JSValue, exception>> promise;
       auto future = promise.get_future();

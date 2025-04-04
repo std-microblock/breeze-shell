@@ -853,6 +853,7 @@ template<> struct js_bind<mb_shell::js::fs> {
                 .static_fun<&mb_shell::js::fs::readdir>("readdir")
                 .static_fun<&mb_shell::js::fs::copy_shfile>("copy_shfile")
                 .static_fun<&mb_shell::js::fs::move_shfile>("move_shfile")
+                .static_fun<&mb_shell::js::fs::watch>("watch")
             ;
     }
 
