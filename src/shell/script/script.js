@@ -49,8 +49,18 @@ const splitIntoLines = (str, maxLen) => {
 
 globalThis.on_plugin_menu = {};
 
+const config_directory_main = shell.breeze.data_directory() + '/config/';
+
+const config_dir_watch_callbacks = new Set();
+
+shell.fs.watch(config_directory_main, (event, filename) => {
+    for (const callback of config_dir_watch_callbacks) {
+        callback(event, filename)
+    }
+})
+
 const plugin = (import_meta, default_config = {}) => {
-    const CONFIG_FILE = '/config.json'
+    const CONFIG_FILE = 'config.json'
 
     const { name, url } = import_meta
     const languages = {}
@@ -58,6 +68,8 @@ const plugin = (import_meta, default_config = {}) => {
     const nameNoExt = name.endsWith('.js') ? name.slice(0, -3) : name
 
     let config = default_config
+
+    const on_reload_callbacks = new Set()
 
     const plugin = {
         i18n: {
@@ -71,7 +83,7 @@ const plugin = (import_meta, default_config = {}) => {
         set_on_menu: (callback) => {
             on_plugin_menu[nameNoExt] = callback
         },
-        config_directory: shell.breeze.data_directory() + '/config/' + nameNoExt,
+        config_directory: config_directory_main + nameNoExt + '/',
         config: {
             read_config() {
                 if (shell.fs.exists(plugin.config_directory + CONFIG_FILE)) {
@@ -114,6 +126,13 @@ const plugin = (import_meta, default_config = {}) => {
             },
             all() {
                 return config
+            },
+            on_reload(callback) {
+                const dispose = () => {
+                    on_reload_callbacks.delete(callback)
+                }
+                on_reload_callbacks.add(callback)
+                return dispose
             }
         },
         log(...args) {
@@ -122,6 +141,17 @@ const plugin = (import_meta, default_config = {}) => {
     }
 
     shell.fs.mkdir(plugin.config_directory)
+    plugin.config.read_config()
+    config_dir_watch_callbacks.add((event, filename) => {
+        if (filename === `${nameNoExt}\\${CONFIG_FILE}`) {
+            shell.println(`[${name}] 配置文件变更: ${event} ${filename}`)
+            plugin.config.read_config()
+            for (const callback of on_reload_callbacks) {
+                callback(config)
+            }
+        }
+    })
+
     return plugin
 }
 
