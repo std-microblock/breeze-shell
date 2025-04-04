@@ -560,6 +560,7 @@ void UpdateDllPath() {
     fs::remove(target, ec);
 
     if (ec) {
+      ec.clear();
       std::wstring oldPath = fs::path(target).parent_path() / L"shell_old.dll";
       if (fs::exists(oldPath)) {
         fs::remove(oldPath, ec);
