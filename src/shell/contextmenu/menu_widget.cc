@@ -25,7 +25,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   auto has_icon = has_icon_padding || icon_img;
   auto c = menu_render::current.value()->light_color ? 0 : 1;
   if (item.type == menu_item::type::spacer) {
-    ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
+    ctx.fillColor(nvgRGBAf(c, c, c, 0.1 * *opacity / 255.f));
     ctx.fillRect(x->dest(), *y, *width, *height);
     return;
   }
