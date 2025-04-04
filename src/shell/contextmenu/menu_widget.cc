@@ -79,7 +79,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto paintX = *x + padding + *width - right_icon_padding - icon_width;
+    auto paintX = *x + padding + width->dest() - right_icon_padding - icon_width;
     auto paint2 = ctx.imagePattern(paintX, paintY, icon_width, icon_width, 0,
                                    icon_unfold_img->id, *opacity / 255.f);
     ctx.beginPath();
@@ -717,7 +717,7 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
   // the screen space, then convert it to the
   // window space.
 
-  auto anchor_x = *width + *x + ctx.offset_x;
+  auto anchor_x = width->dest() + *x + ctx.offset_x;
   auto anchor_y = **y + ctx.offset_y;
 
   anchor_x *= ctx.rt.dpi_scale;
