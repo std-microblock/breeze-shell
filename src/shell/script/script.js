@@ -215,7 +215,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                     name: t("插件市场 / 更新本体"),
                     submenu(sub) {
                         const updatePlugins = async (page) => {
-                            for (const m of sub.get_items().slice(3))
+                            for (const m of sub.get_items().slice(1))
                                 m.remove()
 
                             sub.append_menu({
@@ -227,7 +227,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                             }
                             const data = JSON.parse(cached_plugin_index)
 
-                            for (const m of sub.get_items().slice(3))
+                            for (const m of sub.get_items().slice(1))
                                 m.remove()
 
                             const current_version = shell.breeze.version();
