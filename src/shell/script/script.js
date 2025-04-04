@@ -451,7 +451,7 @@ shell.menu_controller.add_menu_listener(ctx => {
                                 });
 
                                 for (const plugin of plugins) {
-                                    const isPrioritized = isInLoadOrder[plugin] === true;
+                                    let isPrioritized = isInLoadOrder[plugin] === true;
 
                                     const btn = sub.append_menu({
                                         name: plugin,
@@ -470,6 +470,8 @@ shell.menu_controller.add_menu_listener(ctx => {
                                                     icon_svg: ICON_CHECKED
                                                 });
                                             }
+
+                                            isPrioritized = false
                                             write_config();
                                         }
                                     });
