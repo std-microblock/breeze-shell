@@ -300,8 +300,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     scroll_top->animate_to(std::clamp(scroll_top->dest() + ctx.scroll_y * 100,
                                       height->dest() - actual_height, 0.f));
   }
-
   widget::update(ctx);
+  ctx.hovered_hit(this);
   auto forkctx = ctx.with_offset(*x, *y + *scroll_top);
   update_children(forkctx, item_widgets);
   reposition_children_flex(forkctx, item_widgets);
@@ -311,8 +311,6 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   if (bg) {
     bg->update(ctx);
   }
-
-  ctx.hovered_hit(this);
 }
 
 bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {

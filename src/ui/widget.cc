@@ -96,20 +96,26 @@ void ui::widget::add_child(std::shared_ptr<widget> child) {
 }
 
 bool ui::update_context::hovered(widget *w, bool hittest) const {
+  auto hit = w->check_hit(*this);
+  if (!hit) 
+    return false;
+  
   if (hittest) {
     if (!hovered_widgets->empty()) {
       // iterate through parent chain
-      auto p = hovered_widgets->back();
+      auto p = w;
       while (p) {
-        if (p == w)
-          return w->check_hit(*this);
+        if (std::ranges::contains(*hovered_widgets, p)) {
+          return true;
+        }
+
         p = p->parent;
       }
       return false;
     }
   }
 
-  return w->check_hit(*this);
+  return true;
 }
 float ui::widget::measure_height(update_context &ctx) { return height->dest(); }
 float ui::widget::measure_width(update_context &ctx) { return width->dest(); }
