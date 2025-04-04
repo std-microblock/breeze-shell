@@ -177,6 +177,15 @@ const languages = {
 
 let cached_plugin_index = null
 
+// remove possibly existing shell_old.dll if able to
+if (shell.fs.exists(shell.breeze.data_directory() + '/shell_old.dll')) {
+    try {
+        shell.fs.remove(shell.breeze.data_directory() + '/shell_old.dll')
+    } catch (e) {
+        shell.println('Failed to remove old shell.dll: ', e)
+    }
+}
+
 shell.menu_controller.add_menu_listener(ctx => {
     const currentLang = shell.breeze.user_language() === 'zh-CN' ? 'zh-CN' : 'en-US'
     const t = (key) => {
@@ -214,31 +223,72 @@ shell.menu_controller.add_menu_listener(ctx => {
 
                             const current_version = shell.breeze.version();
                             const remote_version = data.shell.version;
+
+                            const exist_old_file = shell.fs.exists(shell.breeze.data_directory() + '/shell_old.dll')
+
                             const upd = sub.append_menu({
-                                name: current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`,
+                                name: exist_old_file ?
+                                    `新版本已下载，将于下次重启资源管理器生效` :
+                                    (current_version === remote_version ?
+                                        (current_version + ' (latest)') :
+                                        `${current_version} -> ${remote_version}`),
                                 icon_svg: current_version === remote_version ? ICON_CHECKED : ICON_CHANGE,
                                 action() {
                                     if (current_version === remote_version) return
-                                    const path = shell.breeze.data_directory() + '/shell_new.dll'
+                                    const shellPath = shell.breeze.data_directory() + '/shell.dll'
+                                    const shellOldPath = shell.breeze.data_directory() + '/shell_old.dll'
                                     const url = PLUGIN_SOURCES[current_source] + data.shell.path
+                                    
                                     upd.set_data({
                                         name: t('更新中...'),
                                         icon_svg: ICON_REPAIR,
                                         disabled: true
                                     })
-                                    shell.network.download_async(url, path, () => {
-                                        upd.set_data({
-                                            name: t('新版本已下载，将于下次重启资源管理器生效'),
-                                            icon_svg: ICON_CHECKED,
-                                            disabled: true
+                                    
+                                    const downloadNewShell = () => {
+                                        shell.network.download_async(url, shellPath, () => {
+                                            upd.set_data({
+                                                name: t('新版本已下载，将于下次重启资源管理器生效'),
+                                                icon_svg: ICON_CHECKED,
+                                                disabled: true
+                                            })
+                                        }, e => {
+                                            upd.set_data({
+                                                name: t('更新失败: ') + e,
+                                                icon_svg: ICON_REPAIR,
+                                                disabled: false
+                                            })
                                         })
-                                    }, e => {
+                                    }
+                                    
+                                    try {
+                                        if (shell.fs.exists(shellPath)) {
+                                            if (shell.fs.exists(shellOldPath)) {
+                                                try {
+                                                    shell.fs.remove(shellOldPath)
+                                                    shell.fs.rename(shellPath, shellOldPath)
+                                                    downloadNewShell()
+                                                } catch (e) {
+                                                    upd.set_data({
+                                                        name: t('更新失败: ') + '无法移动当前文件',
+                                                        icon_svg: ICON_REPAIR,
+                                                        disabled: false
+                                                    })
+                                                }
+                                            } else {
+                                                shell.fs.rename(shellPath, shellOldPath)
+                                                downloadNewShell()
+                                            }
+                                        } else {
+                                            downloadNewShell()
+                                        }
+                                    } catch (e) {
                                         upd.set_data({
                                             name: t('更新失败: ') + e,
                                             icon_svg: ICON_REPAIR,
                                             disabled: false
                                         })
-                                    })
+                                    }
                                 },
                                 submenu(sub) {
                                     for (const line of splitIntoLines(data.shell.changelog, 40)) {

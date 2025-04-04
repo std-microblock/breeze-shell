@@ -153,7 +153,7 @@ bool IsInjected(DWORD targetPID, std::wstring &dllPath) {
   return false;
 }
 
-static std::wstring dllPath = GetModuleDirectory() + L"\\shell.dll";
+static std::wstring dllPath;
 
 int NewExplorerProcessAndInject() {
   GetDebugPrivilege();
@@ -181,11 +181,6 @@ int NewExplorerProcessAndInject() {
     return 1;
   }
 
-  auto asanPath = std::filesystem::path(dllPath).parent_path() /
-                  "clang_rt.asan_dynamic-x86_64.dll";
-  if (std::filesystem::exists(asanPath)) {
-    InjectToPID(targetPID, asanPath.wstring());
-  }
   InjectToPID(targetPID, dllPath);
   return 0;
 }
@@ -368,21 +363,6 @@ struct switch_lang_btn : public button_widget {
   }
 };
 
-void TryUpdateDll() {
-  std::wstring dllPathNew = data_directory().wstring() + L"\\shell_new.dll";
-  if (fs::exists(dllPathNew)) {
-    std::cout << "New DLL found, trying to update." << std::endl;
-    try {
-      std::filesystem::copy_file(dllPathNew, dllPath,
-                                 fs::copy_options::overwrite_existing);
-      std::filesystem::remove(dllPathNew);
-      std::cout << "DLL updated successfully." << std::endl;
-    } catch (std::exception &e) {
-      std::cerr << "Error updating DLL: " << e.what() << std::endl;
-    }
-  }
-}
-
 void InjectAllConsistent() {
   GetDebugPrivilege();
   std::vector<DWORD> injected;
@@ -391,7 +371,6 @@ void InjectAllConsistent() {
 
     for (DWORD pid : pids) {
       if (!std::ranges::contains(injected, pid) && !IsInjected(pid, dllPath)) {
-        TryUpdateDll();
         InjectToPID(pid, dllPath);
         injected.push_back(pid);
       }
@@ -571,6 +550,52 @@ void StartInjectUI() {
   rt.start_loop();
 }
 
+void UpdateDllPath() {
+  auto dllPathNew = data_directory().wstring() + L"\\shell.dll";
+  auto dllPathPacked = GetModuleDirectory() + L"\\shell.dll";
+
+  auto updateDllFile = [&](const std::wstring &packed,
+                           const std::wstring &target) {
+    std::error_code ec;
+    fs::remove(target, ec);
+
+    if (ec) {
+      std::wstring oldPath = fs::path(target).parent_path() / L"shell_old.dll";
+      if (fs::exists(oldPath)) {
+        fs::remove(oldPath, ec);
+      }
+
+      if (!ec) {
+        fs::rename(target, oldPath, ec);
+        if (!ec) {
+          fs::copy(packed, target, fs::copy_options::overwrite_existing);
+        }
+      }
+    } else {
+      fs::copy(packed, target, fs::copy_options::overwrite_existing);
+    }
+  };
+
+  if (fs::exists(dllPathNew)) {
+    if (fs::exists(dllPathPacked)) {
+      auto packedTime = fs::last_write_time(dllPathPacked);
+      auto newTime = fs::last_write_time(dllPathNew);
+
+      if (packedTime > newTime) {
+        updateDllFile(dllPathPacked, dllPathNew);
+      }
+    }
+  } else {
+    fs::create_directories(fs::path(dllPathNew).parent_path());
+
+    if (fs::exists(dllPathPacked)) {
+      fs::copy(dllPathPacked, dllPathNew);
+    }
+  }
+
+  dllPath = dllPathNew;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nShowCmd) {
   int argc = 0;
@@ -581,11 +606,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     args.push_back(argv[x]);
   }
 
+  UpdateDllPath();
+
   if (args.size() <= 1) {
-    AttachConsole(ATTACH_PARENT_PROCESS);
-    freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stderr);
-    freopen("CONIN$", "r", stdin);
+    if (false) {
+      AttachConsole(ATTACH_PARENT_PROCESS);
+      freopen("CONOUT$", "w", stdout);
+      freopen("CONOUT$", "w", stderr);
+      freopen("CONIN$", "r", stdin);
+    }
 
     try {
       std::println("breeze-shell injector started.");
