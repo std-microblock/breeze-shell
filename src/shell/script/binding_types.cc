@@ -1058,4 +1058,13 @@ fs::watch(std::string path, std::function<void(std::string, int)> callback) {
 
   return [dispose] { *dispose = true; };
 }
+std::shared_ptr<mb_shell::js::menu_controller>
+menu_controller::create_detached() {
+  auto m = std::make_shared<menu_widget>();
+  auto ctl = std::make_shared<menu_controller>(m);
+  ctl->$menu_detached = m; // to keep it alive
+  m->parent = m.get();
+
+  return ctl;
+}
 } // namespace mb_shell::js

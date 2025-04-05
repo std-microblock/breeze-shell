@@ -36,7 +36,6 @@ struct folder_view_folder_item {
   void *$render_target;
   int index;
   std::string parent_path;
-  
 
   std::string name();
   std::string modify_date();
@@ -361,6 +360,7 @@ struct menu_info_basic_js {
 
 struct menu_controller {
   std::weak_ptr<mb_shell::menu_widget> $menu;
+  std::shared_ptr<mb_shell::menu_widget> $menu_detached;
 
   // 检查菜单控制器是否有效
   // Check if menu controller is valid
@@ -443,6 +443,8 @@ struct menu_controller {
   append_menu_after(mb_shell::js::js_menu_data data, int after_index) {
     return append_item_after(data, after_index);
   }
+
+  static std::shared_ptr<mb_shell::js::menu_controller> create_detached();
 
   ~menu_controller();
 };
@@ -605,12 +607,12 @@ struct fs {
   // 监测文件/文件夹变动
   // Watch file/folder changes
   // added 0
-	// removed 1
+  // removed 1
   // modified 2
-	// renamed_old 3
-	// renamed_new 4
-  static std::function<void()> watch(std::string path,
-                    std::function<void(std::string, int)> callback);
+  // renamed_old 3
+  // renamed_new 4
+  static std::function<void()>
+  watch(std::string path, std::function<void(std::string, int)> callback);
 };
 
 struct breeze {
