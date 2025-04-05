@@ -1054,10 +1054,6 @@ fs::watch(std::string path, std::function<void(std::string, int)> callback) {
     } catch (std::exception &e) {
       std::cerr << "Error in file watch callback: " << e.what() << std::endl;
     }
-
-    if (*dispose) {
-      delete fw;
-    }
   });
 
   return [dispose] { *dispose = true; };
