@@ -131,8 +131,9 @@ void mb_shell::fix_win11_menu::install() {
                   next->getOperand(0).template holds<zasm::Mem>()) {
                 insn.ptr()
                     .reassembly([](auto a) {
-                      a.mov(zasm::x86::ecx, 0x10);
-                      a.mov(zasm::x86::eax, 0xffff);
+                      a.mov(zasm::x86::eax, 0x0);
+                      a.bts(zasm::x86::edi, 0x8);
+                      a.nop();
                       a.nop();
                       a.nop();
                     })
