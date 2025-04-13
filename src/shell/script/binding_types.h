@@ -630,6 +630,14 @@ struct win32 {
   static size_t load_library(std::string path);
   static std::optional<std::string> env(std::string name);
   static size_t load_file_icon(std::string path);
+
+  static int32_t reg_get_dword(std::string key, std::string name);
+  static std::string reg_get_string(std::string key, std::string name);
+  static int64_t reg_get_qword(std::string key, std::string name);
+  static void reg_set_dword(std::string key, std::string name, int32_t value);
+  static void reg_set_string(std::string key, std::string name,
+                             std::string value);
+  static void reg_set_qword(std::string key, std::string name, int64_t value);
 };
 
 struct infra {

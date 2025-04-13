@@ -1067,4 +1067,134 @@ menu_controller::create_detached() {
 
   return ctl;
 }
+int32_t win32::reg_get_dword(std::string key, std::string name) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+    return 0;
+  }
+  
+  DWORD value = 0;
+  DWORD dataSize = sizeof(DWORD);
+  DWORD dataType = REG_DWORD;
+  
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
+                      reinterpret_cast<LPBYTE>(&value), &dataSize) != ERROR_SUCCESS) {
+    RegCloseKey(hKey);
+    return 0;
+  }
+  
+  RegCloseKey(hKey);
+  return static_cast<int32_t>(value);
+}
+
+std::string win32::reg_get_string(std::string key, std::string name) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+    return "";
+  }
+  
+  DWORD dataSize = 0;
+  DWORD dataType = REG_SZ;
+  
+  // Get the size needed
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, nullptr, &dataSize) != ERROR_SUCCESS) {
+    RegCloseKey(hKey);
+    return "";
+  }
+  
+  std::vector<wchar_t> buffer(dataSize / sizeof(wchar_t) + 1, 0);
+  
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
+                      reinterpret_cast<LPBYTE>(buffer.data()), &dataSize) != ERROR_SUCCESS) {
+    RegCloseKey(hKey);
+    return "";
+  }
+  
+  RegCloseKey(hKey);
+  return wstring_to_utf8(buffer.data());
+}
+
+int64_t win32::reg_get_qword(std::string key, std::string name) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+    return 0;
+  }
+  
+  ULONGLONG value = 0;
+  DWORD dataSize = sizeof(ULONGLONG);
+  DWORD dataType = REG_QWORD;
+  
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
+                      reinterpret_cast<LPBYTE>(&value), &dataSize) != ERROR_SUCCESS) {
+    RegCloseKey(hKey);
+    return 0;
+  }
+  
+  RegCloseKey(hKey);
+  return static_cast<int64_t>(value);
+}
+
+void win32::reg_set_dword(std::string key, std::string name, int32_t value) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  
+  // Create the key if it doesn't exist
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
+                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+    return;
+  }
+  
+  DWORD dwValue = static_cast<DWORD>(value);
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_DWORD, 
+                reinterpret_cast<const BYTE*>(&dwValue), sizeof(DWORD));
+  
+  RegCloseKey(hKey);
+}
+
+void win32::reg_set_string(std::string key, std::string name, std::string value) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  std::wstring wvalue = utf8_to_wstring(value);
+  
+  // Create the key if it doesn't exist
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
+                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+    return;
+  }
+  
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_SZ, 
+                reinterpret_cast<const BYTE*>(wvalue.c_str()), 
+                static_cast<DWORD>((wvalue.size() + 1) * sizeof(wchar_t)));
+  
+  RegCloseKey(hKey);
+}
+
+void win32::reg_set_qword(std::string key, std::string name, int64_t value) {
+  HKEY hKey;
+  std::wstring wkey = utf8_to_wstring(key);
+  std::wstring wname = utf8_to_wstring(name);
+  
+  // Create the key if it doesn't exist
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
+                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+    return;
+  }
+  
+  ULONGLONG qwValue = static_cast<ULONGLONG>(value);
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_QWORD, 
+                reinterpret_cast<const BYTE*>(&qwValue), sizeof(ULONGLONG));
+  
+  RegCloseKey(hKey);
+}
 } // namespace mb_shell::js

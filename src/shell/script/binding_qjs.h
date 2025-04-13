@@ -910,6 +910,12 @@ template<> struct js_bind<mb_shell::js::win32> {
                 .static_fun<&mb_shell::js::win32::load_library>("load_library")
                 .static_fun<&mb_shell::js::win32::env>("env")
                 .static_fun<&mb_shell::js::win32::load_file_icon>("load_file_icon")
+                .static_fun<&mb_shell::js::win32::reg_get_dword>("reg_get_dword")
+                .static_fun<&mb_shell::js::win32::reg_get_string>("reg_get_string")
+                .static_fun<&mb_shell::js::win32::reg_get_qword>("reg_get_qword")
+                .static_fun<&mb_shell::js::win32::reg_set_dword>("reg_set_dword")
+                .static_fun<&mb_shell::js::win32::reg_set_string>("reg_set_string")
+                .static_fun<&mb_shell::js::win32::reg_set_qword>("reg_set_qword")
             ;
     }
 
