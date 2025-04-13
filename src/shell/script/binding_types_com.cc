@@ -23,6 +23,8 @@
 #include <shobjidl_core.h>
 #include <stdio.h>
 
+#include "../logger.h"
+
 #include <thread>
 #include <unordered_map>
 #include <windows.h>
@@ -122,8 +124,11 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
   static auto browsers = GetIShellBrowsers();
   auto GetIShellBrowser = [&](HWND hwnd) -> CComPtr<IShellBrowser> {
     for (auto &[h, b] : browsers) {
-      if (h == hwnd)
+      CComPtr<IShellView> psv;
+      if (h == hwnd && SUCCEEDED(b->QueryActiveShellView(&psv))) {
+        mb_shell::dbgout("Found: {} {}", (void *)h, (void *)b.p);
         return b;
+      }
     }
     return nullptr;
   };
@@ -206,13 +211,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
       std::string class_name = className;
       if (class_name == "SysListView32" || class_name == "DirectUIHWND" ||
           class_name == "SHELLDLL_DefView" || class_name == "CabinetWClass") {
-        std::printf("Target window is a folder view (hwnd: %p)\n", hWnd);
+        dbgout("Target window is a folder view (hwnd: {})\n", (void *)hWnd);
         // Check if the foreground window is an Explorer window
 
         if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
           IShellView *psv;
           perf.end("IShellBrowser - GetIShellBrowserRecursive");
-          std::printf("shell browser: %p\n", psb);
+          dbgout("shell browser: {}\n", (void *)psb);
           if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
             IFolderView *pfv;
             if (SUCCEEDED(
@@ -273,13 +278,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
             psv->Release();
           }
         } else {
-          std::printf("Failed to get IShellBrowser\n");
+          dbgout("Failed to get IShellBrowser");
         }
       }
     }
 
   } __except (EXCEPTION_CONTINUE_EXECUTION) {
-    std::printf("Get IShellBrowser crashed!\n");
+    dbgout("Get IShellBrowser crashed!");
   }
   perf.end("IShellBrowser");
 
