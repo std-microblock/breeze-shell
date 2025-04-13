@@ -10,8 +10,12 @@
 
 namespace mb_shell {
 void append_debug_string(const std::string &str) {
+  static std::mutex mutex;
   static std::ofstream file(config::data_directory() / "debug.log",
                             std::ios::app);
+
+  std::lock_guard<std::mutex> lock(mutex);
+
   file << str;
   file.flush();
 
