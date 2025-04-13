@@ -32,7 +32,7 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
   measureItem.CtlType = ODT_MENU;
   measureItem.CtlID = 0;
   measureItem.itemID = menuItemInfo->wID;
-  measureItem.itemData = reinterpret_cast<ULONG_PTR>(menuItemInfo->dwItemData);
+  measureItem.itemData = (ULONG_PTR)(menuItemInfo->dwItemData);
 
   SendMessageW(hwnd, WM_MEASUREITEM, 0,
                 reinterpret_cast<LPARAM>(&measureItem));
@@ -67,7 +67,7 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
   drawItem.hwndItem = (HWND)menuItemInfo->hSubMenu;
   drawItem.hDC = memDC;
   drawItem.rcItem = rcItem;
-  drawItem.itemData = reinterpret_cast<ULONG_PTR>(menuItemInfo->dwItemData);
+  drawItem.itemData = (ULONG_PTR)(menuItemInfo->dwItemData);
 
   SendMessageW(hwnd, WM_DRAWITEM, 0,
                 reinterpret_cast<LPARAM>(&drawItem)); // 发送绘制消息
