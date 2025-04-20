@@ -916,6 +916,7 @@ template<> struct js_bind<mb_shell::js::win32> {
                 .static_fun<&mb_shell::js::win32::reg_set_dword>("reg_set_dword")
                 .static_fun<&mb_shell::js::win32::reg_set_string>("reg_set_string")
                 .static_fun<&mb_shell::js::win32::reg_set_qword>("reg_set_qword")
+                .static_fun<&mb_shell::js::win32::is_key_down>("is_key_down")
             ;
     }
 

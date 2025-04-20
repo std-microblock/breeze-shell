@@ -638,6 +638,8 @@ struct win32 {
   static void reg_set_string(std::string key, std::string name,
                              std::string value);
   static void reg_set_qword(std::string key, std::string name, int64_t value);
+
+  static bool is_key_down(std::string key);
 };
 
 struct infra {

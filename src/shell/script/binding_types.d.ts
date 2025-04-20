@@ -1337,6 +1337,14 @@ export class win32 {
   */
   static reg_set_qword: ((arg1: string, arg2: string, arg3: int64_t) => void)
             
+	
+/**
+  * 
+  * @param key: string
+  * @returns boolean
+  */
+  static is_key_down: ((arg1: string) => boolean)
+            
 }
     
 export class infra {

@@ -1071,21 +1071,23 @@ int32_t win32::reg_get_dword(std::string key, std::string name) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
-  
-  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) !=
+      ERROR_SUCCESS) {
     return 0;
   }
-  
+
   DWORD value = 0;
   DWORD dataSize = sizeof(DWORD);
   DWORD dataType = REG_DWORD;
-  
-  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
-                      reinterpret_cast<LPBYTE>(&value), &dataSize) != ERROR_SUCCESS) {
+
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType,
+                       reinterpret_cast<LPBYTE>(&value),
+                       &dataSize) != ERROR_SUCCESS) {
     RegCloseKey(hKey);
     return 0;
   }
-  
+
   RegCloseKey(hKey);
   return static_cast<int32_t>(value);
 }
@@ -1094,28 +1096,31 @@ std::string win32::reg_get_string(std::string key, std::string name) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
-  
-  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) !=
+      ERROR_SUCCESS) {
     return "";
   }
-  
+
   DWORD dataSize = 0;
   DWORD dataType = REG_SZ;
-  
+
   // Get the size needed
-  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, nullptr, &dataSize) != ERROR_SUCCESS) {
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, nullptr,
+                       &dataSize) != ERROR_SUCCESS) {
     RegCloseKey(hKey);
     return "";
   }
-  
+
   std::vector<wchar_t> buffer(dataSize / sizeof(wchar_t) + 1, 0);
-  
-  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
-                      reinterpret_cast<LPBYTE>(buffer.data()), &dataSize) != ERROR_SUCCESS) {
+
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType,
+                       reinterpret_cast<LPBYTE>(buffer.data()),
+                       &dataSize) != ERROR_SUCCESS) {
     RegCloseKey(hKey);
     return "";
   }
-  
+
   RegCloseKey(hKey);
   return wstring_to_utf8(buffer.data());
 }
@@ -1124,21 +1129,23 @@ int64_t win32::reg_get_qword(std::string key, std::string name) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
-  
-  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, KEY_READ, &hKey) !=
+      ERROR_SUCCESS) {
     return 0;
   }
-  
+
   ULONGLONG value = 0;
   DWORD dataSize = sizeof(ULONGLONG);
   DWORD dataType = REG_QWORD;
-  
-  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType, 
-                      reinterpret_cast<LPBYTE>(&value), &dataSize) != ERROR_SUCCESS) {
+
+  if (RegQueryValueExW(hKey, wname.c_str(), nullptr, &dataType,
+                       reinterpret_cast<LPBYTE>(&value),
+                       &dataSize) != ERROR_SUCCESS) {
     RegCloseKey(hKey);
     return 0;
   }
-  
+
   RegCloseKey(hKey);
   return static_cast<int64_t>(value);
 }
@@ -1147,36 +1154,39 @@ void win32::reg_set_dword(std::string key, std::string name, int32_t value) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
-  
+
   // Create the key if it doesn't exist
-  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
-                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr,
+                      REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey,
+                      nullptr) != ERROR_SUCCESS) {
     return;
   }
-  
+
   DWORD dwValue = static_cast<DWORD>(value);
-  RegSetValueExW(hKey, wname.c_str(), 0, REG_DWORD, 
-                reinterpret_cast<const BYTE*>(&dwValue), sizeof(DWORD));
-  
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_DWORD,
+                 reinterpret_cast<const BYTE *>(&dwValue), sizeof(DWORD));
+
   RegCloseKey(hKey);
 }
 
-void win32::reg_set_string(std::string key, std::string name, std::string value) {
+void win32::reg_set_string(std::string key, std::string name,
+                           std::string value) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
   std::wstring wvalue = utf8_to_wstring(value);
-  
+
   // Create the key if it doesn't exist
-  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
-                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr,
+                      REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey,
+                      nullptr) != ERROR_SUCCESS) {
     return;
   }
-  
-  RegSetValueExW(hKey, wname.c_str(), 0, REG_SZ, 
-                reinterpret_cast<const BYTE*>(wvalue.c_str()), 
-                static_cast<DWORD>((wvalue.size() + 1) * sizeof(wchar_t)));
-  
+
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_SZ,
+                 reinterpret_cast<const BYTE *>(wvalue.c_str()),
+                 static_cast<DWORD>((wvalue.size() + 1) * sizeof(wchar_t)));
+
   RegCloseKey(hKey);
 }
 
@@ -1184,17 +1194,86 @@ void win32::reg_set_qword(std::string key, std::string name, int64_t value) {
   HKEY hKey;
   std::wstring wkey = utf8_to_wstring(key);
   std::wstring wname = utf8_to_wstring(name);
-  
+
   // Create the key if it doesn't exist
-  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr, 
-                     REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, wkey.c_str(), 0, nullptr,
+                      REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey,
+                      nullptr) != ERROR_SUCCESS) {
     return;
   }
-  
+
   ULONGLONG qwValue = static_cast<ULONGLONG>(value);
-  RegSetValueExW(hKey, wname.c_str(), 0, REG_QWORD, 
-                reinterpret_cast<const BYTE*>(&qwValue), sizeof(ULONGLONG));
-  
+  RegSetValueExW(hKey, wname.c_str(), 0, REG_QWORD,
+                 reinterpret_cast<const BYTE *>(&qwValue), sizeof(ULONGLONG));
+
   RegCloseKey(hKey);
+}
+bool win32::is_key_down(std::string key) {
+  auto key_lower =
+      key | std::views::transform(::tolower) | std::ranges::to<std::string>();
+
+  constexpr auto key_map =
+      std::to_array<std::pair<const char *, int>>({{"ctrl", VK_CONTROL},
+                                                   {"shift", VK_SHIFT},
+                                                   {"alt", VK_MENU},
+                                                   {"space", VK_SPACE},
+                                                   {"enter", VK_RETURN},
+                                                   {"esc", VK_ESCAPE},
+                                                   {"tab", VK_TAB},
+                                                   {"backspace", VK_BACK},
+                                                   {"delete", VK_DELETE},
+                                                   {"left", VK_LEFT},
+                                                   {"right", VK_RIGHT},
+                                                   {"up", VK_UP},
+                                                   {"down", VK_DOWN},
+                                                   {"f1", VK_F1},
+                                                   {"f2", VK_F2},
+                                                   {"f3", VK_F3},
+                                                   {"f4", VK_F4},
+                                                   {"f5", VK_F5},
+                                                   {"f6", VK_F6},
+                                                   {"f7", VK_F7},
+                                                   {"f8", VK_F8},
+                                                   {"f9", VK_F9},
+                                                   {"f10", VK_F10},
+                                                   {"f11", VK_F11},
+                                                   {"f12", VK_F12},
+                                                   {"a", 'A'},
+                                                   {"b", 'B'},
+                                                   {"c", 'C'},
+                                                   {"d", 'D'},
+                                                   {"e", 'E'},
+                                                   {"f", 'F'},
+                                                   {"g", 'G'},
+                                                   {"h", 'H'},
+                                                   {"i", 'I'},
+                                                   {"j", 'J'},
+                                                   {"k", 'K'},
+                                                   {"l", 'L'},
+                                                   {"m", 'M'},
+                                                   {"n", 'N'},
+                                                   {"o", 'O'},
+                                                   {"p", 'P'},
+                                                   {"q", 'Q'},
+                                                   {"r", 'R'},
+                                                   {"s", 'S'},
+                                                   {"t", 'T'},
+                                                   {"u", 'U'},
+                                                   {"v", 'V'},
+                                                   {"w", 'W'},
+                                                   {"x", 'X'},
+                                                   {"y", 'Y'},
+                                                   {"z", 'Z'}});
+
+  auto keycode = std::ranges::find_if(
+      key_map, [key_lower](const auto &pair) {
+        return key_lower == pair.first;
+      });
+
+  if (keycode != key_map.end()) {
+    return GetAsyncKeyState(keycode->second) & 0x8000;
+  }
+
+  return false;
 }
 } // namespace mb_shell::js
