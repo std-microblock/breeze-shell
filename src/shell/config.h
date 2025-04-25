@@ -61,6 +61,7 @@ struct config {
     bool vsync = true;
     bool ignore_owner_draw = true;
     bool reverse_if_open_to_up = true;
+    bool experimental_ownerdraw_support = false;
 
     // debug purpose only
     bool search_large_dwItemData_range = false;

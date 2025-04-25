@@ -130,7 +130,7 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       continue;
     }
 
-    if (info.fType & MFT_OWNERDRAW) {
+    if ((info.fType & MFT_OWNERDRAW) && config::current->context_menu.experimental_ownerdraw_support) {
       auto od = getBitmapFromOwnerDraw(&info, hWnd);
       if (od.width && od.height) {
         item.owner_draw = od;
