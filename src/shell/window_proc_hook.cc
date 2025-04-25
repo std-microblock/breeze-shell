@@ -9,7 +9,7 @@ static std::unordered_set<HWND> hooked_windows;
 
 void window_proc_hook::install(void *hwnd) {
   if (installed)
-    return;
+    uninstall();
   this->hwnd = hwnd;
   this->original_proc = (void *)GetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC);
 
