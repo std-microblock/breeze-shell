@@ -24,6 +24,9 @@
 
 #include "FileWatch.hpp"
 
+#include "wintoastlib.h"
+using namespace WinToastLib;
+
 std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
@@ -1265,15 +1268,91 @@ bool win32::is_key_down(std::string key) {
                                                    {"y", 'Y'},
                                                    {"z", 'Z'}});
 
-  auto keycode = std::ranges::find_if(
-      key_map, [key_lower](const auto &pair) {
-        return key_lower == pair.first;
-      });
+  auto keycode = std::ranges::find_if(key_map, [key_lower](const auto &pair) {
+    return key_lower == pair.first;
+  });
 
   if (keycode != key_map.end()) {
     return GetAsyncKeyState(keycode->second) & 0x8000;
   }
 
   return false;
+}
+
+struct WinToastEventHandler : public IWinToastHandler {
+  std::function<void(int)> on_activate = [](int) {};
+  std::function<void(WinToastDismissalReason)> on_dismiss =
+      [](WinToastDismissalReason) {};
+  void toastActivated() const override {}
+  void toastActivated(int actionIndex) const override {
+    on_activate(actionIndex);
+  }
+  void toastActivated(const char *) const override {}
+
+  void toastDismissed(WinToastDismissalReason state) const override {
+    on_dismiss(state);
+  }
+
+  void toastFailed() const override {}
+} winToastEventHandler;
+
+static void wintoast_init() {
+  static bool initialized = false;
+  if (initialized)
+    return;
+  initialized = true;
+  WinToast::instance()->setAppName(L"Breeze");
+  WinToast::instance()->setAppUserModelId(L"breeze-shell");
+  WinToast::instance()->initialize();
+}
+
+void notification::send_basic(std::string message) {
+  wintoast_init();
+
+  WinToastTemplate templ(WinToastTemplate::ImageAndText02);
+  templ.setTextField(utf8_to_wstring(message), WinToastTemplate::FirstLine);
+  WinToast::instance()->showToast(templ, &winToastEventHandler);
+}
+void notification::send_with_image(std::string message, std::string icon_path) {
+  wintoast_init();
+
+  WinToastTemplate templ(WinToastTemplate::ImageAndText02);
+  templ.setTextField(utf8_to_wstring(message), WinToastTemplate::FirstLine);
+  templ.setImagePath(utf8_to_wstring(icon_path));
+  WinToast::instance()->showToast(templ, &winToastEventHandler);
+}
+void notification::send_title_text(std::string title, std::string message,
+                            std::string image_path) {
+  wintoast_init();
+  WinToastTemplate templ(WinToastTemplate::ImageAndText02);
+  templ.setTextField(utf8_to_wstring(title), WinToastTemplate::FirstLine);
+  templ.setTextField(utf8_to_wstring(message), WinToastTemplate::SecondLine);
+  if (!image_path.empty())
+    templ.setImagePath(utf8_to_wstring(image_path));
+  WinToast::instance()->showToast(templ, &winToastEventHandler);
+}
+void notification::send_with_buttons(
+    std::string title, std::string message,
+    std::vector<std::pair<std::string, std::function<void()>>> buttons) {
+  wintoast_init();
+  WinToastTemplate templ(WinToastTemplate::Text02);
+  templ.setTextField(utf8_to_wstring(title), WinToastTemplate::FirstLine);
+  templ.setTextField(utf8_to_wstring(message), WinToastTemplate::SecondLine);
+
+  for (const auto &[button_text, callback] : buttons) {
+    templ.addAction(utf8_to_wstring(button_text));
+  }
+
+  auto* handler = new WinToastEventHandler();
+  handler->on_activate = [buttons, handler](int actionIndex) {
+    if (actionIndex >= 0 && actionIndex < buttons.size()) {
+      buttons[actionIndex].second();
+    }
+    delete handler;
+  };
+  handler->on_dismiss = [=](WinToastEventHandler::WinToastDismissalReason) {
+  };
+
+  WinToast::instance()->showToast(templ, handler);
 }
 } // namespace mb_shell::js

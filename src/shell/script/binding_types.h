@@ -642,6 +642,16 @@ struct win32 {
   static bool is_key_down(std::string key);
 };
 
+struct notification {
+  static void send_basic(std::string message);
+  static void send_with_image(std::string message, std::string path);
+  static void send_title_text(std::string title, std::string message,
+                              std::string image_path);
+  static void send_with_buttons(
+      std::string title, std::string message,
+      std::vector<std::pair<std::string, std::function<void()>>> buttons);
+};
+
 struct infra {
   static int setTimeout(std::function<void()> callback, int delay);
   static void clearTimeout(int id);

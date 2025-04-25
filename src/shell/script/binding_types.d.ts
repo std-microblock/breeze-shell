@@ -1347,6 +1347,42 @@ export class win32 {
             
 }
     
+export class notification {
+	
+	
+/**
+  * 
+  * @param message: string
+  * @returns void
+  */
+  static send_basic: ((arg1: string) => void)
+            
+	
+/**
+  * 
+  * @param message: string, path: string
+  * @returns void
+  */
+  static send_with_image: ((arg1: string, arg2: string) => void)
+            
+	
+/**
+  * 
+  * @param title: string, message: string, image_path: string
+  * @returns void
+  */
+  static send_title_text: ((arg1: string, arg2: string, arg3: string) => void)
+            
+	
+/**
+  * 
+  * @param title: string, message: string, buttons: Array<pair<string, (() => void)>>
+  * @returns void
+  */
+  static send_with_buttons: ((arg1: string, arg2: string, arg3: Array<pair<string, (() => void)>>) => void)
+            
+}
+    
 export class infra {
 	
 	

@@ -15,7 +15,7 @@ includes("dependencies/quickjs-ng.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp")
+add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast")
 
 target("ui")
     set_kind("static")
@@ -40,7 +40,7 @@ target("ui_test")
 
 target("shell")
     set_kind("shared")
-    add_packages("blook", "quickjs-ng", "reflect-cpp")
+    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast")
     add_deps("ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {

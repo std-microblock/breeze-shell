@@ -922,6 +922,32 @@ template<> struct js_bind<mb_shell::js::win32> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::notification> {
+    static mb_shell::js::notification unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::notification obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::notification &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::notification> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::notification>("notification")
+            .constructor<>()
+                .static_fun<&mb_shell::js::notification::send_basic>("send_basic")
+                .static_fun<&mb_shell::js::notification::send_with_image>("send_with_image")
+                .static_fun<&mb_shell::js::notification::send_title_text>("send_title_text")
+                .static_fun<&mb_shell::js::notification::send_with_buttons>("send_with_buttons")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::infra> {
     static mb_shell::js::infra unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::infra obj;
@@ -995,6 +1021,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze>::bind(mod);
 
     js_bind<mb_shell::js::win32>::bind(mod);
+
+    js_bind<mb_shell::js::notification>::bind(mod);
 
     js_bind<mb_shell::js::infra>::bind(mod);
 
