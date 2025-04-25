@@ -53,6 +53,7 @@ const config_directory_main = shell.breeze.data_directory() + '/config/';
 
 const config_dir_watch_callbacks = new Set();
 
+shell.fs.mkdir(config_directory_main)
 shell.fs.watch(config_directory_main, (event, filename) => {
     for (const callback of config_dir_watch_callbacks) {
         callback(event, filename)
