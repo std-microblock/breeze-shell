@@ -15,11 +15,13 @@ namespace mb_shell {
         std::vector<std::function<void(void*, void*, size_t, size_t, size_t)>> hooks;
         std::queue<std::function<void()>> tasks;
 
+        void send_null();
         auto add_task(auto&& f) -> std::future<std::invoke_result_t<decltype(f)>> {
             using return_type = std::invoke_result_t<decltype(f)>;
             auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<decltype(f)>(f));
             std::future<return_type> res = task->get_future();
             tasks.emplace([task]() { (*task)(); });
+            send_null();
             return res;
         }
 

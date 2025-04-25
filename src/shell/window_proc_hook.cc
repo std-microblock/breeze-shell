@@ -46,4 +46,9 @@ window_proc_hook::~window_proc_hook() {
     uninstall();
   }
 }
+void window_proc_hook::send_null() {
+  if (hwnd) {
+    PostMessageW((HWND)hwnd, WM_NULL, 0, 0);
+  }
+}
 } // namespace mb_shell

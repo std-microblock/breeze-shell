@@ -13,6 +13,8 @@
 
 #include "../logger.h"
 
+#include "../entry.h"
+
 #include <consoleapi.h>
 #include <debugapi.h>
 #include <future>
@@ -34,8 +36,7 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
   measureItem.itemID = menuItemInfo->wID;
   measureItem.itemData = (ULONG_PTR)(menuItemInfo->dwItemData);
 
-  SendMessageW(hwnd, WM_MEASUREITEM, 0,
-                reinterpret_cast<LPARAM>(&measureItem));
+  SendMessageW(hwnd, WM_MEASUREITEM, 0, reinterpret_cast<LPARAM>(&measureItem));
 
   result.width = measureItem.itemWidth;
   result.height = measureItem.itemHeight;
@@ -70,7 +71,7 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
   drawItem.itemData = (ULONG_PTR)(menuItemInfo->dwItemData);
 
   SendMessageW(hwnd, WM_DRAWITEM, 0,
-                reinterpret_cast<LPARAM>(&drawItem)); // 发送绘制消息
+               reinterpret_cast<LPARAM>(&drawItem)); // 发送绘制消息
 
   result.bitmap = CreateCompatibleBitmap(hdc, result.width, result.height);
   if (!result.bitmap) {
@@ -130,7 +131,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       continue;
     }
 
-    if ((info.fType & MFT_OWNERDRAW) && config::current->context_menu.experimental_ownerdraw_support) {
+    if ((info.fType & MFT_OWNERDRAW) &&
+        config::current->context_menu.experimental_ownerdraw_support) {
       auto od = getBitmapFromOwnerDraw(&info, hWnd);
       if (od.width && od.height) {
         item.owner_draw = od;
@@ -149,9 +151,17 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     if (info.hSubMenu) {
       PostMessageW(hWnd, WM_INITMENUPOPUP,
                    reinterpret_cast<WPARAM>(info.hSubMenu), 0xFFFFFFFF);
-      item.submenu =
-          [data = menu::construct_with_hmenu(info.hSubMenu, hWnd, false)](
-              std::shared_ptr<menu_widget> mw) { mw->init_from_data(data); };
+      auto main_thread_id = GetCurrentThreadId();
+      item.submenu = [=](std::shared_ptr<menu_widget> mw) {
+        auto task = [&]() {
+          mw->init_from_data(
+              menu::construct_with_hmenu(info.hSubMenu, hWnd, false));
+        };
+        if (main_thread_id == GetCurrentThreadId())
+          task();
+        else
+          entry::main_window_loop_hook.add_task(task).wait();
+      };
     } else {
       item.action = [=]() mutable {
         menu_render::current.value()->selected_menu = info.wID;

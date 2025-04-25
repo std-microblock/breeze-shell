@@ -45,6 +45,7 @@ inline void setCurrentContext(JSContext *);
 inline JSContext *getContextFromWrapped(Context *);
 inline std::weak_ptr<Context> weakFromContext(JSContext *);
 
+void wait_with_msgloop(std::function<void()> f);
 /** Exception type.
  * Indicates that exception has occured in JS context.
  */
@@ -1853,6 +1854,7 @@ struct js_traits<std::function<R(Args...)>, int> {
       auto &ctx = Context::get(jsfun_obj.ctx);
       std::promise<std::expected<JSValue, exception>> promise;
       auto future = promise.get_future();
+
       auto work = [&]() {
         const int argc = sizeof...(Args);
         JSValue argv[std::max(1, argc)];
@@ -1874,6 +1876,7 @@ struct js_traits<std::function<R(Args...)>, int> {
         work();
       }
 
+      wait_with_msgloop([&future]() { future.wait(); });
       auto result = future.get();
       if (!result)
         throw result.error();
