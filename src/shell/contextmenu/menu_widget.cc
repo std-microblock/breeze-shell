@@ -422,7 +422,7 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   if (ctx.hovered_widgets->empty()) {
     glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH,
                         using_touchscreen ? GLFW_FALSE : GLFW_TRUE);
-                        
+
     if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
         GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
         GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
@@ -771,6 +771,9 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
 
   auto [x, y] = mouse_menu_widget_main::calculate_position(
       submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
+
+  if (auto parent = search_parent<menu_widget>())
+    y += *parent->scroll_top * ctx.rt.dpi_scale;
 
   x -= ctx.offset_x * ctx.rt.dpi_scale;
   y -= ctx.offset_y * ctx.rt.dpi_scale;

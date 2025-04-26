@@ -138,6 +138,16 @@ struct widget : std::enable_shared_from_this<widget> {
   widget* parent = nullptr;
   render_target *owner_rt = nullptr;
 
+  template<typename T> inline T* search_parent() {
+    auto p = parent;
+    while (p) {
+      if (auto t = dynamic_cast<T*>(p)) {
+        return t;
+      }
+      p = p->parent;
+    }
+    return nullptr;
+  }
   virtual void render(nanovg_context ctx);
   virtual void update(update_context &ctx);
   virtual ~widget() = default;
