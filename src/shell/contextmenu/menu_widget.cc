@@ -350,6 +350,21 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     bg_submenu->render(ctx2);
   }
   render_children(ctx2, rendering_submenus);
+
+  // scrollbar
+  if (height->dest() < actual_height) {
+    auto scrollbar_width = config::current->context_menu.theme.scrollbar_width;
+    auto scrollbar_height = height->dest() * height->dest() / actual_height;
+    auto scrollbar_x = width->dest() - scrollbar_width - 2 + *x;
+    auto scrollbar_y = *y - *scroll_top / (actual_height - height->dest()) *
+                                (height->dest() - scrollbar_height);
+
+    float c = menu_render::current.value()->light_color ? 0 : 1;
+    ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
+    ctx.fillRoundedRect(scrollbar_x, scrollbar_y, scrollbar_width,
+                        scrollbar_height,
+                        config::current->context_menu.theme.scrollbar_radius);
+  }
 }
 void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
