@@ -79,7 +79,8 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto paintX = *x + padding + width->dest() - right_icon_padding - icon_width;
+    auto paintX =
+        *x + padding + width->dest() - right_icon_padding - icon_width;
     auto paint2 = ctx.imagePattern(paintX, paintY, icon_width, icon_width, 0,
                                    icon_unfold_img->id, *opacity / 255.f);
     ctx.beginPath();
@@ -367,6 +368,15 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
 
   this->x->animate_to(0);
 }
+
+BOOL IsCursorVisible() {
+  CURSORINFO ci = {sizeof(CURSORINFO)};
+  if (GetCursorInfo(&ci)) {
+    return (ci.flags & CURSOR_SHOWING) != 0;
+  }
+  return FALSE;
+}
+
 mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
                                                          float x, float y)
     : widget(), anchor_x(x), anchor_y(y) {
@@ -392,8 +402,12 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
   }
   menu_wid->update(ctx);
 
+  auto using_touchscreen = !IsCursorVisible();
+
   if (ctx.hovered_widgets->empty()) {
-    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH,
+                        using_touchscreen ? GLFW_FALSE : GLFW_TRUE);
+                        
     if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
         GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
         GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
@@ -766,7 +780,7 @@ void mb_shell::menu_item_ownerdraw_widget::update(ui::update_context &ctx) {
 void mb_shell::menu_item_ownerdraw_widget::render(ui::nanovg_context ctx) {
   if (!img)
     img = ui::LoadBitmapImage(ctx, owner_draw.bitmap);
-  
+
   auto paint = ctx.imagePattern(*x, y->dest(), owner_draw.width,
                                 owner_draw.height, 0, img->id, 1);
 

@@ -94,6 +94,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
 
   rt->on_focus_changed = [](bool focused) {
     if (!focused) {
+      rt->hide_as_close();
     }
   };
 
