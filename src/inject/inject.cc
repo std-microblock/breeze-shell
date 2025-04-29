@@ -419,6 +419,8 @@ struct inject_all_switch : public button_widget {
       CloseHandle(event);
     }
 
+    restart_explorer();
+
     std::thread([this]() {
       Sleep(200);
       check_is_injecting_all();
