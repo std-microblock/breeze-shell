@@ -8,6 +8,7 @@
 
 #include "blook/blook.h"
 #include "blook/memo.h"
+#include "cpptrace/basic.hpp"
 #include "utils.h"
 #include "zasm/base/immediate.hpp"
 #include "zasm/x86/mnemonic.hpp"
@@ -21,6 +22,8 @@
 #pragma comment(lib, "ntdll")
 #include <string>
 #include <vector>
+
+#include "cpptrace/from_current.hpp"
 
 #define REG_KEY_PATH_LENGTH 1024
 
@@ -109,4 +112,70 @@ void mb_shell::fix_win11_menu::install() {
           return RegGetValueHook->call_trampoline<long>(
               hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
       });
+
+  // approch 2: patch the shell32.dll to predent the shift key is pressed
+  std::thread([=]() {
+    CPPTRACE_TRY {
+      if (auto shell32 = proc->module("shell32.dll")) {
+        // mov ecx, 10
+        // call GetKeyState/GetAsyncKeyState
+        auto disasm = shell32.value()->section(".text")->disassembly();
+
+        auto patch_area = [&](auto mem) {
+          for (auto it = mem.begin(); it != mem.end(); ++it) {
+            auto &insn = *it;
+            if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
+              if (insn->getOperand(0) == zasm::x86::ecx &&
+                  insn->getOperand(1).template holds<zasm::Imm>() &&
+                  insn->getOperand(1)
+                          .template get<zasm::Imm>()
+                          .template value<int>() == 0x10) {
+                auto &next = *std::next(it);
+                if (next->getMnemonic() == zasm::x86::Mnemonic::Call &&
+                    next->getOperand(0).template holds<zasm::Mem>()) {
+                  insn.ptr()
+                      .reassembly([](auto a) {
+                        a.mov(zasm::x86::ecx, 0x10);
+                        a.mov(zasm::x86::eax, 0xffff);
+                        a.nop();
+                        a.nop();
+                      })
+                      .patch();
+
+                  return true;
+                }
+              }
+            }
+          }
+
+          return false;
+        };
+
+        // the function to determine if show win10 menu or win11 menu calls
+        // SetMessageExtraInfo, so we use it as a hint
+        auto extraInfo =
+            GetProcAddress(LoadLibraryA("user32.dll"), "SetMessageExtraInfo");
+        for (auto &ins : disasm) {
+          if (ins->getMnemonic() == zasm::x86::Mnemonic::Call) {
+            auto xrefs = ins.xrefs();
+            if (xrefs.empty())
+              continue;
+            if (auto ptr = xrefs[0].try_read<void *>();
+                ptr.has_value() && ptr.value() == extraInfo) {
+              if (patch_area(ins.ptr()
+                                 .find_upwards({0x40, 0x55})
+                                 ->range_size(0x150)
+                                 .disassembly()))
+                break;
+            }
+          }
+        }
+      }
+    }
+    CPPTRACE_CATCH(...) {
+      std::println("Failed to patch shell32.dll for win11 menu fix:");
+
+      cpptrace::from_current_exception().print();
+    }
+  }).detach();
 }
