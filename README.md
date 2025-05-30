@@ -96,3 +96,4 @@ development. Install clangd plugin for full intellisense.
 #### Others
 - [@lipraty](https://github.com/lipraty) - Icon Design
 - [moudey/Shell](https://github.com/moudey/Shell) - Inspiration
+  (All code in this rewrite is ORIGINAL and UNRELATED to moudey/Shell!)
