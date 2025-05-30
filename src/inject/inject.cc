@@ -519,8 +519,6 @@ struct inject_all_switch : public button_widget {
       SetEvent(event);
       CloseHandle(event);
     }
-
-    restart_explorer();
   }
 
   void update_colors(bool is_active, bool is_hovered) override {
