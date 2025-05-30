@@ -78,7 +78,15 @@ void GetDebugPrivilege() {
   CloseHandle(hToken);
 }
 
+void ShowCrashDialog();
+
+constexpr int MAX_CRASH_COUNT = 3;
 int InjectToPID(int targetPID, std::wstring_view dllPath) {
+  static int crash_count = 0;
+
+  if (crash_count >= MAX_CRASH_COUNT) {
+    return 1;
+  }
 
   HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetPID);
   if (hProcess == NULL) {
@@ -118,8 +126,23 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
 
   WaitForSingleObject(hThread, INFINITE);
   CloseHandle(hThread);
-  VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
-  CloseHandle(hProcess);
+
+  std::thread([hProcess]() {
+    WaitForSingleObject(hProcess, INFINITE);
+    auto exitCode = 0;
+    if (!GetExitCodeProcess(hProcess, (LPDWORD)&exitCode)) {
+      std::cerr << "GetExitCodeProcess failed: " << GetLastError() << std::endl;
+    }
+    if (exitCode != 0) {
+      std::cerr << "Process exited with code: " << exitCode << std::endl;
+      if (++crash_count >= MAX_CRASH_COUNT) {
+        ShowCrashDialog();
+      }
+    } else {
+      crash_count = 0; // Reset crash count on successful injection
+    }
+    CloseHandle(hProcess);
+  }).detach();
 
   std::cout << "DLL injected successfully." << std::endl;
   return 0;
@@ -386,6 +409,7 @@ void InjectAllConsistent() {
 
 struct inject_all_switch : public button_widget {
   bool injecting_all = false;
+  std::chrono::steady_clock::time_point last_check;
   inject_all_switch() : button_widget(english ? "Inject All" : "全局注入") {
     check_is_injecting_all();
   }
@@ -420,11 +444,6 @@ struct inject_all_switch : public button_widget {
     }
 
     restart_explorer();
-
-    std::thread([this]() {
-      Sleep(200);
-      check_is_injecting_all();
-    }).detach();
   }
 
   void update_colors(bool is_active, bool is_hovered) override {
@@ -436,6 +455,12 @@ struct inject_all_switch : public button_widget {
       }
     } else {
       button_widget::update_colors(is_active, is_hovered);
+    }
+
+    if (std::chrono::steady_clock::now() - last_check >
+        std::chrono::seconds(1)) {
+      check_is_injecting_all();
+      last_check = std::chrono::steady_clock::now();
     }
   }
 };
@@ -546,10 +571,111 @@ void StartInjectUI() {
     return;
   }
   nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
-
   rt.root->emplace_child<injector_ui_main>();
-
   rt.start_loop();
+}
+
+void ShowCrashDialog() {
+  auto show_by_messagebox = []() {
+    MessageBoxW(
+        NULL,
+        english
+            ? L"Explorer has crashed too many times after injection.\nBreeze "
+              L"Shell will now exit to prevent further crashes."
+            : L"注入后资源管理器多次崩溃。\nBreeze Shell "
+              L"将退出以防止进一步崩溃。",
+        english ? L"Breeze Shell Error" : L"Breeze Shell 错误",
+        MB_ICONERROR | MB_OK);
+  };
+  if (auto r = ui::render_target::init_global(); !r) {
+    std::cerr << "Failed to initialize global render target." << std::endl;
+    show_by_messagebox();
+    return;
+  }
+
+  ui::render_target rt;
+  rt.acrylic = 0.1;
+  rt.transparent = true;
+  rt.width = 400;
+  rt.height = 230;
+  rt.title = "";
+
+  if (auto r = rt.init(); !r) {
+    std::cerr << "Failed to initialize render target." << std::endl;
+    show_by_messagebox();
+    return;
+  }
+
+  nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+
+  // Create error UI
+  auto error_ui = rt.root->emplace_child<ui::widget_flex>();
+  error_ui->gap = 15;
+  error_ui->x->reset_to(20);
+  error_ui->y->reset_to(0);
+
+  // Icon
+  error_ui->emplace_child<breeze_icon>();
+
+  // Error message
+  auto msg_box = error_ui->emplace_child<ui::widget_flex>();
+  msg_box->gap = 10;
+
+  auto title = msg_box->emplace_child<ui::text_widget>();
+  title->text = "Breeze Shell Error";
+  title->font_size = 20;
+  title->color.reset_to({1, 0.4, 0.4, 1});
+
+  auto message = msg_box->emplace_child<ui::text_widget>();
+  message->text = english
+                      ? "Explorer has crashed multiple times after injection."
+                      : "资源管理器在注入后多次崩溃，这可能是 Breeze 的问题。";
+  message->font_size = 14;
+  message->color.reset_to({1, 1, 1, 0.9});
+
+  auto suggestion = msg_box->emplace_child<ui::text_widget>();
+  suggestion->text = english ? "Breeze Shell will be temporarily disabled to "
+                               "prevent further crashes."
+                             : "Breeze 将暂时被禁用，以防止持续崩溃。";
+  suggestion->font_size = 14;
+  suggestion->color.reset_to({1, 1, 1, 0.9});
+
+  auto suggestion2 = msg_box->emplace_child<ui::text_widget>();
+  suggestion2->text = english
+                          ? "If you want to continue using Breeze Shell, "
+                            "please re-enable it in the injector UI."
+                          : "如果您想继续使用 Breeze，请在注入器中重新启用。";
+  suggestion2->font_size = 14;
+  suggestion2->color.reset_to({1, 1, 1, 0.9});
+
+  auto btn_container = error_ui->emplace_child<ui::widget_flex>();
+  btn_container->horizontal = true;
+  btn_container->gap = 10;
+
+  class close_button : public button_widget {
+  public:
+    close_button() : button_widget(english ? "Close" : "关闭") {}
+    void on_click() override { exit(1); }
+  };
+
+  class github_button : public button_widget {
+  public:
+    github_button() : button_widget(english ? "Check GitHub" : "查看 GitHub") {}
+    void on_click() override {
+      ShellExecuteW(
+          NULL, L"open",
+          L"https://github.com/std-microblock/breeze-shell/releases/latest",
+          NULL, NULL, SW_SHOW);
+    }
+  };
+
+  btn_container->emplace_child<close_button>();
+  btn_container->emplace_child<github_button>();
+  rt.start_loop();
+  HANDLE event =
+      CreateEventW(NULL, TRUE, FALSE, L"breeze-shell-inject-consistent-exit");
+  SetEvent(event);
+  CloseHandle(event);
 }
 
 void UpdateDllPath() {
