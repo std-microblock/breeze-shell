@@ -573,8 +573,7 @@ struct breeze_icon : public ui::widget {
     if (!image) {
       image = nvgCreateImageMem(ctx.ctx, 0, g_icon_png, sizeof(g_icon_png));
     }
-    auto paint = nvgImagePattern(ctx.ctx, *x + ctx.offset_x, *y + ctx.offset_y,
-                                 *height, *height, 0, *image, 1);
+    auto paint = ctx.imagePattern(*x, *y, *height, *height, 0, *image, 1);
     ctx.fillPaint(paint);
     ctx.fillRect(*x, *y, *height, *height);
   }

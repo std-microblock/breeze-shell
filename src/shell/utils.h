@@ -21,7 +21,10 @@ bool is_acrylic_available();
 std::optional<std::string> env(const std::string &name);
 bool is_memory_readable(const void *ptr);
 NVGcolor parse_color(const std::string &str);
+std::string format_color(NVGcolor color);
 void set_thread_locale_utf8();
+
+std::vector<std::string> split_string(const std::string &str, char delimiter);
 
 struct task_queue {
 public:

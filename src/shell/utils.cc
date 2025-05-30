@@ -212,3 +212,19 @@ void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
   }
   last_end = now;
 }
+std::vector<std::string> mb_shell::split_string(const std::string &str,
+                                                char delimiter) {
+  std::vector<std::string> result;
+  std::string token;
+  std::istringstream tokenStream(str);
+  while (std::getline(tokenStream, token, delimiter)) {
+    result.push_back(token);
+  }
+  return result;
+}
+std::string mb_shell::format_color(NVGcolor color) {
+  return std::format(
+      "#{0:02x}{1:02x}{2:02x}{3:02x}", static_cast<int>(color.r * 255),
+      static_cast<int>(color.g * 255), static_cast<int>(color.b * 255),
+      static_cast<int>(color.a * 255));
+}

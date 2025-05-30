@@ -6,6 +6,7 @@
 #include "hbitmap_utils.h"
 #include "menu_render.h"
 #include "nanovg.h"
+#include "nanovg_wrapper.h"
 #include "ui.h"
 #include "widget.h"
 #include <algorithm>
@@ -320,13 +321,75 @@ bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
 }
 
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
-  if (bg) {
-    ctx.transaction([&]() {
+
+  auto bg_filler_factory = [&](auto bg, ui::nanovg_context &ctx) {
+    return [bg, ctx]() mutable {
+      ctx.globalAlpha(*bg->opacity / 255.f);
+      auto &theme = config::current->context_menu.theme;
+      bool light = menu_render::current.value()->light_color;
+
+      float boarder_width =
+          theme.use_self_drawn_border ? theme.border_width : 0.0f;
+
+      if (theme.use_self_drawn_border) {
+        float shadow_size = theme.shadow_size,
+              shadow_offset_x = theme.shadow_offset_x,
+              shadow_offset_y = theme.shadow_offset_y;
+        float corner_radius = theme.radius;
+        NVGcolor shadow_color_from =
+                     parse_color(light ? theme.shadow_color_light_from
+                                       : theme.shadow_color_dark_from),
+                 shadow_color_to =
+                     parse_color(light ? theme.shadow_color_light_to
+                                       : theme.shadow_color_dark_to);
+
+        ctx.beginPath();
+        ctx.beginPath();
+
+        ctx.roundedRect(*bg->x - shadow_size + shadow_offset_x,
+                        *bg->y - shadow_size + shadow_offset_y,
+                        *bg->width + shadow_size * 2,
+                        *bg->height + shadow_size * 2,
+                        corner_radius + shadow_size);
+        ctx.fillPaint(ctx.boxGradient(*bg->x + shadow_offset_x,
+                                      *bg->y + shadow_offset_y, *bg->width,
+                                      *bg->height, corner_radius, shadow_size,
+                                      shadow_color_from, shadow_color_to));
+        ctx.fill();
+
+        // Draw the border
+        ctx.beginPath();
+
+        if (theme.inset_border) {
+          ctx.roundedRect(*bg->x + boarder_width / 2, *bg->y + boarder_width / 2,
+                          *bg->width - boarder_width,
+                          *bg->height - boarder_width, corner_radius);
+        } else {
+          ctx.roundedRect(*bg->x, *bg->y, *bg->width, *bg->height,
+                          corner_radius);
+        }
+        ctx.strokeWidth(boarder_width);
+        auto border_color =
+            light ? theme.border_color_light : theme.border_color_dark;
+        border_color.apply_to_ctx(ctx, *bg->x, *bg->y, *bg->width, *bg->height);
+        ctx.stroke();
+      }
+
       ctx.globalCompositeOperation(NVG_DESTINATION_IN);
+      ctx.globalAlpha(1);
       auto cl = nvgRGBAf(0, 0, 0, 1 - *bg->opacity / 255.f);
       ctx.fillColor(cl);
-      ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height, *bg->radius);
-    });
+      if (theme.inset_border)
+        ctx.fillRoundedRect(*bg->x + boarder_width, *bg->y + boarder_width,
+                            *bg->width - boarder_width * 2,
+                            *bg->height - boarder_width * 2, *bg->radius);
+      else
+        ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height,
+                            *bg->radius);
+    };
+  };
+  if (bg) {
+    ctx.transaction(bg_filler_factory(bg, ctx));
     bg->render(ctx);
   }
 
@@ -339,14 +402,7 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   auto ctx2 = ctx.with_offset(*x, *y);
 
   if (bg_submenu) {
-    ctx2.transaction([&]() {
-      ctx2.globalCompositeOperation(NVG_DESTINATION_IN);
-      ctx2.resetScissor();
-      auto cl = nvgRGBAf(0, 0, 0, 1 - *bg_submenu->opacity / 255.f);
-      ctx2.fillColor(cl);
-      ctx2.fillRoundedRect(*bg_submenu->x, *bg_submenu->y, *bg_submenu->width,
-                           *bg_submenu->height, *bg_submenu->radius);
-    });
+    ctx2.transaction(bg_filler_factory(bg_submenu, ctx2));
     bg_submenu->render(ctx2);
   }
   render_children(ctx2, rendering_submenus);

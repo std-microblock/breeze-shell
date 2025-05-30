@@ -16,10 +16,12 @@ struct nanovg_context {
   /*
   Codegen:
 
-console.log([...nanovgSource.matchAll(/nvg(\S+)\(NVGcontext\* ctx,?(.*)\);/g)].map(v=>{ if(v[1][0] === 'nvgTranslate') return; return `inline auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
-        ['ctx',...v[2].split(',').filter(Boolean)].map(v=>v.trim().split(' ').pop()) .map(v=>{ if ('x,y,c1x,c1y,y1,y2,x1,x2,cx,cy'.split(',').includes(v)) return `${v} + offset_${v.includes('x') ? 'x' : 'y'}`
+console.log([...nanovgSource.replace(/,\n/gm, ',').replaceAll('\t', '').matchAll(/nvg(\S+)\(NVGcontext\* ctx,?(.*)\);/g)].map(v=>{ if(v[1] === 'Translate') return; return `inline auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
+        ['ctx',...v[2].split(',').filter(Boolean)].map(v=>v.trim().split(' ').pop()) .map(v=>{ 
+        if ('x,y,c1x,c1y,y1,y2,x1,x2,cx,cy,ox,oy'.split(',').includes(v))
+         return `${v} + offset_${v.includes('x') ? 'x' : 'y'}`
             return v
-        })
+          })
         .join(',')
     }); }`
 }).join('\n'))
@@ -61,6 +63,10 @@ inline auto createImageRGBA( int w, int h, int imageFlags, const unsigned char* 
 inline auto updateImage( int image, const unsigned char* data) { return nvgUpdateImage(ctx,image,data); }
 inline auto imageSize( int image, int* w, int* h) { return nvgImageSize(ctx,image,w,h); }
 inline auto deleteImage( int image) { return nvgDeleteImage(ctx,image); }
+inline auto linearGradient( float sx, float sy, float ex, float ey,  NVGcolor icol, NVGcolor ocol) { return nvgLinearGradient(ctx,sx,sy,ex,ey,icol,ocol); }
+inline auto boxGradient( float x, float y, float w, float h, float r, float f, NVGcolor icol, NVGcolor ocol) { return nvgBoxGradient(ctx,x + offset_x,y + offset_y,w,h,r,f,icol,ocol); }
+inline auto radialGradient( float cx, float cy, float inr, float outr,  NVGcolor icol, NVGcolor ocol) { return nvgRadialGradient(ctx,cx + offset_x,cy + offset_y,inr,outr,icol,ocol); }
+inline auto imagePattern( float ox, float oy, float ex, float ey,float angle, int image, float alpha) { return nvgImagePattern(ctx,ox + offset_x,oy + offset_y,ex,ey,angle,image,alpha); }
 inline auto scissor( float x, float y, float w, float h) { return nvgScissor(ctx,x + offset_x,y + offset_y,w,h); }
 inline auto intersectScissor( float x, float y, float w, float h) { return nvgIntersectScissor(ctx,x + offset_x,y + offset_y,w,h); }
 inline auto resetScissor() { return nvgResetScissor(ctx); }
@@ -96,7 +102,7 @@ inline auto textLineHeight( float lineHeight) { return nvgTextLineHeight(ctx,lin
 inline auto textAlign( int align) { return nvgTextAlign(ctx,align); }
 inline auto fontFaceId( int font) { return nvgFontFaceId(ctx,font); }
 inline auto fontFace( const char* font) { return nvgFontFace(ctx,font); }
-inline auto text( float x, float y, const char* string, const char* end = nullptr) { return nvgText(ctx,x + offset_x,y + offset_y,string,end); }
+inline auto text( float x, float y, const char* string, const char* end) { return nvgText(ctx,x + offset_x,y + offset_y,string,end); }
 inline auto textBox( float x, float y, float breakRowWidth, const char* string, const char* end) { return nvgTextBox(ctx,x + offset_x,y + offset_y,breakRowWidth,string,end); }
 inline auto textBounds( float x, float y, const char* string, const char* end, float* bounds) { return nvgTextBounds(ctx,x + offset_x,y + offset_y,string,end,bounds); }
 inline auto textBoxBounds( float x, float y, float breakRowWidth, const char* string, const char* end, float* bounds) { return nvgTextBoxBounds(ctx,x + offset_x,y + offset_y,breakRowWidth,string,end,bounds); }
@@ -236,12 +242,6 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
   inline void drawSVG(NSVGimageRAII &image, float x, float y, float width,
                       float height) {
     drawSVG(image.image, x, y, width, height);
-  }
-
-  inline auto imagePattern(float cx, float cy, float w, float h, float angle,
-                           int image, float alpha) {
-    return nvgImagePattern(ctx, cx + offset_x, cy + offset_y, w, h, angle,
-                           image, alpha);
   }
 };
 
