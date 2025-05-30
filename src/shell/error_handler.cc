@@ -11,10 +11,11 @@
 #include "build_info.h"
 #include "config.h"
 
+#include "cpptrace/basic.hpp"
 #include "utils.h"
 
 #include "Windows.h"
-#include <DbgHelp.h>
+#include "cpptrace/cpptrace.hpp"
 
 void show_console() {
   if (!GetConsoleWindow()) {
@@ -42,90 +43,6 @@ inline void output_crash_header(std::stringstream &ss) {
   ss << "Config:" << std::endl;
   ss << mb_shell::config::dump_config() << std::endl;
   ss << "----------------------------------------" << std::endl;
-}
-
-std::wstring GetBacktrace(CONTEXT *contextRecord) {
-  std::wstring info;
-  wchar_t symbol_mem[sizeof(IMAGEHLP_SYMBOL64) + 256];
-  auto symbol = (IMAGEHLP_SYMBOL64 *)symbol_mem;
-
-  std::string current_module_path = std::string(MAX_PATH, '\0');
-  GetModuleFileNameA(nullptr, current_module_path.data(),
-                     current_module_path.size()); 
-
-  std::filesystem::path current_module_path_fs = current_module_path;
-  auto current_module_folder = current_module_path_fs.parent_path();
-
-  // Initialize the symbol handler
-  SymInitializeW(GetCurrentProcess(), 
-                current_module_folder.c_str(), TRUE);
-
-  // Initialize the stack frame
-  STACKFRAME64 stackFrame = {0};
-
-#ifdef _WIN64
-  stackFrame.AddrPC.Offset = contextRecord->Rip;
-  stackFrame.AddrPC.Mode = AddrModeFlat;
-  stackFrame.AddrFrame.Offset = contextRecord->Rbp;
-  stackFrame.AddrFrame.Mode = AddrModeFlat;
-  stackFrame.AddrStack.Offset = contextRecord->Rsp;
-  stackFrame.AddrStack.Mode = AddrModeFlat;
-#else
-  stackFrame.AddrPC.Offset = contextRecord->Eip;
-  stackFrame.AddrPC.Mode = AddrModeFlat;
-  stackFrame.AddrFrame.Offset = contextRecord->Ebp;
-  stackFrame.AddrFrame.Mode = AddrModeFlat;
-  stackFrame.AddrStack.Offset = contextRecord->Esp;
-  stackFrame.AddrStack.Mode = AddrModeFlat;
-#endif
-
-  DWORD64 displacement = 0;
-  // Walk the call stack and append each frame to the string
-  while (StackWalk64(
-#ifdef _WIN64
-      IMAGE_FILE_MACHINE_AMD64
-#else
-      IMAGE_FILE_MACHINE_I386
-#endif
-
-      ,
-      GetCurrentProcess(), GetCurrentThread(), &stackFrame, contextRecord,
-      nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
-    // Get the module name and offset for this frame
-    DWORD64 moduleBase =
-        SymGetModuleBase64(GetCurrentProcess(), stackFrame.AddrPC.Offset);
-    wchar_t moduleName[MAX_PATH];
-    GetModuleFileNameW((HMODULE)moduleBase, moduleName, MAX_PATH);
-    DWORD64 offset = stackFrame.AddrPC.Offset - moduleBase;
-
-    symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-    symbol->MaxNameLength = 255;
-
-    wchar_t name[256] = {};
-    SymGetSymFromAddr64(GetCurrentProcess(), stackFrame.AddrPC.Offset,
-                        &displacement, symbol);
-
-    DWORD dwDisplacement;
-    IMAGEHLP_LINE64 line;
-
-    SymGetLineFromAddr64(GetCurrentProcess(), stackFrame.AddrPC.Offset,
-                         &dwDisplacement, &line);
-
-    UnDecorateSymbolNameW(mb_shell::utf8_to_wstring(symbol->Name).c_str(), name,
-                          256, UNDNAME_COMPLETE);
-
-    // Append the frame to the string
-    wchar_t frameInfo[1024];
-    swprintf_s(frameInfo, L"%s + %I64X", moduleName, offset);
-    info += std::wstring(frameInfo) + std::wstring(L"(") + std::wstring(name) +
-            std::wstring(L") at line ") + std::to_wstring(line.LineNumber) + L"\n";
-  }
-
-  // Cleanup the symbol handler
-  SymCleanup(GetCurrentProcess());
-
-  // Return the backtrace string
-  return info;
 }
 
 std::string GetExceptionName(EXCEPTION_POINTERS *ExceptionInfo) {
@@ -234,7 +151,7 @@ void mb_shell::install_error_handlers() {
     ss << "RIP: " << std::hex << ex->ContextRecord->Rip << std::endl;
 
     ss << "Stack trace:" << std::endl;
-    ss << wstring_to_utf8(GetBacktrace(ex->ContextRecord)) << std::endl;
+    ss << cpptrace::stacktrace::current().to_string() << std::endl;
 
     if (file.is_open()) {
       file << ss.str();
@@ -260,10 +177,8 @@ void mb_shell::install_error_handlers() {
       ss << "Uncaught exception of unknown type" << std::endl;
     }
 
-    CONTEXT ctx;
-    RtlCaptureContext(&ctx);
     ss << "Stack trace:" << std::endl;
-    ss << wstring_to_utf8(GetBacktrace(&ctx)) << std::endl;
+    ss << cpptrace::stacktrace::current().to_string() << std::endl;
 
     std::ofstream file(config::data_directory().string() +
                        "\\crash_report.txt");
