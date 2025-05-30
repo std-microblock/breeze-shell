@@ -215,17 +215,17 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
           }
 
           result = *pHBitmap;
-          if (result && ::GetObjectType(result) == OBJ_BITMAP) {
+          if (result && GetObjectType(result) == OBJ_BITMAP) {
             BITMAP bitmap{};
-            if (::GetObjectW(result, sizeof(BITMAP), &bitmap) ==
-                sizeof(BITMAP)) {
+            if (GetObjectW(result, sizeof(BITMAP), &bitmap) == sizeof(BITMAP)) {
               auto bmWidthBytes =
                   ((bitmap.bmWidth * bitmap.bmBitsPixel + 31) / 32) * 4;
               if (bmWidthBytes == bitmap.bmWidthBytes &&
-                  (bitmap.bmBitsPixel == 32 || bitmap.bmBitsPixel == 24 ||
-                   bitmap.bmBitsPixel == 16 || bitmap.bmBitsPixel == 8) &&
-                  bitmap.bmWidth >= 4 && bitmap.bmWidth <= 64 &&
-                  bitmap.bmHeight >= 4 && bitmap.bmHeight <= 64) {
+                  (bitmap.bmBitsPixel % 8 == 0 && bitmap.bmBitsPixel < 128) &&
+                  4 <= bitmap.bmWidth && bitmap.bmWidth <= 64 &&
+                  4 <= bitmap.bmHeight && bitmap.bmHeight <= 64 &&
+                  bitmap.bmPlanes == 1 && bitmap.bmBitsPixel <= 32 &&
+                  bitmap.bmBits != nullptr && bitmap.bmBits != (void *)-1) {
                 item.icon_bitmap = (size_t)result;
                 if (config::current->context_menu
                         .search_large_dwItemData_range) {
