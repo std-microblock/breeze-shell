@@ -125,16 +125,70 @@
                     "type": "integer"
                 },
                 "acrylic_color_light": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Color string supporting formats like #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)."
                 },
                 "acrylic_color_dark": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Color string supporting formats like #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)."
                 },
                 "acrylic_opacity": {
                     "type": "number"
                 },
                 "animation": {
                     "$ref": "#/definitions/Animation"
+                },
+                "use_self_drawn_border": {
+                    "type": "boolean",
+                    "description": "Whether to use a self-drawn border instead of the system default."
+                },
+                "border_color_light": {
+                    "type": "string",
+                    "description": "Color of the border in light mode. Supports formats like #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)."
+                },
+                "border_color_dark": {
+                    "type": "string",
+                    "description": "Color of the border in dark mode. Supports formats like #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)."
+                },
+                "shadow_color_light_from": {
+                    "type": "string"
+                },
+                "shadow_color_light_to": {
+                    "type": "string"
+                },
+                "shadow_color_dark_from": {
+                    "type": "string"
+                },
+                "shadow_color_dark_to": {
+                    "type": "string"
+                },
+                "shadow_blur": {
+                    "type": "number",
+                    "description": "The blur radius of the shadow."
+                },
+                "shadow_offset_x": {
+                    "type": "number",
+                    "description": "The horizontal offset of the shadow."
+                },
+                "shadow_offset_y": {
+                    "type": "number",
+                    "description": "The vertical offset of the shadow."
+                },
+                "shadow_opacity": {
+                    "type": "number",
+                    "description": "The opacity of the shadow (0.0 to 1.0)."
+                },
+                "shadow_size": {
+                    "type": "number",
+                    "description": "The size of the shadow."
+                },
+                "border_width": {
+                    "type": "number",
+                    "description": "The width of the self-drawn border."
+                },
+                "inset_border": {
+                    "type": "boolean",
+                    "description": "Whether the self-drawn border should be inset."
                 }
             },
             "required": [],

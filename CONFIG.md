@@ -98,7 +98,16 @@ Breeze Shell 配置文件的 JSON Schema 位于
         "submenu_bg": {
           ...
         }
-      }
+      },
+      // 使用自绘边框、阴影（需关闭 dwm 边框）
+      "use_self_drawn_border": true,
+      // 自定义边框示例配置
+      "border_width": 2.5,
+      // 支持渐变 [linear-gradient(angle, color1, color2) / radial-gradient(radius, color1, color2)]
+      "border_color_dark": "linear-gradient(30, #DE73DF, #E5C07B)",
+      "shadow_size": 20,
+      "shadow_color_dark_from": "#ff000033",
+      "shadow_color_dark_to": "#00ff0000"
     },
     // 启用垂直同步
     "vsync": true,
@@ -144,7 +153,7 @@ Breeze Shell 配置文件的 JSON Schema 位于
 ```json
 {
   "default_animation": {
-        "easing": "mutation"
-    }
+    "easing": "mutation"
+  }
 }
 ```

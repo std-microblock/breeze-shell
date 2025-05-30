@@ -328,10 +328,13 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
       auto &theme = config::current->context_menu.theme;
       bool light = menu_render::current.value()->light_color;
 
-      float boarder_width =
-          theme.use_self_drawn_border ? theme.border_width : 0.0f;
+      bool use_dwm = config::current->context_menu.theme.use_dwm_if_available
+                         ? is_win11_or_later()
+                         : false;
+      bool use_self_drawn_border = theme.use_self_drawn_border && !use_dwm;
 
-      if (theme.use_self_drawn_border) {
+      float boarder_width = use_self_drawn_border ? theme.border_width : 0.0f;
+      if (use_self_drawn_border) {
         float shadow_size = theme.shadow_size,
               shadow_offset_x = theme.shadow_offset_x,
               shadow_offset_y = theme.shadow_offset_y;
@@ -361,7 +364,8 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
         ctx.beginPath();
 
         if (theme.inset_border) {
-          ctx.roundedRect(*bg->x + boarder_width / 2, *bg->y + boarder_width / 2,
+          ctx.roundedRect(*bg->x + boarder_width / 2,
+                          *bg->y + boarder_width / 2,
                           *bg->width - boarder_width,
                           *bg->height - boarder_width, corner_radius);
         } else {

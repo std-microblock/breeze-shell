@@ -98,7 +98,7 @@ struct config {
       std::string acrylic_color_light = "#fefefe00";
       std::string acrylic_color_dark = "#28282800";
 
-      bool use_self_drawn_border = false;
+      bool use_self_drawn_border = true;
       // These values are used when use_self_drawn_border is true
       paint_color border_color_light = paint_color::from_string("#00000022");
       paint_color border_color_dark = paint_color::from_string("#ffffff22");
@@ -111,8 +111,8 @@ struct config {
       float shadow_offset_y = 0;
       float shadow_opacity = 0.2;
       float shadow_size = 10;
-      float border_width = 1;
-      bool inset_border = false;
+      float border_width = 1.5;
+      bool inset_border = true;
 
       // unused, only for backward compatibility
       float acrylic_opacity = 0.1;
