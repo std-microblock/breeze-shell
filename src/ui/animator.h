@@ -6,7 +6,6 @@
 #include <optional>
 #include <print>
 
-
 namespace ui {
 struct widget;
 enum class easing_type {
@@ -66,11 +65,21 @@ struct animated_color {
   sp_anim_float b = nullptr;
   sp_anim_float a = nullptr;
 
+  operator NVGcolor() {
+    return nvgRGBAf(r->var(), g->var(), b->var(), a->var());
+  }
   animated_color() = delete;
   animated_color(animated_color &&) = default;
 
   animated_color(ui::widget *thiz, float r = 0, float g = 0, float b = 0,
                  float a = 0);
+
+  NVGcolor blend(const animated_color &other, float factor = 0.5f) const {
+    return nvgRGBAf(r->var() * (1 - factor) + other.r->var() * factor,
+                    g->var() * (1 - factor) + other.g->var() * factor,
+                    b->var() * (1 - factor) + other.b->var() * factor,
+                    a->var() * (1 - factor) + other.a->var() * factor);
+  }
 
   std::array<float, 4> operator*() const;
 

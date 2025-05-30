@@ -12,14 +12,12 @@ struct render_target;
 struct nanovg_context {
   NVGcontext *ctx;
   render_target *rt;
+  // clang-format off
   /*
   Codegen:
 
-console.log([...nanovgSource.matchAll(/nvg(\S+)\(NVGcontext\*
-ctx,?(.*)\);/g)].map(v=>{ if(v[1] === 'nvgTranslate') return; return `inline
-auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
-        ['ctx',...v[2].split(',').filter(Boolean)].map(v=>v.trim().split('
-').pop()) .map(v=>{ if (v === 'x' || v === 'y') return `${v} + offset_${v}`
+console.log([...nanovgSource.matchAll(/nvg(\S+)\(NVGcontext\* ctx,?(.*)\);/g)].map(v=>{ if(v[1][0] === 'nvgTranslate') return; return `inline auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
+        ['ctx',...v[2].split(',').filter(Boolean)].map(v=>v.trim().split(' ').pop()) .map(v=>{ if ('x,y,c1x,c1y,y1,y2,x1,x2,cx,cy'.split(',').includes(v)) return `${v} + offset_${v.includes('x') ? 'x' : 'y'}`
             return v
         })
         .join(',')
@@ -29,7 +27,7 @@ auto ${v[1][0].toLowerCase() + v[1].slice(1)}(${v[2]}) { return nvg${v[1]}(${
 
   float offset_x = 0, offset_y = 0;
 
-  // clang-format off
+
 inline auto beginFrame( float windowWidth, float windowHeight, float devicePixelRatio) { return nvgBeginFrame(ctx,windowWidth,windowHeight,devicePixelRatio); }
 inline auto cancelFrame() { return nvgCancelFrame(ctx); }
 inline auto endFrame() { return nvgEndFrame(ctx); }
@@ -69,17 +67,17 @@ inline auto resetScissor() { return nvgResetScissor(ctx); }
 inline auto beginPath() { return nvgBeginPath(ctx); }
 inline auto moveTo( float x, float y) { return nvgMoveTo(ctx,x + offset_x,y + offset_y); }
 inline auto lineTo( float x, float y) { return nvgLineTo(ctx,x + offset_x,y + offset_y); }
-inline auto bezierTo( float c1x, float c1y, float c2x, float c2y, float x, float y) { return nvgBezierTo(ctx,c1x,c1y,c2x,c2y,x + offset_x,y + offset_y); }
-inline auto quadTo( float cx, float cy, float x, float y) { return nvgQuadTo(ctx,cx,cy,x + offset_x,y + offset_y); }
-inline auto arcTo( float x1, float y1, float x2, float y2, float radius) { return nvgArcTo(ctx,x1,y1,x2,y2,radius); }
+inline auto bezierTo( float c1x, float c1y, float c2x, float c2y, float x, float y) { return nvgBezierTo(ctx,c1x + offset_x,c1y + offset_y,c2x,c2y,x + offset_x,y + offset_y); }
+inline auto quadTo( float cx, float cy, float x, float y) { return nvgQuadTo(ctx,cx + offset_x,cy + offset_y,x + offset_x,y + offset_y); }
+inline auto arcTo( float x1, float y1, float x2, float y2, float radius) { return nvgArcTo(ctx,x1 + offset_x,y1 + offset_y,x2 + offset_x,y2 + offset_y,radius); }
 inline auto closePath() { return nvgClosePath(ctx); }
 inline auto pathWinding( int dir) { return nvgPathWinding(ctx,dir); }
-inline auto arc( float cx, float cy, float r, float a0, float a1, int dir) { return nvgArc(ctx,cx,cy,r,a0,a1,dir); }
+inline auto arc( float cx, float cy, float r, float a0, float a1, int dir) { return nvgArc(ctx,cx + offset_x,cy + offset_y,r,a0,a1,dir); }
 inline auto rect( float x, float y, float w, float h) { return nvgRect(ctx,x + offset_x,y + offset_y,w,h); }
 inline auto roundedRect( float x, float y, float w, float h, float r) { return nvgRoundedRect(ctx,x + offset_x,y + offset_y,w,h,r); }
 inline auto roundedRectVarying( float x, float y, float w, float h, float radTopLeft, float radTopRight, float radBottomRight, float radBottomLeft) { return nvgRoundedRectVarying(ctx,x + offset_x,y + offset_y,w,h,radTopLeft,radTopRight,radBottomRight,radBottomLeft); }
-inline auto ellipse( float cx, float cy, float rx, float ry) { return nvgEllipse(ctx,cx,cy,rx,ry); }
-inline auto circle( float cx, float cy, float r) { return nvgCircle(ctx,cx,cy,r); }
+inline auto ellipse( float cx, float cy, float rx, float ry) { return nvgEllipse(ctx,cx + offset_x,cy + offset_y,rx,ry); }
+inline auto circle( float cx, float cy, float r) { return nvgCircle(ctx,cx + offset_x,cy + offset_y,r); }
 inline auto fill() { return nvgFill(ctx); }
 inline auto stroke() { return nvgStroke(ctx); }
 inline auto createFont( const char* name, const char* filename) { return nvgCreateFont(ctx,name,filename); }
