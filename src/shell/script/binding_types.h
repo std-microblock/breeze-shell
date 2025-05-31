@@ -18,7 +18,11 @@ struct menu_widget;
 
 namespace mb_shell::js {
 struct example_struct_jni {
-  struct test {
+  struct test_base {
+    virtual ~test_base() = default;
+    virtual int test_func(int a, int b) = 0;
+  };
+  struct test: public test_base {
     int a;
   };
 
@@ -96,7 +100,7 @@ struct folder_view_controller {
   // Paste items
   void paste();
   // 获取项列表
-  std::vector<std::shared_ptr<mb_shell::js::folder_view_folder_item>> items();
+  std::vector<std::shared_ptr<folder_view_folder_item>> items();
 
   void select(int index, int state);
 
@@ -107,7 +111,7 @@ struct folder_view_controller {
 // value should be reset to none instead of unchanged
 struct value_reset {};
 #define WITH_RESET_OPTION(x)                                                   \
-  std::optional<std::variant<x, std::shared_ptr<mb_shell::js::value_reset>>>
+  std::optional<std::variant<x, std::shared_ptr<value_reset>>>
 
 // 窗口标题栏控制器
 // Window titlebar controller
@@ -270,12 +274,12 @@ struct js_menu_data {
   // 子菜单回调函数
   // Submenu callback function
   WITH_RESET_OPTION(
-      std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>)
+      std::function<void(std::shared_ptr<menu_controller>)>)
   submenu;
   // 菜单动作回调函数
   // Menu action callback function
   WITH_RESET_OPTION(
-      std::function<void(mb_shell::js::js_menu_action_event_data)>)
+      std::function<void(js_menu_action_event_data)>)
   action;
   // SVG图标
   // SVG icon
@@ -298,7 +302,7 @@ struct menu_item_controller {
                std::weak_ptr<mb_shell::menu_item_parent_widget>>
       $parent;
   void set_position(int new_index);
-  void set_data(mb_shell::js::js_menu_data data);
+  void set_data(js_menu_data data);
   js_menu_data data();
   void remove();
   bool valid();
@@ -307,21 +311,21 @@ struct menu_item_controller {
 struct menu_item_parent_item_controller {
   std::weak_ptr<mb_shell::menu_item_parent_widget> $item;
   std::weak_ptr<mb_shell::menu_widget> $menu;
-  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> children();
+  std::vector<std::shared_ptr<menu_item_controller>> children();
   void set_position(int new_index);
   void remove();
   bool valid();
 
-  std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_child_after(mb_shell::js::js_menu_data data, int after_index);
+  std::shared_ptr<menu_item_controller>
+  append_child_after(js_menu_data data, int after_index);
 
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_child(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  append_child(js_menu_data data) {
     return append_child_after(data, -1);
   }
 
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  prepend_child(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  prepend_child(js_menu_data data) {
     return append_child_after(data, 0);
   }
 };
@@ -332,7 +336,7 @@ struct window_prop_data {
 };
 
 struct caller_window_data {
-  std::vector<mb_shell::js::window_prop_data> props;
+  std::vector<window_prop_data> props;
   int x;
   int y;
   int width;
@@ -346,20 +350,20 @@ struct caller_window_data {
 };
 
 struct js_menu_context {
-  std::optional<std::shared_ptr<mb_shell::js::folder_view_controller>>
+  std::optional<std::shared_ptr<folder_view_controller>>
       folder_view;
-  std::optional<std::shared_ptr<mb_shell::js::window_titlebar_controller>>
+  std::optional<std::shared_ptr<window_titlebar_controller>>
       window_titlebar;
-  std::optional<std::shared_ptr<mb_shell::js::input_box_controller>> input_box;
-  mb_shell::js::caller_window_data window_info;
+  std::optional<std::shared_ptr<input_box_controller>> input_box;
+  caller_window_data window_info;
   // 获取当前活动的窗口或指针下的窗口的数据
   static js_menu_context $from_window(void *hwnd);
 };
 
 struct menu_controller;
 struct menu_info_basic_js {
-  std::shared_ptr<mb_shell::js::menu_controller> menu;
-  std::shared_ptr<mb_shell::js::js_menu_context> context;
+  std::shared_ptr<menu_controller> menu;
+  std::shared_ptr<js_menu_context> context;
 };
 
 struct menu_controller {
@@ -372,36 +376,36 @@ struct menu_controller {
 
   // 在指定索引后添加菜单项
   // Append menu item after specified index
-  std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_item_after(mb_shell::js::js_menu_data data, int after_index);
+  std::shared_ptr<menu_item_controller>
+  append_item_after(js_menu_data data, int after_index);
 
   // 在指定索引后添加水平菜单母项
-  std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  std::shared_ptr<menu_item_parent_item_controller>
   append_parent_item_after(int after_index);
 
   // 在末尾添加水平菜单母项
-  inline std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  inline std::shared_ptr<menu_item_parent_item_controller>
   append_parent_item() {
     return append_parent_item_after(-1);
   }
 
   // 在开头添加水平菜单母项
-  inline std::shared_ptr<mb_shell::js::menu_item_parent_item_controller>
+  inline std::shared_ptr<menu_item_parent_item_controller>
   prepend_parent_item() {
     return append_parent_item_after(0);
   }
 
   // 在末尾添加菜单项
   // Append menu item at end
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_item(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  append_item(js_menu_data data) {
     return append_item_after(data, -1);
   }
 
   // 在开头添加菜单项
   // Prepend menu item at beginning
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  prepend_item(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  prepend_item(js_menu_data data) {
     return append_item_after(data, 0);
   }
 
@@ -423,32 +427,32 @@ struct menu_controller {
 
   // 获取所有菜单项
   // Get all menu items
-  std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>> get_items();
+  std::vector<std::shared_ptr<menu_item_controller>> get_items();
 
   // 获取指定索引的菜单项
   // Get menu item at index
-  std::shared_ptr<mb_shell::js::menu_item_controller> get_item(int index);
+  std::shared_ptr<menu_item_controller> get_item(int index);
 
   // 添加菜单事件监听器
   // Add menu event listener
   static std::function<void()> add_menu_listener(
-      std::function<void(mb_shell::js::menu_info_basic_js)> listener);
+      std::function<void(menu_info_basic_js)> listener);
 
   // Only for compatibility
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  prepend_menu(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  prepend_menu(js_menu_data data) {
     return append_item_after(data, 0);
   }
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_menu(mb_shell::js::js_menu_data data) {
+  inline std::shared_ptr<menu_item_controller>
+  append_menu(js_menu_data data) {
     return append_item_after(data, -1);
   }
-  inline std::shared_ptr<mb_shell::js::menu_item_controller>
-  append_menu_after(mb_shell::js::js_menu_data data, int after_index) {
+  inline std::shared_ptr<menu_item_controller>
+  append_menu_after(js_menu_data data, int after_index) {
     return append_item_after(data, after_index);
   }
 
-  static std::shared_ptr<mb_shell::js::menu_controller> create_detached();
+  static std::shared_ptr<menu_controller> create_detached();
 
   ~menu_controller();
 };

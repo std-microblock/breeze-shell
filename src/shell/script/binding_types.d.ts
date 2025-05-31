@@ -26,6 +26,18 @@ export class example_struct_jni {
             
 }
     
+export class test_base {
+	
+	
+/**
+  * 
+  * @param a: number, b: number
+  * @returns number
+  */
+  test_func: ((arg1: number, arg2: number) => number)
+            
+}
+    
 export class test {
 	a: number
 	

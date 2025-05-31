@@ -50,6 +50,29 @@ template<> struct js_bind<mb_shell::js::example_struct_jni> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::example_struct_jni::test_base> {
+    static mb_shell::js::example_struct_jni::test_base unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::example_struct_jni::test_base obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni::test_base &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::example_struct_jni::test_base> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::example_struct_jni::test_base>("test_base")
+            .constructor<>()
+                .fun<&mb_shell::js::example_struct_jni::test_base::test_func>("test_func")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::example_struct_jni::test> {
     static mb_shell::js::example_struct_jni::test unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::example_struct_jni::test obj;
@@ -395,9 +418,9 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         obj.name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
         
-        obj.submenu = js_traits<std::optional<std::variant<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
+        obj.submenu = js_traits<std::optional<std::variant<std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "submenu"));
         
-        obj.action = js_traits<std::optional<std::variant<std::function<void (mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
+        obj.action = js_traits<std::optional<std::variant<std::function<void(mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "action"));
         
         obj.icon_svg = js_traits<std::optional<std::variant<std::string, std::shared_ptr<mb_shell::js::value_reset>>>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_svg"));
         
@@ -419,9 +442,9 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
         
         JS_SetPropertyStr(ctx, obj, "name", js_traits<std::optional<std::string>>::wrap(ctx, val.name));
         
-        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::variant<std::function<void (std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.submenu));
+        JS_SetPropertyStr(ctx, obj, "submenu", js_traits<std::optional<std::variant<std::function<void(std::shared_ptr<mb_shell::js::menu_controller>)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.submenu));
         
-        JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::variant<std::function<void (mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.action));
+        JS_SetPropertyStr(ctx, obj, "action", js_traits<std::optional<std::variant<std::function<void(mb_shell::js::js_menu_action_event_data)>, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.action));
         
         JS_SetPropertyStr(ctx, obj, "icon_svg", js_traits<std::optional<std::variant<std::string, std::shared_ptr<mb_shell::js::value_reset>>>>::wrap(ctx, val.icon_svg));
         
@@ -1006,6 +1029,8 @@ template<> struct js_bind<mb_shell::js::infra> {
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
+
+    js_bind<mb_shell::js::example_struct_jni::test_base>::bind(mod);
 
     js_bind<mb_shell::js::example_struct_jni::test>::bind(mod);
 

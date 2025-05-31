@@ -37,7 +37,7 @@ export class CTypeParser {
         }
     }
 
-    parse(str: string | null = null) {
+    parse(str: string | null = null, typeTransformer: (orig: string) => string = (orig) => orig): CTypeNode {
         if (str) {
             this.lex(str)
             this.cursor = 0
@@ -54,7 +54,7 @@ export class CTypeParser {
         do {
             const parseCommaList = (arr) => {
                 do {
-                    const res = this.parse();
+                    const res = this.parse(null, typeTransformer);
                     if (res)
                         arr.push(res)
                 } while (this.eat(','));
@@ -71,7 +71,7 @@ export class CTypeParser {
                     parseCommaList(type.argsTemplate)
                 this.eat('>', true)
             } else {
-                type.type = this.tokens[this.cursor]
+                type.type = typeTransformer(this.tokens[this.cursor])
                 this.cursor++;
             }
 

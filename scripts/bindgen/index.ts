@@ -1,7 +1,7 @@
 import { ClangASTD } from "./clang-ast";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { cTypeToTypeScript } from "./c-type-parser";
+import { CTypeParser, cTypeToTypeScript } from "./c-type-parser";
 
 const ast = JSON.parse(readFileSync(join(__dirname, "ast.json"), "utf-8")) as ClangASTD;
 
@@ -106,10 +106,9 @@ if (ast.kind !== 'NamespaceDecl') {
 const structNames: string[] = []
 
 const resolveUnderPath = (path: string[], resolveName: string) => {
-    // Firstly, we find the name under the same namespace
     const ns = path.join('::');
     const fullName = `${ns}::${resolveName}`;
-    if (structNames.includes(resolveName)) {
+    if (structNames.includes(fullName)) {
         return fullName;
     }
 
@@ -122,7 +121,17 @@ const resolveUnderPath = (path: string[], resolveName: string) => {
         }
     }
 
-    throw new Error(`Cannot resolve ${resolveName} under namespace ${ns}`);
+    // else we return the name as is
+    return resolveName;
+}
+
+const ctypeToQualified = (type: string, path: string[]) => {
+    const parser = new CTypeParser();
+    const parsed = parser.parse(type, name=> {
+        return resolveUnderPath(path, name)
+    });
+
+    return parser.formatToC(parsed);
 }
 
 const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
@@ -182,7 +191,7 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
         if (node.kind === 'FieldDecl') {
             fields.push({
                 name: node.name!,
-                type: node.type!.qualType,
+                type: ctypeToQualified(node.type!.qualType, path),
                 comment: comment.length > 0 ? comment : undefined
             });
         }
@@ -205,8 +214,8 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
 
             methods.push({
                 name: node.name!,
-                returnType: parsed.returnType,
-                args: parsed.args,
+                returnType: ctypeToQualified(parsed.returnType, path),
+                args: parsed.args.map(arg => ctypeToQualified(arg, path)),
                 static: node.storageClass === 'static',
                 comment: comment.length > 0 ? comment : undefined,
                 argNames

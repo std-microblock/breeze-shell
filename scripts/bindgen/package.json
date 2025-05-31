@@ -6,7 +6,7 @@
   "author": "MicroBlock <66859419+std-microblock@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.15.29",
     "esbuild": "^0.24.2",
     "esbuild-register": "^3.6.0"
   },
