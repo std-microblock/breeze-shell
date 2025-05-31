@@ -1420,10 +1420,10 @@ export class notification {
 	
 /**
   * 
-  * @param title: string, message: string, buttons: Array<pair<string, (() => void)>>
+  * @param title: string, message: string, buttons: Array<[string, (() => void)]>
   * @returns void
   */
-  static send_with_buttons: ((arg1: string, arg2: string, arg3: Array<pair<string, (() => void)>>) => void)
+  static send_with_buttons: ((arg1: string, arg2: string, arg3: Array<[string, (() => void)]>) => void)
             
 }
     

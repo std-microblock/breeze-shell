@@ -134,6 +134,9 @@ export class CTypeParser {
             tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a)).join(' | ')
         } else if (node.type === 'optional') {
             tsBasicType = `${this.formatToTypeScript(node.argsTemplate[0])} | undefined`
+        } else if (node.type === 'pair' || node.type === 'tuple') {
+            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a)).join(', ')
+            tsBasicType = `[${tsBasicType}]`
         }
 
         if (node.function) {
