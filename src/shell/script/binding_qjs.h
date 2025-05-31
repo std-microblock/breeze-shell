@@ -67,34 +67,30 @@ template<> struct js_bind<mb_shell::js::example_struct_jni::test_base> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::example_struct_jni::test_base>("test_base")
             .constructor<>()
-                .fun<&mb_shell::js::example_struct_jni::test_base::test_func>("test_func")
+                .fun<&mb_shell::js::example_struct_jni::test_base::type_func>("type_func")
+                .static_fun<&mb_shell::js::example_struct_jni::test_base::make_random>("make_random")
             ;
     }
 
 };
     
-template <> struct qjs::js_traits<mb_shell::js::example_struct_jni::test> {
-    static mb_shell::js::example_struct_jni::test unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::example_struct_jni::test obj;
-    
-        obj.a = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "a"));
-        
-        return obj;
-    }
-
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni::test &val) noexcept {
-        JSValue obj = JS_NewObject(ctx);
-    
-        JS_SetPropertyStr(ctx, obj, "a", js_traits<int>::wrap(ctx, val.a));
-        
-        return obj;
-    }
-};
 template<> struct js_bind<mb_shell::js::example_struct_jni::test> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::example_struct_jni::test>("test")
             .constructor<>()
-                .fun<&mb_shell::js::example_struct_jni::test::a>("a")
+                .base<mb_shell::js::example_struct_jni::test_base>()
+                .fun<&mb_shell::js::example_struct_jni::test::type_func>("type_func")
+            ;
+    }
+
+};
+    
+template<> struct js_bind<mb_shell::js::example_struct_jni::test2> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::example_struct_jni::test2>("test2")
+            .constructor<>()
+                .base<mb_shell::js::example_struct_jni::test_base>()
+                .fun<&mb_shell::js::example_struct_jni::test2::type_func>("type_func")
             ;
     }
 
@@ -1033,6 +1029,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::example_struct_jni::test_base>::bind(mod);
 
     js_bind<mb_shell::js::example_struct_jni::test>::bind(mod);
+
+    js_bind<mb_shell::js::example_struct_jni::test2>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 

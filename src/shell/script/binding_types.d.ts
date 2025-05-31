@@ -31,16 +31,43 @@ export class test_base {
 	
 /**
   * 
-  * @param a: number, b: number
+  * @param 
   * @returns number
   */
-  test_func: ((arg1: number, arg2: number) => number)
+  type_func: (() => number)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns test_base
+  */
+  static make_random: (() => test_base)
             
 }
     
-export class test {
-	a: number
+export class test extends test_base {
 	
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  type_func: (() => number)
+            
+}
+    
+export class test2 extends test_base {
+	
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  type_func: (() => number)
+            
 }
     
 export class folder_view_folder_item {

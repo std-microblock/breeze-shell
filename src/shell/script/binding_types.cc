@@ -31,6 +31,19 @@ std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
 namespace mb_shell::js {
+int example_struct_jni::test_base::type_func() { return 0; }
+int example_struct_jni::test2::type_func() { return 2; }
+int example_struct_jni::test::type_func() { return 1; }
+std::shared_ptr<example_struct_jni::test_base>
+example_struct_jni::test_base::make_random() {
+  if (std::chrono::system_clock::now().time_since_epoch().count() % 2 == 0) {
+    std::println("Creating test instance");
+    return std::make_shared<test>();
+  } else {
+    std::println("Creating test2 instance");
+    return std::make_shared<test2>();
+  }
+}
 
 bool menu_controller::valid() { return !$menu.expired(); }
 std::shared_ptr<mb_shell::js::menu_item_controller>
@@ -1322,7 +1335,7 @@ void notification::send_with_image(std::string message, std::string icon_path) {
   WinToast::instance()->showToast(templ, &winToastEventHandler);
 }
 void notification::send_title_text(std::string title, std::string message,
-                            std::string image_path) {
+                                   std::string image_path) {
   wintoast_init();
   WinToastTemplate templ(WinToastTemplate::ImageAndText02);
   templ.setTextField(utf8_to_wstring(title), WinToastTemplate::FirstLine);
@@ -1343,15 +1356,14 @@ void notification::send_with_buttons(
     templ.addAction(utf8_to_wstring(button_text));
   }
 
-  auto* handler = new WinToastEventHandler();
+  auto *handler = new WinToastEventHandler();
   handler->on_activate = [buttons, handler](int actionIndex) {
     if (actionIndex >= 0 && actionIndex < buttons.size()) {
       buttons[actionIndex].second();
     }
     delete handler;
   };
-  handler->on_dismiss = [=](WinToastEventHandler::WinToastDismissalReason) {
-  };
+  handler->on_dismiss = [=](WinToastEventHandler::WinToastDismissalReason) {};
 
   WinToast::instance()->showToast(templ, handler);
 }

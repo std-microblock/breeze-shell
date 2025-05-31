@@ -127,7 +127,7 @@ const resolveUnderPath = (path: string[], resolveName: string) => {
 
 const ctypeToQualified = (type: string, path: string[]) => {
     const parser = new CTypeParser();
-    const parsed = parser.parse(type, name=> {
+    const parsed = parser.parse(type, name => {
         return resolveUnderPath(path, name)
     });
 
@@ -156,13 +156,23 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
         argNames?: string[];
     }[] = [];
 
+    const bases: {
+        access: 'public' | 'protected' | 'private';
+        type: string;
+    }[] = node_struct.bases?.map(base => {
+        return {
+            access: base.access,
+            type: ctypeToQualified(base.type!.qualType, path)
+        };
+    }) as any || [];
+
     if (!node_struct.inner) return;
 
     for (const node of node_struct.inner) {
         if (node.name?.startsWith('$')) continue;
 
         const lineNum = node.loc?.line;
-        // find comment above
+        // 1. Parse comments
         let comment = '';
 
         if (lineNum) {
@@ -188,6 +198,7 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
             }
         }
 
+        // 2. Parse fields, methods
         if (node.kind === 'FieldDecl') {
             fields.push({
                 name: node.name!,
@@ -225,19 +236,22 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
 
     const fullName = path.join('::') + '::' + structName;
 
-    binding += `
+    // 1. transform traits as value
+    // We generate this only if there are no bases
+    if (bases.length === 0) {
+        binding += `
 template <> struct qjs::js_traits<${fullName}> {
     static ${fullName} unwrap(JSContext *ctx, JSValueConst v) {
         ${fullName} obj;
     `;
 
-    for (const field of fields) {
-        binding += `
+        for (const field of fields) {
+            binding += `
         obj.${field.name} = js_traits<${field.type}>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "${field.name}"));
         `;
-    }
+        }
 
-    binding += `
+        binding += `
         return obj;
     }
 
@@ -245,31 +259,34 @@ template <> struct qjs::js_traits<${fullName}> {
         JSValue obj = JS_NewObject(ctx);
     `;
 
-    for (const field of fields) {
-        binding += `
+        for (const field of fields) {
+            binding += `
         JS_SetPropertyStr(ctx, obj, "${field.name}", js_traits<${field.type}>::wrap(ctx, val.${field.name}));
         `;
-    }
+        }
 
-    binding += `
+        binding += `
         return obj;
     }
 };`;
+    }
 
-    /**
-     * 
-     *   module.class_<MyClass>("MyClass")
-                    .constructor<>()
-                    .constructor<std::vector<int>>("MyClassA")
-                    .fun<&MyClass::member_variable>("member_variable")
-                    .fun<&MyClass::member_function>("member_function")
-                    .static_fun<&MyClass::static_function>("static_function")
-     */
+
+    // 2. transform traits as class pointer
     binding += `
 template<> struct js_bind<${fullName}> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<${fullName}>("${structName}")
             .constructor<>()`;
+
+    // according to https://github.com/ftk/quickjspp/blob/master/test/inheritance.cpp
+    // we only need to bind one base if there are multiple bases
+    // although idk why
+    if (bases.length > 0) {
+        binding += `
+                .base<${bases[0].type}>()`;
+    }
+
     for (const method of methods) {
         if (method.static) {
             binding += `
@@ -293,47 +310,48 @@ template<> struct js_bind<${fullName}> {
     `;
 
     typescriptDef += `
-export class ${structName} {
+export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => base.type.split('::').pop() ?? base.type).join(', ')}` : ''
+        } {
 \t${fields.map(field => {
-        let fieldDef = `${field.name}${field.type.startsWith('std::optional') ? '?' : ''
-            }: ${cTypeToTypeScript(field.type)}`;
+            let fieldDef = `${field.name}${field.type.startsWith('std::optional') ? '?' : ''
+                }: ${cTypeToTypeScript(field.type)}`;
 
-        if (field.comment) {
+            if (field.comment) {
                 fieldDef = `
   /**
   * ${field.comment.trim().split('\n').join('\n  * ')}
   */
   ${fieldDef}
             `
-        }
+            }
 
-        return fieldDef;
-    }).join('\n\t')}
+            return fieldDef;
+        }).join('\n\t')}
 \t${methods.map(method => {
-        let methodDef = `${method.static ? 'static ' : ''}${method.name}: ${cTypeToTypeScript(`${method.returnType}(${method.args.join(', ')})`)}`
+            let methodDef = `${method.static ? 'static ' : ''}${method.name}: ${cTypeToTypeScript(`${method.returnType}(${method.args.join(', ')})`)}`
 
-        // if (method.comment) {
-        //     methodDef = method.comment.trim().split('\n').map(v => `// ${v}`).join('\n\t')
-        //         + '\n\t' + methodDef;
-        // }
+            // if (method.comment) {
+            //     methodDef = method.comment.trim().split('\n').map(v => `// ${v}`).join('\n\t')
+            //         + '\n\t' + methodDef;
+            // }
 
-        // if (method.argNames) {
-        //     methodDef = '// Args: ' + method.argNames.join(', ') + '\n\t' + methodDef;
-        // }
-        let comments = '';
-        if (method.comment) {
-            comments += method.comment.trim();
-        }
+            // if (method.argNames) {
+            //     methodDef = '// Args: ' + method.argNames.join(', ') + '\n\t' + methodDef;
+            // }
+            let comments = '';
+            if (method.comment) {
+                comments += method.comment.trim();
+            }
             methodDef = `
 /**
   * ${comments.split('\n').join('\n  * ')}
-  * @param ${method.args.map((arg    , i) => `${method.argNames![i]}: ${cTypeToTypeScript(arg)}`).join(', ')}
+  * @param ${method.args.map((arg, i) => `${method.argNames![i]}: ${cTypeToTypeScript(arg)}`).join(', ')}
   * @returns ${cTypeToTypeScript(method.returnType)}
   */
   ${methodDef}
             `
-        return methodDef;
-    }).join('\n\t')}
+            return methodDef;
+        }).join('\n\t')}
 }
     `;
 

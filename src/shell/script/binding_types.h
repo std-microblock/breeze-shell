@@ -19,11 +19,14 @@ struct menu_widget;
 namespace mb_shell::js {
 struct example_struct_jni {
   struct test_base {
-    virtual ~test_base() = default;
-    virtual int test_func(int a, int b) = 0;
+    virtual int type_func();
+    static std::shared_ptr<test_base> make_random();
   };
   struct test: public test_base {
-    int a;
+    virtual int type_func() override;
+  };
+  struct test2: public test_base {
+    virtual int type_func() override;
   };
 
   int a;
