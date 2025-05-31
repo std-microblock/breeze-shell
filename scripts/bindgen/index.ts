@@ -3,7 +3,9 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CTypeParser, cTypeToTypeScript } from "./c-type-parser";
 
-const ast = JSON.parse(readFileSync(join(__dirname, "ast.json"), "utf-8")) as ClangASTD;
+let text = readFileSync(join(__dirname, 'ast.json'), 'utf-8');
+text = '[' + text.replaceAll('}\n{', '},{') + ']';
+const astArr = JSON.parse(text) as ClangASTD[];
 
 const targetFile = 'binding_types.h'
 const outputFile = 'binding_qjs.h'
@@ -99,9 +101,6 @@ const parseFunctionQualType = (type: string) => {
     };
 }
 
-if (ast.kind !== 'NamespaceDecl') {
-    throw new Error('Root node is not a NamespaceDecl');
-}
 
 const structNames: string[] = []
 
@@ -372,15 +371,17 @@ const enumerateStructDecls = (node: ClangASTD, callback, path: string[] = ['mb_s
     }
 }
 
-enumerateStructDecls(ast, (node, path) => {
-    structNames.push(path.join('::') + '::' + node.name!);
-})
+for (const ast of astArr)
+    enumerateStructDecls(ast, (node, path) => {
+        structNames.push(path.join('::') + '::' + node.name!);
+    })
 
-enumerateStructDecls(ast, (node, path) => {
-    if (node.kind === 'CXXRecordDecl') {
-        generateForRecordDecl(node, path);
-    }
-})
+for (const ast of astArr)
+    enumerateStructDecls(ast, (node, path) => {
+        if (node.kind === 'CXXRecordDecl') {
+            generateForRecordDecl(node, path);
+        }
+    })
 
 
 binding += `

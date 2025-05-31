@@ -878,3 +878,65 @@ mb_shell::menu_item_ownerdraw_widget::menu_item_ownerdraw_widget(
     height->reset_to(owner_draw.height);
   }
 }
+void mb_shell::menu_item_custom_widget::update(ui::update_context &ctx) {
+  super::update(ctx);
+  if (custom_widget) {
+    auto ctx2 = ctx.with_offset(*x, *y);
+    custom_widget->update(ctx2);
+  }
+}
+void mb_shell::menu_item_custom_widget::render(ui::nanovg_context ctx) {
+  super::render(ctx);
+  if (custom_widget) {
+    custom_widget->render(ctx.with_offset(*x, *y));
+  }
+}
+float mb_shell::menu_item_custom_widget::measure_width(
+    ui::update_context &ctx) {
+  return custom_widget->measure_width(ctx);
+}
+float mb_shell::menu_item_custom_widget::measure_height(
+    ui::update_context &ctx) {
+  return custom_widget->measure_height(ctx);
+}
+void mb_shell::js_impl::widget_js_base::update(
+    ui::update_context &ctx) {
+  if ($widget) {
+    $widget->update(ctx);
+  }
+
+  if (on_update) {
+    on_update(ctx);
+  }
+
+  if (ctx.mouse_clicked && on_click) {
+    on_click(ctx);
+  }
+
+  if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
+    on_mouse_enter(ctx);
+  } else if (!ctx.hovered(this) && previous_hovered && on_mouse_leave) {
+    on_mouse_leave(ctx);
+  }
+
+  previous_hovered = ctx.hovered(this);
+  if (ctx.mouse_down_on(this) && on_mouse_down) {
+    on_mouse_down(ctx);
+  }
+
+  if (ctx.mouse_up && on_mouse_up) {
+    on_mouse_up(ctx);
+  }
+
+  if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
+    prev_mouse_x = ctx.mouse_x;
+    prev_mouse_y = ctx.mouse_y;
+    if (on_mouse_move && ctx.hovered(this)) {
+      on_mouse_move(ctx);
+    }
+  }
+
+  if (ctx.scroll_y != 0 && on_mouse_wheel) {
+    on_mouse_wheel(ctx);
+  }
+}

@@ -25,7 +25,7 @@ struct update_context {
   screen_info screen;
   float scroll_y;
 
-  bool& need_rerender;
+  bool &need_rerender;
 
   // hit test, lifetime is not guaranteed
   std::shared_ptr<std::vector<widget *>> hovered_widgets =
@@ -135,13 +135,13 @@ struct widget : std::enable_shared_from_this<widget> {
   // when the time is up
   dying_time dying_time;
 
-  widget* parent = nullptr;
+  widget *parent = nullptr;
   render_target *owner_rt = nullptr;
 
-  template<typename T> inline T* search_parent() {
+  template <typename T> inline T *search_parent() {
     auto p = parent;
     while (p) {
-      if (auto t = dynamic_cast<T*>(p)) {
+      if (auto t = dynamic_cast<T *>(p)) {
         return t;
       }
       p = p->parent;
@@ -163,7 +163,8 @@ struct widget : std::enable_shared_from_this<widget> {
   // Update children list in the widget manner
   // It will remove the dead children
   // It will also update the dying time
-  // It will **NOT** update the children with the offset, call it with with_offset(*x, *y) if needed
+  // It will **NOT** update the children with the offset, call it with
+  // with_offset(*x, *y) if needed
   void update_children(update_context &ctx,
                        std::vector<std::shared_ptr<widget>> &children);
   // Render children list in the widget manner
@@ -212,8 +213,10 @@ struct widget_flex : public widget {
   bool horizontal = false;
   bool auto_size = true;
   bool reverse = false;
+  sp_anim_float padding_left = anim_float(), padding_right = anim_float(),
+                padding_top = anim_float(), padding_bottom = anim_float();
   void reposition_children_flex(update_context &ctx,
-                            std::vector<std::shared_ptr<widget>> &children);
+                                std::vector<std::shared_ptr<widget>> &children);
   void update(update_context &ctx) override;
 };
 

@@ -126,7 +126,7 @@ void ui::widget_flex::update(update_context &ctx) {
 }
 void ui::widget_flex::reposition_children_flex(
     update_context &ctx, std::vector<std::shared_ptr<widget>> &children) {
-  float x = 0, y = 0;
+  float x = *padding_left, y = *padding_top;
   float target_width = 0, target_height = 0;
 
   auto children_rev =
@@ -135,12 +135,12 @@ void ui::widget_flex::reposition_children_flex(
               : children;
 
   for (auto &child : children_rev) {
+    child->x->animate_to(x);
+    child->y->animate_to(y);
     if (horizontal) {
-      child->x->animate_to(x);
       x += child->measure_width(ctx) + gap;
       target_height = std::max(target_height, child->measure_height(ctx));
     } else {
-      child->y->animate_to(y);
       y += child->measure_height(ctx) + gap;
       target_width = std::max(target_width, child->measure_width(ctx));
     }
@@ -155,15 +155,15 @@ void ui::widget_flex::reposition_children_flex(
   }
 
   if (horizontal) {
-    width->animate_to(x - gap);
-    height->animate_to(target_height);
+    width->animate_to(x - gap + *padding_left + *padding_right);
+    height->animate_to(target_height + *padding_top + *padding_bottom);
 
     for (auto &child : children) {
       child->height->animate_to(target_height);
     }
   } else {
-    width->animate_to(target_width);
-    height->animate_to(y - gap);
+    width->animate_to(target_width + *padding_left + *padding_right);
+    height->animate_to(y - gap + *padding_top + *padding_bottom);
 
     for (auto &child : children) {
       child->width->animate_to(target_width);

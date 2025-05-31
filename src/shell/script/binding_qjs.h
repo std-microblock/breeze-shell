@@ -11,86 +11,112 @@ struct js_bind {
     static void bind(qjs::Context::Module &mod) {}
 };
 
-template <> struct qjs::js_traits<mb_shell::js::example_struct_jni> {
-    static mb_shell::js::example_struct_jni unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::example_struct_jni obj;
-    
-        obj.a = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "a"));
-        
-        obj.b = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "b"));
-        
-        obj.c = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "c"));
-        
-        return obj;
-    }
-
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni &val) noexcept {
-        JSValue obj = JS_NewObject(ctx);
-    
-        JS_SetPropertyStr(ctx, obj, "a", js_traits<int>::wrap(ctx, val.a));
-        
-        JS_SetPropertyStr(ctx, obj, "b", js_traits<int>::wrap(ctx, val.b));
-        
-        JS_SetPropertyStr(ctx, obj, "c", js_traits<std::string>::wrap(ctx, val.c));
-        
-        return obj;
-    }
-};
-template<> struct js_bind<mb_shell::js::example_struct_jni> {
-    static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::example_struct_jni>("example_struct_jni")
-            .constructor<>()
-                .fun<&mb_shell::js::example_struct_jni::add1>("add1")
-                .fun<&mb_shell::js::example_struct_jni::add2>("add2")
-                .fun<&mb_shell::js::example_struct_jni::a>("a")
-                .fun<&mb_shell::js::example_struct_jni::b>("b")
-                .fun<&mb_shell::js::example_struct_jni::c>("c")
-            ;
-    }
-
-};
-    
-template <> struct qjs::js_traits<mb_shell::js::example_struct_jni::test_base> {
-    static mb_shell::js::example_struct_jni::test_base unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::example_struct_jni::test_base obj;
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui> {
+    static mb_shell::js::breeze_ui unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui obj;
     
         return obj;
     }
 
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni::test_base &val) noexcept {
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     
         return obj;
     }
 };
-template<> struct js_bind<mb_shell::js::example_struct_jni::test_base> {
+template<> struct js_bind<mb_shell::js::breeze_ui> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::example_struct_jni::test_base>("test_base")
+        mod.class_<mb_shell::js::breeze_ui>("breeze_ui")
             .constructor<>()
-                .fun<&mb_shell::js::example_struct_jni::test_base::type_func>("type_func")
-                .static_fun<&mb_shell::js::example_struct_jni::test_base::make_random>("make_random")
             ;
     }
 
 };
     
-template<> struct js_bind<mb_shell::js::example_struct_jni::test> {
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui::js_widget> {
+    static mb_shell::js::breeze_ui::js_widget unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui::js_widget obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui::js_widget &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::example_struct_jni::test>("test")
+        mod.class_<mb_shell::js::breeze_ui::js_widget>("js_widget")
             .constructor<>()
-                .base<mb_shell::js::example_struct_jni::test_base>()
-                .fun<&mb_shell::js::example_struct_jni::test::type_func>("type_func")
+                .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
             ;
     }
 
 };
     
-template<> struct js_bind<mb_shell::js::example_struct_jni::test2> {
+template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::example_struct_jni::test2>("test2")
+        mod.class_<mb_shell::js::breeze_ui::js_text_widget>("js_text_widget")
             .constructor<>()
-                .base<mb_shell::js::example_struct_jni::test_base>()
-                .fun<&mb_shell::js::example_struct_jni::test2::type_func>("type_func")
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::get_text>("get_text")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::set_text>("set_text")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::get_font_size>("get_font_size")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::set_font_size>("set_font_size")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::get_color>("get_color")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::set_color>("set_color")
+            ;
+    }
+
+};
+    
+template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("js_flex_layout_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::children>("children")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::append_child>("append_child")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::prepend_child>("prepend_child")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::remove_child>("remove_child")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_horizontal>("set_horizontal")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_left>("get_padding_left")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_left>("set_padding_left")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_right>("get_padding_right")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_right>("set_padding_right")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_top>("get_padding_top")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_top>("set_padding_top")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_bottom>("get_padding_bottom")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_bottom>("set_padding_bottom")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding>("get_padding")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding>("set_padding")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui::widgets_factory> {
+    static mb_shell::js::breeze_ui::widgets_factory unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui::widgets_factory obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui::widgets_factory &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::widgets_factory>("widgets_factory")
+            .constructor<>()
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
             ;
     }
 
@@ -731,6 +757,7 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
             .constructor<>()
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
                 .fun<&mb_shell::js::menu_controller::append_item_after>("append_item_after")
+                .fun<&mb_shell::js::menu_controller::append_widget_after>("append_widget_after")
                 .fun<&mb_shell::js::menu_controller::append_parent_item_after>("append_parent_item_after")
                 .fun<&mb_shell::js::menu_controller::append_parent_item>("append_parent_item")
                 .fun<&mb_shell::js::menu_controller::prepend_parent_item>("prepend_parent_item")
@@ -1024,13 +1051,15 @@ template<> struct js_bind<mb_shell::js::infra> {
     
 inline void bindAll(qjs::Context::Module &mod) {
 
-    js_bind<mb_shell::js::example_struct_jni>::bind(mod);
+    js_bind<mb_shell::js::breeze_ui>::bind(mod);
 
-    js_bind<mb_shell::js::example_struct_jni::test_base>::bind(mod);
+    js_bind<mb_shell::js::breeze_ui::js_widget>::bind(mod);
 
-    js_bind<mb_shell::js::example_struct_jni::test>::bind(mod);
+    js_bind<mb_shell::js::breeze_ui::js_text_widget>::bind(mod);
 
-    js_bind<mb_shell::js::example_struct_jni::test2>::bind(mod);
+    js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 

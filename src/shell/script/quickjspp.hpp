@@ -169,6 +169,20 @@ template <> struct js_traits<double> {
   }
 };
 
+template <> struct js_traits<float> {
+  /// @throws exception
+  static float unwrap(JSContext *ctx, JSValueConst v) {
+    double r;
+    if (JS_ToFloat64(ctx, &r, v))
+      throw exception{ctx};
+    return static_cast<float>(r);
+  }
+
+  static JSValue wrap(JSContext *ctx, float i) noexcept {
+    return JS_NewFloat64(ctx, static_cast<double>(i));
+  }
+};
+
 namespace detail {
 /** Fake std::string_view which frees the string on destruction.
  */
@@ -2018,6 +2032,66 @@ template <typename U, typename V> struct js_traits<std::pair<U, V>> {
     }
     return std::pair<U, V>{static_cast<U>(jsarray[uint32_t(0)]),
                            static_cast<V>(jsarray[uint32_t(1)])};
+  }
+};
+
+template <typename... T> struct js_traits<std::tuple<T...>> {
+  static JSValue wrap(JSContext *ctx, const std::tuple<T...> &obj) noexcept {
+    try {
+      auto jsarray = Value{weakFromContext(ctx), JS_NewArray(ctx)};
+
+      std::apply(
+          [&jsarray, ctx](const auto &...args) {
+            ((jsarray[uint32_t(args)] =
+                  static_cast<std::decay_t<decltype(args)>>(args)),
+             ...);
+          },
+          obj);
+      return jsarray.release();
+    } catch (exception) {
+      return JS_EXCEPTION;
+    } catch (std::exception const &err) {
+      JS_ThrowInternalError(ctx, "%s", err.what());
+      return JS_EXCEPTION;
+    } catch (...) {
+      JS_ThrowInternalError(ctx, "Unknown error");
+      return JS_EXCEPTION;
+    }
+  }
+  static std::tuple<T...> unwrap(JSContext *ctx, JSValueConst jsarr) {
+    if (!JS_IsArray(ctx, jsarr)) {
+      JS_ThrowTypeError(ctx, "Expected an array");
+      throw exception{ctx};
+    }
+
+    int32_t len;
+    if (JS_ToInt32(ctx, &len, JS_GetPropertyStr(ctx, jsarr, "length")) < 0) {
+      throw exception{ctx};
+    }
+
+    constexpr size_t tuple_size = sizeof...(T);
+    if (static_cast<size_t>(len) != tuple_size) {
+      JS_ThrowRangeError(ctx, "Array length %d does not match tuple size %zu",
+                         len, tuple_size);
+      throw exception{ctx};
+    }
+
+    return unwrap_impl(ctx, jsarr, std::index_sequence_for<T...>{});
+  }
+
+private:
+  template <size_t... I>
+  static std::tuple<T...> unwrap_impl(JSContext *ctx, JSValueConst jsarr,
+                                      std::index_sequence<I...>) {
+    try {
+      return std::make_tuple(
+          js_traits<std::tuple_element_t<I, std::tuple<T...>>>::unwrap(
+              ctx, JS_GetPropertyUint32(ctx, jsarr, I))...);
+    } catch (...) {
+      JS_ThrowInternalError(ctx, "Failed to unwrap tuple element at index %zu",
+                            sizeof...(I) - 1);
+      throw;
+    }
   }
 };
 

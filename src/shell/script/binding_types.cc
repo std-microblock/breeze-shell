@@ -31,20 +31,6 @@ std::unordered_set<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
 namespace mb_shell::js {
-int example_struct_jni::test_base::type_func() { return 0; }
-int example_struct_jni::test2::type_func() { return 2; }
-int example_struct_jni::test::type_func() { return 1; }
-std::shared_ptr<example_struct_jni::test_base>
-example_struct_jni::test_base::make_random() {
-  if (std::chrono::system_clock::now().time_since_epoch().count() % 2 == 0) {
-    std::println("Creating test instance");
-    return std::make_shared<test>();
-  } else {
-    std::println("Creating test2 instance");
-    return std::make_shared<test2>();
-  }
-}
-
 bool menu_controller::valid() { return !$menu.expired(); }
 std::shared_ptr<mb_shell::js::menu_item_controller>
 menu_controller::append_item_after(js_menu_data data, int after_index) {
@@ -1366,5 +1352,32 @@ void notification::send_with_buttons(
   handler->on_dismiss = [=](WinToastEventHandler::WinToastDismissalReason) {};
 
   WinToast::instance()->showToast(templ, handler);
+}
+
+void menu_controller::append_widget_after(
+    std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget,
+    int after_index) {
+
+  if (!valid())
+    return;
+  auto m = $menu.lock();
+  if (!m)
+    return;
+  m->children_dirty = true;
+  while (after_index < 0) {
+    after_index = m->item_widgets.size() + after_index + 1;
+  }
+
+  auto widget_wrapper =
+      std::make_shared<mb_shell::menu_item_custom_widget>(widget->$widget);
+
+  if (after_index >= m->item_widgets.size()) {
+    m->item_widgets.push_back(widget_wrapper);
+  } else {
+    m->item_widgets.insert(m->item_widgets.begin() + after_index,
+                           widget_wrapper);
+  }
+
+  m->update_icon_width();
 }
 } // namespace mb_shell::js

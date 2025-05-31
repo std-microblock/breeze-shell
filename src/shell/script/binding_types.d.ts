@@ -4,69 +4,266 @@
 declare module 'mshell' {
 
 
-export class example_struct_jni {
-	a: number
-	b: number
-	c: string
+export class breeze_ui {
+	
+	
+}
+    
+export class js_widget {
+	
 	
 /**
   * 
-  * @param a: number, b: number
-  * @returns number
+  * @param 
+  * @returns Array<js_widget>
   */
-  add1: ((arg1: number, arg2: number) => number)
-            
-	
-/**
-  * 
-  * @param a: string, b: string
-  * @returns number | string
-  */
-  add2: ((arg1: string, arg2: string) => number | string)
+  children: (() => Array<js_widget>)
             
 }
     
-export class test_base {
+export class js_text_widget extends js_widget {
 	
+	
+/**
+  * 
+  * @param 
+  * @returns string
+  */
+  get_text: (() => string)
+            
+	
+/**
+  * 
+  * @param text: string
+  * @returns void
+  */
+  set_text: ((arg1: string) => void)
+            
 	
 /**
   * 
   * @param 
   * @returns number
   */
-  type_func: (() => number)
+  get_font_size: (() => number)
+            
+	
+/**
+  * 
+  * @param size: number
+  * @returns void
+  */
+  set_font_size: ((arg1: number) => void)
             
 	
 /**
   * 
   * @param 
-  * @returns test_base
+  * @returns [number, number, number, number]
   */
-  static make_random: (() => test_base)
+  get_color: (() => [number, number, number, number])
+            
+	
+/**
+  * 
+  * @param color: [number, number, number, number] | undefined
+  * @returns void
+  */
+  set_color: ((arg1: [number, number, number, number] | undefined) => void)
             
 }
     
-export class test extends test_base {
+export class js_flex_layout_widget extends js_widget {
 	
+	
+/**
+  * 
+  * @param 
+  * @returns Array<js_widget>
+  */
+  children: (() => Array<js_widget>)
+            
+	
+/**
+  * #pragma once
+  * #include <functional>
+  * #include <memory>
+  * #include <optional>
+  * #include <stdlib.h>
+  * #include <string>
+  * #include <tuple>
+  * #include <unordered_set>
+  * #include <variant>
+  * #include <vector>
+  * #include "binding_types_breeze_ui.h"
+  * namespace mb_shell {
+  * struct mouse_menu_widget_main;
+  * struct menu_item_widget;
+  * struct menu_item_normal_widget;
+  * struct menu_item_parent_widget;
+  * struct menu_widget;
+  * } // namespace mb_shell
+  * namespace mb_shell::js {
+  * struct folder_view_folder_item {
+  *  FolderItem
+  * void *$handler;
+  * void *$controller;
+  * void *$render_target;
+  * int index;
+  * std::string parent_path;
+  * std::string name();
+  * std::string modify_date();
+  * std::string path();
+  * size_t size();
+  * std::string type();
+  * @param child: js_widget
+  * @returns void
+  */
+  append_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param child: js_widget
+  * @returns void
+  */
+  prepend_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param child: js_widget
+  * @returns void
+  */
+  remove_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns boolean
+  */
+  get_horizontal: (() => boolean)
+            
+	
+/**
+  * 
+  * @param horizontal: boolean
+  * @returns void
+  */
+  set_horizontal: ((arg1: boolean) => void)
+            
 	
 /**
   * 
   * @param 
   * @returns number
   */
-  type_func: (() => number)
+  get_padding_left: (() => number)
+            
+	
+/**
+  * (0) 取消选择该项。
+  * (1) 选择该项。
+  * (3) 将项目置于编辑模式。
+  * (4) 取消选择除指定项的所有项。
+  * (8) 确保该项显示在视图中。
+  * (16) 为项目提供焦点。
+  * @param padding: number
+  * @returns void
+  */
+  set_padding_left: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  get_padding_right: (() => number)
+            
+	
+/**
+  * 
+  * @param padding: number
+  * @returns void
+  */
+  set_padding_right: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  get_padding_top: (() => number)
+            
+	
+/**
+  * 文件夹视图控制器
+  * @param padding: number
+  * @returns void
+  */
+  set_padding_top: ((arg1: number) => void)
+            
+	
+/**
+  * 文件夹视图控制器
+  *  Folder view controller
+  * @param 
+  * @returns number
+  */
+  get_padding_bottom: (() => number)
+            
+	
+/**
+  * 
+  * @param padding: number
+  * @returns void
+  */
+  set_padding_bottom: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns [number, number, number, number]
+  */
+  get_padding: (() => [number, number, number, number])
+            
+	
+/**
+  * void select(int state);
+  * };
+  *  文件夹视图控制器
+  *  Folder view controller
+  * struct folder_view_controller {
+  * void *$hwnd;
+  * @param left: number, right: number, top: number, bottom: number
+  * @returns void
+  */
+  set_padding: ((arg1: number, arg2: number, arg3: number, arg4: number) => void)
             
 }
     
-export class test2 extends test_base {
+export class widgets_factory {
 	
+	
+/**
+  * 当前文件夹路径
+  *  Current folder path
+  * @param 
+  * @returns js_text_widget
+  */
+  static create_text_widget: (() => js_text_widget)
+            
 	
 /**
   * 
   * @param 
-  * @returns number
+  * @returns js_flex_layout_widget
   */
-  type_func: (() => number)
+  static create_flex_layout_widget: (() => js_flex_layout_widget)
             
 }
     
@@ -793,11 +990,20 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 在指定索引后添加菜单项
+  *  Append menu item after specified index
   * @param data: js_menu_data, after_index: number
   * @returns menu_item_controller
   */
   append_item_after: ((arg1: js_menu_data, arg2: number) => menu_item_controller)
+            
+	
+/**
+  * 
+  * @param widget: js_widget, after_index: number
+  * @returns void
+  */
+  append_widget_after: ((arg1: js_widget, arg2: number) => void)
             
 	
 /**
@@ -825,7 +1031,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 在末尾添加菜单项
+  *  Append menu item at end
   * @param data: js_menu_data
   * @returns menu_item_controller
   */
@@ -833,7 +1040,8 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * 在开头添加菜单项
+  *  Prepend menu item at beginning
   * @param data: js_menu_data
   * @returns menu_item_controller
   */
@@ -895,8 +1103,7 @@ export class menu_controller {
             
 	
 /**
-  * 添加菜单事件监听器
-  *  Add menu event listener
+  * 
   * @param listener: ((arg1: menu_info_basic_js) => void)
   * @returns (() => void)
   */
@@ -904,7 +1111,7 @@ export class menu_controller {
             
 	
 /**
-  * 
+  * Only for compatibility
   * @param data: js_menu_data
   * @returns menu_item_controller
   */
