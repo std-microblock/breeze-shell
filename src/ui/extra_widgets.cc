@@ -103,10 +103,9 @@ void acrylic_background_widget::update(update_context &ctx) {
 
         SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
-        if ((width->updated() || height->updated() || radius->updated() ||
-             !rgn_set) &&
-            !use_dwm) {
+        if (!use_dwm && should_update) {
           rgn_set = true;
+          should_update = false;
           auto rgn = CreateRoundRectRgn(
               0, 0, *width * dpi_scale, *height * dpi_scale,
               *radius * 2 * dpi_scale, *radius * 2 * dpi_scale);
@@ -127,7 +126,7 @@ void acrylic_background_widget::update(update_context &ctx) {
 
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
-  cv.notify_all();
+  should_update = should_update || (width->updated() || height->updated() || radius->updated());
   last_hwnd = nullptr;
   if (use_dwm) {
     radius->reset_to(8.f);
@@ -142,7 +141,6 @@ void acrylic_background_widget::render(nanovg_context ctx) {
   bg_color_tmp.a *= *opacity / 255.f;
   ctx.fillColor(bg_color_tmp);
   ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
-
   last_hwnd_self = last_hwnd;
   last_hwnd = hwnd;
 

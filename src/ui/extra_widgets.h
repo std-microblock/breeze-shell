@@ -21,6 +21,7 @@ struct rect_widget : public widget {
 
 struct acrylic_background_widget : public rect_widget {
   void *hwnd = nullptr;
+  bool should_update = true;
   acrylic_background_widget(bool use_dwm = true);
   ~acrylic_background_widget();
   bool use_dwm = true;
