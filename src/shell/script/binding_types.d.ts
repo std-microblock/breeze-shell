@@ -26,6 +26,11 @@ export class example_struct_jni {
             
 }
     
+export class test {
+	a: number
+	
+}
+    
 export class folder_view_folder_item {
 	index: number
 	parent_path: string

@@ -50,6 +50,33 @@ template<> struct js_bind<mb_shell::js::example_struct_jni> {
 
 };
     
+template <> struct qjs::js_traits<mb_shell::js::example_struct_jni::test> {
+    static mb_shell::js::example_struct_jni::test unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::example_struct_jni::test obj;
+    
+        obj.a = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "a"));
+        
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::example_struct_jni::test &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        JS_SetPropertyStr(ctx, obj, "a", js_traits<int>::wrap(ctx, val.a));
+        
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::example_struct_jni::test> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::example_struct_jni::test>("test")
+            .constructor<>()
+                .fun<&mb_shell::js::example_struct_jni::test::a>("a")
+            ;
+    }
+
+};
+    
 template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
     static mb_shell::js::folder_view_folder_item unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::folder_view_folder_item obj;
@@ -979,6 +1006,8 @@ template<> struct js_bind<mb_shell::js::infra> {
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::example_struct_jni>::bind(mod);
+
+    js_bind<mb_shell::js::example_struct_jni::test>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 

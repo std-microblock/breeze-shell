@@ -103,9 +103,29 @@ if (ast.kind !== 'NamespaceDecl') {
     throw new Error('Root node is not a NamespaceDecl');
 }
 
-let currentNamespace = 'mb_shell::js'
+const structNames: string[] = []
 
-const generateForRecordDecl = (node_struct: ClangASTD) => {
+const resolveUnderPath = (path: string[], resolveName: string) => {
+    // Firstly, we find the name under the same namespace
+    const ns = path.join('::');
+    const fullName = `${ns}::${resolveName}`;
+    if (structNames.includes(resolveName)) {
+        return fullName;
+    }
+
+    // If not found, we try to find the name under the parent namespace
+    if (path.length > 1) {
+        const parentPath = path.slice(0, -1);
+        const parentFullName = resolveUnderPath(parentPath, resolveName);
+        if (parentFullName) {
+            return parentFullName;
+        }
+    }
+
+    throw new Error(`Cannot resolve ${resolveName} under namespace ${ns}`);
+}
+
+const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
     if (node_struct.kind !== 'CXXRecordDecl') {
         throw new Error('Node is not a RecordDecl');
     }
@@ -194,14 +214,12 @@ const generateForRecordDecl = (node_struct: ClangASTD) => {
         }
     }
 
-    // console.log({
-    //     structName, fields, methods
-    // });
+    const fullName = path.join('::') + '::' + structName;
 
     binding += `
-template <> struct qjs::js_traits<${currentNamespace}::${structName}> {
-    static ${currentNamespace}::${structName} unwrap(JSContext *ctx, JSValueConst v) {
-        ${currentNamespace}::${structName} obj;
+template <> struct qjs::js_traits<${fullName}> {
+    static ${fullName} unwrap(JSContext *ctx, JSValueConst v) {
+        ${fullName} obj;
     `;
 
     for (const field of fields) {
@@ -214,7 +232,7 @@ template <> struct qjs::js_traits<${currentNamespace}::${structName}> {
         return obj;
     }
 
-    static JSValue wrap(JSContext *ctx, const ${currentNamespace}::${structName} &val) noexcept {
+    static JSValue wrap(JSContext *ctx, const ${fullName} &val) noexcept {
         JSValue obj = JS_NewObject(ctx);
     `;
 
@@ -239,23 +257,23 @@ template <> struct qjs::js_traits<${currentNamespace}::${structName}> {
                     .static_fun<&MyClass::static_function>("static_function")
      */
     binding += `
-template<> struct js_bind<${currentNamespace}::${structName}> {
+template<> struct js_bind<${fullName}> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<${currentNamespace}::${structName}>("${structName}")
+        mod.class_<${fullName}>("${structName}")
             .constructor<>()`;
     for (const method of methods) {
         if (method.static) {
             binding += `
-                .static_fun<&${currentNamespace}::${structName}::${method.name}>("${method.name}")`;
+                .static_fun<&${fullName}::${method.name}>("${method.name}")`;
         } else {
             binding += `
-                .fun<&${currentNamespace}::${structName}::${method.name}>("${method.name}")`;
+                .fun<&${fullName}::${method.name}>("${method.name}")`;
         }
     }
 
     for (const field of fields) {
         binding += `
-                .fun<&${currentNamespace}::${structName}::${field.name}>("${field.name}")`;
+                .fun<&${fullName}::${field.name}>("${field.name}")`;
     }
 
     binding += `
@@ -312,14 +330,31 @@ export class ${structName} {
 
 }
 
-const structNames: string[] = []
-for (const node of ast.inner!) {
+
+const enumerateStructDecls = (node: ClangASTD, callback, path: string[] = ['mb_shell']) => {
     if (node.kind === 'CXXRecordDecl') {
-        generateForRecordDecl(node);
-        if (node.name && node.inner)
-            structNames.push(node.name);
+        if (node.name && node.inner) {
+            callback(node, path);
+        }
+    }
+
+    if (node.inner) {
+        for (const child of node.inner) {
+            enumerateStructDecls(child, callback, [...path, node.name || '']);
+        }
     }
 }
+
+enumerateStructDecls(ast, (node, path) => {
+    structNames.push(path.join('::') + '::' + node.name!);
+})
+
+enumerateStructDecls(ast, (node, path) => {
+    if (node.kind === 'CXXRecordDecl') {
+        generateForRecordDecl(node, path);
+    }
+})
+
 
 binding += `
 inline void bindAll(qjs::Context::Module &mod) {
@@ -327,7 +362,7 @@ inline void bindAll(qjs::Context::Module &mod) {
 
 for (const structName of structNames) {
     binding += `
-    js_bind<${currentNamespace}::${structName}>::bind(mod);
+    js_bind<${structName}>::bind(mod);
 `
 }
 
@@ -339,6 +374,7 @@ typescriptDef += `
 }
 `
 
+declare var __dirname: string;
 const paths = [
     join(__dirname, 'src/shell/script'),
     join(__dirname, '../src/shell/script'),

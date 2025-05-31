@@ -18,6 +18,10 @@ struct menu_widget;
 
 namespace mb_shell::js {
 struct example_struct_jni {
+  struct test {
+    int a;
+  };
+
   int a;
   int b;
 
