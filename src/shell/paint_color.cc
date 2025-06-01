@@ -1,5 +1,9 @@
 #include "paint_color.h"
+#include "nanovg.h"
+#include "ui.h"
+#include "utils.h"
 #include <numbers>
+#include <vector>
 
 namespace mb_shell {
 paint_color paint_color::from_string(const std::string &str) {
@@ -12,7 +16,7 @@ paint_color paint_color::from_string(const std::string &str) {
   if (trimmed.starts_with("solid(") && trimmed.ends_with(")")) {
     std::string color_str = trimmed.substr(6, trimmed.length() - 7);
     res.type = type::solid;
-    res.color = parse_color(color_str);
+    res.color = rgba_color::from_string(color_str);
   } else if (trimmed.starts_with("linear-gradient(") &&
              trimmed.ends_with(")")) {
     std::string params = trimmed.substr(16, trimmed.length() - 17);
@@ -86,5 +90,45 @@ std::string paint_color::to_string() const {
            format_color(color) + ", " + format_color(color2) + ")";
   }
   return "";
+}
+void paint_color::apply_to_ctx(ui::nanovg_context &ctx, float x, float y,
+                               float width, float height) const {
+
+  switch (type) {
+  case type::solid: {
+    ctx.fillColor(color);
+    ctx.strokeColor(color);
+    return;
+  }
+  case type::linear_gradient: {
+    auto paint = ctx.linearGradient(x, y, x + width * cos(angle),
+                                    y + height * sin(angle), color, color2);
+    ctx.fillPaint(paint);
+    ctx.strokePaint(paint);
+    return;
+  }
+  case type::radial_gradient: {
+    auto paint = ctx.radialGradient(x + width / 2, y + height / 2, radius,
+                                    radius2, color, color2);
+    ctx.fillPaint(paint);
+    ctx.strokePaint(paint);
+    return;
+  }
+  }
+  throw std::runtime_error("Unknown paint color type");
+}
+rgba_color::operator NVGcolor() const {
+  return nvgRGBAf(r, g, b, a);
+}
+rgba_color::rgba_color(const NVGcolor &color)
+    : r(color.r), g(color.g), b(color.b), a(color.a) {}
+NVGcolor rgba_color::nvg() const { return nvgRGBAf(r, g, b, a); }
+rgba_color rgba_color::from_string(const std::string &str) {
+    return parse_color(str);
+}
+std::string rgba_color::to_string() const {
+  return std::format("#{0:02x}{1:02x}{2:02x}{3:02x}", static_cast<int>(r * 255),
+                     static_cast<int>(g * 255), static_cast<int>(b * 255),
+                     static_cast<int>(a * 255));
 }
 } // namespace mb_shell

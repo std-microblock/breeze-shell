@@ -264,7 +264,7 @@ void render_target::render() {
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof(MONITORINFOEX);
   GetMonitorInfo(monitor, &monitor_info);
-  bool need_rerender = false;
+  bool need_repaint = false;
   update_context ctx{
       .delta_t = delta_t,
       .mouse_x = mouse_x / dpi_scale,
@@ -282,7 +282,7 @@ void render_target::render() {
               .dpi_scale = dpi_scale,
           },
       .scroll_y = scroll_y,
-      .need_rerender = need_rerender,
+      .need_repaint = need_repaint,
       .rt = *this,
       .vg = vg,
   };
@@ -300,12 +300,12 @@ void render_target::render() {
       root->update(ctx);
     }
     time_checkpoints("Update root");
-    if (need_rerender ||
-        (ms_steady - last_rerender) > 1000) {
+    if (need_repaint ||
+        (ms_steady - last_repaint) > 1000) {
       glClearColor(0, 0, 0, 0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
               GL_STENCIL_BUFFER_BIT);
-      last_rerender = ms_steady;
+      last_repaint = ms_steady;
       {
         std::lock_guard lock(rt_lock);
         root->render(vg);

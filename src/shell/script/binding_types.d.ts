@@ -13,7 +13,28 @@ export class js_widget {
 	
 	
 /**
-  * 
+  * #pragma once
+  * #include <functional>
+  * #include <memory>
+  * #include <optional>
+  * #include <stdlib.h>
+  * #include <string>
+  * #include <tuple>
+  * #include <unordered_set>
+  * #include <variant>
+  * #include <vector>
+  * #include "binding_types_breeze_ui.h"
+  * namespace mb_shell {
+  * struct mouse_menu_widget_main;
+  * struct menu_item_widget;
+  * struct menu_item_normal_widget;
+  * struct menu_item_parent_widget;
+  * struct menu_widget;
+  * } // namespace mb_shell
+  * namespace mb_shell::js {
+  * struct folder_view_folder_item {
+  *  FolderItem
+  * void *$handler;
   * @param 
   * @returns Array<js_widget>
   */
@@ -81,12 +102,7 @@ export class js_text_widget extends js_widget {
             
 	
 /**
-  * (0) 取消选择该项。
-  * (1) 选择该项。
-  * (3) 将项目置于编辑模式。
-  * (4) 取消选择除指定项的所有项。
-  * (8) 确保该项显示在视图中。
-  * (16) 为项目提供焦点。
+  * 
   * @param 
   * @returns number
   */
@@ -94,7 +110,12 @@ export class js_text_widget extends js_widget {
             
 	
 /**
-  * 
+  * (0) 取消选择该项。
+  * (1) 选择该项。
+  * (3) 将项目置于编辑模式。
+  * (4) 取消选择除指定项的所有项。
+  * (8) 确保该项显示在视图中。
+  * (16) 为项目提供焦点。
   * @param size: number
   * @returns void
   */
@@ -130,12 +151,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * void select(int state);
-  * };
-  *  文件夹视图控制器
-  *  Folder view controller
-  * struct folder_view_controller {
-  * void *$hwnd;
+  * 
   * @param horizontal: boolean
   * @returns void
   */
@@ -151,7 +167,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 当前文件夹路径
+  * 
   * @param padding: number
   * @returns void
   */
@@ -160,7 +176,6 @@ export class js_flex_layout_widget extends js_widget {
 	
 /**
   * 当前文件夹路径
-  *  Current folder path
   * @param 
   * @returns number
   */
@@ -168,7 +183,8 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 当前文件夹路径
+  *  Current folder path
   * @param padding: number
   * @returns void
   */
@@ -176,7 +192,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 当前焦点文件路径
+  * 
   * @param 
   * @returns number
   */
@@ -185,7 +201,6 @@ export class js_flex_layout_widget extends js_widget {
 	
 /**
   * 当前焦点文件路径
-  *  Currently focused file path
   * @param padding: number
   * @returns void
   */
@@ -193,7 +208,8 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 当前焦点文件路径
+  *  Currently focused file path
   * @param 
   * @returns number
   */
@@ -201,7 +217,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 选中的文件列表
+  * 
   * @param padding: number
   * @returns void
   */
@@ -210,7 +226,6 @@ export class js_flex_layout_widget extends js_widget {
 	
 /**
   * 选中的文件列表
-  *  List of selected files
   * @param 
   * @returns [number, number, number, number]
   */
@@ -218,11 +233,61 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 选中的文件列表
+  *  List of selected files
   * @param left: number, right: number, top: number, bottom: number
   * @returns void
   */
   set_padding: ((arg1: number, arg2: number, arg3: number, arg4: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns ((arg1: number) => void)
+  */
+  get_on_click: (() => ((arg1: number) => void))
+            
+	
+/**
+  * 
+  * @param on_click: ((arg1: number) => void)
+  * @returns void
+  */
+  set_on_click: ((arg1: ((arg1: number) => void)) => void)
+            
+	
+/**
+  * 切换到新文件夹
+  * @param 
+  * @returns ((arg1: number, arg2: number) => void)
+  */
+  get_on_mouse_move: (() => ((arg1: number, arg2: number) => void))
+            
+	
+/**
+  * 切换到新文件夹
+  *  Change to a new folder
+  * @param on_mouse_move: ((arg1: number, arg2: number) => void)
+  * @returns void
+  */
+  set_on_mouse_move: ((arg1: ((arg1: number, arg2: number) => void)) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns (() => void)
+  */
+  get_on_mouse_enter: (() => (() => void))
+            
+	
+/**
+  * 打开文件
+  * @param on_mouse_enter: (() => void)
+  * @returns void
+  */
+  set_on_mouse_enter: ((arg1: (() => void)) => void)
             
 }
     
@@ -238,11 +303,23 @@ export class widgets_factory {
             
 	
 /**
-  * 打开文件
+  * 刷新视图
   * @param 
   * @returns js_flex_layout_widget
   */
   static create_flex_layout_widget: (() => js_flex_layout_widget)
+            
+}
+    
+export class breeze_paint {
+	
+	
+/**
+  * 
+  * @param color: string
+  * @returns breeze_paint
+  */
+  static from_color: ((arg1: string) => breeze_paint)
             
 }
     

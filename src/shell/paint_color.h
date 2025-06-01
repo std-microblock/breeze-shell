@@ -1,46 +1,48 @@
 #pragma once
-#include "nanovg.h"
-#include "utils.h"
-#include "ui.h"
+#include <string>
+#include <array>
+
+struct NVGcolor;
+
+namespace ui {
+struct nanovg_context;
+}
 
 namespace mb_shell {
+
+struct rgba_color {
+    float r = 0;
+    float g = 0;
+    float b = 0;
+    float a = 1;
+    
+    rgba_color() = default;
+    rgba_color(float r, float g, float b, float a = 1)
+        : r(r), g(g), b(b), a(a) {}
+
+    static rgba_color from_string(const std::string &str);
+    std::string to_string() const;
+
+    rgba_color(const NVGcolor &color);
+    NVGcolor nvg() const;
+    // we want to pass this directly into fillColor( NVGcolor color)
+    operator NVGcolor() const;
+
+};
+
 struct paint_color {
   enum class type {
     solid,
     linear_gradient,
     radial_gradient
   } type = type::solid;
-  NVGcolor color = parse_color("#000000");
-  NVGcolor color2 = parse_color("#000000");
+  rgba_color color = {0, 0, 0, 1};  // RGBA
+  rgba_color color2 = {0, 0, 0, 1}; // RGBA for gradients
   float radius = 0;
   float radius2 = 0;
   float angle = 0;
   void apply_to_ctx(ui::nanovg_context &ctx, float x, float y, float width,
-                    float height) const {
-
-    switch (type) {
-    case type::solid: {
-      ctx.fillColor(color);
-      ctx.strokeColor(color);
-      return;
-    }
-    case type::linear_gradient: {
-      auto paint = ctx.linearGradient(x, y, x + width * cos(angle),
-                                      y + height * sin(angle), color, color2);
-      ctx.fillPaint(paint);
-      ctx.strokePaint(paint);
-      return;
-    }
-    case type::radial_gradient: {
-      auto paint = ctx.radialGradient(x + width / 2, y + height / 2, radius,
-                                      radius2, color, color2);
-      ctx.fillPaint(paint);
-      ctx.strokePaint(paint);
-      return;
-    }
-    }
-    throw std::runtime_error("Unknown paint color type");
-  }
+                    float height) const;
 
   // supported patterns:
   // #RRGGBBAA

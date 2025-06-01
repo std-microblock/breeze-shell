@@ -25,7 +25,7 @@ struct update_context {
   screen_info screen;
   float scroll_y;
 
-  bool &need_rerender;
+  bool &need_repaint;
 
   // hit test, lifetime is not guaranteed
   std::shared_ptr<std::vector<widget *>> hovered_widgets =
@@ -125,7 +125,7 @@ struct widget : std::enable_shared_from_this<widget> {
 
   float _debug_offset_cache[2];
   bool enable_child_clipping = false;
-
+  bool needs_repaint = false;
   float last_offset_x = 0, last_offset_y = 0;
 
   // Time until the widget is removed from the tree

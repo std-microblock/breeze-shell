@@ -70,8 +70,13 @@ void ui::widget::update(update_context &ctx) {
     anim->update(ctx.delta_t);
 
     if (anim->updated()) {
-      ctx.need_rerender = true;
+      ctx.need_repaint = true;
     }
+  }
+
+  if (this->needs_repaint) {
+    ctx.need_repaint = true;
+    this->needs_repaint = false;
   }
 
   dying_time.update(ctx.delta_t);

@@ -13,10 +13,6 @@ namespace ui {
 struct widget;
 }
 
-namespace mb_shell::js_impl {
-struct widget_js_base;
-}
-
 namespace mb_shell::js {
 struct breeze_ui {
   struct js_text_widget;
@@ -66,6 +62,13 @@ struct breeze_ui {
     void set_padding_bottom(float padding);
     std::tuple<float, float, float, float> get_padding() const;
     void set_padding(float left, float right, float top, float bottom);
+    std::function<void(int)> get_on_click() const;
+    void set_on_click(std::function<void(int)> on_click);
+    std::function<void(float, float)> get_on_mouse_move() const;
+    void set_on_mouse_move(std::function<void(float, float)> on_mouse_move);
+    std::function<void()> get_on_mouse_enter() const;
+    void set_on_mouse_enter(
+        std::function<void()> on_mouse_enter);
   };
 
   struct widgets_factory {

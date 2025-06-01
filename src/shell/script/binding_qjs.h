@@ -94,6 +94,12 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_bottom>("set_padding_bottom")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding>("get_padding")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding>("set_padding")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_click>("get_on_click")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_click>("set_on_click")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_move>("get_on_mouse_move")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_move>("set_on_mouse_move")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_enter>("get_on_mouse_enter")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_enter>("set_on_mouse_enter")
             ;
     }
 
@@ -118,6 +124,29 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
+            ;
+    }
+
+};
+    
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui::breeze_paint> {
+    static mb_shell::js::breeze_ui::breeze_paint unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui::breeze_paint obj;
+    
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui::breeze_paint &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+    
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze_ui::breeze_paint> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::breeze_paint>("breeze_paint")
+            .constructor<>()
+                .static_fun<&mb_shell::js::breeze_ui::breeze_paint::from_color>("from_color")
             ;
     }
 
@@ -1061,6 +1090,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::breeze_paint>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 

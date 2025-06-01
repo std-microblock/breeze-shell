@@ -1,4 +1,5 @@
 #include "../contextmenu/menu_widget.h"
+#include "animator.h"
 #include "binding_types.h"
 #include "ui.h"
 #include "widget.h"
@@ -32,6 +33,7 @@ void breeze_ui::js_text_widget::set_text(std::string text) {
   if (!text_widget)
     return;
   text_widget->text = text;
+  text_widget->needs_repaint = true;
 }
 
 int breeze_ui::js_text_widget::get_font_size() const {
@@ -50,6 +52,7 @@ void breeze_ui::js_text_widget::set_font_size(int size) {
   if (!text_widget)
     return;
   text_widget->font_size = size;
+  text_widget->needs_repaint = true;
 }
 
 std::tuple<float, float, float, float>
@@ -76,19 +79,6 @@ void breeze_ui::js_text_widget::set_color(
          std::get<2>(color.value()), std::get<3>(color.value())});
   } else {
     text_widget->color.animate_to({0.0f, 0.0f, 0.0f, 0.0f});
-  }
-}
-bool breeze_ui::js_flex_layout_widget::get_horizontal() const {
-  return $widget && std::dynamic_pointer_cast<ui::widget_flex>($widget)
-             ? std::dynamic_pointer_cast<ui::widget_flex>($widget)->horizontal
-             : false;
-}
-void breeze_ui::js_flex_layout_widget::set_horizontal(bool horizontal) {
-  if ($widget) {
-    auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
-    if (flex_widget) {
-      flex_widget->horizontal = horizontal;
-    }
   }
 }
 
@@ -136,9 +126,107 @@ breeze_ui::widgets_factory::create_text_widget() {
   return res;
 }
 
+struct widget_js_base : public ui::widget_flex {
+  using super = ui::widget_flex;
+
+  std::function<void(int)> on_click;
+  std::function<void(float, float)> on_mouse_move;
+  std::function<void()> on_mouse_enter;
+  std::function<void(ui::update_context &ctx)> on_mouse_leave;
+  std::function<void(ui::update_context &ctx)> on_mouse_down;
+  std::function<void(ui::update_context &ctx)> on_mouse_up;
+  std::function<void(ui::update_context &ctx)> on_mouse_wheel;
+  std::function<void(ui::update_context &ctx)> on_update;
+
+  bool previous_hovered = false;
+
+  float prev_mouse_x = 0, prev_mouse_y = 0;
+
+  void update(ui::update_context &ctx) override {
+    super::update(ctx);
+
+    if (on_update) {
+      on_update(ctx);
+    }
+
+    if (ctx.mouse_clicked && on_click) {
+      on_click(0);
+    }
+
+    if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
+      on_mouse_enter();
+    } else if (!ctx.hovered(this) && previous_hovered && on_mouse_leave) {
+      on_mouse_leave(ctx);
+    }
+
+    previous_hovered = ctx.hovered(this);
+    if (ctx.mouse_down_on(this) && on_mouse_down) {
+      on_mouse_down(ctx);
+    }
+
+    if (ctx.mouse_up && on_mouse_up) {
+      on_mouse_up(ctx);
+    }
+
+    if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
+      prev_mouse_x = ctx.mouse_x;
+      prev_mouse_y = ctx.mouse_y;
+      if (on_mouse_move && ctx.hovered(this)) {
+        on_mouse_move(ctx.mouse_x, ctx.mouse_y);
+      }
+    }
+
+    if (ctx.scroll_y != 0 && on_mouse_wheel) {
+      on_mouse_wheel(ctx);
+    }
+  }
+
+  ui::sp_anim_float opacity = anim_float(255), border_radius = anim_float(0),
+                    border_width = anim_float(0);
+  ui::animated_color background_color = {this, 0.2f, 0.2f, 0.2f, 0.6f},
+                     border_color = {this, 0.0f, 0.0f, 0.0f, 1.0f};
+  bool inset_border = false;
+
+  std::optional<paint_color> background_paint, border_paint;
+
+  void render(ui::nanovg_context ctx) override {
+    float rx = *x, ry = *y, rw = *width, rh = *height;
+    if (inset_border) {
+      rx += *border_width / 2;
+      ry += *border_width / 2;
+      rw -= *border_width;
+      rh -= *border_width;
+    }
+
+    auto scope = ctx.transaction();
+
+    ctx.globalAlpha(*opacity / 255.f);
+    if (background_paint) {
+      background_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
+    } else {
+      ctx.fillColor(background_color);
+    }
+
+    ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
+
+    if (border_paint) {
+      border_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
+    } else {
+      ctx.strokeColor(border_color);
+    }
+
+    if (*border_width > 0) {
+      ctx.strokeWidth(*border_width);
+      ctx.strokeRoundedRect(rx, ry, rw, rh, *border_radius);
+    }
+
+    super::render(ctx);
+  }
+};
+
 std::shared_ptr<breeze_ui::js_flex_layout_widget>
 breeze_ui::widgets_factory::create_flex_layout_widget() {
-  auto layout_widget = std::make_shared<ui::widget_flex>();
+  auto layout_widget = std::make_shared<widget_js_base>();
   auto res = std::make_shared<js_flex_layout_widget>();
   res->$widget = std::dynamic_pointer_cast<ui::widget>(layout_widget);
   return res;
@@ -147,7 +235,7 @@ breeze_ui::widgets_factory::create_flex_layout_widget() {
 float breeze_ui::js_flex_layout_widget::get_padding_left() const {
   if (!$widget)
     return 0.0f;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return 0.0f;
   return flex_widget->padding_left->dest();
@@ -155,7 +243,7 @@ float breeze_ui::js_flex_layout_widget::get_padding_left() const {
 void breeze_ui::js_flex_layout_widget::set_padding_left(float padding) {
   if (!$widget)
     return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return;
   flex_widget->padding_left->animate_to(padding);
@@ -163,7 +251,7 @@ void breeze_ui::js_flex_layout_widget::set_padding_left(float padding) {
 float breeze_ui::js_flex_layout_widget::get_padding_right() const {
   if (!$widget)
     return 0.0f;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return 0.0f;
   return flex_widget->padding_right->dest();
@@ -171,7 +259,7 @@ float breeze_ui::js_flex_layout_widget::get_padding_right() const {
 void breeze_ui::js_flex_layout_widget::set_padding_right(float padding) {
   if (!$widget)
     return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return;
   flex_widget->padding_right->animate_to(padding);
@@ -179,7 +267,7 @@ void breeze_ui::js_flex_layout_widget::set_padding_right(float padding) {
 float breeze_ui::js_flex_layout_widget::get_padding_top() const {
   if (!$widget)
     return 0.0f;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return 0.0f;
   return flex_widget->padding_top->dest();
@@ -187,7 +275,7 @@ float breeze_ui::js_flex_layout_widget::get_padding_top() const {
 void breeze_ui::js_flex_layout_widget::set_padding_top(float padding) {
   if (!$widget)
     return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return;
   flex_widget->padding_top->animate_to(padding);
@@ -195,7 +283,7 @@ void breeze_ui::js_flex_layout_widget::set_padding_top(float padding) {
 float breeze_ui::js_flex_layout_widget::get_padding_bottom() const {
   if (!$widget)
     return 0.0f;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return 0.0f;
   return flex_widget->padding_bottom->dest();
@@ -203,7 +291,7 @@ float breeze_ui::js_flex_layout_widget::get_padding_bottom() const {
 void breeze_ui::js_flex_layout_widget::set_padding_bottom(float padding) {
   if (!$widget)
     return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
   if (!flex_widget)
     return;
   flex_widget->padding_bottom->animate_to(padding);
@@ -213,6 +301,21 @@ breeze_ui::js_flex_layout_widget::get_padding() const {
   return {get_padding_left(), get_padding_right(), get_padding_top(),
           get_padding_bottom()};
 }
+bool breeze_ui::js_flex_layout_widget::get_horizontal() const {
+  return $widget && std::dynamic_pointer_cast<widget_js_base>($widget)
+             ? std::dynamic_pointer_cast<widget_js_base>($widget)->horizontal
+             : false;
+}
+void breeze_ui::js_flex_layout_widget::set_horizontal(bool horizontal) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->horizontal = horizontal;
+    
+    }
+  }
+}
+
 void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
                                                    float top, float bottom) {
   set_padding_left(left);
@@ -240,5 +343,61 @@ breeze_ui::breeze_paint::from_color(std::string color) {
   auto paint = std::make_shared<breeze_paint>();
   paint->$paint = paint_color::from_string(color);
   return paint;
+}
+std::function<void(int)>
+breeze_ui::js_flex_layout_widget::get_on_click() const {
+  if (!$widget)
+    return nullptr;
+  auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+  if (!flex_widget)
+    return nullptr;
+  return flex_widget->on_click;
+}
+void breeze_ui::js_flex_layout_widget::set_on_click(
+    std::function<void(int)> on_click) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->on_click = on_click;
+    }
+  }
+}
+std::function<void(float, float)>
+breeze_ui::js_flex_layout_widget::get_on_mouse_move() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      return flex_widget->on_mouse_move;
+    }
+  }
+  return nullptr;
+}
+void breeze_ui::js_flex_layout_widget::set_on_mouse_move(
+    std::function<void(float, float)> on_mouse_move) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->on_mouse_move = on_mouse_move;
+    }
+  }
+}
+std::function<void()>
+breeze_ui::js_flex_layout_widget::get_on_mouse_enter() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      return flex_widget->on_mouse_enter;
+    }
+  }
+  return nullptr;
+}
+void breeze_ui::js_flex_layout_widget::set_on_mouse_enter(
+    std::function<void()> on_mouse_enter) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->on_mouse_enter = on_mouse_enter;
+    }
+  }
 }
 } // namespace mb_shell::js

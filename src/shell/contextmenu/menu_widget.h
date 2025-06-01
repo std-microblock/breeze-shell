@@ -15,28 +15,6 @@ namespace mb_shell {
 
 struct menu_widget;
 
-namespace js_impl {
-struct widget_js_base : public ui::widget {
-  using super = ui::widget;
-  std::shared_ptr<ui::widget> $widget;
-  widget_js_base(std::shared_ptr<ui::widget> widget);
-
-  std::function<void(ui::update_context &ctx)> on_click;
-  std::function<void(ui::update_context &ctx)> on_mouse_enter;
-  std::function<void(ui::update_context &ctx)> on_mouse_leave;
-  std::function<void(ui::update_context &ctx)> on_mouse_down;
-  std::function<void(ui::update_context &ctx)> on_mouse_up;
-  std::function<void(ui::update_context &ctx)> on_mouse_move;
-  std::function<void(ui::update_context &ctx)> on_mouse_wheel;
-  std::function<void(ui::update_context &ctx)> on_update;
-
-  bool previous_hovered = false;
-
-  float prev_mouse_x = 0, prev_mouse_y = 0;
-
-  void update(ui::update_context &ctx) override;
-};
-} // namespace js_impl
 
 struct menu_item_widget : public ui::widget {
   using super = ui::widget;
