@@ -158,7 +158,9 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
     const bases: {
         access: 'public' | 'protected' | 'private';
         type: string;
-    }[] = node_struct.bases?.map(base => {
+    }[] = node_struct.bases?.filter(base=>{
+        return !base.type.qualType.includes('std::')
+    }).map(base => {
         return {
             access: base.access,
             type: ctypeToQualified(base.type!.qualType, path)

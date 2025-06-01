@@ -2,6 +2,7 @@
 #include "binding_types.h"
 #include "ui.h"
 #include "widget.h"
+#include <memory>
 
 namespace mb_shell::js {
 std::vector<std::shared_ptr<breeze_ui::js_widget>>
@@ -91,78 +92,56 @@ void breeze_ui::js_flex_layout_widget::set_horizontal(bool horizontal) {
   }
 }
 
-void breeze_ui::js_flex_layout_widget::append_child(
-    std::shared_ptr<js_widget> child) {
-  if (!$widget)
-    return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
-  if (!flex_widget)
-    return;
+void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
+                                              int after_index) {
   if (child && child->$widget) {
-    flex_widget->add_child(
+    $widget->children_dirty = true;
+    if (after_index < 0) {
+      after_index = $widget->children.size() + after_index + 1;
+    }
+    $widget->children.insert(
+        $widget->children.begin() + std::max(0, after_index),
         std::dynamic_pointer_cast<ui::widget>(child->$widget));
   }
 }
 
-void breeze_ui::js_flex_layout_widget::prepend_child(
-    std::shared_ptr<js_widget> child) {
-  if (!$widget)
-    return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
-  if (!flex_widget)
-    return;
-  if (child && child->$widget) {
-    flex_widget->children.insert(
-        flex_widget->children.begin(),
-        std::dynamic_pointer_cast<ui::widget>(child->$widget));
-  }
+void breeze_ui::js_widget::append_child(std::shared_ptr<js_widget> child) {
+  append_child_after(child, -1);
 }
 
-void breeze_ui::js_flex_layout_widget::remove_child(
-    std::shared_ptr<js_widget> child) {
+void breeze_ui::js_widget::prepend_child(std::shared_ptr<js_widget> child) {
+  append_child_after(child, 0);
+}
+
+void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
   if (!$widget)
     return;
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
-  if (!flex_widget)
-    return;
+
   if (child && child->$widget) {
-    auto it = std::find(flex_widget->children.begin(),
-                        flex_widget->children.end(), child->$widget);
-    if (it != flex_widget->children.end()) {
-      flex_widget->children.erase(it);
+    auto it = std::find($widget->children.begin(), $widget->children.end(),
+                        child->$widget);
+    if (it != $widget->children.end()) {
+      $widget->children.erase(it);
+      $widget->children_dirty = true;
     }
   }
-}
-
-std::vector<std::shared_ptr<breeze_ui::js_widget>>
-breeze_ui::js_flex_layout_widget::children() const {
-  std::vector<std::shared_ptr<js_widget>> result;
-  if (!$widget)
-    return result;
-
-  auto flex_widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
-  if (!flex_widget)
-    return result;
-
-  for (const auto &child : flex_widget->children) {
-    result.push_back(std::make_shared<js_widget>(child));
-  }
-  return result;
 }
 
 std::shared_ptr<breeze_ui::js_text_widget>
 breeze_ui::widgets_factory::create_text_widget() {
   auto text_widget = std::make_shared<ui::text_widget>();
 
-  return std::make_shared<js_text_widget>(
-      std::dynamic_pointer_cast<ui::widget>(text_widget));
+  auto res = std::make_shared<js_text_widget>();
+  res->$widget = std::dynamic_pointer_cast<ui::widget>(text_widget);
+  return res;
 }
 
 std::shared_ptr<breeze_ui::js_flex_layout_widget>
 breeze_ui::widgets_factory::create_flex_layout_widget() {
   auto layout_widget = std::make_shared<ui::widget_flex>();
-  return std::make_shared<js_flex_layout_widget>(
-      std::dynamic_pointer_cast<ui::widget>(layout_widget));
+  auto res = std::make_shared<js_flex_layout_widget>();
+  res->$widget = std::dynamic_pointer_cast<ui::widget>(layout_widget);
+  return res;
 }
 
 float breeze_ui::js_flex_layout_widget::get_padding_left() const {
@@ -240,5 +219,48 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
   set_padding_right(right);
   set_padding_top(top);
   set_padding_bottom(bottom);
+}
+// std::shared_ptr<breeze_ui::js_widget>
+// breeze_ui::js_widget::clone(bool with_children) const {
+//   auto new_widget = std::make_shared<js_widget>();
+
+// #define TRY_CAST(type)                                                         \
+//   if (auto casted = std::dynamic_pointer_cast<type>($widget)) {                \
+//     new_widget =                                                               \
+//         std::make_shared<js_widget>(std::dynamic_pointer_cast<ui::widget>(     \
+//             std::make_shared<type>(*casted.get())));                           \
+//   }
+
+//   TRY_CAST(ui::widget_flex)
+//   TRY_CAST(ui::text_widget)
+// #undef TRY_CAST
+//   if (!new_widget || !new_widget->$widget) {
+//     return nullptr;
+//   }
+
+//   if (with_children) {
+//     for (const auto &child : children()) {
+//       if (auto cloned = child->clone())
+//         new_widget->append_child(cloned);
+//       else
+//         return nullptr; // If any child fails to clone, return nullptr
+//     }
+//   }
+//   return new_widget;
+// }
+std::variant<std::shared_ptr<breeze_ui::js_widget>,
+             std::shared_ptr<breeze_ui::js_text_widget>,
+             std::shared_ptr<breeze_ui::js_flex_layout_widget>>
+breeze_ui::js_widget::downcast() {
+#define TRY_DOWNCAST(type)                                                     \
+  if (auto casted =                                                            \
+          std::dynamic_pointer_cast<type>(this->shared_from_this())) {         \
+    return casted;                                                             \
+  }
+  TRY_DOWNCAST(js_text_widget);
+  TRY_DOWNCAST(js_flex_layout_widget);
+#undef TRY_DOWNCAST
+
+  return this->shared_from_this();
 }
 } // namespace mb_shell::js

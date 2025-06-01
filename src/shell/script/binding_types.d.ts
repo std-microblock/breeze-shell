@@ -19,6 +19,46 @@ export class js_widget {
   */
   children: (() => Array<js_widget>)
             
+	
+/**
+  * 
+  * @param child: js_widget
+  * @returns void
+  */
+  append_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param child: js_widget
+  * @returns void
+  */
+  prepend_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param child: js_widget
+  * @returns void
+  */
+  remove_child: ((arg1: js_widget) => void)
+            
+	
+/**
+  * 
+  * @param child: js_widget, after_index: number
+  * @returns void
+  */
+  append_child_after: ((arg1: js_widget, arg2: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns js_widget | js_text_widget | js_flex_layout_widget
+  */
+  downcast: (() => js_widget | js_text_widget | js_flex_layout_widget)
+            
 }
     
 export class js_text_widget extends js_widget {
@@ -41,7 +81,12 @@ export class js_text_widget extends js_widget {
             
 	
 /**
-  * 
+  * (0) 取消选择该项。
+  * (1) 选择该项。
+  * (3) 将项目置于编辑模式。
+  * (4) 取消选择除指定项的所有项。
+  * (8) 确保该项显示在视图中。
+  * (16) 为项目提供焦点。
   * @param 
   * @returns number
   */
@@ -79,75 +124,18 @@ export class js_flex_layout_widget extends js_widget {
 /**
   * 
   * @param 
-  * @returns Array<js_widget>
-  */
-  children: (() => Array<js_widget>)
-            
-	
-/**
-  * #pragma once
-  * #include <functional>
-  * #include <memory>
-  * #include <optional>
-  * #include <stdlib.h>
-  * #include <string>
-  * #include <tuple>
-  * #include <unordered_set>
-  * #include <variant>
-  * #include <vector>
-  * #include "binding_types_breeze_ui.h"
-  * namespace mb_shell {
-  * struct mouse_menu_widget_main;
-  * struct menu_item_widget;
-  * struct menu_item_normal_widget;
-  * struct menu_item_parent_widget;
-  * struct menu_widget;
-  * } // namespace mb_shell
-  * namespace mb_shell::js {
-  * struct folder_view_folder_item {
-  *  FolderItem
-  * void *$handler;
-  * void *$controller;
-  * void *$render_target;
-  * int index;
-  * std::string parent_path;
-  * std::string name();
-  * std::string modify_date();
-  * std::string path();
-  * size_t size();
-  * std::string type();
-  * @param child: js_widget
-  * @returns void
-  */
-  append_child: ((arg1: js_widget) => void)
-            
-	
-/**
-  * 
-  * @param child: js_widget
-  * @returns void
-  */
-  prepend_child: ((arg1: js_widget) => void)
-            
-	
-/**
-  * 
-  * @param child: js_widget
-  * @returns void
-  */
-  remove_child: ((arg1: js_widget) => void)
-            
-	
-/**
-  * 
-  * @param 
   * @returns boolean
   */
   get_horizontal: (() => boolean)
             
 	
 /**
-  * 
+  * void select(int state);
+  * };
+  *  文件夹视图控制器
+  *  Folder view controller
+  * struct folder_view_controller {
+  * void *$hwnd;
   * @param horizontal: boolean
   * @returns void
   */
@@ -163,12 +151,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * (0) 取消选择该项。
-  * (1) 选择该项。
-  * (3) 将项目置于编辑模式。
-  * (4) 取消选择除指定项的所有项。
-  * (8) 确保该项显示在视图中。
-  * (16) 为项目提供焦点。
+  * 当前文件夹路径
   * @param padding: number
   * @returns void
   */
@@ -176,7 +159,8 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 当前文件夹路径
+  *  Current folder path
   * @param 
   * @returns number
   */
@@ -192,7 +176,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 当前焦点文件路径
   * @param 
   * @returns number
   */
@@ -200,7 +184,8 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 文件夹视图控制器
+  * 当前焦点文件路径
+  *  Currently focused file path
   * @param padding: number
   * @returns void
   */
@@ -208,8 +193,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 文件夹视图控制器
-  *  Folder view controller
+  * 
   * @param 
   * @returns number
   */
@@ -217,7 +201,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 选中的文件列表
   * @param padding: number
   * @returns void
   */
@@ -225,7 +209,8 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * 
+  * 选中的文件列表
+  *  List of selected files
   * @param 
   * @returns [number, number, number, number]
   */
@@ -233,12 +218,7 @@ export class js_flex_layout_widget extends js_widget {
             
 	
 /**
-  * void select(int state);
-  * };
-  *  文件夹视图控制器
-  *  Folder view controller
-  * struct folder_view_controller {
-  * void *$hwnd;
+  * 
   * @param left: number, right: number, top: number, bottom: number
   * @returns void
   */
@@ -250,8 +230,7 @@ export class widgets_factory {
 	
 	
 /**
-  * 当前文件夹路径
-  *  Current folder path
+  * 
   * @param 
   * @returns js_text_widget
   */
@@ -259,7 +238,7 @@ export class widgets_factory {
             
 	
 /**
-  * 
+  * 打开文件
   * @param 
   * @returns js_flex_layout_widget
   */

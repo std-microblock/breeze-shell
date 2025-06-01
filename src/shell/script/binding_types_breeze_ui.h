@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace ui {
@@ -16,13 +17,27 @@ struct widget_js_base;
 
 namespace mb_shell::js {
 struct breeze_ui {
-  struct js_widget {
+  struct js_text_widget;
+  struct js_flex_layout_widget;
+  struct js_widget : public std::enable_shared_from_this<js_widget> {
     std::shared_ptr<ui::widget> $widget;
 
     js_widget() = default;
     js_widget(std::shared_ptr<ui::widget> widget) : $widget(widget) {}
+    virtual ~js_widget() = default;
 
     std::vector<std::shared_ptr<js_widget>> children() const;
+    void append_child(std::shared_ptr<js_widget> child);
+    void prepend_child(std::shared_ptr<js_widget> child);
+    void remove_child(std::shared_ptr<js_widget> child);
+    void append_child_after(std::shared_ptr<js_widget> child, int after_index);
+
+    std::variant<std::shared_ptr<js_widget>, std::shared_ptr<js_text_widget>,
+                 std::shared_ptr<js_flex_layout_widget>>
+    downcast();
+    // // Note: You can only certain widgets that can be loaded with
+    // `downcast()`.
+    // std::shared_ptr<js_widget> clone(bool with_children = true) const;
   };
 
   struct js_text_widget : public js_widget {
@@ -35,10 +50,6 @@ struct breeze_ui {
   };
 
   struct js_flex_layout_widget : public js_widget {
-    std::vector<std::shared_ptr<js_widget>> children() const;
-    void append_child(std::shared_ptr<js_widget> child);
-    void prepend_child(std::shared_ptr<js_widget> child);
-    void remove_child(std::shared_ptr<js_widget> child);
     bool get_horizontal() const;
     void set_horizontal(bool horizontal);
 

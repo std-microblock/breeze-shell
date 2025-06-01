@@ -51,6 +51,11 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
         mod.class_<mb_shell::js::breeze_ui::js_widget>("js_widget")
             .constructor<>()
                 .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
+                .fun<&mb_shell::js::breeze_ui::js_widget::append_child>("append_child")
+                .fun<&mb_shell::js::breeze_ui::js_widget::prepend_child>("prepend_child")
+                .fun<&mb_shell::js::breeze_ui::js_widget::remove_child>("remove_child")
+                .fun<&mb_shell::js::breeze_ui::js_widget::append_child_after>("append_child_after")
+                .fun<&mb_shell::js::breeze_ui::js_widget::downcast>("downcast")
             ;
     }
 
@@ -77,10 +82,6 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
         mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("js_flex_layout_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::children>("children")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::append_child>("append_child")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::prepend_child>("prepend_child")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::remove_child>("remove_child")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_horizontal>("set_horizontal")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_left>("get_padding_left")
