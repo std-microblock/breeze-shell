@@ -220,34 +220,6 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
   set_padding_top(top);
   set_padding_bottom(bottom);
 }
-// std::shared_ptr<breeze_ui::js_widget>
-// breeze_ui::js_widget::clone(bool with_children) const {
-//   auto new_widget = std::make_shared<js_widget>();
-
-// #define TRY_CAST(type)                                                         \
-//   if (auto casted = std::dynamic_pointer_cast<type>($widget)) {                \
-//     new_widget =                                                               \
-//         std::make_shared<js_widget>(std::dynamic_pointer_cast<ui::widget>(     \
-//             std::make_shared<type>(*casted.get())));                           \
-//   }
-
-//   TRY_CAST(ui::widget_flex)
-//   TRY_CAST(ui::text_widget)
-// #undef TRY_CAST
-//   if (!new_widget || !new_widget->$widget) {
-//     return nullptr;
-//   }
-
-//   if (with_children) {
-//     for (const auto &child : children()) {
-//       if (auto cloned = child->clone())
-//         new_widget->append_child(cloned);
-//       else
-//         return nullptr; // If any child fails to clone, return nullptr
-//     }
-//   }
-//   return new_widget;
-// }
 std::variant<std::shared_ptr<breeze_ui::js_widget>,
              std::shared_ptr<breeze_ui::js_text_widget>,
              std::shared_ptr<breeze_ui::js_flex_layout_widget>>
@@ -262,5 +234,11 @@ breeze_ui::js_widget::downcast() {
 #undef TRY_DOWNCAST
 
   return this->shared_from_this();
+}
+std::shared_ptr<breeze_ui::breeze_paint>
+breeze_ui::breeze_paint::from_color(std::string color) {
+  auto paint = std::make_shared<breeze_paint>();
+  paint->$paint = paint_color::from_string(color);
+  return paint;
 }
 } // namespace mb_shell::js

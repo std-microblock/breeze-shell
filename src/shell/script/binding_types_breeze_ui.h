@@ -7,6 +7,8 @@
 #include <variant>
 #include <vector>
 
+#include "../paint_color.h"
+
 namespace ui {
 struct widget;
 }
@@ -19,6 +21,7 @@ namespace mb_shell::js {
 struct breeze_ui {
   struct js_text_widget;
   struct js_flex_layout_widget;
+  struct breeze_paint;
   struct js_widget : public std::enable_shared_from_this<js_widget> {
     std::shared_ptr<ui::widget> $widget;
 
@@ -68,6 +71,11 @@ struct breeze_ui {
   struct widgets_factory {
     static std::shared_ptr<js_text_widget> create_text_widget();
     static std::shared_ptr<js_flex_layout_widget> create_flex_layout_widget();
+  };
+
+  struct breeze_paint {
+    paint_color $paint;
+    static std::shared_ptr<breeze_paint> from_color(std::string color);
   };
 };
 } // namespace mb_shell::js
