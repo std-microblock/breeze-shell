@@ -89,29 +89,29 @@ void mb_shell::fix_win11_menu::install() {
   auto RegGetValueW = advapi32.value()->exports("RegGetValueW");
   static auto RegGetValueHook = RegGetValueW->inline_hook();
 
-  RegGetValueHook->install(
-      (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
-                  LPDWORD pdwType, PVOID pvData, LPDWORD pcbData) {
-        // simulate
-        // reg.exe add
-        //
-        //
-        // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
-        // /f /ve
-        auto path = wstring_to_utf8(RegQueryKeyPath(hkey));
-        if (path.ends_with("\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
-                           "\\InprocServer32")) {
-          if (pvData != nullptr && pcbData != nullptr) {
-            *pcbData = 0;
-          }
-          if (pdwType != nullptr) {
-            *pdwType = REG_SZ;
-          }
-          return ERROR_SUCCESS;
-        } else
-          return RegGetValueHook->call_trampoline<long>(
-              hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
-      });
+  // RegGetValueHook->install(
+  //     (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD dwFlags,
+  //                 LPDWORD pdwType, PVOID pvData, LPDWORD pcbData) {
+  //       // simulate
+  //       // reg.exe add
+  //       //
+  //       //
+  //       // "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
+  //       // /f /ve
+  //       auto path = wstring_to_utf8(RegQueryKeyPath(hkey));
+  //       if (path.ends_with("\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
+  //                          "\\InprocServer32")) {
+  //         if (pvData != nullptr && pcbData != nullptr) {
+  //           *pcbData = 0;
+  //         }
+  //         if (pdwType != nullptr) {
+  //           *pdwType = REG_SZ;
+  //         }
+  //         return ERROR_SUCCESS;
+  //       } else
+  //         return RegGetValueHook->call_trampoline<long>(
+  //             hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
+  //     });
 
   // approch 2: patch the shell32.dll to predent the shift key is pressed
   std::thread([=]() {
@@ -163,8 +163,8 @@ void mb_shell::fix_win11_menu::install() {
             if (auto ptr = xrefs[0].try_read<void *>();
                 ptr.has_value() && ptr.value() == extraInfo) {
               if (patch_area(ins.ptr()
-                                 .find_upwards({0x40, 0x55})
-                                 ->range_size(0x150)
+                                 .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                                 ->range_size(0xB50)
                                  .disassembly()))
                 break;
             }
