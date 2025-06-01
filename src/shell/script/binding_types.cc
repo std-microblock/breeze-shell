@@ -827,18 +827,17 @@ struct Timer {
   int id;
 };
 
-std::vector<std::shared_ptr<Timer>> timers;
+std::list<std::unique_ptr<Timer>> timers;
 std::optional<std::thread> timer_thread;
 
 void timer_thread_func() {
   while (true) {
     constexpr auto sleep_time = 30;
     Sleep(sleep_time);
-    std::vector<std::shared_ptr<Timer>> to_remove;
 
     for (auto &timer : timers) {
-      if (timer->ctx.expired()) {
-        to_remove.push_back(timer);
+      if (!timer || timer->ctx.expired()) {
+        timer = nullptr;
         continue;
       }
       timer->elapsed += sleep_time;
@@ -846,21 +845,24 @@ void timer_thread_func() {
         try {
           timer->callback();
           if (!timer->repeat) {
-            to_remove.push_back(timer);
+            timer = nullptr;
           } else {
             timer->elapsed = 0;
           }
         } catch (std::exception &e) {
           std::cerr << "Error in timer callback: " << e.what() << std::endl;
-          to_remove.push_back(timer);
+          timer = nullptr;
+        } catch (...) {
+          std::cerr << "Unknown in timer callback: " << std::endl;
+          timer = nullptr;
         }
       }
     }
 
-    for (auto &timer : to_remove) {
-      timers.erase(std::remove(timers.begin(), timers.end(), timer),
-                   timers.end());
-    }
+    timers.erase(
+        std::remove_if(timers.begin(), timers.end(),
+                       [](const auto &timer) { return !timer; }),
+        timers.end());
   }
 }
 
@@ -873,15 +875,16 @@ void ensure_timer_thread() {
 int infra::setTimeout(std::function<void()> callback, int delay) {
   ensure_timer_thread();
 
-  auto timer = std::make_shared<Timer>();
+  auto timer = std::make_unique<Timer>();
   timer->callback = callback;
   timer->delay = delay;
   timer->repeat = false;
   timer->ctx = qjs::Context::current->weak_from_this();
   timer->id = timers.size() + 1;
-  timers.push_back(timer);
+  auto id = timer->id;
+  timers.push_back(std::move(timer));
 
-  return timer->id;
+  return id;
 };
 void infra::clearTimeout(int id) {
   timers.erase(
@@ -892,15 +895,16 @@ void infra::clearTimeout(int id) {
 int infra::setInterval(std::function<void()> callback, int delay) {
   ensure_timer_thread();
 
-  auto timer = std::make_shared<Timer>();
+  auto timer = std::make_unique<Timer>();
   timer->callback = callback;
   timer->delay = delay;
   timer->repeat = true;
   timer->ctx = qjs::Context::current->weak_from_this();
   timer->id = timers.size() + 1;
-  timers.push_back(timer);
+  auto id = timer->id;
+  timers.push_back(std::move(timer));
 
-  return timer->id;
+  return id;
 };
 void infra::clearInterval(int id) {
   timers.erase(
