@@ -100,6 +100,18 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_move>("set_on_mouse_move")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_enter>("get_on_mouse_enter")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_enter>("set_on_mouse_enter")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_color>("set_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_color>("get_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("set_background_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint>("get_background_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("set_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius>("get_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("set_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color>("get_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("set_border_width")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width>("get_border_width")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("set_border_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint>("get_border_paint")
             ;
     }
 

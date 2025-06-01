@@ -67,8 +67,23 @@ struct breeze_ui {
     std::function<void(float, float)> get_on_mouse_move() const;
     void set_on_mouse_move(std::function<void(float, float)> on_mouse_move);
     std::function<void()> get_on_mouse_enter() const;
-    void set_on_mouse_enter(
-        std::function<void()> on_mouse_enter);
+    void set_on_mouse_enter(std::function<void()> on_mouse_enter);
+    void set_background_color(
+        std::optional<std::tuple<float, float, float, float>> color);
+    std::optional<std::tuple<float, float, float, float>>
+    get_background_color() const;
+    void set_background_paint(std::shared_ptr<breeze_paint> paint);
+    std::shared_ptr<breeze_paint> get_background_paint() const;
+    void set_border_radius(float radius);
+    float get_border_radius() const;
+    void set_border_color(
+        std::optional<std::tuple<float, float, float, float>> color);
+    std::optional<std::tuple<float, float, float, float>>
+    get_border_color() const;
+    void set_border_width(float width);
+    float get_border_width() const;
+    void set_border_paint(std::shared_ptr<breeze_paint> paint);
+    std::shared_ptr<breeze_paint> get_border_paint() const;
   };
 
   struct widgets_factory {

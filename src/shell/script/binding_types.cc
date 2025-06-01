@@ -835,6 +835,7 @@ void timer_thread_func() {
     constexpr auto sleep_time = 30;
     Sleep(sleep_time);
 
+    std::vector<std::function<void()>> callbacks;
     for (auto &timer : timers) {
       if (!timer || timer->ctx.expired()) {
         timer = nullptr;
@@ -842,27 +843,29 @@ void timer_thread_func() {
       }
       timer->elapsed += sleep_time;
       if (timer->elapsed >= timer->delay) {
-        try {
-          timer->callback();
-          if (!timer->repeat) {
-            timer = nullptr;
-          } else {
-            timer->elapsed = 0;
-          }
-        } catch (std::exception &e) {
-          std::cerr << "Error in timer callback: " << e.what() << std::endl;
-          timer = nullptr;
-        } catch (...) {
-          std::cerr << "Unknown in timer callback: " << std::endl;
+
+        bool repeat = timer->repeat;
+        timer->elapsed = 0;
+        callbacks.push_back(timer->callback);
+        if (!repeat) {
           timer = nullptr;
         }
       }
     }
 
-    timers.erase(
-        std::remove_if(timers.begin(), timers.end(),
-                       [](const auto &timer) { return !timer; }),
-        timers.end());
+    timers.erase(std::remove_if(timers.begin(), timers.end(),
+                                [](const auto &timer) { return !timer; }),
+                 timers.end());
+
+    for (const auto &callback : callbacks) {
+      try {
+        callback();
+      } catch (std::exception &e) {
+        std::cerr << "Error in timer callback: " << e.what() << std::endl;
+      } catch (...) {
+        std::cerr << "Unknown in timer callback: " << std::endl;
+      }
+    }
   }
 }
 
@@ -887,10 +890,12 @@ int infra::setTimeout(std::function<void()> callback, int delay) {
   return id;
 };
 void infra::clearTimeout(int id) {
-  timers.erase(
-      std::remove_if(timers.begin(), timers.end(),
-                     [id](const auto &timer) { return timer->id == id; }),
-      timers.end());
+  if (auto it = std::find_if(
+          timers.begin(), timers.end(),
+          [id](const auto &timer) { return timer && timer->id == id; });
+      it != timers.end()) {
+    timers.erase(it);
+  }
 };
 int infra::setInterval(std::function<void()> callback, int delay) {
   ensure_timer_thread();
@@ -906,12 +911,7 @@ int infra::setInterval(std::function<void()> callback, int delay) {
 
   return id;
 };
-void infra::clearInterval(int id) {
-  timers.erase(
-      std::remove_if(timers.begin(), timers.end(),
-                     [id](const auto &timer) { return timer->id == id; }),
-      timers.end());
-};
+void infra::clearInterval(int id) { clearInterval(id); };
 std::string infra::atob(std::string base64) {
   std::string result;
   result.reserve(base64.length() * 3 / 4);

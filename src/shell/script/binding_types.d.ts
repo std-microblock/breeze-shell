@@ -289,6 +289,107 @@ export class js_flex_layout_widget extends js_widget {
   */
   set_on_mouse_enter: ((arg1: (() => void)) => void)
             
+	
+/**
+  * 打开文件
+  *  Open a file
+  * @param color: [number, number, number, number] | undefined
+  * @returns void
+  */
+  set_background_color: ((arg1: [number, number, number, number] | undefined) => void)
+            
+	
+/**
+  * 打开文件夹
+  *  Open a folder
+  * @param 
+  * @returns [number, number, number, number] | undefined
+  */
+  get_background_color: (() => [number, number, number, number] | undefined)
+            
+	
+/**
+  * 
+  * @param paint: breeze_paint
+  * @returns void
+  */
+  set_background_paint: ((arg1: breeze_paint) => void)
+            
+	
+/**
+  * 刷新视图
+  * @param 
+  * @returns breeze_paint
+  */
+  get_background_paint: (() => breeze_paint)
+            
+	
+/**
+  * 刷新视图
+  *  Refresh view
+  * @param radius: number
+  * @returns void
+  */
+  set_border_radius: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  get_border_radius: (() => number)
+            
+	
+/**
+  * 复制
+  * @param color: [number, number, number, number] | undefined
+  * @returns void
+  */
+  set_border_color: ((arg1: [number, number, number, number] | undefined) => void)
+            
+	
+/**
+  * 剪切
+  * @param 
+  * @returns [number, number, number, number] | undefined
+  */
+  get_border_color: (() => [number, number, number, number] | undefined)
+            
+	
+/**
+  * 剪切
+  *  Cut selected items
+  * @param width: number
+  * @returns void
+  */
+  set_border_width: ((arg1: number) => void)
+            
+	
+/**
+  * 
+  * @param 
+  * @returns number
+  */
+  get_border_width: (() => number)
+            
+	
+/**
+  * 粘贴
+  * @param paint: breeze_paint
+  * @returns void
+  */
+  set_border_paint: ((arg1: breeze_paint) => void)
+            
+	
+/**
+  * 粘贴
+  *  Paste items
+  * @param 
+  * @returns breeze_paint
+  */
+  get_border_paint: (() => breeze_paint)
+            
 }
     
 export class widgets_factory {
@@ -303,7 +404,7 @@ export class widgets_factory {
             
 	
 /**
-  * 刷新视图
+  * 
   * @param 
   * @returns js_flex_layout_widget
   */
@@ -315,7 +416,7 @@ export class breeze_paint {
 	
 	
 /**
-  * 
+  * special flag struct to indicate that the corresponding
   * @param color: string
   * @returns breeze_paint
   */

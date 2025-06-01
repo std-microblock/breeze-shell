@@ -145,39 +145,43 @@ struct widget_js_base : public ui::widget_flex {
   void update(ui::update_context &ctx) override {
     super::update(ctx);
 
-    if (on_update) {
-      on_update(ctx);
-    }
-
-    if (ctx.mouse_clicked && on_click) {
-      on_click(0);
-    }
-
-    if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
-      on_mouse_enter();
-    } else if (!ctx.hovered(this) && previous_hovered && on_mouse_leave) {
-      on_mouse_leave(ctx);
-    }
-
-    previous_hovered = ctx.hovered(this);
-    if (ctx.mouse_down_on(this) && on_mouse_down) {
-      on_mouse_down(ctx);
-    }
-
-    if (ctx.mouse_up && on_mouse_up) {
-      on_mouse_up(ctx);
-    }
-
-    if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
-      prev_mouse_x = ctx.mouse_x;
-      prev_mouse_y = ctx.mouse_y;
-      if (on_mouse_move && ctx.hovered(this)) {
-        on_mouse_move(ctx.mouse_x, ctx.mouse_y);
+    try {
+      if (on_update) {
+        on_update(ctx);
       }
-    }
 
-    if (ctx.scroll_y != 0 && on_mouse_wheel) {
-      on_mouse_wheel(ctx);
+      if (ctx.mouse_clicked && on_click) {
+        on_click(0);
+      }
+
+      if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
+        on_mouse_enter();
+      } else if (!ctx.hovered(this) && previous_hovered && on_mouse_leave) {
+        on_mouse_leave(ctx);
+      }
+
+      previous_hovered = ctx.hovered(this);
+      if (ctx.mouse_down_on(this) && on_mouse_down) {
+        on_mouse_down(ctx);
+      }
+
+      if (ctx.mouse_up && on_mouse_up) {
+        on_mouse_up(ctx);
+      }
+
+      if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
+        prev_mouse_x = ctx.mouse_x;
+        prev_mouse_y = ctx.mouse_y;
+        if (on_mouse_move && ctx.hovered(this)) {
+          on_mouse_move(ctx.mouse_x, ctx.mouse_y);
+        }
+      }
+
+      if (ctx.scroll_y != 0 && on_mouse_wheel) {
+        on_mouse_wheel(ctx);
+      }
+    } catch (const std::exception &e) {
+      std::cerr << "Exception in widget update: " << e.what() << std::endl;
     }
   }
 
@@ -311,7 +315,6 @@ void breeze_ui::js_flex_layout_widget::set_horizontal(bool horizontal) {
     auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
     if (flex_widget) {
       flex_widget->horizontal = horizontal;
-    
     }
   }
 }
@@ -399,5 +402,128 @@ void breeze_ui::js_flex_layout_widget::set_on_mouse_enter(
       flex_widget->on_mouse_enter = on_mouse_enter;
     }
   }
+}
+void breeze_ui::js_flex_layout_widget::set_background_color(
+    std::optional<std::tuple<float, float, float, float>> color) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      if (color.has_value()) {
+        flex_widget->background_color.animate_to(
+            {std::get<0>(color.value()), std::get<1>(color.value()),
+             std::get<2>(color.value()), std::get<3>(color.value())});
+      } else {
+        flex_widget->background_color.animate_to({0.0f, 0.0f, 0.0f, 0.0f});
+      }
+    }
+  }
+}
+std::optional<std::tuple<float, float, float, float>>
+breeze_ui::js_flex_layout_widget::get_background_color() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+        auto color = *flex_widget->background_color;
+        return std::make_tuple(color[0], color[1], color[2], color[3]);
+    }
+  }
+  return std::nullopt;
+}
+void breeze_ui::js_flex_layout_widget::set_background_paint(
+    std::shared_ptr<breeze_ui::breeze_paint> paint) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget && paint) {
+      flex_widget->background_paint = paint->$paint;
+    }
+  }
+}
+std::shared_ptr<breeze_ui::breeze_paint>
+breeze_ui::js_flex_layout_widget::get_background_paint() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+        return std::make_shared<breeze_paint>(*flex_widget->background_paint);
+    }
+  }
+  return nullptr;
+}
+void breeze_ui::js_flex_layout_widget::set_border_radius(float radius) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->border_radius->animate_to(radius);
+    }
+  }
+}
+float breeze_ui::js_flex_layout_widget::get_border_radius() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      return flex_widget->border_radius->dest();
+    }
+  }
+  return 0.0f;
+}
+void breeze_ui::js_flex_layout_widget::set_border_color(
+    std::optional<std::tuple<float, float, float, float>> color) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      if (color.has_value()) {
+        flex_widget->border_color.animate_to(
+            {std::get<0>(color.value()), std::get<1>(color.value()),
+             std::get<2>(color.value()), std::get<3>(color.value())});
+      }
+    }
+  }
+}
+std::optional<std::tuple<float, float, float, float>>
+breeze_ui::js_flex_layout_widget::get_border_color() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      auto color = *flex_widget->border_color;
+      return std::make_tuple(color[0], color[1], color[2], color[3]);
+    }
+  }
+  return std::nullopt;
+}
+void breeze_ui::js_flex_layout_widget::set_border_width(float width) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->border_width->animate_to(width);
+    }
+  }
+}
+float breeze_ui::js_flex_layout_widget::get_border_width() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      return flex_widget->border_width->dest();
+    }
+  }
+  return 0.0f;
+}
+void breeze_ui::js_flex_layout_widget::set_border_paint(
+    std::shared_ptr<breeze_paint> paint) {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget) {
+      flex_widget->border_paint = paint->$paint;
+    }
+  }
+}
+std::shared_ptr<breeze_ui::breeze_paint>
+breeze_ui::js_flex_layout_widget::get_border_paint() const {
+  if ($widget) {
+    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
+    if (flex_widget && flex_widget->border_paint) {
+      return std::make_shared<breeze_paint>(
+          *flex_widget->border_paint);
+    }
+  }
+  return nullptr;
 }
 } // namespace mb_shell::js
