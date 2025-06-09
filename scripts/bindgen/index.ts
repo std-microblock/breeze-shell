@@ -189,15 +189,14 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
                 }
                 if (line.startsWith('/*')) {
                     rangeCommentCnt++;
-                    continue;
                 }
                 if (line.endsWith('*/')) {
                     rangeCommentCnt--;
-                    continue;
                 }
 
                 if (rangeCommentCnt === 0) break;
-                else comment = line + '\n' + comment;
+                else comment = line.replaceAll('/*', '').replaceAll('*/', '*')
+                    + '\n' + comment;
             }
         }
 
@@ -322,7 +321,7 @@ export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => bas
         } {
 \t${fields.map(field => {
             let fieldDef = `${field.name}${field.type.startsWith('std::optional') ? '?' : ''
-                }: ${cTypeToTypeScript(field.type)}`;
+                }: ${cTypeToTypeScript(field.type, nameFilter)}`;
 
             if (field.comment) {
                 fieldDef = `
@@ -336,7 +335,7 @@ export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => bas
             return fieldDef;
         }).join('\n\t')}
 \t${methods.map(method => {
-            let methodDef = `${method.static ? 'static ' : ''}${method.name}: ${cTypeToTypeScript(`${method.returnType}(${method.args.join(', ')})`)}`
+            let methodDef = `${method.static ? 'static ' : ''}${method.name}: ${cTypeToTypeScript(`${method.returnType}(${method.args.join(', ')})`, nameFilter)}`
 
             // if (method.comment) {
             //     methodDef = method.comment.trim().split('\n').map(v => `// ${v}`).join('\n\t')
@@ -353,8 +352,8 @@ export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => bas
             methodDef = `
 /**
   * ${comments.split('\n').join('\n  * ')}
-  * @param ${method.args.map((arg, i) => `${method.argNames![i]}: ${cTypeToTypeScript(arg)}`).join(', ')}
-  * @returns ${cTypeToTypeScript(method.returnType)}
+  * @param ${method.args.map((arg, i) => `${method.argNames![i]}: ${cTypeToTypeScript(arg, nameFilter)}`).join(', ')}
+  * @returns ${cTypeToTypeScript(method.returnType, nameFilter)}
   */
   ${methodDef}
             `

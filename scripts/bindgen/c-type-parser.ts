@@ -114,44 +114,46 @@ export class CTypeParser {
         return str
     }
 
-    formatToTypeScript(node: CTypeNode) {
-        node.type = node.type.split('::').pop() ?? node.type
+    formatToTypeScript(node: CTypeNode, namespace: string = ''): string {
+        if (node.type.startsWith(namespace))
+            node.type = node.type.slice(namespace.length);
+        node.type = node.type.split('::').filter(Boolean).join('.');
         const typeMap = {
             'int': 'number',
             'float': 'number',
             'double': 'number',
-            'string': 'string',
-            'vector': 'Array',
+            'std.string': 'string',
+            'std.vector': 'Array',
             'bool': 'boolean',
         }
 
-        let tsBasicType = (typeMap[node.type] ?? node.type) + (node.template ? '<' + node.argsTemplate.map(a => this.formatToTypeScript(a)).join(', ') + '>' : '')
+        let tsBasicType = (typeMap[node.type] ?? node.type) + (node.template ? '<' + node.argsTemplate.map(a => this.formatToTypeScript(a, namespace)).join(', ') + '>' : '')
 
-        const ignoreTypes = ['variant', 'shared_ptr', 'function']
+        const ignoreTypes = ['std.variant', 'std.shared_ptr', 'std.function']
         if (
             ignoreTypes.includes(node.type)
         ) {
-            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a)).join(' | ')
-        } else if (node.type === 'optional') {
-            tsBasicType = `${this.formatToTypeScript(node.argsTemplate[0])} | undefined`
-        } else if (node.type === 'pair' || node.type === 'tuple') {
-            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a)).join(', ')
+            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a, namespace)).join(' | ')
+        } else if (node.type === 'std.optional') {
+            tsBasicType = `${this.formatToTypeScript(node.argsTemplate[0], namespace)} | undefined`
+        } else if (node.type === 'std.pair' || node.type === 'std.tuple') {
+            tsBasicType = node.argsTemplate.map(a => this.formatToTypeScript(a, namespace)).join(', ')
             tsBasicType = `[${tsBasicType}]`
         }
 
         if (node.function) {
-            return `((${node.argsFunc.map(a => this.formatToTypeScript(a)).map((v, i) => `arg${i + 1}: ${v}`).join(', ')}) => ${tsBasicType})`
+            return `((${node.argsFunc.map(a => this.formatToTypeScript(a, namespace)).map((v, i) => `arg${i + 1}: ${v}`).join(', ')}) => ${tsBasicType})`
         }
 
         return tsBasicType;
     }
 }
 
-export const cTypeToTypeScript = (str: string) => {
+export const cTypeToTypeScript = (str: string, namespace: string) => {
     const parser = new CTypeParser();
     parser.lex(str);
     const res = parser.parse()
-    return parser.formatToTypeScript(res);
+    return parser.formatToTypeScript(res, namespace);
 }
 
 

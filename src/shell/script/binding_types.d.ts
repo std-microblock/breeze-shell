@@ -15,72 +15,51 @@ export class js_widget {
 	
 	
 /**
-  * #pragma once
-  * #include <functional>
-  * #include <memory>
-  * #include <optional>
-  * #include <stdlib.h>
-  * #include <string>
-  * #include <tuple>
-  * #include <unordered_set>
-  * #include <variant>
-  * #include <vector>
-  * #include "binding_types_breeze_ui.h"
-  * namespace mb_shell {
-  * struct mouse_menu_widget_main;
-  * struct menu_item_widget;
-  * struct menu_item_normal_widget;
-  * struct menu_item_parent_widget;
-  * struct menu_widget;
-  * } // namespace mb_shell
-  * namespace mb_shell::js {
-  * struct folder_view_folder_item {
-  *  FolderItem
-  * void *$handler;
+  * 
   * @param 
-  * @returns Array<js_widget>
+  * @returns Array<breeze_ui.js_widget>
   */
-  children: (() => Array<js_widget>)
+  children: (() => Array<breeze_ui.js_widget>)
             
 	
 /**
   * 
-  * @param child: js_widget
+  * @param child: breeze_ui.js_widget
   * @returns void
   */
-  append_child: ((arg1: js_widget) => void)
+  append_child: ((arg1: breeze_ui.js_widget) => void)
             
 	
 /**
   * 
-  * @param child: js_widget
+  * @param child: breeze_ui.js_widget
   * @returns void
   */
-  prepend_child: ((arg1: js_widget) => void)
+  prepend_child: ((arg1: breeze_ui.js_widget) => void)
             
 	
 /**
   * 
-  * @param child: js_widget
+  * @param child: breeze_ui.js_widget
   * @returns void
   */
-  remove_child: ((arg1: js_widget) => void)
+  remove_child: ((arg1: breeze_ui.js_widget) => void)
             
 	
 /**
   * 
-  * @param child: js_widget, after_index: number
+  * @param child: breeze_ui.js_widget, after_index: number
   * @returns void
   */
-  append_child_after: ((arg1: js_widget, arg2: number) => void)
+  append_child_after: ((arg1: breeze_ui.js_widget, arg2: number) => void)
             
 	
 /**
   * 
   * @param 
-  * @returns js_widget | js_text_widget | js_flex_layout_widget
+  * @returns breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget
   */
-  downcast: (() => js_widget | js_text_widget | js_flex_layout_widget)
+  downcast: (() => breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget)
             
 }
 }
@@ -120,6 +99,7 @@ export class js_text_widget extends js_widget {
   * (4) 取消选择除指定项的所有项。
   * (8) 确保该项显示在视图中。
   * (16) 为项目提供焦点。
+  * *
   * @param size: number
   * @returns void
   */
@@ -316,18 +296,18 @@ export class js_flex_layout_widget extends js_widget {
 	
 /**
   * 
-  * @param paint: breeze_paint
+  * @param paint: breeze_ui.breeze_paint
   * @returns void
   */
-  set_background_paint: ((arg1: breeze_paint) => void)
+  set_background_paint: ((arg1: breeze_ui.breeze_paint) => void)
             
 	
 /**
   * 刷新视图
   * @param 
-  * @returns breeze_paint
+  * @returns breeze_ui.breeze_paint
   */
-  get_background_paint: (() => breeze_paint)
+  get_background_paint: (() => breeze_ui.breeze_paint)
             
 	
 /**
@@ -382,19 +362,19 @@ export class js_flex_layout_widget extends js_widget {
 	
 /**
   * 粘贴
-  * @param paint: breeze_paint
+  * @param paint: breeze_ui.breeze_paint
   * @returns void
   */
-  set_border_paint: ((arg1: breeze_paint) => void)
+  set_border_paint: ((arg1: breeze_ui.breeze_paint) => void)
             
 	
 /**
   * 粘贴
   *  Paste items
   * @param 
-  * @returns breeze_paint
+  * @returns breeze_ui.breeze_paint
   */
-  get_border_paint: (() => breeze_paint)
+  get_border_paint: (() => breeze_ui.breeze_paint)
             
 }
 }
@@ -406,17 +386,17 @@ export class widgets_factory {
 /**
   * 
   * @param 
-  * @returns js_text_widget
+  * @returns breeze_ui.js_text_widget
   */
-  static create_text_widget: (() => js_text_widget)
+  static create_text_widget: (() => breeze_ui.js_text_widget)
             
 	
 /**
   * 
   * @param 
-  * @returns js_flex_layout_widget
+  * @returns breeze_ui.js_flex_layout_widget
   */
-  static create_flex_layout_widget: (() => js_flex_layout_widget)
+  static create_flex_layout_widget: (() => breeze_ui.js_flex_layout_widget)
             
 }
 }
@@ -428,9 +408,9 @@ export class breeze_paint {
 /**
   * special flag struct to indicate that the corresponding
   * @param color: string
-  * @returns breeze_paint
+  * @returns breeze_ui.breeze_paint
   */
-  static from_color: ((arg1: string) => breeze_paint)
+  static from_color: ((arg1: string) => breeze_ui.breeze_paint)
             
 }
 }
@@ -487,6 +467,7 @@ export class folder_view_folder_item {
   * (4) 取消选择除指定项的所有项。
   * (8) 确保该项显示在视图中。
   * (16) 为项目提供焦点。
+  * *
   * @param state: number
   * @returns void
   */
@@ -1182,10 +1163,10 @@ export class menu_controller {
 	
 /**
   * 
-  * @param widget: js_widget, after_index: number
+  * @param widget: breeze_ui.js_widget, after_index: number
   * @returns void
   */
-  append_widget_after: ((arg1: js_widget, arg2: number) => void)
+  append_widget_after: ((arg1: breeze_ui.js_widget, arg2: number) => void)
             
 	
 /**
