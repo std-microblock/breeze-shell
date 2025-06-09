@@ -17,6 +17,7 @@
 #include <mutex>
 #include <optional>
 #include <print>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -26,8 +27,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
-#include <latch>
 
 #define NOMINMAX
 #include "Windows.h"
@@ -1158,6 +1157,34 @@ template <> struct js_property_traits<const char *> {
   }
 };
 
+template <> struct js_property_traits<std::string> {
+  static void set_property(JSContext *ctx, JSValue this_obj,
+                           const std::string &name, JSValue value) {
+    int err = JS_SetPropertyStr(ctx, this_obj, name.c_str(), value);
+    if (err < 0)
+      throw exception{ctx};
+  }
+
+  static JSValue get_property(JSContext *ctx, JSValue this_obj,
+                              const std::string &name) noexcept {
+    return JS_GetPropertyStr(ctx, this_obj, name.c_str());
+  }
+};
+
+template <> struct js_property_traits<std::string_view> {
+  static void set_property(JSContext *ctx, JSValue this_obj,
+                           std::string_view name, JSValue value) {
+    int err = JS_SetPropertyStr(ctx, this_obj, name.data(), value);
+    if (err < 0)
+      throw exception{ctx};
+  }
+
+  static JSValue get_property(JSContext *ctx, JSValue this_obj,
+                              std::string_view name) noexcept {
+    return JS_GetPropertyStr(ctx, this_obj, name.data());
+  }
+};
+
 template <> struct js_property_traits<uint32_t> {
   static void set_property(JSContext *ctx, JSValue this_obj, uint32_t idx,
                            JSValue value) {
@@ -1518,7 +1545,7 @@ public:
     JSContext *ctx;
     const char *name;
 
-    using nvp = std::pair<const char *, Value>;
+    using nvp = std::pair<std::string, Value>;
     std::vector<nvp> exports;
 
   public:
@@ -1530,24 +1557,56 @@ public:
                          [m](const Module &module) { return module.m == m; });
         if (it == context.modules.end())
           return -1;
-        for (const auto &e : it->exports) {
-          if (JS_SetModuleExport(ctx, m, e.first,
-                                 JS_DupValue(ctx, e.second.v)) != 0)
-            return -1;
+
+        std::unordered_map<std::string, Value> namespaces;
+        auto export_obj = Value{ctx, JS_NewObject(ctx)};
+
+        auto set_key_recursive =
+            [ctx](this auto &self, Value obj,
+                  const std::vector<std::string_view> &keys,
+                  Value &value) -> void {
+          if (keys.size() == 1) {
+            JS_SetPropertyStr(ctx, obj.v, keys[0].data(), value.v);
+          } else {
+            auto key = keys[0];
+            auto keys_rest =
+                std::vector<std::string_view>(keys.begin() + 1, keys.end());
+            Value sub_obj = JS_GetPropertyStr(ctx, obj.v, key.data());
+            if (JS_IsUndefined(sub_obj.v)) {
+              sub_obj = JS_NewObject(ctx);
+              JS_SetPropertyStr(ctx, obj.v, key.data(), sub_obj.v);
+            }
+            self(sub_obj, keys_rest, value);
+          }
+        };
+
+        for (auto &e : it->exports) {
+          auto string_path = std::string(e.first);
+          auto path = string_path | std::views::split(std::string_view("::")) |
+                      std::ranges::to<std::vector<std::string>>();
+          auto view_path =
+              std::vector<std::string_view>(path.begin(), path.end());
+
+          set_key_recursive(export_obj, view_path, e.second);
+          JS_SetModuleExport(
+              ctx, m, path[0].data(),
+              JS_GetPropertyStr(ctx, export_obj.v, path[0].data()));
         }
+
         return 0;
       });
       if (!m)
         throw exception{ctx};
     }
 
-    Module &add(const char *name, JSValue &&value) {
-      exports.push_back({name, {ctx, std::move(value)}});
-      JS_AddModuleExport(ctx, m, name);
+    Module &add(std::string_view name, JSValue &&value) {
+      exports.push_back({std::string(name), {ctx, std::move(value)}});
+      JS_AddModuleExport(ctx, m,
+                         std::string(name.substr(0, name.find("::"))).data());
       return *this;
     }
 
-    template <typename T> Module &add(const char *name, T &&value) {
+    template <typename T> Module &add(std::string_view name, T &&value) {
       return add(name, js_traits<T>::wrap(ctx, std::forward<T>(value)));
     }
 

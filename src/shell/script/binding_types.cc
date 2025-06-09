@@ -911,7 +911,7 @@ int infra::setInterval(std::function<void()> callback, int delay) {
 
   return id;
 };
-void infra::clearInterval(int id) { clearInterval(id); };
+void infra::clearInterval(int id) { clearTimeout(id); };
 std::string infra::atob(std::string base64) {
   std::string result;
   result.reserve(base64.length() * 3 / 4);

@@ -168,7 +168,11 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
           JS_FreeValue(js->ctx, meta_obj);
 
-          JS_EvalFunction(js->ctx, func);
+          auto val = qjs::Value{js->ctx, JS_EvalFunction(js->ctx, func)};
+          if (val.isError()) {
+            std::cerr << "Error in file: " << path << (std::string)val << (std::string)val["stack"]
+                      << std::endl;
+          }
         } catch (std::exception &e) {
           std::cerr << "Error in file: " << path << " " << e.what()
                     << std::endl;
