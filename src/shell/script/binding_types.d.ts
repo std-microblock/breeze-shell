@@ -4,11 +4,13 @@
 declare module 'mshell' {
 
 
+
 export class breeze_ui {
 	
 	
 }
-    
+
+namespace breeze_ui {
 export class js_widget {
 	
 	
@@ -81,7 +83,9 @@ export class js_widget {
   downcast: (() => js_widget | js_text_widget | js_flex_layout_widget)
             
 }
-    
+}
+
+namespace breeze_ui {
 export class js_text_widget extends js_widget {
 	
 	
@@ -138,7 +142,9 @@ export class js_text_widget extends js_widget {
   set_color: ((arg1: [number, number, number, number] | undefined) => void)
             
 }
-    
+}
+
+namespace breeze_ui {
 export class js_flex_layout_widget extends js_widget {
 	
 	
@@ -391,7 +397,9 @@ export class js_flex_layout_widget extends js_widget {
   get_border_paint: (() => breeze_paint)
             
 }
-    
+}
+
+namespace breeze_ui {
 export class widgets_factory {
 	
 	
@@ -411,7 +419,9 @@ export class widgets_factory {
   static create_flex_layout_widget: (() => js_flex_layout_widget)
             
 }
-    
+}
+
+namespace breeze_ui {
 export class breeze_paint {
 	
 	
@@ -423,7 +433,9 @@ export class breeze_paint {
   static from_color: ((arg1: string) => breeze_paint)
             
 }
-    
+}
+
+
 export class folder_view_folder_item {
 	index: number
 	parent_path: string
@@ -481,7 +493,8 @@ export class folder_view_folder_item {
   select: ((arg1: number) => void)
             
 }
-    
+
+
 export class folder_view_controller {
 	
   /**
@@ -592,12 +605,14 @@ export class folder_view_controller {
   select_none: (() => void)
             
 }
-    
+
+
 export class value_reset {
 	
 	
 }
-    
+
+
 export class window_titlebar_controller {
 	
   /**
@@ -741,7 +756,8 @@ export class window_titlebar_controller {
   hide: (() => void)
             
 }
-    
+
+
 export class input_box_controller {
 	
   /**
@@ -940,12 +956,14 @@ export class input_box_controller {
   clear: (() => void)
             
 }
-    
+
+
 export class js_menu_action_event_data {
 	
 	
 }
-    
+
+
 export class js_menu_data {
 	
   /**
@@ -994,7 +1012,8 @@ export class js_menu_data {
 	name_resid?: string | undefined
 	
 }
-    
+
+
 export class menu_item_controller {
 	
 	
@@ -1038,7 +1057,8 @@ export class menu_item_controller {
   valid: (() => boolean)
             
 }
-    
+
+
 export class menu_item_parent_item_controller {
 	
 	
@@ -1098,13 +1118,15 @@ export class menu_item_parent_item_controller {
   prepend_child: ((arg1: js_menu_data) => menu_item_controller)
             
 }
-    
+
+
 export class window_prop_data {
 	key: string
 	value: size_t | string
 	
 }
-    
+
+
 export class caller_window_data {
 	props: Array<window_prop_data>
 	x: number
@@ -1119,7 +1141,8 @@ export class caller_window_data {
 	title: string
 	
 }
-    
+
+
 export class js_menu_context {
 	folder_view?: folder_view_controller | undefined
 	window_titlebar?: window_titlebar_controller | undefined
@@ -1127,13 +1150,15 @@ export class js_menu_context {
 	window_info: caller_window_data
 	
 }
-    
+
+
 export class menu_info_basic_js {
 	menu: menu_controller
 	context: js_menu_context
 	
 }
-    
+
+
 export class menu_controller {
 	
 	
@@ -1299,7 +1324,8 @@ export class menu_controller {
   static create_detached: (() => menu_controller)
             
 }
-    
+
+
 export class clipboard {
 	
 	
@@ -1321,7 +1347,8 @@ export class clipboard {
   static set_text: ((arg1: string) => void)
             
 }
-    
+
+
 export class network {
 	
 	
@@ -1370,7 +1397,8 @@ export class network {
   static download_async: ((arg1: string, arg2: string, arg3: (() => void), arg4: ((arg1: string) => void)) => void)
             
 }
-    
+
+
 export class subproc_result_data {
 	
   /**
@@ -1395,7 +1423,8 @@ export class subproc_result_data {
             
 	
 }
-    
+
+
 export class subproc {
 	
 	
@@ -1435,7 +1464,8 @@ export class subproc {
   static open_async: ((arg1: string, arg2: string, arg3: (() => void)) => void)
             
 }
-    
+
+
 export class fs {
 	
 	
@@ -1602,7 +1632,8 @@ export class fs {
   static watch: ((arg1: string, arg2: ((arg1: string, arg2: number) => void)) => (() => void))
             
 }
-    
+
+
 export class breeze {
 	
 	
@@ -1662,7 +1693,8 @@ export class breeze {
   static user_language: (() => string)
             
 }
-    
+
+
 export class win32 {
 	
 	
@@ -1754,7 +1786,8 @@ export class win32 {
   static is_key_down: ((arg1: string) => boolean)
             
 }
-    
+
+
 export class notification {
 	
 	
@@ -1790,7 +1823,8 @@ export class notification {
   static send_with_buttons: ((arg1: string, arg2: string, arg3: Array<[string, (() => void)]>) => void)
             
 }
-    
+
+
 export class infra {
 	
 	
@@ -1842,7 +1876,7 @@ export class infra {
   static btoa: ((arg1: string) => string)
             
 }
-    
+
 }
 declare module "mshell" {
     export function println(...args: any[]);

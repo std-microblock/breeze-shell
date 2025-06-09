@@ -48,7 +48,7 @@ template <> struct qjs::js_traits<mb_shell::js::breeze_ui::js_widget> {
 };
 template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::breeze_ui::js_widget>("js_widget")
+        mod.class_<mb_shell::js::breeze_ui::js_widget>("breeze_ui::js_widget")
             .constructor<>()
                 .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child>("append_child")
@@ -63,7 +63,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
     
 template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::breeze_ui::js_text_widget>("js_text_widget")
+        mod.class_<mb_shell::js::breeze_ui::js_text_widget>("breeze_ui::js_text_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_text>("get_text")
@@ -79,7 +79,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
     
 template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("js_flex_layout_widget")
+        mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("breeze_ui::js_flex_layout_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
@@ -132,7 +132,7 @@ template <> struct qjs::js_traits<mb_shell::js::breeze_ui::widgets_factory> {
 };
 template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::breeze_ui::widgets_factory>("widgets_factory")
+        mod.class_<mb_shell::js::breeze_ui::widgets_factory>("breeze_ui::widgets_factory")
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
@@ -156,7 +156,7 @@ template <> struct qjs::js_traits<mb_shell::js::breeze_ui::breeze_paint> {
 };
 template<> struct js_bind<mb_shell::js::breeze_ui::breeze_paint> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::breeze_ui::breeze_paint>("breeze_paint")
+        mod.class_<mb_shell::js::breeze_ui::breeze_paint>("breeze_ui::breeze_paint")
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::breeze_paint::from_color>("from_color")
             ;

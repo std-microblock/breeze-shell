@@ -133,6 +133,8 @@ const ctypeToQualified = (type: string, path: string[]) => {
     return parser.formatToC(parsed);
 }
 
+const nameFilter = "mb_shell::js::";
+
 const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
     if (node_struct.kind !== 'CXXRecordDecl') {
         throw new Error('Node is not a RecordDecl');
@@ -158,7 +160,7 @@ const generateForRecordDecl = (node_struct: ClangASTD, path: string[]) => {
     const bases: {
         access: 'public' | 'protected' | 'private';
         type: string;
-    }[] = node_struct.bases?.filter(base=>{
+    }[] = node_struct.bases?.filter(base => {
         return !base.type.qualType.includes('std::')
     }).map(base => {
         return {
@@ -273,11 +275,14 @@ template <> struct qjs::js_traits<${fullName}> {
     }
 
 
+    const hasNamespace = fullName === nameFilter + structName;
+    const jsNamespaceName = fullName.replace(nameFilter, '');
+
     // 2. transform traits as class pointer
     binding += `
 template<> struct js_bind<${fullName}> {
     static void bind(qjs::Context::Module &mod) {
-        mod.class_<${fullName}>("${structName}")
+        mod.class_<${fullName}>("${jsNamespaceName}")
             .constructor<>()`;
 
     // according to https://github.com/ftk/quickjspp/blob/master/test/inheritance.cpp
@@ -310,7 +315,9 @@ template<> struct js_bind<${fullName}> {
 };
     `;
 
+
     typescriptDef += `
+${hasNamespace ? '' : `namespace ${jsNamespaceName.split("::").slice(0, -1).join('.')} {`}
 export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => base.type.split('::').pop() ?? base.type).join(', ')}` : ''
         } {
 \t${fields.map(field => {
@@ -354,7 +361,7 @@ export class ${structName}${bases.length > 0 ? ` extends ${bases.map(base => bas
             return methodDef;
         }).join('\n\t')}
 }
-    `;
+${hasNamespace ? '' : `}\n`}`;
 
 }
 
