@@ -883,6 +883,7 @@ void mb_shell::menu_item_custom_widget::update(ui::update_context &ctx) {
   if (custom_widget) {
     auto ctx2 = ctx.with_offset(*x, *y);
     custom_widget->update(ctx2);
+    custom_widget->parent = this;
   }
 }
 void mb_shell::menu_item_custom_widget::render(ui::nanovg_context ctx) {

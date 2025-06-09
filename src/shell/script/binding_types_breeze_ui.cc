@@ -4,6 +4,7 @@
 #include "ui.h"
 #include "widget.h"
 #include <memory>
+#include <print>
 
 namespace mb_shell::js {
 std::vector<std::shared_ptr<breeze_ui::js_widget>>
@@ -423,8 +424,8 @@ breeze_ui::js_flex_layout_widget::get_background_color() const {
   if ($widget) {
     auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
     if (flex_widget) {
-        auto color = *flex_widget->background_color;
-        return std::make_tuple(color[0], color[1], color[2], color[3]);
+      auto color = *flex_widget->background_color;
+      return std::make_tuple(color[0], color[1], color[2], color[3]);
     }
   }
   return std::nullopt;
@@ -443,7 +444,7 @@ breeze_ui::js_flex_layout_widget::get_background_paint() const {
   if ($widget) {
     auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
     if (flex_widget) {
-        return std::make_shared<breeze_paint>(*flex_widget->background_paint);
+      return std::make_shared<breeze_paint>(*flex_widget->background_paint);
     }
   }
   return nullptr;
@@ -520,8 +521,7 @@ breeze_ui::js_flex_layout_widget::get_border_paint() const {
   if ($widget) {
     auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
     if (flex_widget && flex_widget->border_paint) {
-      return std::make_shared<breeze_paint>(
-          *flex_widget->border_paint);
+      return std::make_shared<breeze_paint>(*flex_widget->border_paint);
     }
   }
   return nullptr;
