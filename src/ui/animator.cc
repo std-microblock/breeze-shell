@@ -5,9 +5,9 @@
 #include <numbers>
 #include <print>
 
-void ui::animated_float::update(float delta_t) {
+void ui::animated_float::update(float delta_time) {
   if (easing == easing_type::mutation) {
-    if (destination != value) {
+    if (destination != value || progress != 1.f) {
       value = destination;
       if (after_animate)
         after_animate.value()(destination);
@@ -19,12 +19,12 @@ void ui::animated_float::update(float delta_t) {
   }
 
   if (delay_timer < delay) {
-    delay_timer += delta_t;
+    delay_timer += delta_time;
     _updated = false;
     return;
   }
 
-  progress += delta_t / duration;
+  progress += delta_time / duration;
 
   if (progress < 0.f) {
     _updated = false;
@@ -83,7 +83,7 @@ void ui::animated_float::reset_to(float dest) {
   value = dest;
   this->from = dest;
   this->destination = dest;
-  progress = 1.f;
+  progress = 0.999999999f; // to avoid lerp issues
   delay_timer = 0.f;
 }
 void ui::animated_float::set_easing(easing_type easing) {

@@ -126,7 +126,9 @@ void acrylic_background_widget::update(update_context &ctx) {
 
   rect_widget::update(ctx);
   dpi_scale = ctx.rt.dpi_scale;
-  should_update = should_update || (width->updated() || height->updated() || radius->updated());
+  should_update = should_update ||
+                  (width->updated() || height->updated() || radius->updated() ||
+                   x->updated() || y->updated() || opacity->updated());
   last_hwnd = nullptr;
   if (use_dwm) {
     radius->reset_to(8.f);
