@@ -150,7 +150,7 @@ struct widget_js_base : public ui::widget_flex {
         on_update(ctx);
       }
 
-      if (ctx.mouse_clicked && on_click) {
+      if (ctx.hovered(this) && ctx.mouse_clicked && on_click) {
         on_click(0);
       }
 

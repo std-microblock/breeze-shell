@@ -1580,6 +1580,13 @@ public:
           }
         };
 
+        // resort the exports to ensure that the shorter namespaces are
+        // processed before the longer ones, so that we can create nested
+        // objects correctly
+        std::ranges::sort(it->exports, [](const nvp &a, const nvp &b) {
+          return a.first.size() < b.first.size();
+        });
+
         for (auto &e : it->exports) {
           auto string_path = std::string(e.first);
           auto path = string_path | std::views::split(std::string_view("::")) |
