@@ -151,23 +151,34 @@ struct widget_js_base : public ui::widget_flex {
         on_update(ctx);
       }
 
+      auto weak = weak_from_this();
       if (ctx.hovered(this) && ctx.mouse_clicked && on_click) {
         on_click(0);
+        if (weak.expired())
+          return;
       }
 
       if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
         on_mouse_enter();
+        if (weak.expired())
+          return;
       } else if (!ctx.hovered(this) && previous_hovered && on_mouse_leave) {
         on_mouse_leave(ctx);
+        if (weak.expired())
+          return;
       }
 
       previous_hovered = ctx.hovered(this);
       if (ctx.mouse_down_on(this) && on_mouse_down) {
         on_mouse_down(ctx);
+        if (weak.expired())
+          return;
       }
 
       if (ctx.mouse_up && on_mouse_up) {
         on_mouse_up(ctx);
+        if (weak.expired())
+          return;
       }
 
       if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
@@ -175,11 +186,15 @@ struct widget_js_base : public ui::widget_flex {
         prev_mouse_y = ctx.mouse_y;
         if (on_mouse_move && ctx.hovered(this)) {
           on_mouse_move(ctx.mouse_x, ctx.mouse_y);
+          if (weak.expired())
+            return;
         }
       }
 
       if (ctx.scroll_y != 0 && on_mouse_wheel) {
         on_mouse_wheel(ctx);
+        if (weak.expired())
+          return;
       }
     } catch (const std::exception &e) {
       std::cerr << "Exception in widget update: " << e.what() << std::endl;
