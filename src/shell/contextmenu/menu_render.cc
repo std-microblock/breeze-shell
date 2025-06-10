@@ -2,7 +2,7 @@
 #include "Windows.h"
 #include "menu_widget.h"
 
-#include "../script/binding_types.h"
+#include "../script/binding_types.hpp"
 #include "ui.h"
 #include <mutex>
 #include <thread>

@@ -1,6 +1,6 @@
 #include "../contextmenu/menu_widget.h"
 #include "animator.h"
-#include "binding_types.h"
+#include "binding_types.hpp"
 #include "ui.h"
 #include "widget.h"
 #include <memory>

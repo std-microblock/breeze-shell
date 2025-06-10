@@ -1,4 +1,4 @@
-#include "binding_types.h"
+#include "binding_types.hpp"
 #include "quickjspp.hpp"
 #include <filesystem>
 #include <iostream>

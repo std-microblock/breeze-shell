@@ -1,0 +1,1 @@
+npx breeze-bindgen@latest -i src/shell/script/binding_types.hpp --nameFilter mb_shell::js -o src/shell/script --extTypesPath scripts/additional-types.txt --tsModuleName mshell

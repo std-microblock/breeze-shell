@@ -1,5 +1,5 @@
 #include "../utils.h"
-#include "binding_types.h"
+#include "binding_types.hpp"
 
 #include "../contextmenu/menu_render.h"
 #include "../entry.h"

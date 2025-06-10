@@ -6,7 +6,7 @@
 #include "entry.h"
 #include "error_handler.h"
 #include "res_string_loader.h"
-#include "script/binding_types.h"
+#include "script/binding_types.hpp"
 #include "script/quickjspp.hpp"
 #include "script/script.h"
 #include "ui.h"
