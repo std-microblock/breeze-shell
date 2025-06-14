@@ -1,7 +1,7 @@
 set_project("shell")
 set_policy("compatibility.version", "3.0")
 set_policy("package.requires_lock", true)
-local version = "0.1.24"
+local version = "0.1.25"
 
 set_languages("c++2b")
 set_warnings("all") 
