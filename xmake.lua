@@ -15,7 +15,7 @@ includes("dependencies/quickjs-ng.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace")
+add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3")
 
 target("ui")
     set_kind("static")
