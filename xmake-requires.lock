@@ -1,0 +1,107 @@
+{
+    __meta__ = {
+        version = "1.0"
+    },
+    ["windows|x64"] = {
+        ["blook#31fecfc4"] = {
+            version = "latest"
+        },
+        ["breeze-glfw#31fecfc4"] = {
+            version = "latest"
+        },
+        ["cmake#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "4.0.1"
+        },
+        ["cpptrace v0.8.3#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "9ccddb5847ab789fe829f6c485989b489ea7c3d4",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v0.8.3"
+        },
+        ["ctre#5a639230"] = {
+            repo = {
+                branch = "master",
+                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v3.9.0"
+        },
+        ["glad#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "7917c51f64652900f1d9a3091f7561d8c3aa936e",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v0.1.36"
+        },
+        ["nanosvg#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2022.07.09"
+        },
+        ["nanovg#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2023.8.27"
+        },
+        ["ninja#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.12.1"
+        },
+        ["opengl#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "latest"
+        },
+        ["python 3.x#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "3.13.2"
+        },
+        ["quickjs-ng#31fecfc4"] = {
+            version = "v0.8.0"
+        },
+        ["reflect-cpp#31fecfc4"] = {
+            version = "v0.17.0"
+        },
+        ["wintoast#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "7917c51f64652900f1d9a3091f7561d8c3aa936e",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.3.1"
+        },
+        ["yyjson#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "0.11.1"
+        }
+    }
+}
