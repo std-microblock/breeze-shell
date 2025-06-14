@@ -484,6 +484,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
 
         obj.name_resid = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name_resid"));
 
+        obj.origin_name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "origin_name"));
+
         return obj;
     }
 
@@ -508,6 +510,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
 
         JS_SetPropertyStr(ctx, obj, "name_resid", js_traits<std::optional<std::string>>::wrap(ctx, val.name_resid));
 
+        JS_SetPropertyStr(ctx, obj, "origin_name", js_traits<std::optional<std::string>>::wrap(ctx, val.origin_name));
+
         return obj;
     }
 };
@@ -524,6 +528,7 @@ template<> struct js_bind<mb_shell::js::js_menu_data> {
                 .fun<&mb_shell::js::js_menu_data::disabled>("disabled")
                 .fun<&mb_shell::js::js_menu_data::wID>("wID")
                 .fun<&mb_shell::js::js_menu_data::name_resid>("name_resid")
+                .fun<&mb_shell::js::js_menu_data::origin_name>("origin_name")
             ;
     }
 };
@@ -996,6 +1001,8 @@ template<> struct js_bind<mb_shell::js::win32> {
         mod.class_<mb_shell::js::win32>("win32")
             .constructor<>()
                 .static_fun<&mb_shell::js::win32::resid_from_string>("resid_from_string")
+                .static_fun<&mb_shell::js::win32::string_from_resid>("string_from_resid")
+                .static_fun<&mb_shell::js::win32::all_resids_from_string>("all_resids_from_string")
                 .static_fun<&mb_shell::js::win32::load_library>("load_library")
                 .static_fun<&mb_shell::js::win32::env>("env")
                 .static_fun<&mb_shell::js::win32::load_file_icon>("load_file_icon")

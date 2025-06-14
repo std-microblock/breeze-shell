@@ -44,5 +44,6 @@ struct menu_item {
   // the two below are only for information; set them changes nothing
   std::optional<size_t> wID;
   std::optional<std::string> name_resid;
+  std::optional<std::string> origin_name;
 };
 } // namespace mb_shell

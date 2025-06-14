@@ -176,6 +176,8 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
       item.type = menu_item::type::spacer;
     } else {
       item.name = wstring_to_utf8(strip_extra_infos(buffer));
+      item.origin_name = wstring_to_utf8(buffer);
+
       auto id_stripped = res_string_loader::string_to_id(buffer);
       if (std::get_if<size_t>(&id_stripped)) {
         item.name_resid =

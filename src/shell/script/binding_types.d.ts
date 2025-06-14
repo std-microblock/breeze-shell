@@ -7,11 +7,7 @@ export class breeze_ui {
 }
 namespace breeze_ui {
 export class js_widget {
-	/**
-     * IShellView*
-      @returns Array<breeze_ui.js_widget>
-     */
-    children(): Array<breeze_ui.js_widget>
+	children(): Array<breeze_ui.js_widget>
 	/**
      * 
      * @param child: breeze_ui.js_widget
@@ -51,7 +47,7 @@ export class js_text_widget extends js_widget {
     set_text(text: string): void
 	get_font_size(): number
 	/**
-     * *
+     * 
      * @param size: number
      * @returns void
      */
@@ -62,7 +58,7 @@ export class js_text_widget extends js_widget {
      * @param color: [number, number, number, number] | undefined
      * @returns void
      */
-    set_color(color: [number, number, number, number] | undefined): void
+    set_color(color?: [number, number, number, number] | undefined): void
 }
 }
 namespace breeze_ui {
@@ -81,45 +77,30 @@ export class js_flex_layout_widget extends js_widget {
      * @returns void
      */
     set_padding_left(padding: number): void
+	get_padding_right(): number
 	/**
-     * 当前文件夹路径
-      @returns number
-     */
-    get_padding_right(): number
-	/**
-     * 当前文件夹路径
-     *  Current folder path
+     * 
      * @param padding: number
      * @returns void
      */
     set_padding_right(padding: number): void
 	get_padding_top(): number
 	/**
-     * 当前焦点文件路径
+     * 
      * @param padding: number
      * @returns void
      */
     set_padding_top(padding: number): void
-	/**
-     * 当前焦点文件路径
-     *  Currently focused file path
-      @returns number
-     */
-    get_padding_bottom(): number
+	get_padding_bottom(): number
 	/**
      * 
      * @param padding: number
      * @returns void
      */
     set_padding_bottom(padding: number): void
+	get_padding(): [number, number, number, number]
 	/**
-     * 选中的文件列表
-      @returns [number, number, number, number]
-     */
-    get_padding(): [number, number, number, number]
-	/**
-     * 选中的文件列表
-     *  List of selected files
+     * 
      * @param left: number
      * @param right: number
      * @param top: number
@@ -134,88 +115,62 @@ export class js_flex_layout_widget extends js_widget {
      * @returns void
      */
     set_on_click(on_click: ((arg1: number) => void)): void
+	get_on_mouse_move(): ((arg1: number, arg2: number) => void)
 	/**
-     * 切换到新文件夹
-      @returns ((arg1: number, arg2: number) => void)
-     */
-    get_on_mouse_move(): ((arg1: number, arg2: number) => void)
-	/**
-     * 切换到新文件夹
-     *  Change to a new folder
+     * 
      * @param on_mouse_move: ((arg1: number, arg2: number) => void)
      * @returns void
      */
     set_on_mouse_move(on_mouse_move: ((arg1: number, arg2: number) => void)): void
 	get_on_mouse_enter(): (() => void)
 	/**
-     * 打开文件
+     * 
      * @param on_mouse_enter: (() => void)
      * @returns void
      */
     set_on_mouse_enter(on_mouse_enter: (() => void)): void
 	/**
-     * 打开文件
-     *  Open a file
+     * 
      * @param color: [number, number, number, number] | undefined
      * @returns void
      */
-    set_background_color(color: [number, number, number, number] | undefined): void
-	/**
-     * 打开文件夹
-     *  Open a folder
-      @returns [number, number, number, number] | undefined
-     */
-    get_background_color(): [number, number, number, number] | undefined
+    set_background_color(color?: [number, number, number, number] | undefined): void
+	get_background_color(): [number, number, number, number] | undefined
 	/**
      * 
      * @param paint: breeze_ui.breeze_paint
      * @returns void
      */
     set_background_paint(paint: breeze_ui.breeze_paint): void
+	get_background_paint(): breeze_ui.breeze_paint
 	/**
-     * 刷新视图
-      @returns breeze_ui.breeze_paint
-     */
-    get_background_paint(): breeze_ui.breeze_paint
-	/**
-     * 刷新视图
-     *  Refresh view
+     * 
      * @param radius: number
      * @returns void
      */
     set_border_radius(radius: number): void
 	get_border_radius(): number
 	/**
-     * 复制
+     * 
      * @param color: [number, number, number, number] | undefined
      * @returns void
      */
-    set_border_color(color: [number, number, number, number] | undefined): void
+    set_border_color(color?: [number, number, number, number] | undefined): void
+	get_border_color(): [number, number, number, number] | undefined
 	/**
-     * 剪切
-      @returns [number, number, number, number] | undefined
-     */
-    get_border_color(): [number, number, number, number] | undefined
-	/**
-     * 剪切
-     *  Cut selected items
+     * 
      * @param width: number
      * @returns void
      */
     set_border_width(width: number): void
 	get_border_width(): number
 	/**
-     * 粘贴
+     * 
      * @param paint: breeze_ui.breeze_paint
      * @returns void
      */
     set_border_paint(paint: breeze_ui.breeze_paint): void
-	/**
-     * 粘贴
-     *  Paste items
-      @returns breeze_ui.breeze_paint
-     */
-    get_border_paint(): breeze_ui.breeze_paint
+	get_border_paint(): breeze_ui.breeze_paint
 }
 }
 namespace breeze_ui {
@@ -227,7 +182,7 @@ export class widgets_factory {
 namespace breeze_ui {
 export class breeze_paint {
 	/**
-     * special flag struct to indicate that the corresponding
+     * 
      * @param color: string
      * @returns breeze_ui.breeze_paint
      */
@@ -243,7 +198,12 @@ export class folder_view_folder_item {
 	size(): size_t
 	type(): string
 	/**
-     * *
+     *     (0) 取消选择该项。
+     *     (1) 选择该项。
+     *     (3) 将项目置于编辑模式。
+     *     (4) 取消选择除指定项的所有项。
+     *     (8) 确保该项显示在视图中。
+     *     (16) 为项目提供焦点。
      * @param state: number
      * @returns void
      */
@@ -251,67 +211,67 @@ export class folder_view_folder_item {
 }
 export class folder_view_controller {
 	/**
-     * 当前文件夹路径
+     *  当前文件夹路径
      *  Current folder path
      */
     current_path: string
 	/**
-     * 当前焦点文件路径
+     *  当前焦点文件路径
      *  Currently focused file path
      */
     focused_file_path: string
 	/**
-     * 选中的文件列表
+     *  选中的文件列表
      *  List of selected files
      */
     selected_files: Array<string>
 	/**
-     * 切换到新文件夹
+     *  切换到新文件夹
      *  Change to a new folder
      * @param new_folder_path: string
      * @returns void
      */
     change_folder(new_folder_path: string): void
 	/**
-     * 打开文件
+     *  打开文件
      *  Open a file
      * @param file_path: string
      * @returns void
      */
     open_file(file_path: string): void
 	/**
-     * 打开文件夹
+     *  打开文件夹
      *  Open a folder
      * @param folder_path: string
      * @returns void
      */
     open_folder(folder_path: string): void
 	/**
-     * 刷新视图
+     *  刷新视图
      *  Refresh view
       @returns void
      */
     refresh(): void
 	/**
-     * 复制
+     *  复制
      *  Copy selected items
       @returns void
      */
     copy(): void
 	/**
-     * 剪切
+     *  剪切
      *  Cut selected items
       @returns void
      */
     cut(): void
 	/**
-     * 粘贴
+     *  粘贴
      *  Paste items
       @returns void
      */
     paste(): void
 	/**
-     * 获取项列表
+     *  获取项列表
       @returns Array<folder_view_folder_item>
      */
     items(): Array<folder_view_folder_item>
@@ -328,23 +288,23 @@ export class value_reset {
 }
 export class window_titlebar_controller {
 	/**
-     * 是否在标题栏中点击
+     *  是否在标题栏中点击
      *  Whether click is in titlebar
      */
     is_click_in_titlebar: boolean
 	/**
-     * 窗口标题
+     *  窗口标题
      *  Window title
      */
     title: string
 	/**
-     * 可执行文件路径
+     *  可执行文件路径
      *  Executable path
      */
     executable_path: string
 	hwnd: number
 	/**
-     * 窗口位置和大小
+     *  窗口位置和大小
      *  Window position and size
      */
     x: number
@@ -352,7 +312,7 @@ export class window_titlebar_controller {
 	width: number
 	height: number
 	/**
-     * 窗口状态
+     *  窗口状态
      *  Window state
      */
     maximized: boolean
@@ -360,21 +320,21 @@ export class window_titlebar_controller {
 	focused: boolean
 	visible: boolean
 	/**
-     * 设置窗口标题
+     *  设置窗口标题
      *  Set window title
      * @param new_title: string
      * @returns void
      */
     set_title(new_title: string): void
 	/**
-     * 设置窗口图标
+     *  设置窗口图标
      *  Set window icon
      * @param icon_path: string
      * @returns void
      */
     set_icon(icon_path: string): void
 	/**
-     * 设置窗口位置
+     *  设置窗口位置
      *  Set window position
      * @param new_x: number
      * @param new_y: number
@@ -382,7 +342,7 @@ export class window_titlebar_controller {
      */
     set_position(new_x: number, new_y: number): void
 	/**
-     * 设置窗口大小
+     *  设置窗口大小
      *  Set window size
      * @param new_width: number
      * @param new_height: number
@@ -390,43 +350,43 @@ export class window_titlebar_controller {
      */
     set_size(new_width: number, new_height: number): void
 	/**
-     * 最大化窗口
+     *  最大化窗口
      *  Maximize window
       @returns void
      */
     maximize(): void
 	/**
-     * 最小化窗口
+     *  最小化窗口
      *  Minimize window
       @returns void
      */
     minimize(): void
 	/**
-     * 还原窗口
+     *  还原窗口
      *  Restore window
       @returns void
      */
     restore(): void
 	/**
-     * 关闭窗口
+     *  关闭窗口
      *  Close window
       @returns void
      */
     close(): void
 	/**
-     * 聚焦窗口
+     *  聚焦窗口
      *  Focus window
       @returns void
      */
     focus(): void
 	/**
-     * 显示窗口
+     *  显示窗口
      *  Show window
       @returns void
      */
     show(): void
 	/**
-     * 隐藏窗口
+     *  隐藏窗口
      *  Hide window
       @returns void
      */
@@ -434,37 +394,37 @@ export class window_titlebar_controller {
 }
 export class input_box_controller {
 	/**
-     * 输入框文本
+     *  输入框文本
      *  Input box text
      */
     text: string
 	/**
-     * 占位符文本
+     *  占位符文本
      *  Placeholder text
      */
     placeholder: string
 	/**
-     * 是否多行
+     *  是否多行
      *  Whether multiline
      */
     multiline: boolean
 	/**
-     * 是否密码框
+     *  是否密码框
      *  Whether password field
      */
     password: boolean
 	/**
-     * 是否只读
+     *  是否只读
      *  Whether readonly
      */
     readonly: boolean
 	/**
-     * 是否禁用
+     *  是否禁用
      *  Whether disabled
      */
     disabled: boolean
 	/**
-     * 输入框位置和大小
+     *  输入框位置和大小
      *  Input box position and size
      */
     x: number
@@ -472,21 +432,21 @@ export class input_box_controller {
 	width: number
 	height: number
 	/**
-     * 设置文本
+     *  设置文本
      *  Set text
      * @param new_text: string
      * @returns void
      */
     set_text(new_text: string): void
 	/**
-     * 设置占位符
+     *  设置占位符
      *  Set placeholder
      * @param new_placeholder: string
      * @returns void
      */
     set_placeholder(new_placeholder: string): void
 	/**
-     * 设置位置
+     *  设置位置
      *  Set position
      * @param new_x: number
      * @param new_y: number
@@ -494,7 +454,7 @@ export class input_box_controller {
      */
     set_position(new_x: number, new_y: number): void
 	/**
-     * 设置大小
+     *  设置大小
      *  Set size
      * @param new_width: number
      * @param new_height: number
@@ -502,53 +462,53 @@ export class input_box_controller {
      */
     set_size(new_width: number, new_height: number): void
 	/**
-     * 设置是否多行
+     *  设置是否多行
      *  Set multiline state
      * @param new_multiline: boolean
      * @returns void
      */
     set_multiline(new_multiline: boolean): void
 	/**
-     * 设置是否为密码框
+     *  设置是否为密码框
      *  Set password field state
      * @param new_password: boolean
      * @returns void
      */
     set_password(new_password: boolean): void
 	/**
-     * 设置是否只读
+     *  设置是否只读
      *  Set readonly state
      * @param new_readonly: boolean
      * @returns void
      */
     set_readonly(new_readonly: boolean): void
 	/**
-     * 设置是否禁用
+     *  设置是否禁用
      *  Set disabled state
      * @param new_disabled: boolean
      * @returns void
      */
     set_disabled(new_disabled: boolean): void
 	/**
-     * 获取焦点
+     *  获取焦点
      *  Get focus
       @returns void
      */
     focus(): void
 	/**
-     * 失去焦点
+     *  失去焦点
      *  Lose focus
       @returns void
      */
     blur(): void
 	/**
-     * 全选文本
+     *  全选文本
      *  Select all text
       @returns void
      */
     select_all(): void
 	/**
-     * 选择文本范围
+     *  选择文本范围
      *  Select text range
      * @param start: number
      * @param end: number
@@ -556,7 +516,7 @@ export class input_box_controller {
      */
     select_range(start: number, end: number): void
 	/**
-     * 设置选择范围
+     *  设置选择范围
      *  Set selection range
      * @param start: number
      * @param end: number
@@ -564,14 +524,14 @@ export class input_box_controller {
      */
     set_selection(start: number, end: number): void
 	/**
-     * 插入文本
+     *  插入文本
      *  Insert text
      * @param new_text: string
      * @returns void
      */
     insert_text(new_text: string): void
 	/**
-     * 删除文本
+     *  删除文本
      *  Delete text
      * @param start: number
      * @param end: number
@@ -579,7 +539,7 @@ export class input_box_controller {
      */
     delete_text(start: number, end: number): void
 	/**
-     * 清空文本
+     *  清空文本
      *  Clear text
       @returns void
      */
@@ -589,38 +549,47 @@ export class js_menu_action_event_data {
 }
 export class js_menu_data {
 	/**
-     * 菜单项类型
+     *  菜单项类型
      *  Menu item type
      */
     type?: string | undefined
 	/**
-     * 菜单项名称
+     *  菜单项名称
      *  Menu item name
      */
     name?: string | undefined
-	submenu?: ((arg1: menu_controller) => void) | value_reset | undefined
-	action?: ((arg1: js_menu_action_event_data) => void) | value_reset | undefined
 	/**
-     * SVG图标
+     *  子菜单回调函数
+     *  Submenu callback function
+     */
+    submenu?: ((arg1: menu_controller) => void) | value_reset | undefined
+	/**
+     *  菜单动作回调函数
+     *  Menu action callback function
+     */
+    action?: ((arg1: js_menu_action_event_data) => void) | value_reset | undefined
+	/**
+     *  SVG图标
      *  SVG icon
      */
     icon_svg?: string | value_reset | undefined
 	/**
-     * 位图图标
+     *  位图图标
      *  Bitmap icon
      */
     icon_bitmap?: size_t | value_reset | undefined
 	/**
-     * 是否禁用
+     *  是否禁用
      *  Whether disabled
      */
     disabled?: boolean | undefined
 	/**
-     * 仅作为信息标识，不影响行为
+     *  仅作为信息标识，不影响行为
      *  Only for information, set this changes nothing
      */
     wID?: int64_t | undefined
 	name_resid?: string | undefined
+	origin_name?: string | undefined
 }
 export class menu_item_controller {
 	/**
@@ -698,13 +667,13 @@ export class menu_info_basic_js {
 }
 export class menu_controller {
 	/**
-     * 检查菜单控制器是否有效
+     *  检查菜单控制器是否有效
      *  Check if menu controller is valid
       @returns boolean
      */
     valid(): boolean
 	/**
-     * 在指定索引后添加菜单项
+     *  在指定索引后添加菜单项
      *  Append menu item after specified index
      * @param data: js_menu_data
      * @param after_index: number
@@ -719,72 +688,81 @@ export class menu_controller {
      */
     append_widget_after(widget: breeze_ui.js_widget, after_index: number): void
 	/**
-     * 
+     *  在指定索引后添加水平菜单母项
      * @param after_index: number
      * @returns menu_item_parent_item_controller
      */
     append_parent_item_after(after_index: number): menu_item_parent_item_controller
-	append_parent_item(): menu_item_parent_item_controller
-	prepend_parent_item(): menu_item_parent_item_controller
 	/**
-     * 在末尾添加菜单项
+     *  在末尾添加水平菜单母项
+      @returns menu_item_parent_item_controller
+     */
+    append_parent_item(): menu_item_parent_item_controller
+	/**
+     *  在开头添加水平菜单母项
+      @returns menu_item_parent_item_controller
+     */
+    prepend_parent_item(): menu_item_parent_item_controller
+	/**
+     *  在末尾添加菜单项
      *  Append menu item at end
      * @param data: js_menu_data
      * @returns menu_item_controller
      */
     append_item(data: js_menu_data): menu_item_controller
 	/**
-     * 在开头添加菜单项
+     *  在开头添加菜单项
      *  Prepend menu item at beginning
      * @param data: js_menu_data
      * @returns menu_item_controller
      */
     prepend_item(data: js_menu_data): menu_item_controller
 	/**
-     * 在开头添加 Spacer
+     *  在开头添加 Spacer
      *  Prepend Spacer
       @returns void
      */
     prepend_spacer(): void
 	/**
-     * 在末尾添加 Spacer
+     *  在末尾添加 Spacer
      *  Append Spacer
       @returns void
      */
     append_spacer(): void
 	/**
-     * 关闭菜单
+     *  关闭菜单
      *  Close menu
       @returns void
      */
     close(): void
 	/**
-     * 清除所有菜单项
+     *  清除所有菜单项
      *  Clear all menu items
       @returns void
      */
     clear(): void
 	/**
-     * 获取所有菜单项
+     *  获取所有菜单项
      *  Get all menu items
       @returns Array<menu_item_controller>
      */
     get_items(): Array<menu_item_controller>
 	/**
-     * 获取指定索引的菜单项
+     *  获取指定索引的菜单项
      *  Get menu item at index
      * @param index: number
      * @returns menu_item_controller
      */
     get_item(index: number): menu_item_controller
 	/**
-     * 
+     *  添加菜单事件监听器
+     *  Add menu event listener
      * @param listener: ((arg1: menu_info_basic_js) => void)
      * @returns (() => void)
      */
     static add_menu_listener(listener: ((arg1: menu_info_basic_js) => void)): (() => void)
 	/**
-     * Only for compatibility
+     *  Only for compatibility
      * @param data: js_menu_data
      * @returns menu_item_controller
      */
@@ -806,13 +784,13 @@ export class menu_controller {
 }
 export class clipboard {
 	/**
-     * 从剪贴板获取文本
+     *  从剪贴板获取文本
      *  Get text from clipboard
       @returns string
      */
     static get_text(): string
 	/**
-     * 设置文本到剪贴板
+     *  设置文本到剪贴板
      *  Set text to clipboard
      * @param text: string
      * @returns void
@@ -821,14 +799,14 @@ export class clipboard {
 }
 export class network {
 	/**
-     * 同步HTTP GET请求
+     *  同步HTTP GET请求
      *  Synchronous HTTP GET request
      * @param url: string
      * @returns string
      */
     static get(url: string): string
 	/**
-     * 同步HTTP POST请求
+     *  同步HTTP POST请求
      *  Synchronous HTTP POST request
      * @param url: string
      * @param data: string
@@ -836,7 +814,7 @@ export class network {
      */
     static post(url: string, data: string): string
 	/**
-     * 异步HTTP GET请求
+     *  异步HTTP GET请求
      *  Asynchronous HTTP GET request
      * @param url: string
      * @param callback: ((arg1: string) => void)
@@ -845,7 +823,7 @@ export class network {
      */
     static get_async(url: string, callback: ((arg1: string) => void), error_callback: ((arg1: string) => void)): void
 	/**
-     * 异步HTTP POST请求
+     *  异步HTTP POST请求
      *  Asynchronous HTTP POST request
      * @param url: string
      * @param data: string
@@ -855,7 +833,7 @@ export class network {
      */
     static post_async(url: string, data: string, callback: ((arg1: string) => void), error_callback: ((arg1: string) => void)): void
 	/**
-     * 下载文件
+     *  下载文件
      *  Download file
      * @param url: string
      * @param path: string
@@ -867,31 +845,31 @@ export class network {
 }
 export class subproc_result_data {
 	/**
-     * 标准输出
+     *  标准输出
      *  Standard output
      */
     out: string
 	/**
-     * 标准错误
+     *  标准错误
      *  Standard error
      */
     err: string
 	/**
-     * 退出码
+     *  退出码
      *  Exit code
      */
     code: number
 }
 export class subproc {
 	/**
-     * 同步运行命令
+     *  同步运行命令
      *  Run command synchronously
      * @param cmd: string
      * @returns subproc_result_data
      */
     static run(cmd: string): subproc_result_data
 	/**
-     * 异步运行命令
+     *  异步运行命令
      *  Run command asynchronously
      * @param cmd: string
      * @param callback: ((arg1: subproc_result_data) => void)
@@ -899,7 +877,7 @@ export class subproc {
      */
     static run_async(cmd: string, callback: ((arg1: subproc_result_data) => void)): void
 	/**
-     * 同步打开东西
+     *  同步打开东西
      *  Open something synchronously
      * @param path: string
      * @param args: string
@@ -907,7 +885,7 @@ export class subproc {
      */
     static open(path: string, args: string): void
 	/**
-     * 异步打开东西
+     *  异步打开东西
      *  Open something asynchronously
      * @param path: string
      * @param args: string
@@ -918,48 +896,48 @@ export class subproc {
 }
 export class fs {
 	/**
-     * 获取当前工作目录
+     *  获取当前工作目录
      *  Get current working directory
       @returns string
      */
     static cwd(): string
 	/**
-     * 设置当前工作目录
+     *  设置当前工作目录
      *  Set current working directory
      * @param path: string
      * @returns void
      */
     static chdir(path: string): void
 	/**
-     * 判断路径是否存在
+     *  判断路径是否存在
      *  Check if path exists
      * @param path: string
      * @returns boolean
      */
     static exists(path: string): boolean
 	/**
-     * 判断路径是否为目录
+     *  判断路径是否为目录
      *  Check if path is directory
      * @param path: string
      * @returns boolean
      */
     static isdir(path: string): boolean
 	/**
-     * 创建目录
+     *  创建目录
      *  Create directory
      * @param path: string
      * @returns void
      */
     static mkdir(path: string): void
 	/**
-     * 删除目录
+     *  删除目录
      *  Remove directory
      * @param path: string
      * @returns void
      */
     static rmdir(path: string): void
 	/**
-     * 重命名文件或目录
+     *  重命名文件或目录
      *  Rename file or directory
      * @param old_path: string
      * @param new_path: string
@@ -967,14 +945,14 @@ export class fs {
      */
     static rename(old_path: string, new_path: string): void
 	/**
-     * 删除文件
+     *  删除文件
      *  Remove file
      * @param path: string
      * @returns void
      */
     static remove(path: string): void
 	/**
-     * 复制文件
+     *  复制文件
      *  Copy file
      * @param src_path: string
      * @param dest_path: string
@@ -982,7 +960,7 @@ export class fs {
      */
     static copy(src_path: string, dest_path: string): void
 	/**
-     * 移动文件
+     *  移动文件
      *  Move file
      * @param src_path: string
      * @param dest_path: string
@@ -990,14 +968,14 @@ export class fs {
      */
     static move(src_path: string, dest_path: string): void
 	/**
-     * 读取文件
+     *  读取文件
      *  Read file
      * @param path: string
      * @returns string
      */
     static read(path: string): string
 	/**
-     * 写入文件
+     *  写入文件
      *  Write file
      * @param path: string
      * @param data: string
@@ -1005,14 +983,14 @@ export class fs {
      */
     static write(path: string, data: string): void
 	/**
-     * 以二进制模式读取文件
+     *  以二进制模式读取文件
      *  Read file in binary mode
      * @param path: string
      * @returns Array<uint8_t>
      */
     static read_binary(path: string): Array<uint8_t>
 	/**
-     * 以二进制模式写入文件
+     *  以二进制模式写入文件
      *  Write file in binary mode
      * @param path: string
      * @param data: Array<uint8_t>
@@ -1020,14 +998,14 @@ export class fs {
      */
     static write_binary(path: string, data: Array<uint8_t>): void
 	/**
-     * 读取目录
+     *  读取目录
      *  Read directory
      * @param path: string
      * @returns Array<string>
      */
     static readdir(path: string): Array<string>
 	/**
-     * 使用 SHFileOperation 拷贝文件/文件夹
+     *  使用 SHFileOperation 拷贝文件/文件夹
      *  Copy file with SHFileOperation
      *  这会模拟资源管理器中“复制”的行为，即显示进度窗口，UAC请求窗口等
      * @param src_path: string
@@ -1037,7 +1015,7 @@ export class fs {
      */
     static copy_shfile(src_path: string, dest_path: string, callback: ((arg1: boolean, arg2: string) => void)): void
 	/**
-     * 使用 SHFileOperation 移动文件/文件夹
+     *  使用 SHFileOperation 移动文件/文件夹
      *  Move file with SHFileOperation
      *  这会模拟资源管理器中“移动”的行为，即显示进度窗口，UAC请求窗口等
      * @param src_path: string
@@ -1047,7 +1025,13 @@ export class fs {
      */
     static move_shfile(src_path: string, dest_path: string, callback: ((arg1: boolean) => void)): void
 	/**
-     * 
+     *  监测文件/文件夹变动
+     *  Watch file/folder changes
+     *  added 0
+     *  removed 1
+     *  modified 2
+     *  renamed_old 3
+     *  renamed_new 4
      * @param path: string
      * @param callback: ((arg1: string, arg2: number) => void)
      * @returns (() => void)
@@ -1070,6 +1054,18 @@ export class win32 {
      * @returns string
      */
     static resid_from_string(str: string): string
+	/**
+     * 
+     * @param str: string
+     * @returns string
+     */
+    static string_from_resid(str: string): string
+	/**
+     * 
+     * @param str: string
+     * @returns Array<string>
+     */
+    static all_resids_from_string(str: string): Array<string>
 	/**
      * 
      * @param path: string

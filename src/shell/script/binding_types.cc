@@ -258,8 +258,8 @@ js_menu_data menu_item_controller::data() {
 
   data.wID = item->item.wID;
   data.name_resid = item->item.name_resid;
-
   data.disabled = item->item.disabled;
+  data.origin_name = item->item.origin_name;
 
   return data;
 }
@@ -1383,5 +1383,12 @@ void menu_controller::append_widget_after(
   }
 
   m->update_icon_width();
+}
+std::string win32::string_from_resid(std::string str) {
+  return res_string_loader::string_from_id_string(str);
+  
+}
+std::vector<std::string> win32::all_resids_from_string(std::string str) {
+  return res_string_loader::get_all_ids_of_string(utf8_to_wstring(str));
 }
 } // namespace mb_shell::js

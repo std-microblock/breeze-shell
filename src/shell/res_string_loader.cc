@@ -21,6 +21,9 @@ static std::mutex lock_str_data;
 static std::unordered_map<std::wstring,
                           res_string_loader::res_string_identifier>
     str_data;
+static std::unordered_map<res_string_loader::res_string_identifier,
+                          std::wstring>
+    str_data_rev;
 static std::unordered_map<size_t, std::string> module_name_cache;
 
 res_string_loader::string_id res_string_loader::string_to_id(std::wstring str) {
@@ -34,8 +37,10 @@ res_string_loader::string_id res_string_loader::string_to_id(std::wstring str) {
 
 std::string get_module_name_from_instance(HINSTANCE hInstance) {
   char buffer[MAX_PATH];
-  GetModuleFileNameA(hInstance, buffer, MAX_PATH);
-  return std::filesystem::path(buffer).filename().string();
+  if (GetModuleFileNameA(hInstance, buffer, MAX_PATH)) {
+    return std::filesystem::path(buffer).filename().string();
+  }
+  return {};
 }
 
 size_t store_module_name(HINSTANCE hInstance) {
@@ -57,7 +62,7 @@ void res_string_loader::init_hook() {
   static auto LoadStringWHook =
       kernelbase->exports("LoadStringW")->inline_hook();
   LoadStringWHook->install(+[](HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer,
-                              int cchBufferMax) -> int {
+                               int cchBufferMax) -> int {
     auto res = LoadStringWHook->call_trampoline<int>(hInstance, uID, lpBuffer,
                                                      cchBufferMax);
     if (res > 0) {
@@ -66,6 +71,7 @@ void res_string_loader::init_hook() {
       if (str_data.find(str) != str_data.end())
         return res;
       str_data[str] = {uID, store_module_name(hInstance)};
+      str_data_rev[{uID, store_module_name(hInstance)}] = str;
     }
     return res;
   });
@@ -74,7 +80,7 @@ void res_string_loader::init_hook() {
       kernelbase->exports("LoadStringA")->inline_hook();
 
   LoadStringAHook->install(+[](HINSTANCE hInstance, UINT uID, LPSTR lpBuffer,
-                              int cchBufferMax) -> int {
+                               int cchBufferMax) -> int {
     auto res = LoadStringAHook->call_trampoline<int>(hInstance, uID, lpBuffer,
                                                      cchBufferMax);
     if (res > 0) {
@@ -84,6 +90,7 @@ void res_string_loader::init_hook() {
       if (str_data.find(s) != str_data.end())
         return res;
       str_data[s] = {uID, store_module_name(hInstance)};
+      str_data_rev[{uID, store_module_name(hInstance)}] = s;
     }
 
     return res;
@@ -154,6 +161,58 @@ void EnumerateStringResources(
         return TRUE;
       },
       reinterpret_cast<LONG_PTR>(&callback));
+  // RT_MENU
+  EnumResourceNamesW(
+      mod, MAKEINTRESOURCEW(4),
+      +[](HMODULE hModule, LPCWSTR /*lpType*/, LPWSTR lpName,
+          LONG_PTR lParam) -> BOOL {
+        auto &cb =
+            *reinterpret_cast<std::function<void(std::wstring_view, size_t)> *>(
+                lParam);
+        if (!IS_INTRESOURCE(lpName))
+          return TRUE;
+
+        HMENU hMenu = LoadMenuW(hModule, lpName);
+        if (hMenu) {
+          for (UINT id = 0; id < 0xFFFF; id++) {
+            UINT state = GetMenuState(hMenu, id, MF_BYCOMMAND);
+            if (state != 0xFFFFFFFF) {
+              MENUITEMINFOW info = {sizeof(MENUITEMINFO)};
+              info.fMask = MIIM_STRING;
+              info.dwTypeData = nullptr;
+              info.cch = 0;
+
+              if (auto res = GetMenuItemInfoW(hMenu, id, FALSE, &info); !res) {
+                std::println("Failed to get menu item info for id {}: {}", id,
+                             GetLastError());
+                continue;
+              }
+
+              std::wstring name;
+              if (info.cch == 0) {
+                continue; // 没有名称
+              } else {
+                name.resize(info.cch + 1);
+                info.dwTypeData = name.data();
+                info.cch = static_cast<UINT>(name.size());
+                if (!GetMenuItemInfoW(hMenu, id, FALSE, &info)) {
+                  std::println("Failed to get menu item info for id {}", id);
+                  continue;
+                }
+              }
+              
+              if (info.dwTypeData) {
+                cb(info.dwTypeData,
+                   static_cast<size_t>((id << 16) + (size_t)lpName));
+              }
+            }
+          }
+          DestroyMenu(hMenu);
+        }
+
+        return TRUE;
+      },
+      reinterpret_cast<LONG_PTR>(&callback));
 }
 
 void load_all_res_strings(std::string module) {
@@ -163,7 +222,11 @@ void load_all_res_strings(std::string module) {
     return;
   }
   if (!hInstance) {
-    return;
+    hInstance = LoadLibraryExA(module.data(), nullptr,
+                               LOAD_LIBRARY_AS_DATAFILE |
+                                   LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    if (!hInstance)
+      return;
   }
   auto mod_hash = store_module_name(hInstance);
 
@@ -175,6 +238,7 @@ void load_all_res_strings(std::string module) {
     if (str_data.find(s) != str_data.end())
       return;
     str_data[s] = {id, mod_hash};
+    str_data_rev[{id, mod_hash}] = s;
   });
 }
 
@@ -193,8 +257,40 @@ void res_string_loader::init_known_strings() {
     load_all_res_strings(dll);
   }
   dbgout("[perf] init_known_strings took {}ms",
-               std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::high_resolution_clock::now() - now)
-                   .count());
+         std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::high_resolution_clock::now() - now)
+             .count());
+}
+std::string res_string_loader::string_from_id_string(const std::string &str) {
+  auto pos = str.find('@');
+  if (pos == std::string::npos) {
+    return str;
+  }
+  auto id_str = str.substr(0, pos);
+  auto module_name = str.substr(pos + 1);
+
+  size_t id = std::stoull(id_str);
+  if (module_name == "0") {
+    return std::to_string(id);
+  }
+
+  res_string_identifier id_obj{id, std::hash<std::string>{}(module_name)};
+  std::lock_guard lock(lock_str_data);
+  auto it = str_data_rev.find(id_obj);
+  if (it != str_data_rev.end()) {
+    return wstring_to_utf8(it->second);
+  }
+  return "";
+}
+std::vector<std::string>
+res_string_loader::get_all_ids_of_string(const std::wstring &str) {
+  std::vector<std::string> ids;
+  std::lock_guard lock(lock_str_data);
+  for (const auto &[id, s] : str_data_rev) {
+    if (s == str) {
+      ids.push_back(std::to_string(id.id) + "@" + module_name_cache[id.module]);
+    }
+  }
+  return ids;
 }
 } // namespace mb_shell
