@@ -30,7 +30,7 @@ jobs:
 
     - name: Xmake configure
       run: |
-        xmake config --yes --toolchain=clang-cl --mode=releasedbg
+        xmake config -v --yes --toolchain=clang-cl --mode=releasedbg
 
     - name: build-releasedbg
       run: |
