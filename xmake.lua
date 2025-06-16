@@ -10,12 +10,27 @@ add_rules("mode.releasedbg")
 
 includes("dependencies/blook.lua")
 includes("dependencies/glfw.lua")
-includes("dependencies/reflect-cpp.lua")
 includes("dependencies/quickjs-ng.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3")
+
+add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
+    configs = {
+        ssl = true
+    }
+})
+
+add_requireconfs("**.cinatra", {
+    override = true,
+    version = "e329293f6705649a6f1e8847ec845a7631179bb8"
+})
+
+add_requireconfs("**.async_simple", {
+    override = true,
+    version = "18f3882be354d407af0f0674121dcddaeff36e26"
+})
 
 target("ui")
     set_kind("static")
@@ -40,7 +55,7 @@ target("ui_test")
 
 target("shell")
     set_kind("shared")
-    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace")
+    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs")
     add_deps("ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
