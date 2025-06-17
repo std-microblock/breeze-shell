@@ -41,10 +41,11 @@ struct config {
       float padding = 6;
       float text_padding = 8;
       float icon_padding = 4;
-      float right_icon_padding = 20;
+      float right_icon_padding = 10;
       float multibutton_line_gap = -6;
       float scrollbar_width = 6;
       float scrollbar_radius = 3;
+      float hotkey_padding = 4;
 
       std::string acrylic_color_light = "#fefefe00";
       std::string acrylic_color_dark = "#28282800";

@@ -46,6 +46,7 @@ struct menu_item_normal_widget : public menu_item_widget {
   float text_padding = config::current->context_menu.theme.text_padding;
   float margin = config::current->context_menu.theme.margin;
   bool has_icon_padding = false;
+  bool has_submenu_padding = false;
   float padding = config::current->context_menu.theme.padding;
   float icon_padding = config::current->context_menu.theme.icon_padding;
   float right_icon_padding =

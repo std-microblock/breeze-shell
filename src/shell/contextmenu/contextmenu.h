@@ -38,6 +38,7 @@ struct menu_item {
   std::optional<std::function<void(std::shared_ptr<menu_widget>)>> submenu;
   std::optional<size_t> icon_bitmap;
   std::optional<std::string> icon_svg;
+  std::optional<std::string> hotkey;
   bool icon_updated = false;
   bool disabled = false;
 
