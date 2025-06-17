@@ -49,6 +49,14 @@
             },
             version = "v0.8.3"
         },
+        ["ctre#5a639230"] = {
+            repo = {
+                branch = "master",
+                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v3.9.0"
+        },
         ["frozen#31fecfc4"] = {
             repo = {
                 branch = "master",
@@ -73,6 +81,14 @@
             },
             version = "1.0.8"
         },
+        ["jom#f26e00a1"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "1.1.4"
+        },
         ["nanosvg#31fecfc4"] = {
             repo = {
                 branch = "master",
@@ -88,6 +104,14 @@
                 url = "https://github.com/xmake-io/xmake-repo.git"
             },
             version = "2023.8.27"
+        },
+        ["nasm#f26e00a1"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2.16.03"
         },
         ["ninja#31fecfc4"] = {
             repo = {
@@ -105,6 +129,14 @@
             },
             version = "latest"
         },
+        ["openssl#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "1.1.1-w"
+        },
         ["python 3.x#31fecfc4"] = {
             repo = {
                 branch = "master",
@@ -116,6 +148,22 @@
         ["quickjs-ng#31fecfc4"] = {
             version = "v0.8.0"
         },
+        ["reflect-cpp#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v0.19.0"
+        },
+        ["strawberry-perl#f26e00a1"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "5.38.2"
+        },
         ["wintoast#31fecfc4"] = {
             repo = {
                 branch = "master",
@@ -124,13 +172,21 @@
             },
             version = "v1.3.1"
         },
-        ["yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27#31fecfc4"] = {
+        ["yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27#bcb8b196"] = {
             repo = {
                 branch = "master",
                 commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
                 url = "https://github.com/xmake-io/xmake-repo.git"
             },
             version = "b82a2192"
+        },
+        ["yyjson#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "0.11.1"
         }
     }
 }
