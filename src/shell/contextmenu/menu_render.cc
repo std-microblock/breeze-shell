@@ -22,10 +22,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
-    rt->no_focus = true;
+    rt->no_focus = false;
     rt->capture_all_input = true;
     rt->decorated = false;
-    rt->topmost = true;
+    // rt->topmost = true;
     rt->vsync = config::current->context_menu.vsync;
 
     if (config::current->avoid_resize_ui) {
@@ -91,12 +91,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
                std::chrono::duration_cast<std::chrono::milliseconds>(
                    rt->clock.now() - before_js)
                    .count());
-
-  rt->on_focus_changed = [](bool focused) {
-    if (!focused) {
-      rt->hide_as_close();
-    }
-  };
 
   dbgout("Current menu: {}", menu_render::current.has_value());
   return render;

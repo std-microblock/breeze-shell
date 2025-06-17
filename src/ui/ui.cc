@@ -5,7 +5,6 @@
 #include <print>
 #include <stacktrace>
 #include <thread>
-#include <winuser.h>
 #define GLFW_INCLUDE_GLEXT
 #include "GLFW/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -55,7 +54,6 @@ std::expected<bool, std::string> render_target::init() {
   root = std::make_shared<widget>();
 
   std::ignore = init_global();
-
   std::promise<void> p;
 
   render_target::post_main_thread_task([&]() {
@@ -168,6 +166,22 @@ std::expected<bool, std::string> render_target::init() {
     rt->scroll_y += yoffset;
   });
 
+  glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode,
+                                int action, int mods) {
+    auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
+    if (key >= 0 && key <= GLFW_KEY_LAST) {
+      auto lock = rt->key_states.get_back_lock();
+      auto& back = rt->key_states.get_back();
+      if (action == GLFW_PRESS) {
+        back[key] |= key_state::pressed;
+      } else if (action == GLFW_RELEASE) {
+        back[key] |= key_state::released;
+      } else if (action == GLFW_REPEAT) {
+        back[key] |= key_state::repeated;
+      }
+    }
+  });
+
   glfwGetWindowContentScale(window, &dpi_scale, nullptr);
   reset_view();
 
@@ -224,12 +238,13 @@ void render_target::render() {
   glViewport(0, 0, fb_width, fb_height);
 
   auto now = clock.now();
-  auto delta_t = 1000 * std::chrono::duration<float>(now - last_time).count();
+  auto delta_time =
+      1000 * std::chrono::duration<float>(now - last_time).count();
   last_time = now;
   if constexpr (true) {
     static float counter = 0, time_ctr = 0;
     counter++;
-    time_ctr += delta_t;
+    time_ctr += delta_time;
     if (time_ctr > 1000) {
       time_ctr = 0;
       std::printf("FPS: %f\n", counter);
@@ -238,7 +253,8 @@ void render_target::render() {
   }
 
   auto begin = clock.now();
-  auto ms_steady = duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+  auto ms_steady =
+      duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
   auto time_checkpoints = [&](const char *name) {
     if constexpr (false) {
       auto end = clock.now();
@@ -266,13 +282,14 @@ void render_target::render() {
   GetMonitorInfo(monitor, &monitor_info);
   bool need_repaint = false;
   update_context ctx{
-      .delta_t = delta_t,
+      .delta_time = delta_time,
       .mouse_x = mouse_x / dpi_scale,
       .mouse_y = mouse_y / dpi_scale,
       .mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS,
       .right_mouse_down =
           glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS,
+      .window = window,
       .screen =
           {
               .width =
@@ -297,11 +314,12 @@ void render_target::render() {
     time_checkpoints("Update context");
     {
       std::lock_guard lock(rt_lock);
+      root->owner_rt = this;
       root->update(ctx);
+      key_states.flip();
     }
     time_checkpoints("Update root");
-    if (need_repaint ||
-        (ms_steady - last_repaint) > 1000) {
+    if (need_repaint || (ms_steady - last_repaint) > 1000) {
       glClearColor(0, 0, 0, 0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
               GL_STENCIL_BUFFER_BIT);
@@ -313,7 +331,7 @@ void render_target::render() {
       vg.endFrame();
       glFlush();
       glfwSwapBuffers(window);
-      
+
     } else {
       if (vsync)
         Sleep(5);
@@ -358,6 +376,11 @@ void render_target::show() {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNORMAL);
   }
 
+  if (this->parent) {
+    SetWindowLongPtr(glfwGetWin32Window(window), GWLP_HWNDPARENT,
+                     (LONG_PTR)this->parent);
+  }
+
   if (topmost)
     SetWindowPos(glfwGetWin32Window(window), HWND_TOPMOST, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -366,6 +389,9 @@ void render_target::hide() { ShowWindow(glfwGetWin32Window(window), SW_HIDE); }
 void render_target::hide_as_close() {
   glfwMakeContextCurrent(nullptr);
   should_loop_stop_hide_as_close = true;
+  focused_widget = std::nullopt;
+  // reset owner widget
+  SetWindowLong(glfwGetWin32Window(window), GWLP_HWNDPARENT, 0);
 }
 void render_target::post_loop_thread_task(std::function<void()> task) {
   if (is_in_loop_thread) {

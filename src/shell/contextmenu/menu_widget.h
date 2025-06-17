@@ -90,7 +90,7 @@ enum class popup_direction {
   bottom_left,
   bottom_right,
 };
-
+struct menu_item_widget;
 struct menu_widget : public ui::widget_flex {
   using super = ui::widget_flex;
   float bg_padding_vertical = 6;
@@ -103,6 +103,7 @@ struct menu_widget : public ui::widget_flex {
 
   std::shared_ptr<ui::rect_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
+  std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
   std::vector<std::shared_ptr<widget>> item_widgets;
   menu_widget *parent_menu = nullptr;

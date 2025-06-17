@@ -31,7 +31,7 @@ struct animated_float {
 
   operator float() const { return var(); }
   float operator*() const { return var(); }
-  void update(float delta_t);
+  void update(float delta_time);
 
   void animate_to(float destination);
   void reset_to(float destination);

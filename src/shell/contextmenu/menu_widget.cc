@@ -1,6 +1,7 @@
 #include "menu_widget.h"
 #include "../config.h"
 #include "../utils.h"
+#include "GLFW/glfw3.h"
 #include "animator.h"
 #include "contextmenu.h"
 #include "hbitmap_utils.h"
@@ -18,15 +19,16 @@
 #include "../logger.h"
 /*
 | padding | icon_padding | icon | icon_padding | text_padding | text |
-text_padding | hotkey_padding | hotkey | hotkey_padding | right_icon_padding | right_icon | right_icon_padding |
+text_padding | hotkey_padding | hotkey | hotkey_padding | right_icon_padding |
+right_icon | right_icon_padding |
 */
 void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
   super::render(ctx);
-  
+
   auto icon_width = config::current->context_menu.theme.font_size + 2;
   auto has_icon = has_icon_padding || icon_img;
   auto c = menu_render::current.value()->light_color ? 0 : 1;
-  
+
   if (item.type == menu_item::type::spacer) {
     ctx.fillColor(nvgRGBAf(c, c, c, 0.1 * *opacity / 255.f));
     ctx.fillRect(x->dest(), *y, *width, *height);
@@ -39,6 +41,14 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
                                config::current->context_menu.theme.item_radius);
   ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
                       roundcorner);
+
+  // Draw focused border
+  if (focused()) {
+    ctx.strokeColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.5)); // Half opacity
+    ctx.strokeWidth(1.0f);
+    ctx.strokeRoundedRect(*x + margin, *y, *width - margin * 2, *height,
+                          roundcorner);
+  }
 
   // Draw left icon
   if (item.icon_bitmap.has_value() || item.icon_svg.has_value()) {
@@ -73,7 +83,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
 
   // Calculate right side positions
   auto right_x = *x + width->dest() - margin - padding;
-  
+
   // Draw right icon (submenu indicator)
   if (item.submenu) {
     if (!icon_unfold_img) {
@@ -81,22 +91,24 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
           R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
           c ? "white" : "black");
       auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
-      this->icon_unfold_img = ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
+      this->icon_unfold_img =
+          ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
     }
 
     auto paintY = floor(*y + (*height - icon_width) / 2);
-    auto paintX = right_x - right_icon_padding - icon_width;
+    auto paintX = right_x - icon_width;
     auto paint = ctx.imagePattern(paintX, paintY, icon_width, icon_width, 0,
                                   icon_unfold_img->id, *opacity / 255.f);
     ctx.beginPath();
     ctx.rect(paintX, paintY, icon_width, icon_width);
     ctx.fillPaint(paint);
     ctx.fill();
-    
-    right_x = paintX - right_icon_padding;
+
+    right_x = paintX;
   } else if (has_submenu_padding) {
-    // Reserve space for right icon alignment even if this item doesn't have submenu
-    right_x -= icon_width + right_icon_padding * 2;
+    // Reserve space for right icon alignment even if this item doesn't have
+    // submenu
+    right_x -= icon_width;
   }
 
   // Draw hotkey
@@ -104,17 +116,19 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.7)); // Slightly dimmed
     ctx.fontSize(font_size * 0.9); // Slightly smaller font
     ctx.textAlign(NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
-    
+
     auto hotkey_x = right_x - hotkey_padding;
-    ctx.text(round(hotkey_x), round(*y + *height / 2), item.hotkey->c_str(), nullptr);
+    ctx.text(round(hotkey_x), round(*y + *height / 2), item.hotkey->c_str(),
+             nullptr);
   }
 }
 
-float mb_shell::menu_item_normal_widget::measure_width(ui::update_context &ctx) {
+float mb_shell::menu_item_normal_widget::measure_width(
+    ui::update_context &ctx) {
   if (item.type == menu_item::type::spacer) {
     return 1;
   }
-  
+
   auto font_size = config::current->context_menu.theme.font_size;
   float width = 0;
 
@@ -134,12 +148,13 @@ float mb_shell::menu_item_normal_widget::measure_width(ui::update_context &ctx) 
   if (item.hotkey && !item.hotkey->empty()) {
     ctx.vg.fontSize(font_size * 0.9);
     auto hotkey_padding = config::current->context_menu.theme.hotkey_padding;
-    width += ctx.vg.measureText(item.hotkey->c_str()).first + hotkey_padding * 2;
+    width +=
+        ctx.vg.measureText(item.hotkey->c_str()).first + hotkey_padding * 2;
   }
 
   // Right icon space (always reserve if any item in menu has submenu)
   if (has_submenu_padding) {
-    width += font_size + 2 + right_icon_padding * 2;
+    width += font_size + 2 + right_icon_padding;
   }
 
   // Right padding
@@ -194,16 +209,20 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
   }
 
   if (item.submenu) {
+    float show_submenu_timer_before = show_submenu_timer;
     if (ctx.hovered(this)) {
-      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_t, 300.f);
+      show_submenu_timer = std::min(show_submenu_timer + ctx.delta_time, 300.f);
     } else if (ctx.within(parent).hovered(parent)) {
-      show_submenu_timer = std::max(show_submenu_timer - ctx.delta_t, 0.f);
+      show_submenu_timer = std::max(show_submenu_timer - ctx.delta_time, 0.f);
     }
 
-    if (show_submenu_timer >= 150.f) {
-      show_submenu(ctx);
-    } else {
-      hide_submenu();
+    // only act if changed
+    if (show_submenu_timer_before != show_submenu_timer) {
+      if (show_submenu_timer >= 150.f) {
+        show_submenu(ctx);
+      } else {
+        hide_submenu();
+      }
     }
   } else {
     hide_submenu();
@@ -344,6 +363,102 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 
   if (bg) {
     bg->update(ctx);
+  }
+
+  // process keyboard actions
+  // 1. check if focused
+  //    we should handle keyboard actions only if this menu is focused or
+  //    nothing is focused and we don't have any submenus
+  bool should_handle_keyboard =
+      owner_rt &&
+      (focused() ||
+       std::ranges::any_of(
+           item_widgets,
+           [](const auto &item) { return item->focus_within(); }) ||
+       (!owner_rt->focused_widget.has_value() && rendering_submenus.empty()));
+
+  if (should_handle_keyboard) {
+    auto move_key = [&](this auto &self, bool next) -> void {
+      auto focused_item = std::ranges::find_if(
+          item_widgets, [](const auto &item) { return item->focused(); });
+      if (focused_item != item_widgets.end()) {
+        if (next) {
+          focused_item++;
+          if (focused_item == item_widgets.end()) {
+            focused_item = item_widgets.begin();
+          }
+        } else {
+          if (focused_item == item_widgets.begin()) {
+            focused_item = item_widgets.end() - 1;
+          } else {
+            focused_item--;
+          }
+        }
+
+        (*focused_item)->set_focus(true);
+
+        if (auto wid =
+                (*focused_item)->template downcast<menu_item_normal_widget>()) {
+          if (wid->item.disabled ||
+              wid->item.type == mb_shell::menu_item::type::spacer) {
+            self(next);
+            return;
+          }
+        } else {
+          self(next);
+        }
+      } else {
+        if (!item_widgets.empty()) {
+          item_widgets.front()->set_focus(true);
+        }
+      }
+    };
+    if (ctx.key_pressed(GLFW_KEY_UP)) {
+      move_key(false);
+    } else if (ctx.key_pressed(GLFW_KEY_DOWN)) {
+      move_key(true);
+    } else if (ctx.key_pressed(GLFW_KEY_LEFT)) {
+      // close submenu on left key
+      if (parent_menu) {
+        parent_menu->current_submenu = nullptr;
+        close();
+      }
+
+      ctx.stop_key_propagation(GLFW_KEY_LEFT);
+
+      if (parent_item_widget) {
+        parent_item_widget->lock()->set_focus();
+      } else {
+        parent_menu->set_focus();
+      }
+    } else if (ctx.key_pressed(GLFW_KEY_RIGHT)) {
+      auto focused_item = std::ranges::find_if(
+          item_widgets, [](const auto &item) { return item->focused(); });
+      if (focused_item != item_widgets.end()) {
+        if (auto wid = (*focused_item)->downcast<menu_item_normal_widget>())
+          if (wid->item.submenu && !wid->submenu_wid) {
+            wid->show_submenu(ctx);
+            current_submenu->set_focus();
+          }
+      }
+    } else if (ctx.key_pressed(GLFW_KEY_ENTER) ||
+               ctx.key_pressed(GLFW_KEY_SPACE)) { // Enter or Space key
+      auto focused_item = std::ranges::find_if(
+          item_widgets, [](const auto &item) { return item->focused(); });
+      if (focused_item != item_widgets.end()) {
+        if (auto wid = (*focused_item)->downcast<menu_item_normal_widget>()) {
+          if (wid->item.action) {
+            try {
+              wid->item.action.value()();
+            } catch (std::exception &e) {
+              std::cerr << "Error in action: " << e.what() << std::endl;
+            }
+          } else if (wid->item.submenu) {
+            wid->show_submenu(ctx);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -881,9 +996,14 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
 
   submenu_wid->reset_animation(direction == popup_direction::top_left ||
                                direction == popup_direction::top_right);
+  submenu_wid->parent_item_widget = weak_from_this();
   auto parent_menu = parent->downcast<menu_widget>();
   if (!parent_menu)
     parent_menu = parent->parent->downcast<menu_widget>();
+  if (parent_menu->current_submenu) {
+    parent_menu->current_submenu->close();
+    parent_menu->current_submenu = nullptr;
+  }
   parent_menu->current_submenu = submenu_wid;
   parent_menu->rendering_submenus.push_back(submenu_wid);
   submenu_wid->parent_menu = parent_menu.get();

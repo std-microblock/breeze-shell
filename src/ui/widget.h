@@ -15,10 +15,11 @@ struct screen_info {
 };
 struct update_context {
   // time since last frame, in milliseconds
-  float delta_t;
+  float delta_time;
   // mouse position in window coordinates
   double mouse_x, mouse_y;
   bool mouse_down, right_mouse_down;
+  void* window;
   // only true for one frame
   bool mouse_clicked, right_mouse_clicked;
   bool mouse_up;
@@ -39,6 +40,9 @@ struct update_context {
 
   bool mouse_clicked_on_hit(widget *w, bool hittest = true);
   bool hovered_hit(widget *w, bool hittest = true);
+  bool key_pressed(int key) const;
+  void stop_key_propagation(int key);
+  bool key_down(int key) const;
 
   float offset_x = 0, offset_y = 0;
   render_target &rt;
@@ -137,6 +141,10 @@ struct widget : std::enable_shared_from_this<widget> {
 
   widget *parent = nullptr;
   render_target *owner_rt = nullptr;
+
+  bool focused();
+  bool focus_within();
+  void set_focus(bool focused = true);
 
   template <typename T> inline T *search_parent() {
     auto p = parent;

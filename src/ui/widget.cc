@@ -66,8 +66,9 @@ void ui::widget::render(nanovg_context ctx) {
 }
 void ui::widget::update(update_context &ctx) {
   children_dirty = false;
+  owner_rt = &ctx.rt;
   for (auto anim : anim_floats) {
-    anim->update(ctx.delta_t);
+    anim->update(ctx.delta_time);
 
     if (anim->updated()) {
       ctx.need_repaint = true;
@@ -79,7 +80,7 @@ void ui::widget::update(update_context &ctx) {
     this->needs_repaint = false;
   }
 
-  dying_time.update(ctx.delta_t);
+  dying_time.update(ctx.delta_time);
   update_context upd = ctx.with_offset(*x, *y);
   update_children(upd, children);
   if constexpr (false)
@@ -102,9 +103,9 @@ void ui::widget::add_child(std::shared_ptr<widget> child) {
 
 bool ui::update_context::hovered(widget *w, bool hittest) const {
   auto hit = w->check_hit(*this);
-  if (!hit) 
+  if (!hit)
     return false;
-  
+
   if (hittest) {
     if (!hovered_widgets->empty()) {
       // iterate through parent chain
@@ -279,4 +280,37 @@ void ui::update_context::print_hover_info(widget *w) const {
               mouse_x <= (w->x->dest() + w->width->dest() + offset_x),
               mouse_y >= (w->y->dest() + offset_y),
               mouse_y <= (w->y->dest() + w->height->dest() + offset_y));
+}
+bool ui::widget::focused() {
+  return owner_rt && !owner_rt->focused_widget->expired() &&
+         owner_rt->focused_widget->lock().get() == this;
+}
+bool ui::widget::focus_within() {
+  return focused() || std::ranges::any_of(children, [](const auto &child) {
+           return child->focus_within();
+         });
+}
+void ui::widget::set_focus(bool focused) {
+  if (owner_rt) {
+    if (focused) {
+      owner_rt->focused_widget = this->shared_from_this();
+    } else {
+      if (owner_rt->focused_widget &&
+          owner_rt->focused_widget->lock().get() == this) {
+        owner_rt->focused_widget.reset();
+      }
+    }
+  }
+}
+
+bool ui::update_context::key_pressed(int key) const {
+  return (bool)(rt.key_states.get()[key] & key_state::pressed);
+}
+bool ui::update_context::key_down(int key) const {
+  return glfwGetKey((GLFWwindow *)window, key) == GLFW_PRESS;
+}
+void ui::update_context::stop_key_propagation(int key) {
+  if (key >= 0 && key < GLFW_KEY_LAST + 1) {
+    rt.key_states.get()[key] = key_state::none;
+  }
 }
