@@ -1068,6 +1068,7 @@ std::shared_ptr<mb_shell::js::menu_controller>
 menu_controller::create_detached() {
   auto m = std::make_shared<menu_widget>();
   auto ctl = std::make_shared<menu_controller>(m);
+  ctl->$menu = m;
   ctl->$menu_detached = m; // to keep it alive
   m->parent = m.get();
 
