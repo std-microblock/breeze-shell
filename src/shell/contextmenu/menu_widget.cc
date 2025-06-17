@@ -113,10 +113,11 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
 
   // Draw hotkey
   if (item.hotkey && !item.hotkey->empty()) {
-    ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.7)); // Slightly dimmed
-    ctx.fontSize(font_size * 0.9); // Slightly smaller font
+    auto t = ctx.transaction();
+    ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.7));
+    ctx.fontSize(font_size * 0.9);
     ctx.textAlign(NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
-
+    ctx.fontFace("monospace");
     auto hotkey_x = right_x - hotkey_padding;
     ctx.text(round(hotkey_x), round(*y + *height / 2), item.hotkey->c_str(),
              nullptr);
@@ -146,8 +147,10 @@ float mb_shell::menu_item_normal_widget::measure_width(
 
   // Hotkey
   if (item.hotkey && !item.hotkey->empty()) {
+    auto t = ctx.vg.transaction();
     ctx.vg.fontSize(font_size * 0.9);
     auto hotkey_padding = config::current->context_menu.theme.hotkey_padding;
+    ctx.vg.fontFace("monospace");
     width +=
         ctx.vg.measureText(item.hotkey->c_str()).first + hotkey_padding * 2;
   }
@@ -378,18 +381,18 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
        (!owner_rt->focused_widget.has_value() && rendering_submenus.empty()));
 
   if (should_handle_keyboard) {
-    auto move_key = [&](this auto &self, bool next) -> void {
+    auto move_key = [&](this auto &self, bool next, auto &items) -> void {
       auto focused_item = std::ranges::find_if(
-          item_widgets, [](const auto &item) { return item->focused(); });
-      if (focused_item != item_widgets.end()) {
+          items, [](const auto &item) { return item->focused(); });
+      if (focused_item != items.end()) {
         if (next) {
           focused_item++;
-          if (focused_item == item_widgets.end()) {
-            focused_item = item_widgets.begin();
+          if (focused_item == items.end()) {
+            focused_item = items.begin();
           }
         } else {
-          if (focused_item == item_widgets.begin()) {
-            focused_item = item_widgets.end() - 1;
+          if (focused_item == items.begin()) {
+            focused_item = items.end() - 1;
           } else {
             focused_item--;
           }
@@ -401,22 +404,22 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                 (*focused_item)->template downcast<menu_item_normal_widget>()) {
           if (wid->item.disabled ||
               wid->item.type == mb_shell::menu_item::type::spacer) {
-            self(next);
+            self(next, items);
             return;
           }
         } else {
-          self(next);
+          self(next, items);
         }
       } else {
-        if (!item_widgets.empty()) {
-          item_widgets.front()->set_focus(true);
+        if (!items.empty()) {
+          items.front()->set_focus(true);
         }
       }
     };
     if (ctx.key_pressed(GLFW_KEY_UP)) {
-      move_key(false);
+      move_key(false, item_widgets);
     } else if (ctx.key_pressed(GLFW_KEY_DOWN)) {
-      move_key(true);
+      move_key(true, item_widgets);
     } else if (ctx.key_pressed(GLFW_KEY_LEFT)) {
       // close submenu on left key
       if (parent_menu) {
@@ -457,6 +460,103 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
             wid->show_submenu(ctx);
           }
         }
+      }
+    } else {
+      auto menus_matching_key =
+          item_widgets | std::views::filter([&](const auto &item) {
+            if (auto wid = item->template downcast<menu_item_normal_widget>()) {
+              if (!wid->item.hotkey)
+                return false;
+              auto hotkey = *wid->item.hotkey | std::views::split('+') |
+                            std::views::transform([](const auto &c) {
+                              auto s = std::string(c.begin(), c.end());
+                              // trim whitespace
+                              s.erase(s.find_last_not_of(" \t\n\r") + 1);
+                              s.erase(0, s.find_first_not_of(" \t\n\r"));
+                              return s;
+                            });
+
+              static auto translate_map = std::unordered_map<std::string, int>{
+                  {"ctrl", GLFW_KEY_LEFT_CONTROL},
+                  {"shift", GLFW_KEY_LEFT_SHIFT},
+                  {"alt", GLFW_KEY_LEFT_ALT},
+                  {"win", GLFW_KEY_LEFT_SUPER},
+                  {"a", GLFW_KEY_A},
+                  {"b", GLFW_KEY_B},
+                  {"c", GLFW_KEY_C},
+                  {"d", GLFW_KEY_D},
+                  {"e", GLFW_KEY_E},
+                  {"f", GLFW_KEY_F},
+                  {"g", GLFW_KEY_G},
+                  {"h", GLFW_KEY_H},
+                  {"i", GLFW_KEY_I},
+                  {"j", GLFW_KEY_J},
+                  {"k", GLFW_KEY_K},
+                  {"l", GLFW_KEY_L},
+                  {"m", GLFW_KEY_M},
+                  {"n", GLFW_KEY_N},
+                  {"o", GLFW_KEY_O},
+                  {"p", GLFW_KEY_P},
+                  {"q", GLFW_KEY_Q},
+                  {"r", GLFW_KEY_R},
+                  {"s", GLFW_KEY_S},
+                  {"t", GLFW_KEY_T},
+                  {"u", GLFW_KEY_U},
+                  {"v", GLFW_KEY_V},
+                  {"w", GLFW_KEY_W},
+                  {"x", GLFW_KEY_X},
+                  {"y", GLFW_KEY_Y},
+                  {"z", GLFW_KEY_Z},
+                  {"0", GLFW_KEY_0},
+                  {"1", GLFW_KEY_1},
+                  {"2", GLFW_KEY_2},
+                  {"3", GLFW_KEY_3},
+                  {"4", GLFW_KEY_4},
+                  {"5", GLFW_KEY_5},
+                  {"6", GLFW_KEY_6},
+                  {"7", GLFW_KEY_7},
+                  {"8", GLFW_KEY_8},
+                  {"9", GLFW_KEY_9},
+              };
+
+              auto key_combination = std::vector<int>();
+              for (const auto &key : hotkey) {
+                if (auto it = translate_map.find(
+                        std::string(key) | std::views::transform(::tolower) |
+                        std::ranges::to<std::string>());
+                    it != translate_map.end()) {
+                  key_combination.push_back(it->second);
+                } else {
+                  // If the key is not found, we can ignore it
+                  return false;
+                }
+              }
+
+              return std::ranges::all_of(key_combination, [&](int key) {
+                return ctx.key_pressed(key);
+              });
+            }
+            return false;
+          }) |
+          std::ranges::to<std::vector>();
+
+      if (menus_matching_key.size() == 1) {
+        auto wid = menus_matching_key.front()
+                       ->downcast<mb_shell::menu_item_normal_widget>();
+        if (wid && wid->item.action) {
+          try {
+            wid->item.action.value()();
+          } catch (std::exception &e) {
+            std::cerr << "Error in action: " << e.what() << std::endl;
+          }
+        } else if (wid && wid->item.submenu && !wid->submenu_wid) {
+          wid->show_submenu(ctx);
+          current_submenu->set_focus();
+        }
+      } else if (menus_matching_key.size() > 1) {
+        move_key(!ctx.key_pressed(GLFW_KEY_LEFT_SHIFT) &&
+                     !ctx.key_pressed(GLFW_KEY_RIGHT_SHIFT),
+                 menus_matching_key);
       }
     }
   }

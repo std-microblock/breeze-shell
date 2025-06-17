@@ -123,7 +123,9 @@ Breeze Shell 配置文件的 JSON Schema 位于
       "padding_vertical": 20,
       // 水平边距
       "padding_horizontal": 0
-    }
+    },
+    // 是否启用热键
+    "hotkeys" : true,
   },
 
   // 开启调试窗口

@@ -20,11 +20,11 @@
 #include <future>
 #include <iostream>
 #include <print>
+#include <ranges>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <variant>
-#include <winuser.h>
 
 namespace mb_shell {
 owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
@@ -112,6 +112,25 @@ std::wstring strip_extra_infos(std::wstring_view str) {
   return result;
 }
 
+std::vector<std::string> extract_hotkeys(const std::string &name) {
+  std::vector<std::string> keys;
+
+  size_t pos = 0;
+  while ((pos = name.find('&', pos)) != std::string::npos) {
+    if (pos + 1 < name.length()) {
+      char key = name[pos + 1];
+      if (key != '&') { // Skip escaped ampersands (&&)
+        keys.push_back(std::string(1, key));
+      }
+      pos += 2;
+    } else {
+      pos++;
+    }
+  }
+
+  return keys;
+}
+
 menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
   menu m;
 
@@ -177,6 +196,13 @@ menu menu::construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top) {
     } else {
       item.name = wstring_to_utf8(strip_extra_infos(buffer));
       item.origin_name = wstring_to_utf8(buffer);
+      if (config::current->context_menu.hotkeys) {
+        auto hotkeys = extract_hotkeys(item.origin_name.value());
+        if (!hotkeys.empty()) {
+          item.hotkey = std::ranges::views::join_with(hotkeys, " + ") |
+                        std::ranges::to<std::string>();
+        }
+      }
 
       auto id_stripped = res_string_loader::string_to_id(buffer);
       if (std::get_if<size_t>(&id_stripped)) {

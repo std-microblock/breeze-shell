@@ -42,7 +42,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
                   config::current->font_path_main.string().c_str());
     nvgCreateFont(rt->nvg, "fallback",
                   config::current->font_path_fallback.string().c_str());
+    nvgCreateFont(rt->nvg, "monospace",
+                  config::current->font_path_monospace.string().c_str());
     nvgAddFallbackFont(rt->nvg, "main", "fallback");
+    nvgAddFallbackFont(rt->nvg, "monospace", "main");
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
@@ -60,8 +63,8 @@ menu_render menu_render::create(int x, int y, menu menu) {
   // set the position of the window to fullscreen in this monitor + padding
 
   dbgout("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
-               monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
-               monitor_info.rcMonitor.bottom);
+         monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
+         monitor_info.rcMonitor.bottom);
 
   rt->set_position(monitor_info.rcMonitor.left, monitor_info.rcMonitor.top);
   if (!config::current->avoid_resize_ui)
@@ -88,9 +91,9 @@ menu_render menu_render::create(int x, int y, menu menu) {
     listener->operator()(menu_info);
   }
   dbgout("[perf] JS plugins costed {}ms",
-               std::chrono::duration_cast<std::chrono::milliseconds>(
-                   rt->clock.now() - before_js)
-                   .count());
+         std::chrono::duration_cast<std::chrono::milliseconds>(rt->clock.now() -
+                                                               before_js)
+             .count());
 
   dbgout("Current menu: {}", menu_render::current.has_value());
   return render;

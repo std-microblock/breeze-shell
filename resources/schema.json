@@ -59,6 +59,9 @@
                 },
                 "position": {
                     "$ref": "#/definitions/Position"
+                },
+                "hotkeys": {
+                    "type": "boolean"
                 }
             },
             "required": [],

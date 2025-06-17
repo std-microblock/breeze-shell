@@ -153,4 +153,7 @@ std::filesystem::path config::default_fallback_font() {
   return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
 }
 std::string config::dump_config() { return rfl::json::write(*config::current); }
+std::filesystem::path config::default_mono_font() {
+  return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "consola.ttf";
+}
 } // namespace mb_shell

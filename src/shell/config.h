@@ -16,6 +16,7 @@ namespace mb_shell {
 struct config {
   static std::filesystem::path default_main_font();
   static std::filesystem::path default_fallback_font();
+  static std::filesystem::path default_mono_font();
 
   struct animated_float_conf {
     float duration = _default_animation.duration;
@@ -89,6 +90,7 @@ struct config {
     bool ignore_owner_draw = true;
     bool reverse_if_open_to_up = true;
     bool experimental_ownerdraw_support = false;
+    bool hotkeys = true;
 
     // debug purpose only
     bool search_large_dwItemData_range = false;
@@ -102,6 +104,7 @@ struct config {
   // Restart to apply font/hook changes
   std::filesystem::path font_path_main = default_main_font();
   std::filesystem::path font_path_fallback = default_fallback_font();
+  std::filesystem::path font_path_monospace = default_mono_font();
   bool res_string_loader_use_hook = false;
   bool avoid_resize_ui = false;
   std::vector<std::string> plugin_load_order = {};
