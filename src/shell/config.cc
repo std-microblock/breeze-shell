@@ -83,7 +83,7 @@ void config::read_config() {
       config::current = std::make_unique<config>(json.value());
       std::cout << "Config reloaded." << std::endl;
     } else {
-      std::cerr << "Failed to read config file: " << json.error()->what()
+      std::cerr << "Failed to read config file: " << json.error().what()
                 << "\nUsing default config instead." << std::endl;
       config::current = std::make_unique<config>();
       config::current->debug_console = true;
