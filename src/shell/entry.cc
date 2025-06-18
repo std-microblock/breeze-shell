@@ -3,6 +3,7 @@
 #include "blook/blook.h"
 
 #include "config.h"
+#include "contextmenu/hooks.h"
 #include "entry.h"
 #include "error_handler.h"
 #include "res_string_loader.h"
@@ -59,9 +60,7 @@ void main() {
   config::run_config_loader();
 
   res_string_loader::init();
-  fix_win11_menu::install();
 
-  static std::atomic_bool has_active_menu = false;
   std::thread([]() {
     script_context ctx;
 
@@ -71,15 +70,10 @@ void main() {
     if (!std::filesystem::exists(script_dir))
       std::filesystem::create_directories(script_dir);
 
-    ctx.watch_folder(script_dir, [&]() { return !has_active_menu.load(); });
+    ctx.watch_folder(script_dir, [&]() {
+      return !context_menu_hooks::has_active_menu.load();
+    });
   }).detach();
-
-  auto proc = blook::Process::self();
-  auto win32u = proc->module("win32u.dll");
-  auto user32 = proc->module("user32.dll");
-
-  auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
-  static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
   std::set_terminate([]() {
     auto eptr = std::current_exception();
@@ -106,35 +100,20 @@ void main() {
     }
   }).detach();
 
-  NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x,
-                               int64_t y, HWND hWnd, int64_t lptpm) {
-    if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
-        config::current->context_menu.ignore_owner_draw) {
-      return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x, y,
-                                                       hWnd, lptpm);
-    }
-    
-    entry::main_window_loop_hook.install(hWnd);
+  wchar_t executable_path[MAX_PATH];
+  if (GetModuleFileNameW(NULL, executable_path, MAX_PATH) == 0) {
+    MessageBoxW(NULL, L"Failed to get executable path", L"Error", MB_ICONERROR);
+    return;
+  }
 
-    has_active_menu = true;
+  std::filesystem::path exe_path(executable_path);
 
-    perf_counter perf("TrackPopupMenuEx");
-    menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-    perf.end("construct_with_hmenu");
-    auto menu_render = menu_render::create(x, y, menu);
-    menu_render.rt->last_time = menu_render.rt->clock.now();
-    perf.end("menu_render::create");
-    menu_render.rt->start_loop();
-
-    has_active_menu = false;
-
-    if (menu_render.selected_menu && !(uFlags & TPM_NONOTIFY)) {
-      PostMessageW(hWnd, WM_COMMAND, *menu_render.selected_menu, 0);
-      PostMessageW(hWnd, WM_NULL, 0, 0);
-    }
-
-    return (int32_t)menu_render.selected_menu.value_or(0);
-  });
+  context_menu_hooks::install_common_hook();
+  if (exe_path.filename() == "OneCommander.exe") {
+    context_menu_hooks::install_SHCreateDefaultContextMenu_hook();
+  } else if (exe_path.filename() == "explorer.exe") {
+    fix_win11_menu::install();
+  }
 }
 } // namespace mb_shell
 
