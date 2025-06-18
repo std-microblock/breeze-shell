@@ -36,7 +36,8 @@ std::vector<DWORD> GetExplorerPIDs() {
     pe32.dwSize = sizeof(PROCESSENTRY32);
     if (Process32First(hSnapshot, &pe32)) {
       do {
-        if (strcmp(pe32.szExeFile, "explorer.exe") == 0) {
+        std::string exeFile(pe32.szExeFile);
+        if (exeFile == "explorer.exe" || exeFile == "OneCommander.exe") {
           pids.push_back(pe32.th32ProcessID);
         }
       } while (Process32Next(hSnapshot, &pe32));

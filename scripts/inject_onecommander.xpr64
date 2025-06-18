@@ -1,0 +1,20 @@
+<XenosConfig>
+	<imagePath>D:\breeze-shell\build\windows\x64\releasedbg\shell.dll</imagePath>
+	<manualMapFlags>0</manualMapFlags>
+	<procName>OneCommander.exe</procName>
+	<hijack>0</hijack>
+	<unlink>0</unlink>
+	<erasePE>0</erasePE>
+	<close>0</close>
+	<krnHandle>0</krnHandle>
+	<injIndef>0</injIndef>
+	<processMode>0</processMode>
+	<injectMode>0</injectMode>
+	<delay>0</delay>
+	<period>0</period>
+	<skip>0</skip>
+	<procCmdLine>C:/</procCmdLine>
+	<initRoutine/>
+	<initArgs/>
+</XenosConfig>
+

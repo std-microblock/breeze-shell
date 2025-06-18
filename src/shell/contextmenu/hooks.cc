@@ -1,12 +1,14 @@
 #include "./hooks.h"
 #include "../config.h"
+#include "../entry.h"
+#include "../script/quickjspp.hpp"
+#include "blook/memo.h"
 #include "contextmenu.h"
 #include "menu_render.h"
-#include "../script/quickjspp.hpp"
-#include "../entry.h"
 
 #include "blook/blook.h"
 #include <atlcomcli.h>
+#include <atomic>
 #include <shobjidl_core.h>
 #include <thread>
 
@@ -14,7 +16,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
 #include "shlobj_core.h"
-
 
 std::atomic_bool mb_shell::context_menu_hooks::has_active_menu = false;
 
@@ -43,20 +44,17 @@ void mb_shell::context_menu_hooks::install_common_hook() {
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     perf.end("construct_with_hmenu");
 
-    auto selected_menu_future = renderer
-        .add_task([&]() {
-          auto menu_render = menu_render::create(x, y, menu);
-          menu_render.rt->last_time = menu_render.rt->clock.now();
+    auto selected_menu_future = renderer.add_task([&]() {
+      auto menu_render = menu_render::create(x, y, menu);
+      menu_render.rt->last_time = menu_render.rt->clock.now();
 
-          perf.end("menu_render::create");
-          menu_render.rt->start_loop();
+      perf.end("menu_render::create");
+      menu_render.rt->start_loop();
 
-          return menu_render.selected_menu;
-        });
-
-    qjs::wait_with_msgloop([&]() {
-        selected_menu_future.wait();
+      return menu_render.selected_menu;
     });
+
+    qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 
     auto selected_menu = selected_menu_future.get();
 
@@ -110,6 +108,55 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
   auto SHELL32_SHCreateDefaultContextMenu =
       shell32.value()->exports("SHELL32_SHCreateDefaultContextMenu");
 
+  static std::atomic_bool close_next_create_window_exw_window = false;
+
+  auto user32 = proc->module("user32.dll");
+  auto CreateWindowExWFunc = user32.value()->exports("CreateWindowExW");
+  if (!CreateWindowExWFunc) {
+    std::cerr << "Failed to find CreateWindowExW in user32.dll" << std::endl;
+  }
+  static auto CreateWindowExWHook = CreateWindowExWFunc->inline_hook();
+  CreateWindowExWHook->install(+[](DWORD dwExStyle, LPCWSTR lpClassName,
+                                   LPCWSTR lpWindowName, DWORD dwStyle, int X,
+                                   int Y, int nWidth, int nHeight,
+                                   HWND hWndParent, HMENU hMenu,
+                                   HINSTANCE hInstance,
+                                   LPVOID lpParam) -> HWND {
+    std::wstring class_name = [&]{
+        if (!lpClassName) {
+            return std::wstring(L"");
+        }
+        if (blook::Pointer((void*)lpClassName).try_read<int>()) {
+            return std::wstring(lpClassName);
+        } else {
+            // read as registered class
+            wchar_t class_name_buffer[256];
+            if (GetClassNameW((HWND)lpClassName, class_name_buffer, 256) > 0) {
+                return std::wstring(class_name_buffer);
+            } else {
+                return std::wstring(L"");
+            }
+        }
+    }();
+
+    bool should_close =
+        close_next_create_window_exw_window &&
+        class_name.starts_with(L"HwndWrapper[OneCommander.exe");
+
+    if (should_close) {
+      dwStyle &= ~WS_VISIBLE;
+    }
+
+    auto res = CreateWindowExWHook->call_trampoline<HWND>(
+        dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight,
+        hWndParent, hMenu, hInstance, lpParam);
+    if (res && should_close) {
+      close_next_create_window_exw_window = false;
+      PostMessageW(res, WM_CLOSE, 0, 0);
+    }
+    return res;
+  });
+
   /**
    prototype: SHSTDAPI SHCreateDefaultContextMenu(
     [in]  const DEFCONTEXTMENU *pdcm,
@@ -123,12 +170,11 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
       SHELL32_SHCreateDefaultContextMenu->inline_hook();
   SHCreateDefaultContextMenuHook->install(+[](DEFCONTEXTMENU *def, REFIID riid,
                                               void **ppv) -> HRESULT {
-    IContextMenu *pdcm = NULL;
     SHCreateDefaultContextMenuHook->uninstall();
-    auto res =
-        SHCreateDefaultContextMenu(def, riid, reinterpret_cast<void **>(&pdcm));
+    auto res = SHCreateDefaultContextMenu(def, riid, ppv);
     SHCreateDefaultContextMenuHook->install();
 
+    IContextMenu *pdcm = (IContextMenu *)*ppv;
     if (SUCCEEDED(res) && pdcm) {
       IContextMenu2 *pcm2 = NULL;
 
@@ -158,8 +204,10 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
 
         pCM->InvokeCommand((LPCMINVOKECOMMANDINFO)&ici);
       }
+
+      close_next_create_window_exw_window = true;
     }
 
-    return S_FALSE;
+    return res;
   });
 }
