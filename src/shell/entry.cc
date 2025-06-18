@@ -108,11 +108,11 @@ void main() {
 
   std::filesystem::path exe_path(executable_path);
 
+  fix_win11_menu::install();
+  
   context_menu_hooks::install_common_hook();
   if (exe_path.filename() == "OneCommander.exe") {
     context_menu_hooks::install_SHCreateDefaultContextMenu_hook();
-  } else if (exe_path.filename() == "explorer.exe") {
-    fix_win11_menu::install();
   }
 }
 } // namespace mb_shell
