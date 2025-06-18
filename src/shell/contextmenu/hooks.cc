@@ -153,6 +153,7 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
     if (res && should_close) {
       close_next_create_window_exw_window = false;
       PostMessageW(res, WM_CLOSE, 0, 0);
+      CloseWindow(res);
     }
     return res;
   });
