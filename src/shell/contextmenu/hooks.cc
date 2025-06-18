@@ -2,15 +2,19 @@
 #include "../config.h"
 #include "contextmenu.h"
 #include "menu_render.h"
+#include "../script/quickjspp.hpp"
+#include "../entry.h"
 
 #include "blook/blook.h"
 #include <atlcomcli.h>
 #include <shobjidl_core.h>
+#include <thread>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
 #include "shlobj_core.h"
+
 
 std::atomic_bool mb_shell::context_menu_hooks::has_active_menu = false;
 
@@ -22,6 +26,8 @@ void mb_shell::context_menu_hooks::install_common_hook() {
   auto NtUserTrackPopupMenu = win32u.value()->exports("NtUserTrackPopupMenuEx");
   static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
+  static auto renderer = task_queue{};
+
   NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x,
                                int64_t y, HWND hWnd, int64_t lptpm) {
     if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
@@ -30,24 +36,38 @@ void mb_shell::context_menu_hooks::install_common_hook() {
                                                        hWnd, lptpm);
     }
 
+    entry::main_window_loop_hook.install(hWnd);
     has_active_menu = true;
 
     perf_counter perf("TrackPopupMenuEx");
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     perf.end("construct_with_hmenu");
-    auto menu_render = menu_render::create(x, y, menu);
-    menu_render.rt->last_time = menu_render.rt->clock.now();
-    perf.end("menu_render::create");
-    menu_render.rt->start_loop();
+
+    auto selected_menu_future = renderer
+        .add_task([&]() {
+          auto menu_render = menu_render::create(x, y, menu);
+          menu_render.rt->last_time = menu_render.rt->clock.now();
+
+          perf.end("menu_render::create");
+          menu_render.rt->start_loop();
+
+          return menu_render.selected_menu;
+        });
+
+    qjs::wait_with_msgloop([&]() {
+        selected_menu_future.wait();
+    });
+
+    auto selected_menu = selected_menu_future.get();
 
     has_active_menu = false;
 
-    if (menu_render.selected_menu && !(uFlags & TPM_NONOTIFY)) {
-      PostMessageW(hWnd, WM_COMMAND, *menu_render.selected_menu, 0);
+    if (selected_menu && !(uFlags & TPM_NONOTIFY)) {
+      PostMessageW(hWnd, WM_COMMAND, *selected_menu, 0);
       PostMessageW(hWnd, WM_NULL, 0, 0);
     }
 
-    return (int32_t)menu_render.selected_menu.value_or(0);
+    return (int32_t)selected_menu.value_or(0);
   });
 }
 
@@ -115,7 +135,7 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
       int pcmType = 0;
       UpgradeContextMenu(pdcm, reinterpret_cast<void **>(&pcm2), &pcmType);
 
-      IContextMenu* pCM(pcm2);
+      IContextMenu *pCM(pcm2);
 
       HMENU hmenu = CreatePopupMenu();
       pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF, CMF_EXPLORE | CMF_CANRENAME);

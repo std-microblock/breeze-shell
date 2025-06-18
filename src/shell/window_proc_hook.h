@@ -17,6 +17,7 @@ namespace mb_shell {
 
         void send_null();
         auto add_task(auto&& f) -> std::future<std::invoke_result_t<decltype(f)>> {
+            if (!installed) throw std::runtime_error("Hook not installed");
             using return_type = std::invoke_result_t<decltype(f)>;
             auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<decltype(f)>(f));
             std::future<return_type> res = task->get_future();

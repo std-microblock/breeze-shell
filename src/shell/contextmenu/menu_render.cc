@@ -2,12 +2,12 @@
 #include "Windows.h"
 #include "menu_widget.h"
 
+#include "../entry.h"
+#include "../logger.h"
 #include "../script/binding_types.hpp"
 #include "ui.h"
 #include <mutex>
 #include <thread>
-
-#include "../logger.h"
 
 namespace mb_shell {
 std::optional<menu_render *> menu_render::current{};
@@ -49,8 +49,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);
-  auto current_js_context = std::make_shared<js::js_menu_context>(
-      js::js_menu_context::$from_window(menu.parent_window));
 
   rt->parent = menu.parent_window;
 
@@ -81,6 +79,14 @@ menu_render menu_render::create(int x, int y, menu menu) {
       // convert the x and y to the window coordinates
       x - monitor_info.rcMonitor.left, y - monitor_info.rcMonitor.top);
   rt->root->children.push_back(menu_wid);
+  auto current_js_context =
+      entry::main_window_loop_hook
+          .add_task([&]() {
+            return std::make_shared<js::js_menu_context>(
+                js::js_menu_context::$from_window(menu.parent_window));
+          })
+          .get();
+          
   js::menu_info_basic_js menu_info{
       .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
       .context = current_js_context};

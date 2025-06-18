@@ -2,6 +2,7 @@
 #include "../utils.h"
 #include "contextmenu.h"
 #include "ui.h"
+#include <memory>
 #include <optional>
 
 namespace mb_shell {
