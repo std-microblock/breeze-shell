@@ -82,6 +82,7 @@ std::vector<std::tuple<HWND, CComPtr<IShellBrowser>>> GetIShellBrowsers() {
   CComPtr<IShellWindows> spShellWindows;
   spShellWindows.CoCreateInstance(CLSID_ShellWindows);
 
+  if (!spShellWindows) return {};
   CComVariant vtLoc(CSIDL_DESKTOP);
   CComVariant vtEmpty;
 
