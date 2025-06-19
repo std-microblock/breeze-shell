@@ -401,4 +401,11 @@ void render_target::post_loop_thread_task(std::function<void()> task) {
   std::lock_guard lock(loop_thread_tasks_lock);
   loop_thread_tasks.push(std::move(task));
 }
+void render_target::focus() {
+  if (this->window) {
+    glfwFocusWindow(this->window);
+    SetActiveWindow(glfwGetWin32Window(this->window));
+    SetFocus(glfwGetWin32Window(this->window));
+  }
+}
 } // namespace ui

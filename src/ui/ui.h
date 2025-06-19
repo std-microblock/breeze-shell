@@ -120,6 +120,7 @@ struct render_target {
   void close();
   void hide();
   void show();
+  void focus();
   void hide_as_close();
   bool should_loop_stop_hide_as_close = false;
   std::optional<std::function<void(bool)>> on_focus_changed;

@@ -1,4 +1,6 @@
 #include "menu_render.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "GLFW/glfw3native.h"
 #include "Windows.h"
 #include "menu_widget.h"
 
@@ -18,14 +20,14 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return {nullptr, std::nullopt};
   }
 
-  constexpr int l_pad = 100, t_pad = -1;
+  constexpr int l_pad = -1, t_pad = -1;
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
     rt->no_focus = false;
     rt->capture_all_input = true;
     rt->decorated = false;
-    // rt->topmost = true;
+    rt->topmost = true;
     rt->vsync = config::current->context_menu.vsync;
 
     if (config::current->avoid_resize_ui) {
@@ -74,6 +76,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
 
   rt->show();
+  rt->focus();
   auto menu_wid = std::make_shared<mouse_menu_widget_main>(
       menu,
       // convert the x and y to the window coordinates
