@@ -105,6 +105,8 @@ auto GetDesktopIShellBrowser() {
   auto spShellWindows = CComPtr<IShellWindows>();
   spShellWindows.CoCreateInstance(CLSID_ShellWindows);
 
+  if (!spShellWindows)
+    return std::optional<std::pair<HWND, CComPtr<IShellBrowser>>>();
   CComVariant vtLoc(CSIDL_DESKTOP);
   CComVariant vtEmpty;
 
