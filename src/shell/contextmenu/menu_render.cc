@@ -20,7 +20,6 @@ menu_render menu_render::create(int x, int y, menu menu) {
     return {nullptr, std::nullopt};
   }
 
-  constexpr int l_pad = -1, t_pad = -1;
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
@@ -66,11 +65,11 @@ menu_render menu_render::create(int x, int y, menu menu) {
          monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
          monitor_info.rcMonitor.bottom);
 
-  rt->set_position(monitor_info.rcMonitor.left, monitor_info.rcMonitor.top);
+  rt->set_position(monitor_info.rcMonitor.left + 1, monitor_info.rcMonitor.top + 1);
   if (!config::current->avoid_resize_ui)
     rt->resize(
-        monitor_info.rcMonitor.right - monitor_info.rcMonitor.left + l_pad,
-        monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top + t_pad);
+        monitor_info.rcMonitor.right - monitor_info.rcMonitor.left - 2,
+        monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top - 2);
 
   glfwMakeContextCurrent(rt->window);
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
