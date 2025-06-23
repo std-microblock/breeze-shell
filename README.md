@@ -17,7 +17,7 @@
 <h1>Breeze Shell</h1>
 <h5>Bring fluency & delication back to Windows</h5>
 <div>
-  <img widtb=500 src=./resources/preview1.webp />
+  <img width=500 src=./resources/preview1.webp />
 </div>
 </div>
 
