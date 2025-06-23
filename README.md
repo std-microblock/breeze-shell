@@ -69,8 +69,8 @@ interface in ~2MiB.
 # Try it out!
 
 Download and extract the zip, and Run `breeze.exe`.
-<div>
-  <img widtb=500 src=./resources/preview1.webp />
+<div align = center>
+  <img width=500 src=./resources/preview1.webp />
 </div>
 
 # Building
