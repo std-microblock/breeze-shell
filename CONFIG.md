@@ -1,5 +1,4 @@
 # Configuration File Format Description
-#**FOR CHINESE CONFIG **
 
 This project's configuration file adopts the JSON format, and it is recommended to use **VSCode** for editing.
 
