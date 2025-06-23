@@ -11,6 +11,15 @@
 [![Donate](https://img.shields.io/badge/Donate%20Me-❤️-red?style=flat&logo=paypal&color=007BFF)](https://github.com/std-microblock/breeze-shell/blob/master/DONATE.md)
 [Discord](https://discord.gg/MgpHk8pa3d)  
 
+[![Discord](https://img.shields.io/badge/Discord-5A6CEA?style=flat&logo=discord&logoColor=white)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/Chat%20on%20Discord-4051B5?style=for-the-badge&logo=discord&color=5865F2)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/Discord%20Server-%E2%9D%A4%EF%B8%8F-pink?style=flat-square&logo=discord)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/Join_Discord-7289DA?style=plastic&logo=discord)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Discord-7289DA?style=flat&logo=discord)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/%20%20%F0%9D%94%8A%20Join%20Discord%20%F0%9D%94%8A-%20%20%F0%9D%94%8A-5865F2?style=plastic&logo=discord)](https://discord.gg/your-invite)
+
+
+
 <div align=center>
   <img src=./resources/icon.webp width=300 />
 <h1>Breeze Shell</h1>
