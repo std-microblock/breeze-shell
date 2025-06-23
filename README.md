@@ -7,9 +7,7 @@
 > Issue (You can use Chinese or English)\
 > 对于中国人来说, [中文](./README_zh.md) \
 
-[![Donate](https://img.shields.io/badge/Donate-you_like-blue)](https://example.com)
-<button type="button">Donate Me</button>
-(./DONATE.md)\
+[![Donate](https://img.shields.io/badge/Donate-Me-green?style=flat&logo=paypal&color=5E72E4)](https://paypal.me/YourUsername)
 [Discord](https://discord.gg/MgpHk8pa3d)  
 
 <div align=center>
