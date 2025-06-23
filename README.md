@@ -6,7 +6,9 @@
 > Both English and Chinese issues are accepted.
 > Issue (You can use Chinese or English)
 
-[中文](./README_zh.md) [Donate Me](./DONATE.md) [Discord](https://discord.gg/MgpHk8pa3d)
+[中文](./README_zh.md) 
+[Donate Me](./DONATE.md) 
+[Discord](https://discord.gg/MgpHk8pa3d)
 
 <div align=center>
   <img src=./resources/icon.webp width=300 />
