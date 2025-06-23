@@ -1,4 +1,4 @@
-# Configuration File Format Description [FOR CHINESE CONFIG](URL "https://github.com/myst-25/breeze-shell/blob/master/CONFIG_zh.md")
+# Configuration File Format Description [FOR CHINESE CONFIG](URL ".\CONFIG_zh.md")
 
 This project's configuration file adopts the JSON format, and it is recommended to use **VSCode** for editing.
 
