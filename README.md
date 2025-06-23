@@ -7,7 +7,7 @@
 > Issue (You can use Chinese or English)\
 > 对于中国人来说, [中文](./README_zh.md) \
 
-<button type="button">[Donate Me]</button>
+<button type="button">Donate Me</button>
 (./DONATE.md)\
 [Discord](https://discord.gg/MgpHk8pa3d)  
 
