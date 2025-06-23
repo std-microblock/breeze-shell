@@ -9,8 +9,7 @@
 
 
 [![Donate](https://img.shields.io/badge/Donate%20Me-❤️-red?style=flat&logo=paypal&color=007BFF)](https://github.com/std-microblock/breeze-shell/blob/master/DONATE.md)
-[Discord](https://discord.gg/MgpHk8pa3d)  
-[![Discord](https://img.shields.io/badge/Join_Discord-7289DA?style=plastic&logo=discord)](https://discord.gg/your-invite)
+[![Discord](https://img.shields.io/badge/Join_Discord-7289DA?style=plastic&logo=discord)](https://discord.gg/MgpHk8pa3d)
 
 
 <div align=center>
