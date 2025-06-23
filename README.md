@@ -8,6 +8,11 @@
 > 对于中国人来说, [中文](./README_zh.md) \
 
 [![Donate](https://img.shields.io/badge/Donate-Me-green?style=flat&logo=paypal&color=5E72E4)](https://paypal.me/YourUsername)
+[![Donate](https://img.shields.io/badge/Donate%20Me-❤️-red?style=flat&logo=paypal&color=007BFF)](https://paypal.me/YourUsername)
+[![Donate](https://img.shields.io/badge/Support%20Me-%E2%9D%A4%EF%B8%8F-FB3E97?style=flat&logo=patreon)](https://buymeacoffee.com/YourUsername)
+[![Donate](https://img.shields.io/badge/%20%20%F0%9D%94%8A%20Donate%20Me%20%F0%9D%94%8A-%20%20%F0%9D%94%8A-pink?style=plastic&logo=ko-fi)](https://ko-fi.com/yourusername)
+[![Donate](https://img.shields.io/badge/PayPal-Donate-informational?style=flat-square&logo=paypal)](https://paypal.me/YourUsername)
+[![Donate](https://img.shields.io/badge/Donate%20Me-%E2%9D%A4%EF%B8%8F-red?style=for-the-badge&logo=buy-me-a-coffee&color=2D2D2D)](https://buymeacoffee.com/YourUsername)
 [Discord](https://discord.gg/MgpHk8pa3d)  
 
 <div align=center>
