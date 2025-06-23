@@ -1,10 +1,10 @@
 > [!WARNING]
 > This project is still in active development. File a bug report if you meet
 > any!\
-> 此项目仍在开发阶段，如果遇到问题请发送 Issue
+> This project is still under development. If you encounter any problems, please send an Issue
 >
 > Both English and Chinese issues are accepted.
-> Issue 中使用中文或英文均可
+> Issue (You can use Chinese or English)
 
 [中文](./README_zh.md) [Donate Me](./DONATE.md) [Discord](https://discord.gg/MgpHk8pa3d)
 
