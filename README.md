@@ -70,7 +70,8 @@ interface in ~2MiB.
 
 Download and extract the zip, and Run `breeze.exe`.
 
-![image](https://github.com/user-attachments/assets/e9ab080d-26a2-4d71-b139-31062d79101c)  
+![image](https://github.com/user-attachments/assets/0446eca8-3f42-46d0-85cf-bd07c349c18f)
+
 
 
 # Building
