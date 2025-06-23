@@ -8,8 +8,7 @@
 > 对于中国人来说, [中文](./README_zh.md) \
 
 
-[中文](./README_zh.md) 
-[Donate Me](./DONATE.md) 
+[Donate Me](./DONATE.md)\
 [Discord](https://discord.gg/MgpHk8pa3d)
 
 <div align=center>
