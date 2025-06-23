@@ -70,7 +70,7 @@ interface in ~2MiB.
 
 Download and extract the zip, and Run `breeze.exe`.
 <div align = center>
-  <img width=500 src=./resources/preview1.webp />
+  <img width=500 src=./resources/breeze-interface />
 </div>
 
 # Building
