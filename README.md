@@ -69,10 +69,9 @@ interface in ~2MiB.
 # Try it out!
 
 Download and extract the zip, and Run `breeze.exe`.
-
-![image](https://github.com/user-attachments/assets/0446eca8-3f42-46d0-85cf-bd07c349c18f)
-
-
+<div>
+  <img widtb=500 src=./resources/preview1.webp />
+</div>
 
 # Building
 
