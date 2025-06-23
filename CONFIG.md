@@ -1,17 +1,20 @@
-# 配置文件格式说明
+# Configuration File Format Description
 
-本项目的配置文件采用 JSON 格式，推荐使用 VSCode 进行编辑。
+This project's configuration file adopts the JSON format, and it is recommended to use **VSCode** for editing.
 
-本项目配置文件默认位于 `%USERPROFILE%/.breeze-shell/config.json`。
+The default location of the configuration file is:  
+`%USERPROFILE%/.breeze-shell/config.json`.  
 
-编辑配置文件并保存后，插件将会自动重载配置，无需重新启动。
+When the configuration file is saved, the plugin will automatically reload the configuration without requiring a restart.
 
-**如果保存后弹出了黑窗口，这大概是因为你的配置文件有错误，请阅读黑窗口内的报错信息并修复错误**
+**If a black window appears after saving, it indicates an error in the configuration file. Please read the error message in the black window and fix the issue accordingly.**
+
+---
 
 ## Schema
 
-Breeze Shell 配置文件的 JSON Schema 位于
-[resources/schema.json](./resources/schema.json)，在配置文件内写入
+The JSON Schema for the Breeze Shell configuration file is located at  
+[resources/schema.json](./resources/schema.json). To enable type checking and autocompletion in VSCode, add the following line to your configuration file:
 
 ```json
 {
@@ -19,74 +22,75 @@ Breeze Shell 配置文件的 JSON Schema 位于
 }
 ```
 
-即可在 VSCode 中看到配置文件类型检查及补全。
+This allows VSCode to provide real-time validation and suggestions .
 
-## 配置文件结构
+---
 
-以下为一份带有注释的完整默认 JSON 配置，注意其**不能**直接填入 config.json
-当中，因为配置文件解析当前不支持注释
+## Configuration File Structure
+
+The following is a fully annotated default JSON configuration. Note that this **cannot** be directly copied into `config.json` as JSON does not support comments.
 
 ```json5
 {
   "context_menu": {
     "theme": {
-      // 在 Windows 11 下使用 DWM 圆角而不是 SetWindowRgn 圆角
+      // Use DWM-rounded corners instead of SetWindowRgn rounded corners on Windows 11
       "use_dwm_if_available": true,
-      // 启用亚克力背景效果
+      // Enable acrylic background effect
       "acrylic": true,
-      // 圆角大小，仅在不使用 DWM 圆角时生效
+      // Corner radius (only effective when DWM-rounded corners are not used)
       "radius": 6.0,
-      // 字体大小，可调整此项以对齐缩放后的整数倍率字体大小以避免模糊
+      // Font size (adjust to align with scaled integer font sizes to avoid blurring)
       "font_size": 14.0,
-      // 项高度
+      // Item height
       "item_height": 23.0,
-      // 项间距
+      // Item spacing
       "item_gap": 3.0,
-      // 项圆角大小
+      // Item corner radius
       "item_radius": 5.0,
-      // 外边距
+      // Margin
       "margin": 5.0,
-      // 内边距
+      // Padding
       "padding": 6.0,
-      // 文笔内边距
+      // Text padding
       "text_padding": 8.0,
-      // 图标内边距
+      // Icon padding
       "icon_padding": 4.0,
-      // 右侧图标（展开图标）边距
+      // Right icon (expand icon) padding
       "right_icon_padding": 20.0,
-      // 横排按钮间距（此处为负值以抵消项边距的效果）
+      // Horizontal button spacing (negative value to offset item spacing)
       "multibutton_line_gap": -6.0,
-      // 在亮色主题下的亚克力背景颜色
+      // Acrylic background color in light themes
       "acrylic_color_light": "#fefefe00",
-      // 在暗色主题下的亚克力背景颜色
+      // Acrylic background color in dark themes
       "acrylic_color_dark": "#28282800",
-      // 背景透明度
-      "background_opacity":1.0,
-      // 动画相关
+      // Background opacity
+      "background_opacity": 1.0,
+      // Animation settings
       "animation": {
-        // 菜单项动画
+        // Menu item animations
         "item": {
-          // animated_float_conf: 通用动画配置
+          // animated_float_conf: General animation configuration
           "opacity": {
-            // 持续时长
+            // Duration in milliseconds
             "duration": 200.0,
-            // 动画曲线
-            // 可为：
-            // mutation (关闭动画)
-            // linear (线性)
-            // ease_in, ease_out, ease_in_out (三种缓动曲线)
+            // Animation curve
+            // Options: 
+            // mutation (disable animation), 
+            // linear (linear), 
+            // ease_in, ease_out, ease_in_out (easing curves)
             "easing": "ease_in_out",
-            // 对延迟时间的缩放
-            // 即：如果本来是在开始总动画 50ms 后显示该动画，
-            //     若 delay_scale 为 2 则在 100ms 后才显示
+            // Delay scaling factor
+            // Example: If the original delay is 50ms, 
+            // a delay_scale of 2 results in a 100ms delay
             "delay_scale": 1.0
           },
-          // 同 opacity，以下均省略
+          // Same structure as opacity for x, y, width
           "x": animated_float_conf,
           "y": animated_float_conf,
           "width": animated_float_conf
         },
-        // 主菜单的背景
+        // Main menu background animation
         "main_bg": {
           "opacity": animated_float_conf,
           "x": animated_float_conf,
@@ -94,63 +98,65 @@ Breeze Shell 配置文件的 JSON Schema 位于
           "w": animated_float_conf,
           "h": animated_float_conf
         },
-        // 子菜单的背景，同主菜单
+        // Submenu background animation (same as main menu)
         "submenu_bg": {
           ...
         }
       },
-      // 使用自绘边框、阴影（需关闭 dwm 边框）
+      // Use custom-drawn border/shadow (disable DWM border)
       "use_self_drawn_border": true,
-      // 自定义边框示例配置
+      // Custom border width example
       "border_width": 2.5,
-      // 支持渐变 [linear-gradient(angle, color1, color2) / radial-gradient(radius, color1, color2)]
+      // Gradient support: [linear-gradient(angle, color1, color2) / radial-gradient(radius, color1, color2)]
       "border_color_dark": "linear-gradient(30, #DE73DF, #E5C07B)",
       "shadow_size": 20,
       "shadow_color_dark_from": "#ff000033",
       "shadow_color_dark_to": "#00ff0000"
     },
-    // 启用垂直同步
+    // Enable vertical sync
     "vsync": true,
-    // 不替换 owner draw 的菜单
+    // Do not replace owner-drawn menus
     "ignore_owner_draw": true,
-    // 在向上展开时将所有项反向
+    // Reverse all items when expanding upward
     "reverse_if_open_to_up": true,
-    // 调试选项，搜索更大范围的图标，不建议打开
+    // Debug option: search a larger range for icons (not recommended)
     "search_large_dwItemData_range": false,
-    // 定位相关
+    // Positioning settings
     "position": {
-      // 竖直边距
+      // Vertical padding
       "padding_vertical": 20,
-      // 水平边距
+      // Horizontal padding
       "padding_horizontal": 0
     },
-    // 是否启用热键
-    "hotkeys" : true,
+    // Enable hotkeys
+    "hotkeys": true
   },
 
-  // 开启调试窗口
+  // Enable debug console
   "debug_console": false,
 
-  // 主字体
+  // Primary font path
   "font_path_main": "C:\\WINDOWS\\Fonts\\segoeui.ttf",
-  // 副字体
+  // Fallback font path
   "font_path_fallback": "C:\\WINDOWS\\Fonts\\msyh.ttc",
-  // 使用 hook 方式加载更多 resid
+  // Use hook to load additional resource strings
   "res_string_loader_use_hook": false,
-  // 调试选项，避免更改 UI 窗口大小
+  // Debug option: avoid resizing UI windows
   "avoid_resize_ui": false,
-  // 插件加载顺序，在越前面的越先加载
-  // 格式为插件的无拓展名文件名
-  // 如：Windows 11 Icon Pack
+  // Plugin load order (plugins listed first load earlier)
+  // Format: plugin filename without extension
+  // Example: "Windows 11 Icon Pack"
   "plugin_load_order": [],
-  // 全局默认动画效果
+  // Global default animation
   "default_animation": animated_float_conf
 }
 ```
 
-## 示例配置文件
+---
 
-#### 禁用所有动画
+## Example Configuration
+
+### Disable All Animations
 
 ```json
 {
@@ -159,3 +165,5 @@ Breeze Shell 配置文件的 JSON Schema 位于
   }
 }
 ```
+
+This configuration disables all animations by setting the easing curve to `mutation` .
