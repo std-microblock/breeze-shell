@@ -3,9 +3,9 @@
 > any!\
 > This project is still under development. If you encounter any problems, please send an Issue
 >
-> Both English and Chinese issues are accepted.
-> Issue (You can use Chinese or English)
-> 对于中国人来说, [中文](./README_zh.md) 
+> Both English and Chinese issues are accepted.\
+> Issue (You can use Chinese or English)\
+> 对于中国人来说, [中文](./README_zh.md) \
 
 
 [中文](./README_zh.md) 
