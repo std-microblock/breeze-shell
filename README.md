@@ -1,21 +1,11 @@
 > [!WARNING]
-> This project is still in active development. File a bug report if you meet
-> any!\
-> This project is still under development. If you encounter any problems, please send an Issue
+> This project is still in active development. File a bug report if you meet any!  
+> 此项目仍在开发阶段，如果遇到问题请发送 Issue
 >
-> Both English and Chinese issues are accepted.\
-> Issue (You can use Chinese or English)\
-> 对于中国人来说, [中文](./README_zh.md) \
+> Both English and Chinese issues are accepted  
+> Issue 中使用中文或英文均可
 
-<div align="centre">
-  
-[![Donate](https://img.shields.io/badge/Donate%20Me-❤️-red?style=flat&logo=paypal&color=007BFF&height=100&fontsize=20)](https://github.com/std-microblock/breeze-shell/blob/master/DONATE.md)
-[![Discord](https://img.shields.io/badge/Join_Discord-7289DA?style=plastic&logo=discord&height=100&fontsize=20)](https://discord.gg/MgpHk8pa3d)
-
-</div>
-
-
-
+[中文](./README_zh.md) 
 
 <div align=center>
   <img src=./resources/icon.webp width=300 />
@@ -25,6 +15,8 @@
   <img width=500 src=./resources/preview1.webp />
 </div>
 </div>
+
+[![Discord](https://img.shields.io/badge/Join_Discord-7289DA?style=plastic&logo=discord&height=100&fontsize=20)](https://discord.gg/MgpHk8pa3d)
 
 Breeze is an **alternative context menu** for Windows 10 and Windows 11.
 
