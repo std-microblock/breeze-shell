@@ -1,4 +1,6 @@
-# Configuration File Format Description [FOR CHINESE CONFIG](./CONFIG_zh.md)
+[中文 →](./CONFIG_zh.md)
+
+# Configuration File Format Description
 
 This project's configuration file adopts the JSON format, and it is recommended to use **VSCode** for editing.
 
