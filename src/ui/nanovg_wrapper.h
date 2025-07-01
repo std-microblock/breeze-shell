@@ -243,6 +243,9 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
                       float height) {
     drawSVG(image.image, x, y, width, height);
   }
+
+  inline void drawImage(const NVGImage &image, float x, float y, float width,
+                        float height, float rounding = 0, float alpha = 1);
 };
 
 struct GLTexture {
@@ -274,6 +277,17 @@ struct NVGImage {
     //   ctx.deleteImage(id);
   }
 };
+
+inline void nanovg_context::drawImage(const NVGImage &image, float x, float y,
+                                      float width, float height, float rounding,
+                                      float alpha) {
+  if (image.id == -1)
+    return;
+  beginPath();
+  roundedRect(x, y, width, height, rounding);
+  fillPaint(imagePattern(x, y, width, height, 0, image.id, alpha));
+  fill();
+}
 
 NVGImage nanovg_context::imageFromSVG(NSVGimage *image, float dpi_scale) {
   static auto rast = nsvgCreateRasterizer();

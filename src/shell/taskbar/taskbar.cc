@@ -50,7 +50,7 @@ std::expected<void, std::string> taskbar_render::init() {
   SHAppBarMessage(ABM_ACTIVATE, &abd);
   SHAppBarMessage(ABM_WINDOWPOSCHANGED, &abd);
 
-  rt.root->emplace_child<taskbar_widget>();
+  rt.root->emplace_child<taskbar::taskbar_widget>();
 
   return {};
 }
