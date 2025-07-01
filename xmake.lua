@@ -74,7 +74,7 @@ target("shell")
     end)
     on_run(function (target)
         if is_host("windows") then
-            local cmd = "rundll32.exe " .. target:targetfile() .. ",1"
+            local cmd = "rundll32.exe " .. target:targetfile() .. ",func"
             os.exec(cmd)
         end
     end)

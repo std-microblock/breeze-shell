@@ -408,4 +408,7 @@ void render_target::focus() {
     SetFocus(glfwGetWin32Window(this->window));
   }
 }
+void *render_target::hwnd() const {
+  return window ? glfwGetWin32Window(window) : nullptr;
+}
 } // namespace ui

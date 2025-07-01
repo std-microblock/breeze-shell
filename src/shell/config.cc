@@ -156,4 +156,11 @@ std::string config::dump_config() { return rfl::json::write(*config::current); }
 std::filesystem::path config::default_mono_font() {
   return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "consola.ttf";
 }
+void config::apply_fonts_to_nvg(NVGcontext *nvg) {
+  nvgCreateFont(nvg, "main", font_path_main.string().c_str());
+  nvgCreateFont(nvg, "fallback", font_path_fallback.string().c_str());
+  nvgCreateFont(nvg, "monospace", font_path_monospace.string().c_str());
+  nvgAddFallbackFont(nvg, "main", "fallback");
+  nvgAddFallbackFont(nvg, "monospace", "main");
+}
 } // namespace mb_shell

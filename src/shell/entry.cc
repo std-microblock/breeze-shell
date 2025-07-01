@@ -17,6 +17,8 @@
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"
 
+#include "./taskbar/taskbar.h"
+
 #include "fix_win11_menu.h"
 
 #include <atomic>
@@ -59,8 +61,6 @@ void main() {
   install_error_handlers();
   config::run_config_loader();
 
-  res_string_loader::init();
-
   std::thread([]() {
     script_context ctx;
 
@@ -92,27 +92,65 @@ void main() {
     std::abort();
   });
 
-  std::thread([]() {
-    if (auto res = ui::render_target::init_global(); !res) {
-      MessageBoxW(NULL, L"Failed to initialize global render target", L"Error",
-                  MB_ICONERROR);
-      return;
-    }
-  }).detach();
-
   wchar_t executable_path[MAX_PATH];
   if (GetModuleFileNameW(NULL, executable_path, MAX_PATH) == 0) {
     MessageBoxW(NULL, L"Failed to get executable path", L"Error", MB_ICONERROR);
     return;
   }
 
+  auto init_render_global = [&]() {
+    std::thread([]() {
+      if (auto res = ui::render_target::init_global(); !res) {
+        MessageBoxW(NULL, L"Failed to initialize global render target",
+                    L"Error", MB_ICONERROR);
+        return;
+      }
+    }).detach();
+  };
+
   std::filesystem::path exe_path(executable_path);
+  if (exe_path.filename() == "explorer.exe") {
+    init_render_global();
+    context_menu_hooks::install_common_hook();
+    fix_win11_menu::install();
+    res_string_loader::init();
+  }
 
-  fix_win11_menu::install();
-
-  context_menu_hooks::install_common_hook();
   if (exe_path.filename() == "OneCommander.exe") {
+    init_render_global();
+    context_menu_hooks::install_common_hook();
     context_menu_hooks::install_SHCreateDefaultContextMenu_hook();
+    res_string_loader::init();
+  }
+
+  if (exe_path.filename() == "rundll32.exe") {
+    SetProcessDPIAware();
+    
+    std::thread([]() {
+      SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+      taskbar_render taskbar;
+      auto monitor = MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
+      if (!monitor) {
+        MessageBoxW(NULL, L"Failed to get primary monitor", L"Error",
+                    MB_ICONERROR);
+        return;
+      }
+      taskbar.monitor.cbSize = sizeof(MONITORINFO);
+      if (GetMonitorInfoW(monitor,
+                                  &taskbar.monitor) == 0) {
+        MessageBoxW(NULL, (L"Failed to get monitor info: " + std::to_wstring(GetLastError())).c_str(),
+                    L"Error", MB_ICONERROR);
+        return;
+      }
+      taskbar.position = taskbar_render::menu_position::bottom;
+      if (auto res = taskbar.init(); !res) {
+        MessageBoxW(NULL, L"Failed to initialize taskbar", L"Error",
+                    MB_ICONERROR);
+        return;
+      }
+
+      taskbar.rt.start_loop();
+    }).detach();
   }
 }
 } // namespace mb_shell
@@ -129,4 +167,14 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
   }
   }
   return 1;
+}
+
+extern "C" __declspec(dllexport) void func() {
+  while (true) {
+    // This function is called by rundll32.exe, which is used to run the taskbar
+    // in a separate thread.
+    // We can use this to keep the taskbar running without blocking the main
+    // thread.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
