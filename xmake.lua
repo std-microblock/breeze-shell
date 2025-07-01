@@ -72,6 +72,12 @@ target("shell")
         package:set("configvar", "GIT_BRANCH_NAME", git_branch_name or "null")
         package:set("configvar", "BUILD_DATE_TIME", build_date_time)
     end)
+    on_run(function (target)
+        if is_host("windows") then
+            local cmd = "rundll32.exe " .. target:targetfile() .. ",1"
+            os.exec(cmd)
+        end
+    end)
     add_files("src/shell/script/script.js")
     add_files("src/shell/**/*.cc", "src/shell/*.cc", "src/shell/**/*.c")
     set_encodings("utf-8")
