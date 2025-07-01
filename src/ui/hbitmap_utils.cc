@@ -10,7 +10,7 @@ ui::NVGImage ui::LoadBitmapImage(nanovg_context ctx, void *hbitmap) {
 
   GetObject(hBitmap, sizeof(bm), &bm);
 
-  BITMAPINFO bi = {0};
+  BITMAPINFO bi = {};
   bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 
   if (!GetDIBits(dc, hBitmap, 0, 0, NULL, &bi, DIB_RGB_COLORS)) {
