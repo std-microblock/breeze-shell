@@ -201,9 +201,6 @@ std::vector<window_stack_info> get_window_stacks() {
                                        &size)) {
           std::string exe_path_str = wstring_to_utf8(exe_path);
           auto &stack = stack_map[exe_path_str];
-          if (stack.windows.empty() || stack.windows.back().active) {
-            stack.active = true;
-          }
 
           stack.windows.push_back(win);
         }
@@ -276,12 +273,15 @@ void app_list_stack_widget::render(ui::nanovg_context ctx) {
     }
 
     if (icon) {
-      ctx.drawImage(*icon, *x + 8, *y + 8, *width - 16,
-                    *height - 16);
+      ctx.drawImage(*icon, *x + 8, *y + 8, *width - 16, *height - 16);
     }
   }
-}
 
+  // active indicator
+  ctx.fillColor({1.0f, 1.0f, 1.0f, *active_indicator_opacity});
+  ctx.fillRoundedRect(*x + (*width - *active_indicator_width) / 2, *y + *height - 4,
+                      *active_indicator_width, 3, 1.5f);
+}
 void app_list_stack_widget::update(ui::update_context &ctx) {
   ui::widget::update(ctx);
   width->reset_to(40);
@@ -293,6 +293,30 @@ void app_list_stack_widget::update(ui::update_context &ctx) {
     bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.8f});
   } else {
     bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.8f});
+  }
+  // active predicator
+  if (active) {
+    active_indicator_width->animate_to(15);
+    active_indicator_opacity->animate_to(0.7);
+  } else {
+    active_indicator_width->animate_to(5);
+    active_indicator_opacity->animate_to(0.3);
+  }
+
+  if (ctx.mouse_clicked_on(this)) {
+    HWND hWnd = stack.windows.front().hwnd;
+    bool isForeground = active;
+    bool isMinimized = IsIconic(hWnd);
+
+    if (isMinimized) {
+      ShowWindow(hWnd, SW_RESTORE);
+      SetForegroundWindow(hWnd);
+    } else if (isForeground) {
+      ShowWindow(hWnd, SW_MINIMIZE);
+    } else {
+      SetForegroundWindow(hWnd);
+      ShowWindow(hWnd, SW_SHOW);
+    }
   }
 }
 } // namespace mb_shell::taskbar

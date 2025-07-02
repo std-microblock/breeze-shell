@@ -106,6 +106,7 @@ struct config {
     struct theme {
       struct animation {
         animated_float_conf bg_color;
+        animated_float_conf active_indicator;
       } animation;
     } theme;
   } taskbar;

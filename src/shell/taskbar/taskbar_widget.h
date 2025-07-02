@@ -22,12 +22,10 @@ struct window_info {
   std::string title;
   std::string class_name;
   HICON icon_handle;
-  bool active;
 
   bool operator==(const window_info &other) const {
     return hwnd == other.hwnd && title == other.title &&
-           class_name == other.class_name && icon_handle == other.icon_handle &&
-           active == other.active;
+           class_name == other.class_name && icon_handle == other.icon_handle;
   }
 
   async_simple::coro::Lazy<HICON> get_async_icon_cached();
@@ -36,7 +34,12 @@ struct window_info {
 
 struct window_stack_info {
   std::vector<window_info> windows;
-  bool active;
+  bool active() {
+    return !windows.empty() &&
+           std::ranges::any_of(windows, [](const window_info &win) {
+             return win.hwnd == GetForegroundWindow();
+           });
+  }
 
   // if there are at least one window same in both stacks, they are same stack
   bool is_same(const window_stack_info &other) const {
@@ -59,10 +62,18 @@ std::vector<window_stack_info> get_window_stacks();
 
 struct app_list_stack_widget : public ui::widget {
   window_stack_info stack;
+  bool active = false;
   std::optional<ui::NVGImage> icon;
+
+  ui::sp_anim_float active_indicator_width = anim_float(),
+                    active_indicator_opacity = anim_float();
   ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
   app_list_stack_widget(const window_stack_info &stack) : stack(stack) {
     config::current->taskbar.theme.animation.bg_color.apply_to(bg_color);
+    config::current->taskbar.theme.animation.active_indicator.apply_to(
+        active_indicator_width);
+    config::current->taskbar.theme.animation.active_indicator.apply_to(
+        active_indicator_opacity);
   }
 
   void render(ui::nanovg_context ctx) override;
@@ -124,6 +135,19 @@ struct app_list_widget : public ui::widget_flex {
                                       });
                                 }),
                  stacks.end());
+  }
+
+  void update_active_stacks() {
+    if (GetForegroundWindow() == owner_rt->hwnd())
+      return;
+    for (auto &pair : stacks) {
+      pair.first->active = pair.second.active();
+    }
+  }
+
+  void update(ui::update_context &ctx) override {
+    ui::widget_flex::update(ctx);
+    update_active_stacks();
   }
 };
 
