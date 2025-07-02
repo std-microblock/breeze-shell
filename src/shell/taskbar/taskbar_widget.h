@@ -138,7 +138,7 @@ struct app_list_widget : public ui::widget_flex {
   }
 
   void update_active_stacks() {
-    if (GetForegroundWindow() == owner_rt->hwnd())
+    if (GetForegroundWindow() == owner_rt->hwnd() || GetForegroundWindow() == 0)
       return;
     for (auto &pair : stacks) {
       pair.first->active = pair.second.active();
