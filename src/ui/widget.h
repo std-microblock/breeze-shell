@@ -250,4 +250,23 @@ struct padding_widget : public widget {
   void render(nanovg_context ctx) override;
 };
 
+
+struct button_widget : public ui::padding_widget {
+  button_widget(const std::string &button_text);
+
+  ui::animated_color border_top = {this, 0, 0, 0, 0},
+                     border_right = {this, 0, 0, 0, 0},
+                     border_bottom = {this, 0, 0, 0, 0},
+                     border_left = {this, 0, 0, 0, 0};
+
+  void render(ui::nanovg_context ctx) override;
+
+  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.6};
+
+  virtual void on_click();
+
+  virtual void update_colors(bool is_active, bool is_hovered);
+  ui::update_context *ctx;
+  void update(ui::update_context &ctx) override;
+};
 } // namespace ui
