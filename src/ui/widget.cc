@@ -314,21 +314,11 @@ void ui::update_context::stop_key_propagation(int key) {
     rt.key_states.get()[key] = key_state::none;
   }
 }
-ui::button_widget::button_widget(const std::string &button_text) {
+ui::button_widget::button_widget(const std::string &button_text): button_widget() {
   auto text = emplace_child<ui::text_widget>();
   text->text = button_text;
   text->font_size = 14;
   text->color.reset_to({1, 1, 1, 0.95});
-
-  padding_bottom->reset_to(10);
-  padding_top->reset_to(10);
-  padding_left->reset_to(22);
-  padding_right->reset_to(20);
-
-  border_top.reset_to({1, 1, 1, 0.12});
-  border_right.reset_to({1, 1, 1, 0.04});
-  border_bottom.reset_to({1, 1, 1, 0.02});
-  border_left.reset_to({1, 1, 1, 0.04});
 }
 void ui::button_widget::render(ui::nanovg_context ctx) {
 
@@ -422,4 +412,15 @@ void ui::button_widget::update(ui::update_context &ctx) {
   }
 
   update_colors(ctx.mouse_down_on(this), ctx.hovered(this));
+}
+ui::button_widget::button_widget() {
+  padding_bottom->reset_to(10);
+  padding_top->reset_to(10);
+  padding_left->reset_to(22);
+  padding_right->reset_to(20);
+
+  border_top.reset_to({1, 1, 1, 0.12});
+  border_right.reset_to({1, 1, 1, 0.04});
+  border_bottom.reset_to({1, 1, 1, 0.02});
+  border_left.reset_to({1, 1, 1, 0.04});
 }

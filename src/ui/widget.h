@@ -19,7 +19,7 @@ struct update_context {
   // mouse position in window coordinates
   double mouse_x, mouse_y;
   bool mouse_down, right_mouse_down;
-  void* window;
+  void *window;
   // only true for one frame
   bool mouse_clicked, right_mouse_clicked;
   bool mouse_up;
@@ -250,8 +250,8 @@ struct padding_widget : public widget {
   void render(nanovg_context ctx) override;
 };
 
-
 struct button_widget : public ui::padding_widget {
+  button_widget();
   button_widget(const std::string &button_text);
 
   ui::animated_color border_top = {this, 0, 0, 0, 0},
