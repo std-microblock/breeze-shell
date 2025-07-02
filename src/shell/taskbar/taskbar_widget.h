@@ -61,7 +61,9 @@ struct app_list_stack_widget : public ui::widget {
   window_stack_info stack;
   std::optional<ui::NVGImage> icon;
   ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
-  app_list_stack_widget(const window_stack_info &stack) : stack(stack) {}
+  app_list_stack_widget(const window_stack_info &stack) : stack(stack) {
+    config::current->taskbar.theme.animation.bg_color.apply_to(bg_color);
+  }
 
   void render(ui::nanovg_context ctx) override;
 

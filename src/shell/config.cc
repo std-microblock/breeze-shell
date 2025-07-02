@@ -163,4 +163,11 @@ void config::apply_fonts_to_nvg(NVGcontext *nvg) {
   nvgAddFallbackFont(nvg, "main", "fallback");
   nvgAddFallbackFont(nvg, "monospace", "main");
 }
+void config::animated_float_conf::apply_to(ui::animated_color &anim,
+                                           float delay) {
+  apply_to(anim.r, delay);
+  apply_to(anim.g, delay);
+  apply_to(anim.b, delay);
+  apply_to(anim.a, delay);
+}
 } // namespace mb_shell
