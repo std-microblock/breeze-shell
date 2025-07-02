@@ -60,6 +60,7 @@ std::vector<window_stack_info> get_window_stacks();
 struct app_list_stack_widget : public ui::widget {
   window_stack_info stack;
   std::optional<ui::NVGImage> icon;
+  ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
   app_list_stack_widget(const window_stack_info &stack) : stack(stack) {}
 
   void render(ui::nanovg_context ctx) override;
@@ -71,11 +72,7 @@ struct app_list_stack_widget : public ui::widget {
     icon.reset();
   }
 
-  void update(ui::update_context &ctx) override {
-    ui::widget::update(ctx);
-    width->reset_to(40);
-    height->reset_to(40);
-  }
+  void update(ui::update_context &ctx) override;
 };
 
 struct app_list_widget : public ui::widget_flex {

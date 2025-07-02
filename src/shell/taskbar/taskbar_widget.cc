@@ -219,34 +219,6 @@ std::vector<window_stack_info> get_window_stacks() {
   return stacks;
 }
 
-void app_list_stack_widget::render(ui::nanovg_context ctx) {
-  if (stack.windows.empty()) {
-    return;
-  }
-
-  auto &first_window = stack.windows.front();
-  if (first_window.icon_handle) {
-    if (!icon) {
-      auto rgba = IconExtractor::GetIcon(first_window.icon_handle);
-      icon = ui::NVGImage{
-          ctx.createImageRGBA(rgba.width, rgba.height, 0, rgba.rgbaData.data()),
-          rgba.width, rgba.height, ctx};
-    }
-
-    if (icon) {
-      ctx.drawImage(*icon, *x + 4, *y + 4, 32, 32);
-    }
-  }
-
-  if (stack.windows.size() > 1) {
-    ctx.fontSize(12);
-    ctx.fontFace("sans");
-    ctx.fillColor(nvgRGBAf(1, 1, 1, 0.8));
-    ctx.textAlign(NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-    ctx.text(*x + 20, *y + 20, std::to_string(stack.windows.size()).c_str(),
-             nullptr);
-  }
-}
 async_simple::coro::Lazy<HICON> window_info::get_async_icon() {
   auto sendMessageAsync = [](HWND hwnd, UINT msg, WPARAM wParam,
                              LPARAM lParam) -> async_simple::coro::Lazy<HICON> {
@@ -282,5 +254,45 @@ async_simple::coro::Lazy<HICON> window_info::get_async_icon_cached() {
   auto icon = co_await get_async_icon();
   large_icon_cache[hwnd] = icon;
   co_return large_icon_cache[hwnd];
+}
+
+void app_list_stack_widget::render(ui::nanovg_context ctx) {
+  if (stack.windows.empty()) {
+    return;
+  }
+
+  ctx.fillColor(bg_color);
+  ctx.fillRoundedRect(*x, *y, *width, *height, 6);
+  ctx.strokeColor({0.2f, 0.2f, 0.2f, 0.8f});
+  ctx.strokeRoundedRect(*x, *y, *width, *height, 6);
+
+  auto &first_window = stack.windows.front();
+  if (first_window.icon_handle) {
+    if (!icon) {
+      auto rgba = IconExtractor::GetIcon(first_window.icon_handle);
+      icon = ui::NVGImage{
+          ctx.createImageRGBA(rgba.width, rgba.height, 0, rgba.rgbaData.data()),
+          rgba.width, rgba.height, ctx};
+    }
+
+    if (icon) {
+      ctx.drawImage(*icon, *x + 8, *y + 8, *width - 16,
+                    *height - 16);
+    }
+  }
+}
+
+void app_list_stack_widget::update(ui::update_context &ctx) {
+  ui::widget::update(ctx);
+  width->reset_to(40);
+  height->reset_to(40);
+
+  if (ctx.mouse_down_on(this)) {
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+  } else if (ctx.hovered(this)) {
+    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.8f});
+  } else {
+    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.8f});
+  }
 }
 } // namespace mb_shell::taskbar
