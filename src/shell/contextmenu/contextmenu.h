@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#define NOMINMAX
+
 #include <Windows.h>
 
 namespace mb_shell {

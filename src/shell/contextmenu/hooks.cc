@@ -12,8 +12,6 @@
 #include <shobjidl_core.h>
 #include <thread>
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
 #include "shlobj_core.h"
 
@@ -196,7 +194,7 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
         CMINVOKECOMMANDINFOEX ici = {};
         ici.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
         ici.hwnd = def->hwnd;
-        ici.fMask = CMIC_MASK_UNICODE;
+        ici.fMask = 0x100000; /* CMIC_MASK_UNICODE */
         ici.lpVerb = MAKEINTRESOURCEA(res - 1);
         ici.lpVerbW = MAKEINTRESOURCEW(res - 1);
         ici.nShow = SW_SHOWNORMAL;

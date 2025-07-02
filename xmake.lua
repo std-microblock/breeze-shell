@@ -55,6 +55,7 @@ target("ui_test")
 
 target("shell")
     set_kind("shared")
+    add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs")
     add_deps("ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")

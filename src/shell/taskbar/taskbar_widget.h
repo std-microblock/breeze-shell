@@ -1,8 +1,10 @@
 #pragma once
 #include "../config.h"
 #include "animator.h"
+#include "async_simple/Try.h"
 #include "extra_widgets.h"
 #include "hbitmap_utils.h"
+#include "nanovg.h"
 #include "nanovg_wrapper.h"
 #include "taskbar.h"
 #include "ui.h"
@@ -11,6 +13,8 @@
 #include <functional>
 #include <memory>
 #include <optional>
+
+#include "async_simple/coro/Lazy.h"
 
 namespace mb_shell::taskbar {
 struct window_info {
@@ -25,6 +29,9 @@ struct window_info {
            class_name == other.class_name && icon_handle == other.icon_handle &&
            active == other.active;
   }
+
+  async_simple::coro::Lazy<HICON> get_async_icon_cached();
+  async_simple::coro::Lazy<HICON> get_async_icon();
 };
 
 struct window_stack_info {
@@ -52,7 +59,6 @@ std::vector<window_stack_info> get_window_stacks();
 
 struct app_list_stack_widget : public ui::widget {
   window_stack_info stack;
-
   std::optional<ui::NVGImage> icon;
   app_list_stack_widget(const window_stack_info &stack) : stack(stack) {}
 
@@ -93,15 +99,18 @@ struct app_list_widget : public ui::widget_flex {
                                return pair.second.is_same(new_stack);
                              });
       if (it != stacks.end()) {
-        // Found existing stack, update it
         it->second = new_stack;
         it->first->update_stack(new_stack);
       } else {
-        // New stack, create a widget for it
-        std::println("Adding new stack with {} windows",
-                     new_stack.windows.size());
         auto widget = std::make_shared<app_list_stack_widget>(new_stack);
         stacks.emplace_back(widget, new_stack);
+        new_stack.windows[0].get_async_icon_cached().start(
+            [=](async_simple::Try<HICON> ico) mutable {
+              if (ico.available() && ico.value() != nullptr) {
+                widget->stack.windows[0].icon_handle = ico.value();
+                widget->icon.reset();
+              }
+            });
         add_child(widget);
       }
     }

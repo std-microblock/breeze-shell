@@ -3,6 +3,9 @@
 
 #include "taskbar_widget.h"
 
+#define WINSHELLAPI
+#include <shellapi.h>
+
 #include "../config.h"
 namespace mb_shell {
 std::expected<void, std::string> taskbar_render::init() {

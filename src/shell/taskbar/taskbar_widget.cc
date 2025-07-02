@@ -1,7 +1,9 @@
 #include "taskbar_widget.h"
+#include "async_simple/Promise.h"
 #include "nanovg_wrapper.h"
 #include <unordered_map>
 
+#include "cinatra/coro_http_client.hpp"
 namespace mb_shell::taskbar {
 // https://stackoverflow.com/questions/2397578/how-to-get-the-executable-name-of-a-window
 static HWND GetLastVisibleActivePopUpOfWindow(HWND window) {
@@ -161,21 +163,15 @@ std::vector<window_info> get_window_list() {
           GetClassNameW(hwnd, class_name, sizeof(class_name) / sizeof(wchar_t));
           info.class_name = wstring_to_utf8(class_name);
 
-          HICON hIcon = (HICON)SendMessageW(hwnd, WM_GETICON, ICON_BIG, 192);
-          if (hIcon == NULL) {
-            hIcon = (HICON)GetClassLongPtrW(hwnd, GCLP_HICON);
-          }
-          if (hIcon == NULL) {
-            hIcon = (HICON)SendMessageW(hwnd, WM_GETICON, ICON_SMALL, 0);
-          }
-          if (hIcon == NULL) {
-            hIcon = (HICON)SendMessageW(hwnd, WM_GETICON, ICON_SMALL2, 0);
-          }
-          if (hIcon == NULL) {
-            hIcon = (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM);
+          info.icon_handle = (HICON)GetClassLongPtrW(hwnd, GCLP_HICON);
+          if (info.icon_handle == nullptr) {
+            info.icon_handle = (HICON)GetClassLongPtrW(hwnd, GCLP_HICONSM);
           }
 
-          info.icon_handle = hIcon;
+          if (info.icon_handle == nullptr) {
+            // default icon if no icon is found
+            info.icon_handle = LoadIcon(NULL, IDI_APPLICATION);
+          }
 
           window_list->push_back(info);
         }
@@ -235,7 +231,6 @@ void app_list_stack_widget::render(ui::nanovg_context ctx) {
       icon = ui::NVGImage{
           ctx.createImageRGBA(rgba.width, rgba.height, 0, rgba.rgbaData.data()),
           rgba.width, rgba.height, ctx};
-      std::println("loaded image for {}: {}", first_window.title, icon->id);
     }
 
     if (icon) {
@@ -251,5 +246,41 @@ void app_list_stack_widget::render(ui::nanovg_context ctx) {
     ctx.text(*x + 20, *y + 20, std::to_string(stack.windows.size()).c_str(),
              nullptr);
   }
+}
+async_simple::coro::Lazy<HICON> window_info::get_async_icon() {
+  auto sendMessageAsync = [](HWND hwnd, UINT msg, WPARAM wParam,
+                             LPARAM lParam) -> async_simple::coro::Lazy<HICON> {
+    async_simple::Promise<HICON> promise;
+    auto future = promise.getFuture();
+    std::thread([hwnd, msg, wParam, lParam,
+                 promise = std::move(promise)]() mutable {
+      HICON result = (HICON)SendMessageW(hwnd, msg, wParam, lParam);
+      promise.setValue(result);
+    }).detach();
+
+    co_return co_await std::move(future);
+  };
+
+  HICON hIcon = co_await sendMessageAsync(hwnd, WM_GETICON, ICON_BIG, 192);
+  if (hIcon == NULL) {
+    hIcon = co_await sendMessageAsync(hwnd, WM_GETICON, ICON_SMALL, 192);
+  }
+  if (hIcon == NULL) {
+    hIcon = co_await sendMessageAsync(hwnd, WM_GETICON, ICON_SMALL2, 192);
+  }
+
+  co_return hIcon;
+}
+
+static std::unordered_map<HWND, HICON> large_icon_cache;
+async_simple::coro::Lazy<HICON> window_info::get_async_icon_cached() {
+  if (large_icon_cache.find(hwnd) != large_icon_cache.end() &&
+      large_icon_cache[hwnd] != nullptr) {
+    co_return large_icon_cache[hwnd];
+  }
+
+  auto icon = co_await get_async_icon();
+  large_icon_cache[hwnd] = icon;
+  co_return large_icon_cache[hwnd];
 }
 } // namespace mb_shell::taskbar

@@ -44,7 +44,6 @@
 #include <winreg.h>
 #include <winuser.h>
 
-#define NOMINMAX
 #include <Windows.h>
 
 namespace mb_shell {
@@ -125,7 +124,7 @@ void main() {
 
   if (exe_path.filename() == "rundll32.exe") {
     SetProcessDPIAware();
-    
+
     std::thread([]() {
       SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
       taskbar_render taskbar;
@@ -136,10 +135,12 @@ void main() {
         return;
       }
       taskbar.monitor.cbSize = sizeof(MONITORINFO);
-      if (GetMonitorInfoW(monitor,
-                                  &taskbar.monitor) == 0) {
-        MessageBoxW(NULL, (L"Failed to get monitor info: " + std::to_wstring(GetLastError())).c_str(),
-                    L"Error", MB_ICONERROR);
+      if (GetMonitorInfoW(monitor, &taskbar.monitor) == 0) {
+        MessageBoxW(
+            NULL,
+            (L"Failed to get monitor info: " + std::to_wstring(GetLastError()))
+                .c_str(),
+            L"Error", MB_ICONERROR);
         return;
       }
       taskbar.position = taskbar_render::menu_position::bottom;
