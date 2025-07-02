@@ -3,6 +3,8 @@
 #include "nanovg_wrapper.h"
 #include <unordered_map>
 
+#include <shellapi.h>
+
 #include "cinatra/coro_http_client.hpp"
 namespace mb_shell::taskbar {
 // https://stackoverflow.com/questions/2397578/how-to-get-the-executable-name-of-a-window
@@ -169,8 +171,25 @@ std::vector<window_info> get_window_list() {
           }
 
           if (info.icon_handle == nullptr) {
-            // default icon if no icon is found
-            info.icon_handle = LoadIcon(NULL, IDI_APPLICATION);
+            // use the exe icon if nothing else is available
+            int pid;
+
+            GetWindowThreadProcessId(hwnd, (LPDWORD)&pid);
+            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+            if (hProcess) {
+              DWORD size = MAX_PATH;
+              std::wstring exe_path(MAX_PATH + 2, L'\0');
+              if (QueryFullProcessImageNameW((HMODULE)hProcess, 0, exe_path.data(), &size)) {
+                info.icon_handle = ExtractIconW(
+                    nullptr, exe_path.c_str(), 0);
+              }
+              CloseHandle(hProcess);
+            }
+          }
+
+          if (info.icon_handle == nullptr) {
+            // if still no icon, use default icon
+            info.icon_handle = LoadIcon(nullptr, IDI_APPLICATION);
           }
 
           window_list->push_back(info);

@@ -3,7 +3,6 @@
 
 #include "taskbar_widget.h"
 
-#define WINSHELLAPI
 #include <shellapi.h>
 
 #include "../config.h"

@@ -22,7 +22,6 @@
 #include "script.h"
 #include "winhttp.h"
 
-#define WINSHELLAPI
 #include <shellapi.h>
 
 #include "FileWatch.hpp"
