@@ -9,6 +9,7 @@ void ui::animated_float::update(float delta_time) {
   if (easing == easing_type::mutation) {
     if (destination != value || progress != 1.f) {
       value = destination;
+      progress = 1.f;
       if (after_animate)
         after_animate.value()(destination);
       _updated = true;
