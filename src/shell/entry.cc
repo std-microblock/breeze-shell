@@ -108,21 +108,26 @@ void main() {
   };
 
   std::filesystem::path exe_path(executable_path);
-  if (exe_path.filename() == "explorer.exe") {
+  auto filename = exe_path.filename().string() | 
+                  std::views::transform([](char c) { return std::tolower(c); }) |
+                  std::ranges::to<std::string>();
+
+
+  if (filename == "explorer.exe") {
     init_render_global();
+    res_string_loader::init();
     context_menu_hooks::install_common_hook();
     fix_win11_menu::install();
-    res_string_loader::init();
   }
 
-  if (exe_path.filename() == "OneCommander.exe") {
+  if (filename == "onecommander.exe") {
     init_render_global();
     context_menu_hooks::install_common_hook();
     context_menu_hooks::install_SHCreateDefaultContextMenu_hook();
     res_string_loader::init();
   }
 
-  if (exe_path.filename() == "rundll32.exe") {
+  if (filename == "rundll32.exe") {
     SetProcessDPIAware();
 
     std::thread([]() {
