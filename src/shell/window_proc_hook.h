@@ -12,7 +12,7 @@ namespace mb_shell {
         void* hooked_proc = nullptr;
         bool installed = false;
 
-        std::vector<std::function<bool(void*, void*, size_t, size_t, size_t)>> hooks;
+        std::vector<std::function<std::optional<int>(void*, void*, size_t, size_t, size_t)>> hooks;
         std::queue<std::function<void()>> tasks;
 
         void send_null();

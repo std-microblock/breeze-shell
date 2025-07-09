@@ -131,7 +131,6 @@ std::expected<bool, std::string> render_target::init() {
   if (capture_all_input) {
     // retrieve all mouse messages
     SetCapture(h);
-    SetFocus(h);
   }
 
   if (topmost) {

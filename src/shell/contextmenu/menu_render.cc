@@ -21,12 +21,13 @@ menu_render menu_render::create(int x, int y, menu menu) {
   }
 
   static auto rt = []() {
+    static window_proc_hook glfw_proc_hook;
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
     rt->no_activate = true;
     rt->capture_all_input = true;
     rt->decorated = false;
-    rt->topmost = false;
+    rt->topmost = true;
     rt->vsync = config::current->context_menu.vsync;
 
     if (config::current->avoid_resize_ui) {
@@ -38,6 +39,18 @@ menu_render menu_render::create(int x, int y, menu menu) {
       MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                   MB_ICONERROR);
     }
+
+    glfw_proc_hook.install(rt->hwnd());
+    SetCapture((HWND)rt->hwnd());
+    glfw_proc_hook.hooks.push_back([](void *hwnd, void *original_proc,
+                                      size_t msg, size_t wparam,
+                                      size_t lparam) -> std::optional<int> {
+      if (msg == WM_MOUSEACTIVATE) {
+        return MA_NOACTIVATE;
+      }
+
+      return std::nullopt;
+    });
 
     nvgCreateFont(rt->nvg, "main",
                   config::current->font_path_main.string().c_str());
@@ -65,16 +78,14 @@ menu_render menu_render::create(int x, int y, menu menu) {
          monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
          monitor_info.rcMonitor.bottom);
 
-  rt->set_position(monitor_info.rcMonitor.left + 1, monitor_info.rcMonitor.top + 1);
+  rt->set_position(monitor_info.rcMonitor.left + 1,
+                   monitor_info.rcMonitor.top + 1);
   if (!config::current->avoid_resize_ui)
-    rt->resize(
-        monitor_info.rcMonitor.right - monitor_info.rcMonitor.left - 2,
-        monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top - 2);
+    rt->resize(monitor_info.rcMonitor.right - monitor_info.rcMonitor.left - 2,
+               monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top - 2);
 
   glfwMakeContextCurrent(rt->window);
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
-
-  
 
   rt->show();
   auto menu_wid = std::make_shared<mouse_menu_widget_main>(
@@ -89,7 +100,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
                 js::js_menu_context::$from_window(menu.parent_window));
           })
           .get();
-          
+
   js::menu_info_basic_js menu_info{
       .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
       .context = current_js_context};

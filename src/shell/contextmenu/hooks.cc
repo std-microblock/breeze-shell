@@ -56,8 +56,6 @@ void mb_shell::context_menu_hooks::install_common_hook() {
       auto hook = SetWindowsHookExW(
           WH_KEYBOARD,
           [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
-            std::println("Keyboard hook called: nCode={}, wParam={}", nCode,
-                         wParam);
             if (nCode == HC_ACTION) {
               PostMessageW(window, lParam == WM_KEYDOWN ? WM_KEYDOWN : WM_KEYUP,
                            wParam, lParam);
@@ -66,6 +64,10 @@ void mb_shell::context_menu_hooks::install_common_hook() {
             return CallNextHookEx(NULL, nCode, wParam, lParam);
           },
           NULL, thread_id_orig);
+        
+      SetWindowLongPtrW(window, GWL_EXSTYLE,
+                        GetWindowLongPtrW(window, GWL_EXSTYLE) |
+                            WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
 
       menu_render.rt->start_loop();
       UnhookWindowsHookEx(hook);
