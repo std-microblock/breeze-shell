@@ -23,10 +23,10 @@ menu_render menu_render::create(int x, int y, menu menu) {
   static auto rt = []() {
     auto rt = std::make_shared<ui::render_target>();
     rt->transparent = true;
-    rt->no_focus = false;
+    rt->no_activate = true;
     rt->capture_all_input = true;
     rt->decorated = false;
-    rt->topmost = true;
+    rt->topmost = false;
     rt->vsync = config::current->context_menu.vsync;
 
     if (config::current->avoid_resize_ui) {
@@ -74,8 +74,9 @@ menu_render menu_render::create(int x, int y, menu menu) {
   glfwMakeContextCurrent(rt->window);
   glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
 
+  
+
   rt->show();
-  rt->focus();
   auto menu_wid = std::make_shared<mouse_menu_widget_main>(
       menu,
       // convert the x and y to the window coordinates

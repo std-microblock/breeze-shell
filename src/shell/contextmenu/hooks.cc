@@ -44,16 +44,34 @@ void mb_shell::context_menu_hooks::install_common_hook() {
     menu menu = menu::construct_with_hmenu(hMenu, hWnd);
     perf.end("construct_with_hmenu");
 
+    auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer.add_task([&]() {
       auto menu_render = menu_render::create(x, y, menu);
       menu_render.rt->last_time = menu_render.rt->clock.now();
-
       perf.end("menu_render::create");
+
+      static HWND window = nullptr;
+      window = (HWND)menu_render.rt->hwnd();
+      // set keyboard hook to handle keyboard input
+      auto hook = SetWindowsHookExW(
+          WH_KEYBOARD,
+          [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
+            std::println("Keyboard hook called: nCode={}, wParam={}", nCode,
+                         wParam);
+            if (nCode == HC_ACTION) {
+              PostMessageW(window, lParam == WM_KEYDOWN ? WM_KEYDOWN : WM_KEYUP,
+                           wParam, lParam);
+              return 1;
+            }
+            return CallNextHookEx(NULL, nCode, wParam, lParam);
+          },
+          NULL, thread_id_orig);
+
       menu_render.rt->start_loop();
+      UnhookWindowsHookEx(hook);
 
       return menu_render.selected_menu;
     });
-
     qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 
     auto selected_menu = selected_menu_future.get();

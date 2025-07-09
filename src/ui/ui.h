@@ -87,7 +87,7 @@ struct render_target {
   std::optional<float> acrylic = {};
   bool extend = false;
   bool transparent = false;
-  bool no_focus = false;
+  bool no_activate = false;
   bool capture_all_input = false;
   bool decorated = true;
   bool topmost = false;
@@ -122,6 +122,7 @@ struct render_target {
   void show();
   void focus();
   void hide_as_close();
+  void *hwnd() const;
   bool should_loop_stop_hide_as_close = false;
   std::optional<std::function<void(bool)>> on_focus_changed;
   std::chrono::steady_clock clock{};

@@ -120,7 +120,7 @@ std::expected<bool, std::string> render_target::init() {
     DwmEnableBlurBehindWindow(h, nullptr);
   }
 
-  if (no_focus) {
+  if (no_activate) {
     SetWindowLongPtr(h, GWL_EXSTYLE,
                      GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                          WS_EX_NOACTIVATE);
@@ -131,6 +131,7 @@ std::expected<bool, std::string> render_target::init() {
   if (capture_all_input) {
     // retrieve all mouse messages
     SetCapture(h);
+    SetFocus(h);
   }
 
   if (topmost) {
@@ -171,7 +172,7 @@ std::expected<bool, std::string> render_target::init() {
     auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
     if (key >= 0 && key <= GLFW_KEY_LAST) {
       auto lock = rt->key_states.get_back_lock();
-      auto& back = rt->key_states.get_back();
+      auto &back = rt->key_states.get_back();
       if (action == GLFW_PRESS) {
         back[key] |= key_state::pressed;
       } else if (action == GLFW_RELEASE) {
@@ -370,7 +371,7 @@ void render_target::post_main_thread_task(std::function<void()> task) {
   glfwPostEmptyEvent();
 }
 void render_target::show() {
-  if (no_focus) {
+  if (no_activate) {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNOACTIVATE);
   } else {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNORMAL);
@@ -403,9 +404,14 @@ void render_target::post_loop_thread_task(std::function<void()> task) {
 }
 void render_target::focus() {
   if (this->window) {
-    glfwFocusWindow(this->window);
-    SetActiveWindow(glfwGetWin32Window(this->window));
+    if (!no_activate) {
+      glfwFocusWindow(this->window);
+      SetActiveWindow(glfwGetWin32Window(this->window));
+    }
     SetFocus(glfwGetWin32Window(this->window));
   }
+}
+void *render_target::hwnd() const {
+  return window ? glfwGetWin32Window(window) : nullptr;
 }
 } // namespace ui
