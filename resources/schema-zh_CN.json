@@ -10,8 +10,8 @@
             "animation": {
               "definitions": {
                 "main": {
-                  "title": "Context Menu Animation Configuration",
-                  "description": "Animation effects for context menu",
+                  "title": "菜单动画配置",
+                  "description": "上下文菜单的主体动画效果",
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
@@ -19,8 +19,8 @@
                   }
                 },
                 "item": {
-                  "title": "Context Menu Item Animation Configuration",
-                  "description": "Animation effects for context menu items",
+                  "title": "菜单项动画配置",
+                  "description": "上下文菜单项的动画效果",
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
@@ -31,8 +31,8 @@
                   }
                 },
                 "bg": {
-                  "title": "Background Animation Configuration",
-                  "description": "Animation effects for context menu background",
+                  "title": "背景动画配置",
+                  "description": "上下文菜单的背景动画效果",
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
@@ -44,8 +44,8 @@
                   }
                 }
               },
-              "title": "Animation Configuration",
-              "description": "Configure the animation effects of the context menu",
+              "title": "动画效果配置",
+              "description": "上下文菜单的动画效果",
               "type": "object",
               "additionalProperties": false,
               "properties": {
@@ -64,237 +64,237 @@
               }
             }
           },
-          "title": "Context Menu Theme Configuration",
-          "description": "Configure the theme and appearance of the context menu",
+          "title": "上下文菜单主题配置",
+          "description": "配置上下文菜单的主题和外观",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "use_dwm_if_available": {
-              "title": "Try Using Windows 11 Rounded Corners",
-              "description": "Use DWM rounded corners instead of SetWindowRgn rounded corners on Windows 11",
+              "title": "尝试使用 Windows 11 圆角",
+              "description": "在 Windows 11 下使用 DWM 圆角而不是 SetWindowRgn 圆角",
               "type": "boolean",
               "default": true
             },
             "background_opacity": {
-              "title": "Background Opacity",
-              "description": "0.0 means fully transparent, 1.0 means fully opaque",
+              "title": "背景透明度",
+              "description": "0.0 表示完全透明，1.0 表示完全不透明",
               "type": "number",
               "minimum": 0,
               "maximum": 1,
               "default": 1
             },
             "acrylic": {
-              "title": "Use Acrylic Material",
-              "description": "Semi-transparent texture to enhance depth",
+              "title": "使用亚克力背景效果",
+              "description": "半透明纹理，增加层次感",
               "type": "boolean",
               "default": true
             },
             "radius": {
-              "title": "Corner Radius",
-              "description": "Corner radius of the context menu",
+              "title": "圆角大小",
+              "description": "上下文菜单的圆角大小",
               "type": "number",
               "minimum": 0,
               "default": 6
             },
             "font_size": {
-              "title": "Font Size",
-              "description": "Font size for the context menu",
+              "title": "字体大小",
+              "description": "上下文菜单的字体大小",
               "type": "number",
               "minimum": 0,
               "default": 14
             },
             "item_height": {
-              "title": "Context Menu Item Height",
-              "description": "Height of each context menu item",
+              "title": "菜单项高度",
+              "description": "上下文菜单项的高度",
               "type": "number",
               "minimum": 0,
               "default": 23
             },
             "item_gap": {
-              "title": "Context Menu Item Gap",
-              "description": "Spacing between context menu items",
+              "title": "菜单项间距",
+              "description": "上下文菜单项之间的间距",
               "type": "number",
               "minimum": 0,
               "default": 3
             },
             "item_radius": {
-              "title": "Context Menu Item Corner Radius",
-              "description": "Corner radius of each context menu item",
+              "title": "圆角大小",
+              "description": "上下文菜单项的圆角大小",
               "type": "number",
               "minimum": 0,
               "default": 5
             },
             "margin": {
-              "title": "Context Menu Margin",
-              "description": "Horizontal margin of the context menu",
+              "title": "外边距",
+              "description": "上下文菜单的外边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 5
             },
             "padding": {
-              "title": "Context Menu Padding",
-              "description": "Horizontal padding of the context menu",
+              "title": "内边距",
+              "description": "上下文菜单的内边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 6
             },
             "text_padding": {
-              "title": "Context Menu Item Text Padding",
-              "description": "Horizontal padding for text in context menu items",
+              "title": "文本内边距",
+              "description": "上下文菜单项的文本内边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 8
             },
             "icon_padding": {
-              "title": "Context Menu Item Left Icon Padding",
-              "description": "Horizontal padding for the left icon in context menu items",
+              "title": "左侧图标内边距",
+              "description": "上下文菜单项的左侧图标内边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 4
             },
             "right_icon_padding": {
-              "title": "Context Menu Item Right Icon (Expand Icon) Padding",
-              "description": "Horizontal padding for the right icon (expand icon) in context menu items",
+              "title": "右侧图标（展开图标）内边距",
+              "description": "上下文菜单项的右侧图标（展开图标）内边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 10
             },
             "multibutton_line_gap": {
-              "title": "Multi-button Line Gap",
-              "description": "Horizontal spacing between multi-buttons in context menu items",
+              "title": "多按钮间距",
+              "description": "上下文菜单项多按钮之间的间距（横向）",
               "type": "number",
               "default": -6
             },
             "scrollbar_width": {
-              "title": "Scrollbar Width",
-              "description": "Width of the context menu scrollbar",
+              "title": "滚动条宽度",
+              "description": "上下文菜单滚动条的宽度",
               "type": "number",
               "minimum": 0,
               "default": 6
             },
             "scrollbar_radius": {
-              "title": "Scrollbar Corner Radius",
-              "description": "Corner radius of the context menu scrollbar",
+              "title": "滚动条圆角大小",
+              "description": "上下文菜单滚动条的圆角大小",
               "type": "number",
               "minimum": 0,
               "default": 3
             },
             "hotkey_padding": {
-              "title": "Hotkey Padding",
-              "description": "Horizontal padding for hotkeys in context menu items",
+              "title": "快捷键内边距",
+              "description": "上下文菜单项快捷键的内边距（横向）",
               "type": "number",
               "minimum": 0,
               "default": 4
             },
             "acrylic_color_light": {
-              "title": "Acrylic Background Color (Light Mode)",
-              "description": "Supports formats: #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)",
+              "title": "亚克力背景颜色（浅色模式）",
+              "description": "支持以下格式：#RRGGBBAA、#RRGGBB、rgba(R, G, B, A)、rgb(R, G, B)、linear-gradient(angle, color1, color2)、radial-gradient(radius, color1, color2)、solid(color)",
               "type": "string",
               "default": "#fefefe00"
             },
             "acrylic_color_dark": {
-              "title": "Acrylic Background Color (Dark Mode)",
-              "description": "Supports formats: #RRGGBBAA, #RRGGBB, rgba(R, G, B, A), rgb(R, G, B), linear-gradient(angle, color1, color2), radial-gradient(radius, color1, color2), solid(color)",
+              "title": "亚克力背景颜色（深色模式）",
+              "description": "支持以下格式：#RRGGBBAA、#RRGGBB、rgba(R, G, B, A)、rgb(R, G, B)、linear-gradient(angle, color1, color2)、radial-gradient(radius, color1, color2)、solid(color)",
               "type": "string",
               "default": "#28282800"
             },
             "use_self_drawn_border": {
-              "title": "Use Self-drawn Border and Shadow",
-              "description": "Requires disabling DWM borders",
+              "title": "使用自绘边框、阴影",
+              "description": "需关闭 DWM 边框",
               "type": "boolean",
               "default": true
             },
             "border_color_light": {
-              "title": "Border Color (Light Mode)",
-              "description": "Context menu border color in light mode",
+              "title": "边框颜色（浅色模式）",
+              "description": "上下文菜单的边框颜色（浅色模式）",
               "type": "string",
               "default": "#00000022"
             },
             "border_color_dark": {
-              "title": "Border Color (Dark Mode)",
-              "description": "Context menu border color in dark mode",
+              "title": "边框颜色（深色模式）",
+              "description": "上下文菜单的边框颜色（深色模式）",
               "type": "string",
               "default": "#ffffff22"
             },
             "shadow_color_light_from": {
-              "title": "Shadow Color Start Value (Light Mode)",
-              "description": "Context menu shadow color start value in light mode",
+              "title": "阴影颜色起始值（浅色模式）",
+              "description": "上下文菜单的阴影颜色起始值（浅色模式）",
               "type": "string",
               "default": "#00000020"
             },
             "shadow_color_light_to": {
-              "title": "Shadow Color End Value (Light Mode)",
-              "description": "Context menu shadow color end value in light mode",
+              "title": "阴影颜色终止值（浅色模式）",
+              "description": "上下文菜单的阴影颜色终止值（浅色模式）",
               "type": "string",
               "default": "#00000000"
             },
             "shadow_color_dark_from": {
-              "title": "Shadow Color Start Value (Dark Mode)",
-              "description": "Context menu shadow color start value in dark mode",
+              "title": "阴影颜色起始值（深色模式）",
+              "description": "上下文菜单的阴影颜色起始值（深色模式）",
               "type": "string",
               "default": "#00000033"
             },
             "shadow_color_dark_to": {
-              "title": "Shadow Color End Value (Dark Mode)",
-              "description": "Context menu shadow color end value in dark mode",
+              "title": "阴影颜色结束值（深色模式）",
+              "description": "上下文菜单的阴影颜色终止值（深色模式）",
               "type": "string",
               "default": "#00000000"
             },
             "shadow_blur": {
-              "title": "Shadow Blur",
-              "description": "Blur radius of the context menu shadow",
+              "title": "阴影模糊半径",
+              "description": "上下文菜单的阴影模糊半径",
               "type": "number",
               "minimum": 0,
               "default": 10
             },
             "shadow_offset_x": {
-              "title": "Shadow Offset (Horizontal)",
-              "description": "Context menu shadow offset in the horizontal direction",
+              "title": "阴影偏移（横向）",
+              "description": "上下文菜单的阴影偏移（横向）",
               "type": "number",
               "default": 0
             },
             "shadow_offset_y": {
-              "title": "Shadow Offset (Vertical)",
-              "description": "Context menu shadow offset in the vertical direction",
+              "title": "阴影偏移（纵向）",
+              "description": "上下文菜单的阴影偏移（纵向）",
               "type": "number",
               "default": 0
             },
             "shadow_opacity": {
-              "title": "Shadow Opacity",
-              "description": "0.0 means fully transparent, 1.0 means fully opaque",
+              "title": "阴影透明度",
+              "description": "0.0 表示完全透明，1.0 表示完全不透明",
               "type": "number",
               "minimum": 0,
               "maximum": 1,
               "default": 0.2
             },
             "shadow_size": {
-              "title": "Shadow Size",
-              "description": "Context menu shadow size",
+              "title": "阴影大小",
+              "description": "上下文菜单的阴影大小",
               "type": "number",
               "minimum": 0,
               "default": 10
             },
             "border_width": {
-              "title": "Border Width",
-              "description": "Context menu border width",
+              "title": "边框宽度",
+              "description": "上下文菜单的边框宽度",
               "type": "number",
               "minimum": 0,
               "default": 1.5
             },
             "inset_border": {
-              "title": "Use Inset Border",
-              "description": "Context menu uses inset-style border",
+              "title": "使用内嵌边框",
+              "description": "上下文菜单使用内嵌风格的边框",
               "type": "boolean",
               "default": true
             },
             "acrylic_opacity": {
-              "title": "Acrylic Background Opacity",
-              "description": "0.0 means fully transparent, 1.0 means fully opaque",
+              "title": "亚克力背景透明度",
+              "description": "0.0 表示完全透明，1.0 表示完全不透明",
               "type": "number",
               "minimum": 0,
               "maximum": 1,
               "default": 0.1,
-              "deprecationMessage": "This option has been deprecated"
+              "deprecationMessage": "该配置项已废弃"
             },
             "animation": {
               "$ref": "#/definitions/context_menu/definitions/theme/definitions/animation"
@@ -302,21 +302,21 @@
           }
         },
         "position": {
-          "title": "Position Configuration",
-          "description": "Context menu position configuration",
+          "title": "定位配置",
+          "description": "上下文菜单的定位配置",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "padding_vertical": {
-              "title": "Vertical Padding",
-              "description": "Vertical padding for the context menu popup position",
+              "title": "内边距（纵向）",
+              "description": "上下文菜单弹出位置的内边距（纵向）",
               "type": "integer",
               "minimum": 0,
               "default": 20
             },
             "padding_horizontal": {
-              "title": "Horizontal Padding",
-              "description": "Horizontal padding for the context menu popup position",
+              "title": "内边距（横向）",
+              "description": "上下文菜单弹出位置的内边距（横向）",
               "type": "integer",
               "minimum": 0,
               "default": 0
@@ -324,48 +324,48 @@
           }
         }
       },
-      "title": "Context Menu Configuration",
-      "description": "Configure the behavior and appearance of the context menu",
+      "title": "上下文菜单配置",
+      "description": "配置上下文菜单的行为和外观",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "theme": { "$ref": "#/definitions/context_menu/definitions/theme" },
         "vsync": {
-          "title": "Enable Vertical Sync",
-          "description": "Enable vertical sync to reduce tearing",
+          "title": "启用垂直同步",
+          "description": "启用垂直同步以减少撕裂现象",
           "type": "boolean",
           "default": true
         },
         "ignore_owner_draw": {
-          "title": "Ignore Owner Draw",
-          "description": "Ignore the replacement of owner-drawn context menus",
+          "title": "忽略自绘菜单",
+          "description": "不对自绘菜单进行替换",
           "type": "boolean",
           "default": true
         },
         "reverse_if_open_to_up": {
-          "title": "Reverse Order When Opening Upwards",
-          "description": "Reverse the order of context menu items when the menu opens upwards",
+          "title": "向上展开时反向排列菜单项",
+          "description": "当上下文菜单自下而上展开时，反转上下文菜单项顺序",
           "type": "boolean",
           "default": true
         },
         "experimental_ownerdraw_support": {
-          "title": "Enable Owner Draw (Experimental)",
-          "description": "Currently in an experimental stage, may have issues",
+          "title": "启用自绘菜单（实验性功能）",
+          "description": "目前处于实验阶段，可能会有问题",
           "type": "boolean",
           "default": false
         },
         "hotkeys": {
-          "title": "Enable Hotkeys",
-          "description": "Enable hotkey support for the context menu",
+          "title": "启用快捷键",
+          "description": "启用上下文菜单的快捷键操作",
           "type": "boolean",
           "default": true
         },
         "search_large_dwItemData_range": {
-          "title": "Search Larger Range of DWItemData",
-          "description": "Search for a larger range of DWItemData",
+          "title": "搜索更大范围的图标",
+          "description": "搜索更大范围的 DWItemData",
           "type": "boolean",
           "default": false,
-          "deprecationMessage": "This option is for debugging purposes only and is not recommended to be enabled"
+          "deprecationMessage": "该配置项仅为调试用途"
         },
         "position": {
           "$ref": "#/definitions/context_menu/definitions/position"
@@ -373,35 +373,29 @@
       }
     },
     "animated_float_conf": {
-      "title": "General Animation Configuration",
-      "description": "Configuration for general animations and effects",
+      "title": "通用动画效果配置",
+      "description": "通用动画的行为和效果配置",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "duration": {
-          "title": "Animation Duration",
-          "description": "Duration of the animation effect in milliseconds",
+          "title": "动画持续时间",
+          "description": "动画的持续时间（毫秒）",
           "type": "number",
           "minimum": 0,
           "default": 150
         },
         "easing": {
-          "title": "Animation Easing",
-          "description": "Easing function for the animation effect",
+          "title": "动画曲线",
+          "description": "动画的缓动函数",
           "type": "string",
           "enum": ["mutation", "linear", "ease_in", "ease_out", "ease_in_out"],
-          "enumDescriptions": [
-            "Disabled",
-            "Linear",
-            "Ease In",
-            "Ease Out",
-            "Ease In And Out"
-          ],
+          "enumDescriptions": ["禁用", "线性", "缓入", "缓出", "缓入缓出"],
           "default": "ease_in_out"
         },
         "delay_scale": {
-          "title": "Delay Scale",
-          "description": "Animation delay scale factor",
+          "title": "延迟缩放",
+          "description": "动画效果的延迟缩放比例",
           "type": "number",
           "minimum": 0,
           "default": 1
@@ -414,45 +408,45 @@
     "default_animation": { "$ref": "#/definitions/animated_float_conf" },
     "context_menu": { "$ref": "#/definitions/context_menu" },
     "debug_console": {
-      "title": "Enable Debug Console",
-      "description": "Enable the debug console to view debug information",
+      "title": "启用调试控制台",
+      "description": "启用调试控制台以查看调试信息",
       "type": "boolean",
       "default": false
     },
     "font_path_main": {
-      "title": "Font Path (Main)",
-      "description": "Path to the main font used in the application",
+      "title": "字体路径",
+      "description": "字体的路径",
       "type": "string",
       "default": "C:/Windows/Fonts/segoeui.ttf"
     },
     "font_path_fallback": {
-      "title": "Font Path (Fallback)",
-      "description": "Path to the fallback font used in the application",
+      "title": "字体路径（备用）",
+      "description": "备用字体的路径",
       "type": "string",
       "default": "C:/Windows/Fonts/msyh.ttc"
     },
     "default_mono_font": {
-      "title": "Default Mono Font",
-      "description": "Default monospaced font used in the application",
+      "title": "默认等宽字体路径",
+      "description": "默认等宽字体的路径",
       "type": "string",
       "default": "C:/Windows/Fonts/consola.ttf"
     },
     "res_string_loader_use_hook": {
-      "title": "Enable Resource String Loader Hook",
-      "description": "Use hook-based loading for more resid to improve localization support",
+      "title": "启用资源字符串加载器钩子",
+      "description": "用 hook 方式加载更多 resid 以获取更好的本地化支持",
       "type": "boolean",
       "default": false
     },
     "avoid_resize_ui": {
-      "title": "Avoid UI Resizing",
-      "description": "Force fixed width and height for the UI window",
+      "title": "避免更改 UI 窗口大小",
+      "description": "强制固定宽度和高度",
       "type": "boolean",
       "default": false,
-      "deprecationMessage": "This option is for debugging purposes"
+      "deprecationMessage": "该配置项仅为调试用途"
     },
     "plugin_load_order": {
-      "title": "Plugin Load Order (Priority)",
-      "description": "Plugin file names without extensions (e.g., Windows 11 Icon Pack)",
+      "title": "插件加载顺序（靠前优先）",
+      "description": "插件的无拓展名文件名（例如：Windows 11 Icon Pack）",
       "type": "array",
       "items": { "type": "string" },
       "default": []
