@@ -11,11 +11,11 @@
 ## Schema
 
 Breeze Shell 配置文件的 JSON Schema 位于
-[resources/schema.json](./resources/schema.json)，在配置文件内写入
+[resources/schema-zh_CN.json](./resources/schema-zh_CN.json)，在配置文件内写入
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/std-microblock/breeze-shell/refs/heads/master/resources/schema.json"
+  "$schema": "https://raw.githubusercontent.com/std-microblock/breeze-shell/refs/heads/master/resources/schema-zh_CN.json"
 }
 ```
 
