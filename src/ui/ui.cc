@@ -18,6 +18,8 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
 
+#include "shellscalingapi.h"
+
 namespace ui {
 std::atomic_int render_target::view_cnt = 0;
 thread_local static bool is_in_loop_thread = false;
@@ -171,7 +173,7 @@ std::expected<bool, std::string> render_target::init() {
     auto rt = static_cast<render_target *>(glfwGetWindowUserPointer(window));
     if (key >= 0 && key <= GLFW_KEY_LAST) {
       auto lock = rt->key_states.get_back_lock();
-      auto& back = rt->key_states.get_back();
+      auto &back = rt->key_states.get_back();
       if (action == GLFW_PRESS) {
         back[key] |= key_state::pressed;
       } else if (action == GLFW_RELEASE) {
@@ -199,6 +201,59 @@ render_target::~render_target() {
 
   glfwDestroyWindow(window);
 }
+
+HMONITOR get_closest_monitor(HWND hwnd) {
+  std::vector<std::pair<HMONITOR, MONITORINFO>> monitors;
+  EnumDisplayMonitors(
+      nullptr, nullptr,
+      [](HMONITOR monitor, HDC, LPRECT, LPARAM lParam) {
+        auto &monitors =
+            *reinterpret_cast<std::vector<std::pair<HMONITOR, MONITORINFO>> *>(
+                lParam);
+        MONITORINFO info;
+        info.cbSize = sizeof(MONITORINFO);
+
+        if (GetMonitorInfo(monitor, &info)) {
+          monitors.emplace_back(monitor, info);
+        }
+
+        return TRUE;
+      },
+      reinterpret_cast<LPARAM>(&monitors));
+
+  if (monitors.empty()) {
+    return nullptr;
+  }
+
+  HMONITOR closest_monitor = nullptr;
+  RECT window_rect;
+  GetWindowRect(hwnd, &window_rect);
+  LONG window_center_x = (window_rect.left + window_rect.right) / 2;
+  LONG window_center_y = (window_rect.top + window_rect.bottom) / 2;
+
+  LONG min_distance = LONG_MAX;
+  for (const auto &[monitor, info] : monitors) {
+    LONG monitor_center_x = (info.rcMonitor.left + info.rcMonitor.right) / 2;
+    LONG monitor_center_y = (info.rcMonitor.top + info.rcMonitor.bottom) / 2;
+    LONG distance = abs(monitor_center_x - window_center_x) +
+                    abs(monitor_center_y - window_center_y);
+    if (distance < min_distance) {
+      min_distance = distance;
+      closest_monitor = monitor;
+    }
+  }
+
+  return closest_monitor;
+}
+
+float get_dpi_scale_from_monitor(HMONITOR monitor) {
+  UINT dpi_x, dpi_y;
+  if (GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y) != S_OK) {
+    return 1.0f; // Default DPI scale if failed
+  }
+  return static_cast<float>(dpi_x) / 96.0f; // 96 DPI is the standard DPI
+}
+
 std::expected<bool, std::string> render_target::init_global() {
   static std::atomic_bool initialized = false;
   if (initialized.exchange(true)) {
@@ -274,9 +329,8 @@ void render_target::render() {
   glfwGetCursorPos(window, &mouse_x, &mouse_y);
   int window_x, window_y;
   glfwGetWindowPos(window, &window_x, &window_y);
-
-  auto monitor =
-      MonitorFromWindow(glfwGetWin32Window(window), MONITOR_DEFAULTTONEAREST);
+  auto monitor = get_closest_monitor(glfwGetWin32Window(window));
+  dpi_scale = get_dpi_scale_from_monitor(monitor);
   MONITORINFOEX monitor_info;
   monitor_info.cbSize = sizeof(MONITORINFOEX);
   GetMonitorInfo(monitor, &monitor_info);

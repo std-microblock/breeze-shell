@@ -37,7 +37,7 @@ target("ui")
     add_packages("glfw", "glad", "nanovg", "nanosvg", {
         public = true
     })
-    add_syslinks("dwmapi")
+    add_syslinks("dwmapi", "shcore")
     add_files("src/ui/*.cc")
     add_headerfiles("src/ui/*.h")
     add_includedirs("src/ui", {
