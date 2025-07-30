@@ -87,7 +87,7 @@ struct render_target {
   std::optional<float> acrylic = {};
   bool extend = false;
   bool transparent = false;
-  bool no_focus = false;
+  bool no_activate = false;
   bool capture_all_input = false;
   bool decorated = true;
   bool topmost = false;

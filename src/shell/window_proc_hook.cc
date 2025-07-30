@@ -18,8 +18,10 @@ void window_proc_hook::install(void *hwnd) {
         SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC,
                           (LONG_PTR)this->original_proc);
 
+        std::optional<int> callOriginal = std::nullopt;
         for (auto &f : this->hooks) {
-          f(hwnd, this->original_proc, msg, wp, lp);
+          if (!callOriginal)
+            callOriginal = f(hwnd, this->original_proc, msg, wp, lp);
         }
 
         while (!this->tasks.empty()) {
@@ -30,7 +32,9 @@ void window_proc_hook::install(void *hwnd) {
         SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC,
                           (LONG_PTR)this->hooked_proc);
 
-        return CallWindowProcW((WNDPROC)this->original_proc, hwnd, msg, wp, lp);
+        return callOriginal ? *callOriginal
+                            : CallWindowProcW((WNDPROC)this->original_proc,
+                                              hwnd, msg, wp, lp);
       });
 
   SetWindowLongPtrW((HWND)hwnd, GWLP_WNDPROC, (LONG_PTR)this->hooked_proc);
