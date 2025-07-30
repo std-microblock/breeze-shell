@@ -55,6 +55,7 @@ target("ui_test")
 
 target("shell")
     set_kind("shared")
+    add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs")
     add_deps("ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
@@ -71,6 +72,12 @@ target("shell")
         package:set("configvar", "GIT_COMMIT_HASH", git_commit_hash or "null")
         package:set("configvar", "GIT_BRANCH_NAME", git_branch_name or "null")
         package:set("configvar", "BUILD_DATE_TIME", build_date_time)
+    end)
+    on_run(function (target)
+        if is_host("windows") then
+            local cmd = "rundll32.exe " .. target:targetfile() .. ",func"
+            os.exec(cmd)
+        end
     end)
     add_files("src/shell/script/script.js")
     add_files("src/shell/**/*.cc", "src/shell/*.cc", "src/shell/**/*.c")

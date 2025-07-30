@@ -314,3 +314,113 @@ void ui::update_context::stop_key_propagation(int key) {
     rt.key_states.get()[key] = key_state::none;
   }
 }
+ui::button_widget::button_widget(const std::string &button_text): button_widget() {
+  auto text = emplace_child<ui::text_widget>();
+  text->text = button_text;
+  text->font_size = 14;
+  text->color.reset_to({1, 1, 1, 0.95});
+}
+void ui::button_widget::render(ui::nanovg_context ctx) {
+
+  ctx.fillColor(bg_color);
+  ctx.fillRoundedRect(*x, *y, *width, *height, 6);
+
+  float bw = 1.0f;
+
+  float radius = 6.0f;
+  // 4 edges
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_top);
+  ctx.moveTo(*x + radius, *y + bw / 2);
+  ctx.lineTo(*x + *width - radius, *y + bw / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_right);
+  ctx.moveTo(*x + *width - bw / 2, *y + radius);
+  ctx.lineTo(*x + *width - bw / 2, *y + *height - radius);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_bottom);
+  ctx.moveTo(*x + *width - radius, *y + *height - bw / 2);
+  ctx.lineTo(*x + radius, *y + *height - bw / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_left);
+  ctx.moveTo(*x + bw / 2, *y + *height - radius);
+  ctx.lineTo(*x + bw / 2, *y + radius);
+  ctx.stroke();
+
+  // 4 corners
+  float cr = radius - bw / 2;
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_right.blend(border_top));
+  ctx.moveTo(*x + *width - radius, *y + bw / 2);
+  ctx.arcTo(*x + *width - bw / 2, *y + bw / 2, *x + *width - bw / 2,
+            *y + radius, cr);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_bottom.blend(border_right));
+  ctx.moveTo(*x + *width - bw / 2, *y + *height - radius);
+  ctx.arcTo(*x + *width - bw / 2, *y + *height - bw / 2, *x + *width - radius,
+            *y + *height - bw / 2, cr);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_left.blend(border_bottom));
+  ctx.moveTo(*x + radius, *y + *height - bw / 2);
+  ctx.arcTo(*x + bw / 2, *y + *height - bw / 2, *x + bw / 2,
+            *y + *height - radius, cr);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeWidth(bw);
+  ctx.strokeColor(border_top.blend(border_left));
+  ctx.moveTo(*x + bw / 2, *y + radius);
+  ctx.arcTo(*x + bw / 2, *y + bw / 2, *x + radius, *y + bw / 2, cr);
+  ctx.stroke();
+
+  padding_widget::render(ctx);
+}
+void ui::button_widget::update_colors(bool is_active, bool is_hovered) {
+  if (is_active) {
+    bg_color.animate_to({0.3, 0.3, 0.3, 0.7});
+  } else if (is_hovered) {
+    bg_color.animate_to({0.35, 0.35, 0.35, 0.7});
+  } else {
+    bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
+  }
+}
+void ui::button_widget::on_click() {}
+void ui::button_widget::update(ui::update_context &ctx) {
+  padding_widget::update(ctx);
+
+  if (ctx.mouse_clicked_on_hit(this)) {
+    this->ctx = &ctx;
+    on_click();
+    this->ctx = nullptr;
+  }
+
+  update_colors(ctx.mouse_down_on(this), ctx.hovered(this));
+}
+ui::button_widget::button_widget() {
+  padding_bottom->reset_to(10);
+  padding_top->reset_to(10);
+  padding_left->reset_to(22);
+  padding_right->reset_to(20);
+
+  border_top.reset_to({1, 1, 1, 0.12});
+  border_right.reset_to({1, 1, 1, 0.04});
+  border_bottom.reset_to({1, 1, 1, 0.02});
+  border_left.reset_to({1, 1, 1, 0.04});
+}

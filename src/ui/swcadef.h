@@ -1,5 +1,5 @@
 #pragma once
-#define NOMINMAX
+
 #include "windows.h"
 #include <dwmapi.h>
 

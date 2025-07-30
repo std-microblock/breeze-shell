@@ -22,6 +22,8 @@
 #include "script.h"
 #include "winhttp.h"
 
+#include <shellapi.h>
+
 #include "FileWatch.hpp"
 
 #include "wintoastlib.h"

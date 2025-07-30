@@ -162,7 +162,7 @@
                 commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
                 url = "https://github.com/xmake-io/xmake-repo.git"
             },
-            version = "5.38.2"
+            version = "5.32.0+1"
         },
         ["wintoast#31fecfc4"] = {
             repo = {
