@@ -122,7 +122,7 @@ std::expected<bool, std::string> render_target::init() {
     DwmEnableBlurBehindWindow(h, nullptr);
   }
 
-  if (no_focus) {
+  if (no_activate) {
     SetWindowLongPtr(h, GWL_EXSTYLE,
                      GetWindowLongPtr(h, GWL_EXSTYLE) | WS_EX_LAYERED |
                          WS_EX_NOACTIVATE);
@@ -424,7 +424,7 @@ void render_target::post_main_thread_task(std::function<void()> task) {
   glfwPostEmptyEvent();
 }
 void render_target::show() {
-  if (no_focus) {
+  if (no_activate) {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNOACTIVATE);
   } else {
     ShowWindow(glfwGetWin32Window(window), SW_SHOWNORMAL);
@@ -457,8 +457,10 @@ void render_target::post_loop_thread_task(std::function<void()> task) {
 }
 void render_target::focus() {
   if (this->window) {
-    glfwFocusWindow(this->window);
-    SetActiveWindow(glfwGetWin32Window(this->window));
+    if (!no_activate) {
+      glfwFocusWindow(this->window);
+      SetActiveWindow(glfwGetWin32Window(this->window));
+    }
     SetFocus(glfwGetWin32Window(this->window));
   }
 }
