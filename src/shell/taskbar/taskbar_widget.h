@@ -151,8 +151,25 @@ struct app_list_widget : public ui::widget_flex {
   }
 };
 
+struct windows_button_widget : public ui::widget {
+  windows_button_widget() {}
+  int is_windows_menu_open = false;
+  bool should_ignore_next_click = false;
+  std::optional<ui::NVGImage> icon;
+  ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
+  void render(ui::nanovg_context ctx) override;
+
+  void update(ui::update_context &ctx) override;
+};
+
 struct taskbar_widget : public ui::widget_flex {
   taskbar_widget() {
+    horizontal = true;
+    gap = 10;
+    auto btn_windows = emplace_child<windows_button_widget>();
+    btn_windows->width->reset_to(40);
+    btn_windows->height->reset_to(40);
+
     auto app_list = emplace_child<app_list_widget>();
     app_list->update_stacks();
   }

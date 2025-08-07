@@ -249,9 +249,9 @@ HMONITOR get_closest_monitor(HWND hwnd) {
 float get_dpi_scale_from_monitor(HMONITOR monitor) {
   UINT dpi_x, dpi_y;
   if (GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y) != S_OK) {
-    return 1.0f; // Default DPI scale if failed
+    return 1.0f;
   }
-  return static_cast<float>(dpi_x) / 96.0f; // 96 DPI is the standard DPI
+  return static_cast<float>(dpi_x) / 96.0f;
 }
 
 std::expected<bool, std::string> render_target::init_global() {

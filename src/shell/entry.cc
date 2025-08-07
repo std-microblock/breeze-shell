@@ -32,6 +32,7 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <objbase.h>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -108,10 +109,10 @@ void main() {
   };
 
   std::filesystem::path exe_path(executable_path);
-  auto filename = exe_path.filename().string() | 
-                  std::views::transform([](char c) { return std::tolower(c); }) |
-                  std::ranges::to<std::string>();
-
+  auto filename =
+      exe_path.filename().string() |
+      std::views::transform([](char c) { return std::tolower(c); }) |
+      std::ranges::to<std::string>();
 
   if (filename == "explorer.exe") {
     init_render_global();
@@ -129,7 +130,7 @@ void main() {
 
   if (filename == "rundll32.exe") {
     SetProcessDPIAware();
-
+    CoInitialize(nullptr);
     std::thread([]() {
       SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
       taskbar_render taskbar;

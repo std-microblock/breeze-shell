@@ -215,7 +215,10 @@ inline auto debugDumpPathCache() { return nvgDebugDumpPathCache(ctx); }
   struct NSVGimageRAII {
     NSVGimage *image;
     NSVGimageRAII(NSVGimage *image) : image(image) {}
-    ~NSVGimageRAII() { nsvgDelete(image); }
+    ~NSVGimageRAII() {
+      if (image)
+        nsvgDelete(image);
+    }
   };
 
   inline NVGImage imageFromSVG(NSVGimage *image, float dpi_scale = 1);

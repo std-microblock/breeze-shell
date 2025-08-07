@@ -1,9 +1,13 @@
 #include "taskbar_widget.h"
 #include "async_simple/Promise.h"
 #include "nanovg_wrapper.h"
+#include <atlcomcli.h>
 #include <unordered_map>
 
 #include <shellapi.h>
+
+#include <shobjidl.h>
+#include <windows.h>
 
 #include "cinatra/coro_http_client.hpp"
 namespace mb_shell::taskbar {
@@ -175,13 +179,14 @@ std::vector<window_info> get_window_list() {
             int pid;
 
             GetWindowThreadProcessId(hwnd, (LPDWORD)&pid);
-            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+            HANDLE hProcess = OpenProcess(
+                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
             if (hProcess) {
               DWORD size = MAX_PATH;
               std::wstring exe_path(MAX_PATH + 2, L'\0');
-              if (QueryFullProcessImageNameW((HMODULE)hProcess, 0, exe_path.data(), &size)) {
-                info.icon_handle = ExtractIconW(
-                    nullptr, exe_path.c_str(), 0);
+              if (QueryFullProcessImageNameW((HMODULE)hProcess, 0,
+                                             exe_path.data(), &size)) {
+                info.icon_handle = ExtractIconW(nullptr, exe_path.c_str(), 0);
               }
               CloseHandle(hProcess);
             }
@@ -298,8 +303,8 @@ void app_list_stack_widget::render(ui::nanovg_context ctx) {
 
   // active indicator
   ctx.fillColor({1.0f, 1.0f, 1.0f, *active_indicator_opacity});
-  ctx.fillRoundedRect(*x + (*width - *active_indicator_width) / 2, *y + *height - 4,
-                      *active_indicator_width, 3, 1.5f);
+  ctx.fillRoundedRect(*x + (*width - *active_indicator_width) / 2,
+                      *y + *height - 4, *active_indicator_width, 3, 1.5f);
 }
 void app_list_stack_widget::update(ui::update_context &ctx) {
   ui::widget::update(ctx);
@@ -336,6 +341,69 @@ void app_list_stack_widget::update(ui::update_context &ctx) {
       SetForegroundWindow(hWnd);
       ShowWindow(hWnd, SW_SHOW);
     }
+  }
+}
+void windows_button_widget::render(ui::nanovg_context ctx) {
+  constexpr auto padding = 10;
+
+  if (!icon) {
+    static auto svg_icon_windows =
+        R"#(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4875 4875"><path fill="#fff" d="M0 0h2311v2310H0zm2564 0h2311v2310H2564zM0 2564h2311v2311H0zm2564 0h2311v2311H2564"/></svg>)#";
+    ui::nanovg_context::NSVGimageRAII svg =
+        nsvgParse(std::string(svg_icon_windows).data(), "px", 96);
+    icon = ctx.imageFromSVG(svg.image, ctx.rt->dpi_scale);
+  }
+
+  ctx.fillColor(bg_color.nvg());
+  ctx.fillRoundedRect(*x, *y, *width, *height, 6);
+  ctx.fillColor(nvgRGBAf(1, 1, 1, 1));
+  ctx.drawImage(*icon, *x + padding, *y + padding, *width - padding * 2,
+                *height - padding * 2);
+}
+void windows_button_widget::update(ui::update_context &ctx) {
+  bool last_is_windows_menu_open = is_windows_menu_open;
+  static ATL::CComPtr<IAppVisibility> appVisibility;
+  if (!appVisibility) {
+    HRESULT hr =
+        CoCreateInstance(CLSID_AppVisibility, nullptr, CLSCTX_INPROC_SERVER,
+                         IID_PPV_ARGS(&appVisibility));
+    if (FAILED(hr)) {
+      std::cerr << "Failed to create AppVisibility instance: " << std::hex << hr
+                << std::endl;
+      return;
+    }
+  }
+  appVisibility->IsLauncherVisible(&is_windows_menu_open);
+
+  should_ignore_next_click =
+      (last_is_windows_menu_open && ctx.mouse_down_on(this)) ||
+      should_ignore_next_click;
+
+  if (should_ignore_next_click && ctx.mouse_clicked) {
+    should_ignore_next_click = false;
+    return;
+  }
+
+  if (last_is_windows_menu_open) {
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+    return;
+  }
+
+  if (ctx.mouse_down_on(this)) {
+    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.8f});
+  } else if (ctx.hovered(this)) {
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+  } else {
+    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.8f});
+  }
+
+  if (ctx.mouse_clicked_on(this)) {
+    INPUT input = {};
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = VK_LWIN; // Left Windows key
+    SendInput(1, &input, sizeof(INPUT));
+    input.ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(1, &input, sizeof(INPUT));
   }
 }
 } // namespace mb_shell::taskbar
