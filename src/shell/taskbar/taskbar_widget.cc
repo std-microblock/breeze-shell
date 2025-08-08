@@ -283,9 +283,8 @@ void app_list_stack_widget::render(ui::nanovg_context ctx) {
   }
 
   ctx.fillColor(bg_color);
-  ctx.fillRoundedRect(*x, *y, *width, *height, 6);
-  ctx.strokeColor({0.2f, 0.2f, 0.2f, 0.8f});
-  ctx.strokeRoundedRect(*x, *y, *width, *height, 6);
+  static constexpr auto margin = 4;
+  ctx.fillRoundedRect(*x + margin, *y + margin, *width - margin * 2, *height - margin * 2, 6);
 
   auto &first_window = stack.windows.front();
   if (first_window.icon_handle) {
@@ -312,11 +311,11 @@ void app_list_stack_widget::update(ui::update_context &ctx) {
   height->reset_to(40);
 
   if (ctx.mouse_down_on(this)) {
-    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
   } else if (ctx.hovered(this)) {
-    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.8f});
+    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.5f});
   } else {
-    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.8f});
+    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0});
   }
   // active predicator
   if (active) {
@@ -344,7 +343,7 @@ void app_list_stack_widget::update(ui::update_context &ctx) {
   }
 }
 void windows_button_widget::render(ui::nanovg_context ctx) {
-  ui::widget::render(ctx);
+  super::render(ctx);
   constexpr auto padding = 10;
 
   if (!icon) {
@@ -362,7 +361,7 @@ void windows_button_widget::render(ui::nanovg_context ctx) {
                 *height - padding * 2);
 }
 void windows_button_widget::update(ui::update_context &ctx) {
-  ui::widget::update(ctx);
+  super::update(ctx);
   bool last_is_windows_menu_open = is_windows_menu_open;
   static ATL::CComPtr<IAppVisibility> appVisibility = nullptr;
   if (!appVisibility) {
@@ -387,16 +386,16 @@ void windows_button_widget::update(ui::update_context &ctx) {
   }
 
   if (last_is_windows_menu_open) {
-    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
     return;
   }
 
   if (ctx.mouse_down_on(this)) {
-    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.8f});
+    bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.5f});
   } else if (ctx.hovered(this)) {
-    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.8f});
+    bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
   } else {
-    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.8f});
+    bg_color.animate_to({0.1f, 0.1f, 0.1f, 0});
   }
 
   if (ctx.mouse_clicked_on(this)) {

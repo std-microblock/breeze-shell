@@ -72,7 +72,6 @@ void acrylic_background_widget::update(update_context &ctx) {
 
       bool rgn_set = false;
       while (true) {
-
         if (to_close) {
           ShowWindow((HWND)hwnd, SW_HIDE);
           DestroyWindow((HWND)hwnd);
@@ -103,9 +102,15 @@ void acrylic_background_widget::update(update_context &ctx) {
 
         SetLayeredWindowAttributes((HWND)hwnd, 0, *opacity, LWA_ALPHA);
 
+        should_update = should_update || **x != current_xywh[0] || **y != current_xywh[1] || *width != current_xywh[2] || *height != current_xywh[3];
+
         if (!use_dwm && should_update) {
           rgn_set = true;
           should_update = false;
+          current_xywh[0] = **x;
+          current_xywh[1] = **y;
+          current_xywh[2] = *width;
+          current_xywh[3] = *height;
           auto rgn = CreateRoundRectRgn(
               0, 0, *width * dpi_scale, *height * dpi_scale,
               *radius * 2 * dpi_scale, *radius * 2 * dpi_scale);

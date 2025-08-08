@@ -18,7 +18,7 @@ public:
     void update(ui::update_context& ctx) override;
 
     ui::sp_anim_float opacity;
-    ui::sp_anim_float x, y, width, height, radius;
+    ui::sp_anim_float radius;
     NVGcolor bg_color;
 
 private:
