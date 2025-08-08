@@ -2,16 +2,21 @@
 #include "async_simple/Promise.h"
 #include "breeze_ui/nanovg_wrapper.h"
 #include <atlcomcli.h>
+#include <thread>
+#include <uiautomation.h> // Added for UI Automation
 #include <unordered_map>
 
 #include <shellapi.h>
 
 #include <shobjidl.h>
+#include <unordered_set>
 #include <windows.h>
 
 #include "cinatra/coro_http_client.hpp"
+#include "shell/entry.h"
 
 namespace mb_shell::taskbar {
+
 // https://stackoverflow.com/questions/2397578/how-to-get-the-executable-name-of-a-window
 static HWND GetLastVisibleActivePopUpOfWindow(HWND window) {
     HWND lastPopUp = GetLastActivePopup(window);
@@ -57,6 +62,12 @@ static bool KeepWindowHandleInAltTabList(HWND window) {
             if (std::wstring(window_text) == L"Start") {
                 return false;
             }
+        }
+
+        // Check window style
+        LONG_PTR style = GetWindowLongPtr(window, GWL_STYLE);
+        if (style & WS_EX_TOOLWINDOW) {
+            return false;
         }
 
         return true;
@@ -154,9 +165,7 @@ struct window_info {
     HICON icon_handle;
 
     bool operator==(const window_info &other) const {
-        return hwnd == other.hwnd && title == other.title &&
-               class_name == other.class_name &&
-               icon_handle == other.icon_handle;
+        return hwnd == other.hwnd;
     }
 
     async_simple::coro::Lazy<HICON> get_async_icon_cached();
@@ -220,6 +229,11 @@ struct app_list_stack_widget : public ui::widget {
         auto &first_window = stack.windows.front();
         if (first_window.icon_handle) {
             if (!icon) {
+                if (!IconExtractor::GetIconBitmapInfo(
+                        first_window.icon_handle)) {
+                    first_window.icon_handle = nullptr;
+                    return;
+                }
                 auto rgba = IconExtractor::GetIcon(first_window.icon_handle);
                 icon =
                     ui::NVGImage{ctx.createImageRGBA(rgba.width, rgba.height, 0,
@@ -299,8 +313,10 @@ struct app_list_widget : public ui::widget_flex {
 
     void update_stacks() {
         auto new_stacks = get_window_stacks();
-        std::println("Updating app list stacks, found {} stacks",
-                     new_stacks.size());
+
+        // Mark which existing stacks have been matched
+        std::vector<bool> matched(stacks.size(), false);
+
         // firstly, try to match existing stacks with new ones
         for (auto &new_stack : new_stacks) {
             auto it = std::find_if(stacks.begin(), stacks.end(),
@@ -308,34 +324,35 @@ struct app_list_widget : public ui::widget_flex {
                                        return pair.second.is_same(new_stack);
                                    });
             if (it != stacks.end()) {
+                // Mark this existing stack as matched
+                matched[std::distance(stacks.begin(), it)] = true;
                 it->second = new_stack;
                 it->first->update_stack(new_stack);
             } else {
                 auto widget =
                     std::make_shared<app_list_stack_widget>(new_stack);
                 stacks.emplace_back(widget, new_stack);
-                new_stack.windows[0].get_async_icon_cached().start(
-                    [=](async_simple::Try<HICON> ico) mutable {
-                        if (ico.available() && ico.value() != nullptr) {
-                            widget->stack.windows[0].icon_handle = ico.value();
-                            widget->icon.reset();
-                        }
-                    });
+                matched.push_back(true); // New stack is automatically matched
+                if (!new_stack.windows.empty()) {
+                    new_stack.windows[0].get_async_icon_cached().start(
+                        [=](async_simple::Try<HICON> ico) mutable {
+                            if (ico.available() && ico.value() != nullptr) {
+                                widget->stack.windows[0].icon_handle = ico.value();
+                                widget->icon.reset();
+                            }
+                        });
+                }
                 add_child(widget);
             }
         }
 
-        // Remove stacks that are no longer present
-        stacks.erase(
-            std::remove_if(stacks.begin(), stacks.end(),
-                           [&new_stacks](const auto &pair) {
-                               return std::none_of(
-                                   new_stacks.begin(), new_stacks.end(),
-                                   [&pair](const auto &new_stack) {
-                                       return pair.second.is_same(new_stack);
-                                   });
-                           }),
-            stacks.end());
+        // Remove unmatched stacks
+        for (int i = matched.size() - 1; i >= 0; --i) {
+            if (!matched[i]) {
+                remove_child(stacks[i].first);
+                stacks.erase(stacks.begin() + i);
+            }
+        }
     }
 
     void update_active_stacks() {
@@ -438,6 +455,38 @@ struct windows_button_widget : public background_widget {
     }
 };
 
+std::unordered_set<taskbar_widget *> taskbar_widgets;
+void init_polling_thread() {
+    std::thread([]() {
+        while (true) {
+            int cnt = 0;
+            EnumWindows(
+                [](HWND hwnd, LPARAM lParam) -> BOOL {
+                    auto *count = reinterpret_cast<int *>(lParam);
+                    (*count)++;
+                    return TRUE;
+                },
+                reinterpret_cast<LPARAM>(&cnt));
+
+            static auto last_win_cnt = 0;
+            if (cnt != last_win_cnt) {
+                last_win_cnt = cnt;
+                for (auto *widget : taskbar_widgets) {
+                    widget->get_child<app_list_widget>()->update_stacks();
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }).detach();
+}
+
+void ensure_polling_thread_initialized() {
+    static bool initialized = false;
+    if (!initialized) {
+        init_polling_thread();
+    }
+}
+
 taskbar_widget::taskbar_widget() {
     horizontal = true;
     gap = 7;
@@ -451,9 +500,15 @@ taskbar_widget::taskbar_widget() {
 
     auto app_list = emplace_child<app_list_widget>();
     app_list->update_stacks();
+    taskbar_widgets.insert(this);
+    ensure_polling_thread_initialized();
 }
 
+taskbar_widget::~taskbar_widget() { taskbar_widgets.erase(this); }
+
 std::vector<window_info> get_window_list() {
+    static std::mutex lock;
+    std::lock_guard<std::mutex> guard(lock);
     std::vector<window_info> windows;
 
     EnumWindows(
@@ -464,7 +519,6 @@ std::vector<window_info> get_window_list() {
             if (KeepWindowHandleInAltTabList(hwnd)) {
                 window_info info;
                 info.hwnd = hwnd;
-
                 int title_length = GetWindowTextLengthW(hwnd);
                 if (title_length > 0) {
                     std::wstring title(title_length + 1, L'\0');

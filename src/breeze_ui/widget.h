@@ -186,6 +186,7 @@ struct widget : std::enable_shared_from_this<widget> {
   virtual bool check_hit(const update_context &ctx);
 
   void add_child(std::shared_ptr<widget> child);
+  void remove_child(std::shared_ptr<widget> child);
   std::vector<std::shared_ptr<widget>> children;
   bool children_dirty = false;
   template <typename T, typename... Args>

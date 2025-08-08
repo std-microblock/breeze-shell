@@ -21,5 +21,6 @@
 namespace mb_shell::taskbar {
 struct taskbar_widget : public ui::widget_flex {
     taskbar_widget();
+    ~taskbar_widget();
 };
 } // namespace mb_shell::taskbar

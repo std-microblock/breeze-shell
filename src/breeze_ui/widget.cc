@@ -424,3 +424,9 @@ ui::button_widget::button_widget() {
   border_bottom.reset_to({1, 1, 1, 0.02});
   border_left.reset_to({1, 1, 1, 0.04});
 }
+void ui::widget::remove_child(std::shared_ptr<widget> child) {
+    child->parent = nullptr;
+    children.erase(std::remove(children.begin(), children.end(), child),
+                   children.end());
+    children_dirty = true;
+}
