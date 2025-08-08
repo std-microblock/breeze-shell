@@ -20,17 +20,18 @@ std::expected<void, std::string> taskbar_render::init() {
                monitor.rcMonitor.top, monitor.rcMonitor.right,
                monitor.rcMonitor.bottom);
 
-  int height = (monitor.rcMonitor.bottom - monitor.rcMonitor.top) / 10;
+  int height = (monitor.rcMonitor.bottom - monitor.rcMonitor.top) / 20;
   rt.show();
   config::current->apply_fonts_to_nvg(rt.nvg);
 
   bool top = position == menu_position::top;
 
+  rt.resize(monitor.rcMonitor.right - monitor.rcMonitor.left, height);
   if (top) {
-    rt.resize(monitor.rcMonitor.right - monitor.rcMonitor.left, height);
+    rt.set_position(monitor.rcMonitor.left, monitor.rcMonitor.top);
   } else {
-    rt.resize(monitor.rcMonitor.right - monitor.rcMonitor.left,
-              monitor.rcMonitor.bottom - monitor.rcMonitor.top - height);
+    rt.set_position(monitor.rcMonitor.left,
+                    monitor.rcMonitor.bottom - height);
   }
 
   APPBARDATA abd = {sizeof(APPBARDATA)};

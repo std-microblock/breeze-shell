@@ -344,6 +344,7 @@ void app_list_stack_widget::update(ui::update_context &ctx) {
   }
 }
 void windows_button_widget::render(ui::nanovg_context ctx) {
+  ui::widget::render(ctx);
   constexpr auto padding = 10;
 
   if (!icon) {
@@ -361,8 +362,9 @@ void windows_button_widget::render(ui::nanovg_context ctx) {
                 *height - padding * 2);
 }
 void windows_button_widget::update(ui::update_context &ctx) {
+  ui::widget::update(ctx);
   bool last_is_windows_menu_open = is_windows_menu_open;
-  static ATL::CComPtr<IAppVisibility> appVisibility;
+  static ATL::CComPtr<IAppVisibility> appVisibility = nullptr;
   if (!appVisibility) {
     HRESULT hr =
         CoCreateInstance(CLSID_AppVisibility, nullptr, CLSCTX_INPROC_SERVER,

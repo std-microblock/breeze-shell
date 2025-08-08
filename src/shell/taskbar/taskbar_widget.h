@@ -166,6 +166,10 @@ struct taskbar_widget : public ui::widget_flex {
   taskbar_widget() {
     horizontal = true;
     gap = 10;
+    auto left_padding = emplace_child<ui::rect_widget>();
+    left_padding->width->reset_to(6);
+    left_padding->height->reset_to(1);
+
     auto btn_windows = emplace_child<windows_button_widget>();
     btn_windows->width->reset_to(40);
     btn_windows->height->reset_to(40);

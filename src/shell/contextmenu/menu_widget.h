@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include "../widgets/background_widget.h"
 
 namespace mb_shell {
 
@@ -99,16 +100,15 @@ struct menu_widget : public ui::widget_flex {
   float actual_height = 0;
   ui::sp_anim_float scroll_top =
       anim_float(0, 200, ui::easing_type::ease_in_out);
-  std::shared_ptr<ui::rect_widget> bg;
+  std::shared_ptr<background_widget> bg;
 
-  std::shared_ptr<ui::rect_widget> bg_submenu;
+  std::shared_ptr<background_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
   std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
   std::vector<std::shared_ptr<widget>> item_widgets;
   menu_widget *parent_menu = nullptr;
 
-  std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;
   menu_widget();
   popup_direction direction = popup_direction::bottom_right;

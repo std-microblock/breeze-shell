@@ -235,56 +235,6 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
     submenu_wid = nullptr;
   }
 }
-std::shared_ptr<ui::rect_widget>
-mb_shell::menu_widget::create_bg(bool is_main) {
-  std::shared_ptr<ui::rect_widget> bg;
-
-  if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
-
-    auto light_color = menu_render::current.value()->light_color;
-    auto acrylic_color =
-        light_color
-            ? parse_color(
-                  config::current->context_menu.theme.acrylic_color_light)
-            : parse_color(
-                  config::current->context_menu.theme.acrylic_color_dark);
-
-    auto acrylic = std::make_shared<ui::acrylic_background_widget>(
-        config::current->context_menu.theme.use_dwm_if_available
-            ? is_win11_or_later()
-            : false);
-    acrylic->acrylic_bg_color = acrylic_color;
-    acrylic->update_color();
-    bg = acrylic;
-
-    if (menu_render::current.value()->light_color)
-      bg->bg_color = nvgRGBAf(1, 1, 1, 0);
-    else
-      bg->bg_color = nvgRGBAf(0, 0, 0, 0);
-  } else {
-    bg = std::make_shared<ui::rect_widget>();
-    auto c = menu_render::current.value()->light_color ? 1 : 25 / 255.f;
-    bg->bg_color = nvgRGBAf(c, c, c, 1);
-  }
-
-  bg->radius->reset_to(config::current->context_menu.theme.radius);
-
-  bg->opacity->reset_to(0);
-  if (is_main)
-    config::current->context_menu.theme.animation.main_bg.opacity(bg->opacity,
-                                                                  0);
-  else {
-    config::current->context_menu.theme.animation.submenu_bg.opacity(
-        bg->opacity, 0);
-    config::current->context_menu.theme.animation.submenu_bg.x(bg->x, 0);
-    config::current->context_menu.theme.animation.submenu_bg.y(bg->y, 0);
-    config::current->context_menu.theme.animation.submenu_bg.w(bg->width, 0);
-    config::current->context_menu.theme.animation.submenu_bg.h(bg->height, 0);
-  }
-  bg->opacity->animate_to(
-      255 * config::current->context_menu.theme.background_opacity);
-  return bg;
-}
 
 mb_shell::menu_widget::menu_widget() : super() {
   gap = config::current->context_menu.theme.item_gap;
@@ -313,7 +263,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 
   if (current_submenu) {
     if (!bg_submenu) {
-      bg_submenu = create_bg(false);
+      bg_submenu = std::make_shared<background_widget>(false);
       bg_submenu->x->reset_to(current_submenu->x->dest());
       bg_submenu->y->reset_to(current_submenu->y->dest() - bg_padding_vertical);
       bg_submenu->width->reset_to(current_submenu->width->dest());
@@ -569,78 +519,7 @@ bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
 
 void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
 
-  auto bg_filler_factory = [&](auto bg, ui::nanovg_context &ctx) {
-    return [bg, ctx]() mutable {
-      ctx.globalAlpha(*bg->opacity / 255.f);
-      auto &theme = config::current->context_menu.theme;
-      bool light = menu_render::current.value()->light_color;
-
-      bool use_dwm = config::current->context_menu.theme.use_dwm_if_available
-                         ? is_win11_or_later()
-                         : false;
-      bool use_self_drawn_border = theme.use_self_drawn_border && !use_dwm;
-
-      float boarder_width = use_self_drawn_border ? theme.border_width : 0.0f;
-      if (use_self_drawn_border) {
-        float shadow_size = theme.shadow_size,
-              shadow_offset_x = theme.shadow_offset_x,
-              shadow_offset_y = theme.shadow_offset_y;
-        float corner_radius = theme.radius;
-        NVGcolor shadow_color_from =
-                     parse_color(light ? theme.shadow_color_light_from
-                                       : theme.shadow_color_dark_from),
-                 shadow_color_to =
-                     parse_color(light ? theme.shadow_color_light_to
-                                       : theme.shadow_color_dark_to);
-
-        ctx.beginPath();
-        ctx.beginPath();
-
-        ctx.roundedRect(*bg->x - shadow_size + shadow_offset_x,
-                        *bg->y - shadow_size + shadow_offset_y,
-                        *bg->width + shadow_size * 2,
-                        *bg->height + shadow_size * 2,
-                        corner_radius + shadow_size);
-        ctx.fillPaint(ctx.boxGradient(*bg->x + shadow_offset_x,
-                                      *bg->y + shadow_offset_y, *bg->width,
-                                      *bg->height, corner_radius, shadow_size,
-                                      shadow_color_from, shadow_color_to));
-        ctx.fill();
-
-        // Draw the border
-        ctx.beginPath();
-
-        if (theme.inset_border) {
-          ctx.roundedRect(*bg->x + boarder_width / 2,
-                          *bg->y + boarder_width / 2,
-                          *bg->width - boarder_width,
-                          *bg->height - boarder_width, corner_radius);
-        } else {
-          ctx.roundedRect(*bg->x, *bg->y, *bg->width, *bg->height,
-                          corner_radius);
-        }
-        ctx.strokeWidth(boarder_width);
-        auto border_color =
-            light ? theme.border_color_light : theme.border_color_dark;
-        border_color.apply_to_ctx(ctx, *bg->x, *bg->y, *bg->width, *bg->height);
-        ctx.stroke();
-      }
-
-      ctx.globalCompositeOperation(NVG_DESTINATION_IN);
-      ctx.globalAlpha(1);
-      auto cl = nvgRGBAf(0, 0, 0, 1 - *bg->opacity / 255.f);
-      ctx.fillColor(cl);
-      if (theme.inset_border)
-        ctx.fillRoundedRect(*bg->x + boarder_width, *bg->y + boarder_width,
-                            *bg->width - boarder_width * 2,
-                            *bg->height - boarder_width * 2, *bg->radius);
-      else
-        ctx.fillRoundedRect(*bg->x, *bg->y, *bg->width, *bg->height,
-                            *bg->radius);
-    };
-  };
   if (bg) {
-    ctx.transaction(bg_filler_factory(bg, ctx));
     bg->render(ctx);
   }
 
@@ -653,7 +532,6 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
   auto ctx2 = ctx.with_offset(*x, *y);
 
   if (bg_submenu) {
-    ctx2.transaction(bg_filler_factory(bg_submenu, ctx2));
     bg_submenu->render(ctx2);
   }
   render_children(ctx2, rendering_submenus);
@@ -933,7 +811,7 @@ mb_shell::menu_item_normal_widget::menu_item_normal_widget(menu_item item)
 
 void mb_shell::menu_widget::init_from_data(menu menu_data) {
   if (menu_data.is_top_level && !bg) {
-    bg = create_bg(true);
+    bg = std::make_shared<background_widget>(true);
   }
   auto init_items = menu_data.items;
 
