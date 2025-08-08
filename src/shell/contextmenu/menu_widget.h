@@ -1,5 +1,5 @@
 #pragma once
-#include "../config.h"
+#include "shell/config.h"
 #include "breeze_ui/animator.h"
 #include "contextmenu.h"
 #include "breeze_ui/extra_widgets.h"
@@ -10,7 +10,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include "../widgets/background_widget.h"
+#include "shell/widgets/background_widget.h"
 
 namespace mb_shell {
 

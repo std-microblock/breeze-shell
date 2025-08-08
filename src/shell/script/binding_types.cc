@@ -12,12 +12,12 @@
 #include <variant>
 
 // Resid
-#include "../res_string_loader.h"
+#include "shell/res_string_loader.h"
 // Context menu
-#include "../contextmenu/menu_render.h"
-#include "../contextmenu/menu_widget.h"
+#include "shell/contextmenu/menu_render.h"
+#include "shell/contextmenu/menu_widget.h"
 // Compile Information
-#include "../build_info.h"
+#include "shell/build_info.h"
 
 #include "script.h"
 #include "winhttp.h"

@@ -1,6 +1,6 @@
 #include "menu_widget.h"
-#include "../config.h"
-#include "../utils.h"
+#include "shell/config.h"
+#include "shell/utils.h"
 #include "GLFW/glfw3.h"
 #include "breeze_ui/animator.h"
 #include "contextmenu.h"
@@ -16,7 +16,7 @@
 #include <ranges>
 #include <vector>
 
-#include "../logger.h"
+#include "shell/logger.h"
 /*
 | padding | icon_padding | icon | icon_padding | text_padding | text |
 text_padding | hotkey_padding | hotkey | hotkey_padding | right_icon_padding |

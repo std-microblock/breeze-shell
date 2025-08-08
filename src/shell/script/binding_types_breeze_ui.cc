@@ -1,4 +1,4 @@
-#include "../contextmenu/menu_widget.h"
+#include "shell/contextmenu/menu_widget.h"
 #include "breeze_ui/animator.h"
 #include "binding_types.hpp"
 #include "breeze_ui/ui.h"

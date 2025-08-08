@@ -1,5 +1,5 @@
 #pragma once
-#include "../config.h"
+#include "shell/config.h"
 #include "breeze_ui/animator.h"
 #include "async_simple/Try.h"
 #include "breeze_ui/extra_widgets.h"

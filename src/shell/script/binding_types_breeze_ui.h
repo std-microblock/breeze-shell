@@ -7,7 +7,7 @@
 #include <variant>
 #include <vector>
 
-#include "../paint_color.h"
+#include "shell/paint_color.h"
 
 namespace ui {
 struct widget;

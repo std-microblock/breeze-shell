@@ -4,9 +4,9 @@
 #include "Windows.h"
 #include "menu_widget.h"
 
-#include "../entry.h"
-#include "../logger.h"
-#include "../script/binding_types.hpp"
+#include "shell//entry.h"
+#include "shell//logger.h"
+#include "shell//script/binding_types.hpp"
 #include "breeze_ui/ui.h"
 #include <mutex>
 #include <thread>

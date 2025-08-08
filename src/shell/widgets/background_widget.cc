@@ -1,7 +1,7 @@
 #include "background_widget.h"
-#include "../config.h"
-#include "../utils.h"
-#include "../contextmenu/menu_render.h"
+#include "shell/config.h"
+#include "shell/utils.h"
+#include "shell/contextmenu/menu_render.h"
 #include "breeze_ui/extra_widgets.h"
 #include "nanovg.h"
 

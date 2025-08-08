@@ -5,7 +5,7 @@
 
 #include <shellapi.h>
 
-#include "../config.h"
+#include "shell/config.h"
 namespace mb_shell {
 std::expected<void, std::string> taskbar_render::init() {
   rt.transparent = true;
