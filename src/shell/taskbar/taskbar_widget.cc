@@ -1,6 +1,6 @@
 #include "taskbar_widget.h"
 #include "async_simple/Promise.h"
-#include "nanovg_wrapper.h"
+#include "breeze_ui/nanovg_wrapper.h"
 #include <atlcomcli.h>
 #include <unordered_map>
 

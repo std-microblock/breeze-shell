@@ -1,7 +1,7 @@
 #pragma once
 #include "../utils.h"
 #include "contextmenu.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #include <memory>
 #include <optional>
 

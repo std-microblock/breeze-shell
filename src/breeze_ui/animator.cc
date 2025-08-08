@@ -1,5 +1,5 @@
-#include "animator.h"
-#include "widget.h"
+#include "breeze_ui/animator.h"
+#include "breeze_ui/widget.h"
 #include <array>
 #include <cstdio>
 #include <numbers>

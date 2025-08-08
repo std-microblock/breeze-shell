@@ -1,5 +1,5 @@
-#include "widget.h"
-#include "ui.h"
+#include "breeze_ui/widget.h"
+#include "breeze_ui/ui.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>

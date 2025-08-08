@@ -37,7 +37,7 @@ shell.menu_controller.add_menu_listener((e) => {
 
 ## 轻量高速
 
-Breeze 基于自研 breeze-ui 框架实现，这是一个跨平台、简洁优雅、动画友好的现代 C++ UI 库，支持 NanoVG 和 ThorVG 双渲染后端。这使得 Breeze 能在约 2MB 的体积下实现精致的视觉体验。
+Breeze 基于自研 breeze_ui 框架实现，这是一个跨平台、简洁优雅、动画友好的现代 C++ UI 库，支持 NanoVG 和 ThorVG 双渲染后端。这使得 Breeze 能在约 2MB 的体积下实现精致的视觉体验。
 
 # 立即体验
 

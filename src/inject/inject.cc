@@ -5,9 +5,9 @@
 #include <thread>
 #include <vector>
 
-#include "animator.h"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/animator.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 
 static unsigned char g_icon_png[] = {
 #include "icon-small.png.h"

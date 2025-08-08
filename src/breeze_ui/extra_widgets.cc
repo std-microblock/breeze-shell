@@ -1,12 +1,12 @@
-#include "extra_widgets.h"
-#include "widget.h"
+#include "breeze_ui/extra_widgets.h"
+#include "breeze_ui/widget.h"
 #include <future>
 #include <iostream>
 #include <print>
 #include <thread>
 
 #include "swcadef.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #include <expected>
 #include <functional>
 #include <memory>

@@ -10,9 +10,9 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 
-#include "ui.h"
+#include "breeze_ui/ui.h"
 
-#include "widget.h"
+#include "breeze_ui/widget.h"
 
 #include "nanovg.h"
 #define NANOVG_GL3_IMPLEMENTATION

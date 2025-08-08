@@ -32,15 +32,15 @@ add_requireconfs("**.async_simple", {
     version = "18f3882be354d407af0f0674121dcddaeff36e26"
 })
 
-target("ui")
+target("breeze_ui")
     set_kind("static")
     add_packages("glfw", "glad", "nanovg", "nanosvg", {
         public = true
     })
     add_syslinks("dwmapi", "shcore")
-    add_files("src/ui/*.cc")
-    add_headerfiles("src/ui/*.h")
-    add_includedirs("src/ui", {
+    add_files("src/breeze_ui/*.cc")
+    add_headerfiles("src/breeze_ui/*.h")
+    add_includedirs("src/", {
         public = true
     })
     set_encodings("utf-8")
@@ -48,16 +48,21 @@ target("ui")
 target("ui_test")
     set_default(false)
     set_kind("binary")
-    add_deps("ui")
+    add_deps("breeze_ui")
     add_files("src/ui_test/*.cc")
     set_encodings("utf-8")
     add_tests("defualt")
 
 target("shell")
+    add_headerfiles()
     set_kind("shared")
+    add_headerfiles("src/shell/**.h")
+    add_includedirs("src/", {
+        public = true
+    })
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs")
-    add_deps("ui")
+    add_deps("breeze_ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
         extensions = {".js"}
@@ -87,7 +92,7 @@ target("inject")
     set_kind("binary")
     add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32")
     add_files("src/inject/*.cc")
-    add_deps("ui")
+    add_deps("breeze_ui")
     set_basename("breeze")
     set_encodings("utf-8")
     add_rules("utils.bin2c", {

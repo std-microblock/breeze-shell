@@ -7,7 +7,7 @@
 #include "../entry.h"
 #include "../logger.h"
 #include "../script/binding_types.hpp"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #include <mutex>
 #include <thread>
 

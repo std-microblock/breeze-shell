@@ -1,8 +1,8 @@
 #include "../contextmenu/menu_widget.h"
-#include "animator.h"
+#include "breeze_ui/animator.h"
 #include "binding_types.hpp"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 #include <memory>
 #include <print>
 

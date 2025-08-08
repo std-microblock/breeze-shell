@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nanovg_wrapper.h"
+#include "breeze_ui/nanovg_wrapper.h"
 #include <functional>
 #include <memory>
 #include <optional>

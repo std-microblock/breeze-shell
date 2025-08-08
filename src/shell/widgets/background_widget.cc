@@ -2,7 +2,7 @@
 #include "../config.h"
 #include "../utils.h"
 #include "../contextmenu/menu_render.h"
-#include "extra_widgets.h"
+#include "breeze_ui/extra_widgets.h"
 #include "nanovg.h"
 
 namespace mb_shell {

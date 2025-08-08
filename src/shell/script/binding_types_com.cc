@@ -33,7 +33,7 @@
 #include <winuser.h>
 
 #include "propkey.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];

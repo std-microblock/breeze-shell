@@ -1,7 +1,7 @@
 #pragma once
-#include "animator.h"
+#include "breeze_ui/animator.h"
 #include "nanovg.h"
-#include "widget.h"
+#include "breeze_ui/widget.h"
 #include <condition_variable>
 #include <mutex>
 #include <thread>

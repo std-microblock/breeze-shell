@@ -10,7 +10,7 @@
 #include "script/binding_types.hpp"
 #include "script/quickjspp.hpp"
 #include "script/script.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #include "utils.h"
 
 #include "./contextmenu/contextmenu.h"

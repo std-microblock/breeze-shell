@@ -2,7 +2,7 @@
 #include "contextmenu.h"
 #include "../utils.h"
 #include "menu_widget.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 #include <algorithm>
 #include <codecvt>
 

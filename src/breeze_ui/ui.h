@@ -14,7 +14,7 @@
 #include "GLFW/glfw3.h"
 #include "nanovg.h"
 
-#include "widget.h"
+#include "breeze_ui/widget.h"
 
 namespace ui {
 

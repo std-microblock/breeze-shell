@@ -1,20 +1,21 @@
 #pragma once
 #include "../config.h"
-#include "animator.h"
+#include "breeze_ui/animator.h"
 #include "async_simple/Try.h"
-#include "extra_widgets.h"
-#include "hbitmap_utils.h"
+#include "breeze_ui/extra_widgets.h"
+#include "breeze_ui/hbitmap_utils.h"
 #include "nanovg.h"
-#include "nanovg_wrapper.h"
+#include "breeze_ui/nanovg_wrapper.h"
 #include "taskbar.h"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <optional>
 
 #include "async_simple/coro/Lazy.h"
+
 
 namespace mb_shell::taskbar {
 struct window_info {

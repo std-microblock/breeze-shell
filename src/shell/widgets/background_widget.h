@@ -1,8 +1,8 @@
 #pragma once
 
-#include "widget.h"
-#include "extra_widgets.h"
-#include "animator.h"
+#include "breeze_ui/widget.h"
+#include "breeze_ui/extra_widgets.h"
+#include "breeze_ui/animator.h"
 #include "nanovg.h"
 #include <memory>
 

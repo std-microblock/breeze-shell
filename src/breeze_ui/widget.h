@@ -1,6 +1,6 @@
 #pragma once
-#include "animator.h"
-#include "nanovg_wrapper.h"
+#include "breeze_ui/animator.h"
+#include "breeze_ui/nanovg_wrapper.h"
 
 #include <functional>
 #include <memory>

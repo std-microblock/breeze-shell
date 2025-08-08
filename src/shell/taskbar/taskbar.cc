@@ -1,5 +1,5 @@
 #include "taskbar.h"
-#include "widget.h"
+#include "breeze_ui/widget.h"
 
 #include "taskbar_widget.h"
 
