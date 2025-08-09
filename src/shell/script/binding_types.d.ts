@@ -48,7 +48,7 @@ export class js_widget {
      * @returns void
      */
     set_animation(variable_name: string, enabled: boolean): void
-	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget
+	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget
 }
 }
 namespace breeze_ui {
@@ -110,9 +110,16 @@ export class js_flex_layout_widget extends js_widget {
 }
 }
 namespace breeze_ui {
+export class js_image_widget extends js_widget {
+	get svg(): string;
+    set svg(value: string);
+}
+}
+namespace breeze_ui {
 export class widgets_factory {
 	static create_text_widget(): breeze_ui.js_text_widget
 	static create_flex_layout_widget(): breeze_ui.js_flex_layout_widget
+	static create_image_widget(): breeze_ui.js_image_widget
 }
 }
 namespace breeze_ui {

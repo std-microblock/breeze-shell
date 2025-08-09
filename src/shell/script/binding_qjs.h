@@ -152,6 +152,18 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
     }
 };
 
+template<> struct js_bind<mb_shell::js::breeze_ui::js_image_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_image_widget>("breeze_ui::js_image_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_image_widget::get_svg, &mb_shell::js::breeze_ui::js_image_widget::set_svg>("svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::get_svg>("get_svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::set_svg>("set_svg")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::breeze_ui::widgets_factory> {
     static mb_shell::js::breeze_ui::widgets_factory unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::breeze_ui::widgets_factory obj;
@@ -171,6 +183,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
             ;
     }
 };
@@ -1142,6 +1155,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::js_text_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::js_image_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 
