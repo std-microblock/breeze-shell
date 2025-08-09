@@ -9,6 +9,7 @@ async function build() {
       platform: 'browser',
       outfile: '../script.js',
       external: ['mshell'],
+      minify: true,
       banner: {
         js: `// Generated from project in ./ts
 // Don't edit this file directly!
