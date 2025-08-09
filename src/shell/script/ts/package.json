@@ -1,0 +1,16 @@
+{
+  "name": "preact-ui",
+  "packageManager": "yarn@1.22.19",
+  "devDependencies": {
+    "esbuild": "^0.25.5"
+  },
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "@types/react": "18",
+    "@types/react-reconciler": "^0.28.9",
+    "react": "18",
+    "react-reconciler": "0.29.2"
+  }
+}
