@@ -17,6 +17,6 @@
     "react": "18",
     "react-reconciler": "0.29.2"
   },
-  "version": "0.0.10",
+  "version": "0.0.11",
   "types": "./dist/types/type_entry.d.ts"
 }
