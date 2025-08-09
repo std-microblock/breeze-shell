@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <windows.h>
 
+#include "breeze_ui/widget.h"
 #include "cinatra/coro_http_client.hpp"
 #include "shell/entry.h"
 
@@ -337,7 +338,8 @@ struct app_list_widget : public ui::widget_flex {
                     new_stack.windows[0].get_async_icon_cached().start(
                         [=](async_simple::Try<HICON> ico) mutable {
                             if (ico.available() && ico.value() != nullptr) {
-                                widget->stack.windows[0].icon_handle = ico.value();
+                                widget->stack.windows[0].icon_handle =
+                                    ico.value();
                                 widget->icon.reset();
                             }
                         });
@@ -487,11 +489,125 @@ void ensure_polling_thread_initialized() {
     }
 }
 
+// Clock widget
+struct clock_widget : public background_widget {
+    using super = background_widget;
+    std::string current_time;
+    std::string current_date;
+    ui::animated_color text_color = {this, 1.0f, 1.0f, 1.0f, 0.9f};
+    ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.0f};
+
+    clock_widget() : background_widget(false) { update_time(); }
+
+    void update_time() {
+        auto now = std::chrono::system_clock::now();
+        auto time_t = std::chrono::system_clock::to_time_t(now);
+        auto tm = *std::localtime(&time_t);
+
+        char time_buffer[32];
+        char date_buffer[64];
+        std::strftime(time_buffer, sizeof(time_buffer), "%H:%M:%S", &tm);
+        std::strftime(date_buffer, sizeof(date_buffer), "%Y/%m/%d", &tm);
+
+        current_time = time_buffer;
+        current_date = date_buffer;
+    }
+
+    void render(ui::nanovg_context ctx) override {
+        super::render(ctx);
+
+        ctx.fillColor(bg_color.nvg());
+        ctx.fillRoundedRect(*x, *y, *width, *height, 6);
+
+        ctx.fillColor(text_color.nvg());
+        ctx.fontSize(14);
+        ctx.fontFace("main");
+        ctx.textAlign(NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+
+        // Draw time
+        ctx.text(*x + *width / 2, *y + 8, current_time.c_str(), nullptr);
+
+        // Draw date
+        ctx.fontSize(11);
+        ctx.text(*x + *width / 2, *y + 24, current_date.c_str(), nullptr);
+    }
+
+    void update(ui::update_context &ctx) override {
+        super::update(ctx);
+
+        // Update time every second
+        static auto last_update = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_update)
+                .count() >= 1) {
+            update_time();
+            last_update = now;
+        }
+
+        width->reset_to(80);
+        height->reset_to(40);
+
+        if (ctx.mouse_down_on(this)) {
+            bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.6f});
+            text_color.animate_to({1.0f, 1.0f, 1.0f, 1.0f});
+        } else if (ctx.hovered(this)) {
+            bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.4f});
+            text_color.animate_to({1.0f, 1.0f, 1.0f, 1.0f});
+        } else {
+            bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.0f});
+            text_color.animate_to({1.0f, 1.0f, 1.0f, 0.9f});
+        }
+
+        if (ctx.mouse_clicked_on(this)) {
+            // Open Windows calendar/date settings
+            ShellExecuteW(nullptr, L"open", L"ms-settings:dateandtime", nullptr,
+                          nullptr, SW_SHOWNORMAL);
+        }
+    }
+};
+
+// Desktop button widget
+struct desktop_button_widget : public background_widget {
+    using super = background_widget;
+    ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.0f};
+
+    desktop_button_widget() : background_widget(false) {}
+
+    void render(ui::nanovg_context ctx) override {
+        super::render(ctx);
+
+        ctx.fillColor(bg_color.nvg());
+        ctx.fillRoundedRect(*x, *y, *width, *height, 6);
+    }
+
+    void update(ui::update_context &ctx) override {
+        super::update(ctx);
+        width->reset_to(10);
+        height->reset_to(40);
+
+        if (ctx.mouse_down_on(this)) {
+            bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.6f});
+        } else if (ctx.hovered(this)) {
+            bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.4f});
+        } else {
+            bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.0f});
+        }
+
+        if (ctx.mouse_clicked_on(this)) {
+            // Show desktop by minimizing all windows
+            keybd_event(VK_LWIN, 0, 0, 0);
+            keybd_event('D', 0, 0, 0);
+            keybd_event('D', 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+        }
+    }
+};
+
 taskbar_widget::taskbar_widget() {
     horizontal = true;
     gap = 7;
     auto left_padding = emplace_child<ui::rect_widget>();
-    left_padding->width->reset_to(5);
+    left_padding->width->reset_to(10);
     left_padding->height->reset_to(0);
 
     auto btn_windows = emplace_child<windows_button_widget>();
@@ -501,6 +617,15 @@ taskbar_widget::taskbar_widget() {
     auto app_list = emplace_child<app_list_widget>();
     app_list->update_stacks();
     taskbar_widgets.insert(this);
+
+    emplace_child<ui::widget_flex::spacer>();
+    auto clock = emplace_child<clock_widget>();
+    auto desktop_btn = emplace_child<desktop_button_widget>();
+
+    auto right_padding = emplace_child<ui::rect_widget>();
+    right_padding->width->reset_to(5);
+    right_padding->height->reset_to(0);
+
     ensure_polling_thread_initialized();
 }
 

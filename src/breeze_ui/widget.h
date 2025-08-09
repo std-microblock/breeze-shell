@@ -231,7 +231,7 @@ struct widget_flex : public widget {
     void update(update_context &ctx) override;
 
     struct spacer : public widget {
-        float size = 0;
+        float size = 1;
     };
 };
 // A widget that renders text
