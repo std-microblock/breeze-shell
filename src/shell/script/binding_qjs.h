@@ -175,6 +175,30 @@ template<> struct js_bind<mb_shell::js::breeze_ui::breeze_paint> {
     }
 };
 
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui::window> {
+    static mb_shell::js::breeze_ui::window unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui::window obj;
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui::window &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze_ui::window> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::window>("breeze_ui::window")
+            .constructor<>()
+                .static_fun<&mb_shell::js::breeze_ui::window::create>("create")
+                .fun<&mb_shell::js::breeze_ui::window::set_root_widget>("set_root_widget")
+                .fun<&mb_shell::js::breeze_ui::window::close>("close")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
     static mb_shell::js::folder_view_folder_item unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::folder_view_folder_item obj;
@@ -1087,51 +1111,6 @@ template<> struct js_bind<mb_shell::js::infra> {
     }
 };
 
-template <> struct qjs::js_traits<mb_shell::js::ui> {
-    static mb_shell::js::ui unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::ui obj;
-
-        return obj;
-    }
-
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::ui &val) noexcept {
-        JSValue obj = JS_NewObject(ctx);
-
-        return obj;
-    }
-};
-template<> struct js_bind<mb_shell::js::ui> {
-    static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::ui>("ui")
-            .constructor<>()
-            ;
-    }
-};
-
-template <> struct qjs::js_traits<mb_shell::js::ui::window> {
-    static mb_shell::js::ui::window unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::ui::window obj;
-
-        return obj;
-    }
-
-    static JSValue wrap(JSContext *ctx, const mb_shell::js::ui::window &val) noexcept {
-        JSValue obj = JS_NewObject(ctx);
-
-        return obj;
-    }
-};
-template<> struct js_bind<mb_shell::js::ui::window> {
-    static void bind(qjs::Context::Module &mod) {
-        mod.class_<mb_shell::js::ui::window>("ui::window")
-            .constructor<>()
-                .static_fun<&mb_shell::js::ui::window::create>("create")
-                .fun<&mb_shell::js::ui::window::set_root_widget>("set_root_widget")
-                .fun<&mb_shell::js::ui::window::close>("close")
-            ;
-    }
-};
-
 inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::breeze_ui>::bind(mod);
@@ -1145,6 +1124,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::breeze_paint>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::window>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 
@@ -1191,9 +1172,5 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::notification>::bind(mod);
 
     js_bind<mb_shell::js::infra>::bind(mod);
-
-    js_bind<mb_shell::js::ui>::bind(mod);
-
-    js_bind<mb_shell::js::ui::window>::bind(mod);
 
 }

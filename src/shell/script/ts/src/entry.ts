@@ -1,6 +1,8 @@
 import * as shell from "mshell"
 import { makeBreezeConfigMenu } from "./menu";
 import { plugin } from "./plugin";
+import * as React from "react";
+import { createRenderer } from "./react/renderer";
 
 // remove possibly existing shell_old.dll if able to
 if (shell.fs.exists(shell.breeze.data_directory() + '/shell_old.dll')) {
@@ -35,3 +37,5 @@ shell.menu_controller.add_menu_listener(ctx => {
 })
 
 globalThis.plugin = plugin as any
+globalThis.React = React
+globalThis.createRenderer = createRenderer

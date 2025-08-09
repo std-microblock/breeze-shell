@@ -8,11 +8,14 @@
     "types": [
       "./src/jsx.d.ts",
       "../binding_types.d.ts",
-      "./src/types/global.d.ts"
+      "./src/global.d.ts"
     ],
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationDir": "./dist/types"
   }
 }

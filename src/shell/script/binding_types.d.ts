@@ -104,6 +104,25 @@ export class breeze_paint {
     static from_color(color: string): breeze_ui.breeze_paint
 }
 }
+namespace breeze_ui {
+export class window {
+	/**
+     * 
+     * @param title: string
+     * @param width: number
+     * @param height: number
+     * @returns breeze_ui.window
+     */
+    static create(title: string, width: number, height: number): breeze_ui.window
+	/**
+     * 
+     * @param widget: breeze_ui.js_widget
+     * @returns void
+     */
+    set_root_widget(widget: breeze_ui.js_widget): void
+	close(): void
+}
+}
 export class folder_view_folder_item {
 	index: number
 	parent_path: string
@@ -1121,27 +1140,6 @@ export class infra {
      */
     static btoa(str: string): string
 }
-export class ui {
-}
-namespace ui {
-export class window {
-	/**
-     * 
-     * @param title: string
-     * @param width: number
-     * @param height: number
-     * @returns ui.window
-     */
-    static create(title: string, width: number, height: number): ui.window
-	/**
-     * 
-     * @param widget: breeze_ui.js_widget
-     * @returns void
-     */
-    set_root_widget(widget: breeze_ui.js_widget): void
-	close(): void
-}
-}
 }
 
 declare module "mshell" {
@@ -1159,27 +1157,3 @@ declare module "mshell" {
     type uintptr_t = number;
     type ssize_t = number;
 }
-
-// helper to access field based on dot path
-type FieldPath<T, K extends string> = K extends keyof T ? T[K] : K extends `${infer K1}.${infer K2}` ? K1 extends keyof T ? FieldPath<T[K1], K2> : never : never;
-
-declare function plugin<T = object>(import_meta: { url: string }, default_config?: T): {
-    i18n: {
-        define(lang: string, data: { [key: string]: string }): void;
-        t(key: string): string;
-    };
-    set_on_menu(callback: (m:
-        import('mshell').menu_controller
-    ) => void): void;
-    config_directory: string;
-    config: {
-        read_config(): void;
-        write_config(): void;
-        get<K extends string>(key: K): FieldPath<T, K>;
-        set<K extends string>(key: K, value: FieldPath<T, K>): void;
-        all(): T;
-    };
-    log(...args: any[]): void;
-};
-
-declare type ShellPluginHelper = ReturnType<typeof plugin>;

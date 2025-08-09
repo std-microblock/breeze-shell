@@ -11,9 +11,6 @@
 
 #include "binding_types_breeze_ui.h"
 
-namespace ui {
-struct render_target;
-}
 
 namespace mb_shell {
 struct mouse_menu_widget_main;
@@ -660,18 +657,6 @@ struct infra {
 
     static std::string atob(std::string base64);
     static std::string btoa(std::string str);
-};
-
-struct ui {
-    struct window {
-        static std::shared_ptr<window> create(std::string title, int width,
-                                              int height);
-
-        std::unique_ptr<::ui::render_target> $render_target;
-        void set_root_widget(
-            std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget);
-        void close();
-    };
 };
 
 } // namespace mb_shell::js

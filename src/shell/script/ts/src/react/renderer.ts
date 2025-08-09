@@ -1,5 +1,6 @@
 import Reconciler, { HostConfig } from 'react-reconciler'
 import * as shell from "mshell"
+import React from 'react';
 
 const getSetFactory = (fieldname: string) => {
     return {

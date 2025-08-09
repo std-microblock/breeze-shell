@@ -1,4 +1,5 @@
 #include "binding_types.hpp"
+#include "binding_types_breeze_ui.h"
 #include "quickjspp.hpp"
 #include <filesystem>
 #include <iostream>
@@ -1409,33 +1410,5 @@ std::string win32::string_from_resid(std::string str) {
 }
 std::vector<std::string> win32::all_resids_from_string(std::string str) {
     return res_string_loader::get_all_ids_of_string(utf8_to_wstring(str));
-}
-std::shared_ptr<ui::window> ui::window::create(std::string title, int width,
-                                               int height) {
-    auto rt = std::make_unique<::ui::render_target>();
-    rt->acrylic = 0.1;
-    rt->transparent = true;
-    rt->width = width;
-    rt->height = height;
-    rt->title = title;
-
-    auto win = std::make_shared<ui::window>();
-    win->$render_target = std::move(rt);
-
-    std::thread([win]() { win->$render_target->start_loop(); }).detach();
-    win->$render_target->show();
-    return win;
-}
-void ui::window::set_root_widget(
-    std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget) {
-    if (!$render_target)
-        return;
-    std::lock_guard l($render_target->rt_lock);
-    $render_target->root = widget->$widget;
-}
-void ui::window::close() {
-    if (!$render_target)
-        return;
-    $render_target->close();
 }
 } // namespace mb_shell::js
