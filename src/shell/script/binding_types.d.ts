@@ -7,6 +7,14 @@ export class breeze_ui {
 }
 namespace breeze_ui {
 export class js_widget {
+	get x(): number;
+    set x(value: number);
+	get y(): number;
+    set y(value: number);
+	get width(): number;
+    set width(value: number);
+	get height(): number;
+    set height(value: number);
 	children(): Array<breeze_ui.js_widget>
 	/**
      * 
@@ -55,14 +63,6 @@ export class js_text_widget extends js_widget {
 }
 namespace breeze_ui {
 export class js_flex_layout_widget extends js_widget {
-	get x(): number;
-    set x(value: number);
-	get y(): number;
-    set y(value: number);
-	get width(): number;
-    set width(value: number);
-	get height(): number;
-    set height(value: number);
 	get auto_size(): boolean;
     set auto_size(value: boolean);
 	get horizontal(): boolean;
@@ -110,9 +110,16 @@ export class js_flex_layout_widget extends js_widget {
 }
 }
 namespace breeze_ui {
+export class js_image_widget extends js_widget {
+	get svg(): string;
+    set svg(value: string);
+}
+}
+namespace breeze_ui {
 export class widgets_factory {
 	static create_text_widget(): breeze_ui.js_text_widget
 	static create_flex_layout_widget(): breeze_ui.js_flex_layout_widget
+	static create_image_widget(): breeze_ui.js_image_widget
 }
 }
 namespace breeze_ui {

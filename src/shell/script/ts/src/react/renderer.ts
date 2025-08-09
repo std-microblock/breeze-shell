@@ -6,7 +6,9 @@ const getSetFactory = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_widget, value: any) => {
             const v = Array.isArray(value) ? value : [value];
-            instance.downcast()['set_' + fieldname](...v);
+            const setter = instance.downcast()['set_' + fieldname];
+            if (!setter) console.log(`[warn] Setter not found for ${fieldname}`);
+            else setter(...v);
         },
         get: (instance: shell.breeze_ui.js_widget) => {
             return instance.downcast()['get_' + fieldname]();
@@ -86,6 +88,14 @@ const animatedVarsProp = {
     }
 }
 
+const basicProps = {
+    animatedVars: animatedVarsProp,
+    x: getSetFactory('x'),
+    y: getSetFactory('y'),
+    width: getSetFactory('width'),
+    height: getSetFactory('height'),
+}
+
 const componentMap = {
     text: {
         creator: shell.breeze_ui.widgets_factory.create_text_widget,
@@ -100,7 +110,7 @@ const componentMap = {
             },
             fontSize: getSetFactory('font_size'),
             color: getSetFactoryColor('color'),
-            animatedVars: animatedVarsProp
+            ...basicProps
         }
     },
     flex: {
@@ -124,12 +134,15 @@ const componentMap = {
             backgroundPaint: getSetFactory('background_paint'),
             borderPaint: getSetFactory('border_paint'),
             horizontal: getSetFactory('horizontal'),
-            animatedVars: animatedVarsProp,
-            x: getSetFactory('x'),
-            y: getSetFactory('y'),
-            width: getSetFactory('width'),
-            height: getSetFactory('height'),
-            autoSize: getSetFactory('auto_size')
+            autoSize: getSetFactory('auto_size'),
+            ...basicProps
+        }
+    },
+    img: {
+        creator: shell.breeze_ui.widgets_factory.create_image_widget,
+        props: {
+            svg: getSetFactory('svg'),
+            ...basicProps
         }
     }
 }

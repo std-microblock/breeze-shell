@@ -48,12 +48,24 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::breeze_ui::js_widget>("breeze_ui::js_widget")
             .constructor<>()
+                .property<&mb_shell::js::breeze_ui::js_widget::get_x, &mb_shell::js::breeze_ui::js_widget::set_x>("x")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_y, &mb_shell::js::breeze_ui::js_widget::set_y>("y")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_width, &mb_shell::js::breeze_ui::js_widget::set_width>("width")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_height, &mb_shell::js::breeze_ui::js_widget::set_height>("height")
                 .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child>("append_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::prepend_child>("prepend_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::remove_child>("remove_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child_after>("append_child_after")
                 .fun<&mb_shell::js::breeze_ui::js_widget::set_animation>("set_animation")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_x>("get_x")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_x>("set_x")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_y>("get_y")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_y>("set_y")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_width>("get_width")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_width>("set_width")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_height>("get_height")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_height>("set_height")
                 .fun<&mb_shell::js::breeze_ui::js_widget::downcast>("downcast")
             ;
     }
@@ -82,10 +94,6 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
         mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("breeze_ui::js_flex_layout_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
-                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_x, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_x>("x")
-                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_y, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_y>("y")
-                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_width>("width")
-                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_height, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_height>("height")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_auto_size>("auto_size")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_horizontal>("horizontal")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_left, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_left>("padding_left")
@@ -104,14 +112,6 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("border_radius")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("border_color")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("border_width")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_x>("get_x")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_x>("set_x")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_y>("get_y")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_y>("set_y")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_width>("get_width")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_width>("set_width")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_height>("get_height")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_height>("set_height")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size>("get_auto_size")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_auto_size>("set_auto_size")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
@@ -152,6 +152,18 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
     }
 };
 
+template<> struct js_bind<mb_shell::js::breeze_ui::js_image_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_image_widget>("breeze_ui::js_image_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_image_widget::get_svg, &mb_shell::js::breeze_ui::js_image_widget::set_svg>("svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::get_svg>("get_svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::set_svg>("set_svg")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::breeze_ui::widgets_factory> {
     static mb_shell::js::breeze_ui::widgets_factory unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::breeze_ui::widgets_factory obj;
@@ -171,6 +183,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
             ;
     }
 };
@@ -1142,6 +1155,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::js_text_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::js_image_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 

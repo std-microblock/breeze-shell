@@ -1,5 +1,6 @@
 import { breeze_paint } from "mshell";
 
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
@@ -36,6 +37,21 @@ declare module 'react' {
         fontSize?: number;
         color?: string;
         key?: string | number;
+        animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        autoSize?: boolean;
+      },
+      img: {
+        animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        autoSize?: boolean;
+        svg?: string;
       }
     }
   }

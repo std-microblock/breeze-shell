@@ -1,7 +1,10 @@
+#include "binding_types_breeze_ui.h"
 #include "binding_types.hpp"
 #include "breeze_ui/animator.h"
+#include "breeze_ui/nanovg_wrapper.h"
 #include "breeze_ui/ui.h"
 #include "breeze_ui/widget.h"
+#include "nanosvg.h"
 #include "shell/config.h"
 #include "shell/contextmenu/menu_widget.h"
 #include <memory>
@@ -388,9 +391,9 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
     set_padding_bottom(bottom);
 }
 
-std::variant<std::shared_ptr<breeze_ui::js_widget>,
-             std::shared_ptr<breeze_ui::js_text_widget>,
-             std::shared_ptr<breeze_ui::js_flex_layout_widget>>
+std::variant<std::shared_ptr<breeze_ui::js_widget>, std::shared_ptr<breeze_ui::js_text_widget>,
+             std::shared_ptr<breeze_ui::js_flex_layout_widget>,
+             std::shared_ptr<breeze_ui::js_image_widget>>
 breeze_ui::js_widget::downcast() {
 #define TRY_DOWNCAST(type)                                                     \
     if (auto casted =                                                          \
@@ -399,6 +402,7 @@ breeze_ui::js_widget::downcast() {
     }
     TRY_DOWNCAST(js_text_widget);
     TRY_DOWNCAST(js_flex_layout_widget);
+    TRY_DOWNCAST(js_image_widget);
 #undef TRY_DOWNCAST
 
     return this->shared_from_this();
@@ -433,11 +437,8 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    border_width, float)
 
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, x, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, y, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, width, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, height, float)
-IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size, bool)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
+                 bool)
 
 void breeze_ui::window::set_root_widget(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget) {
@@ -490,6 +491,60 @@ void breeze_ui::js_widget::set_animation(std::string variable_name,
             }
         }
     }
+}
+
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, x, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, y, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, width, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, height, float)
+
+struct image_widget : public ui::widget {
+    struct data_svg {
+        std::string content;
+    };
+
+    std::variant<data_svg, std::nullopt_t> data = std::nullopt;
+    std::optional<ui::NVGImage> image;
+
+    void render(ui::nanovg_context ctx) override {
+        if (!image) {
+            if (auto svg = std::get_if<data_svg>(&data)) {
+                ui::nanovg_context::NSVGimageRAII img(
+                    nsvgParse(svg->content.data(), nullptr, 96));
+                image = ctx.imageFromSVG(img.image);
+            }
+        }
+
+        if (image) {
+            ctx.drawImage(*image, *x, *y, *width, *height);
+        }
+    }
+};
+
+std::string breeze_ui::js_image_widget::get_svg() {
+    auto w = $widget->downcast<image_widget>();
+    if (w) {
+        if (auto svg = std::get_if<image_widget::data_svg>(&w->data)) {
+            return svg->content;
+        }
+    }
+    return "";
+}
+
+void breeze_ui::js_image_widget::set_svg(std::string svg) {
+    auto w = $widget->downcast<image_widget>();
+    if (w) {
+        w->data = image_widget::data_svg{svg};
+    }
+}
+
+std::shared_ptr<breeze_ui::js_image_widget>
+breeze_ui::widgets_factory::create_image_widget() {
+    auto wid = std::make_shared<image_widget>();
+
+    auto res = std::make_shared<js_image_widget>();
+    res->$widget = std::dynamic_pointer_cast<ui::widget>(wid);
+    return res;
 }
 
 // Clean up macros

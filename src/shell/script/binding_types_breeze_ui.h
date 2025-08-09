@@ -18,6 +18,7 @@ namespace mb_shell::js {
 struct breeze_ui {
     struct js_text_widget;
     struct js_flex_layout_widget;
+    struct js_image_widget;
     struct breeze_paint;
     struct js_widget : public std::enable_shared_from_this<js_widget> {
         std::shared_ptr<ui::widget> $widget;
@@ -35,9 +36,20 @@ struct breeze_ui {
 
         void set_animation(std::string variable_name, bool enabled);
 
+        float get_x() const;
+        void set_x(float x);
+        float get_y() const;
+        void set_y(float y);
+        float get_width() const;
+        void set_width(float width);
+        float get_height() const;
+        void set_height(float height);
+
         std::variant<std::shared_ptr<js_widget>,
                      std::shared_ptr<js_text_widget>,
-                     std::shared_ptr<js_flex_layout_widget>>
+                     std::shared_ptr<js_flex_layout_widget>,
+                     std::shared_ptr<js_image_widget>
+                     >
         downcast();
         // // Note: You can only certain widgets that can be loaded with
         // `downcast()`.
@@ -59,10 +71,6 @@ struct breeze_ui {
     type get_##name() const;                                                   \
     void set_##name(type);
 
-        DEFINE_PROP(float, x)
-        DEFINE_PROP(float, y)
-        DEFINE_PROP(float, width)
-        DEFINE_PROP(float, height)
         DEFINE_PROP(bool, auto_size)
 
         DEFINE_PROP(bool, horizontal)
@@ -96,10 +104,16 @@ struct breeze_ui {
 #undef DEFINE_PROP
     };
 
+    struct js_image_widget : public js_widget {
+        std::string get_svg();
+        void set_svg(std::string svg);
+    };
+
     struct widgets_factory {
         static std::shared_ptr<js_text_widget> create_text_widget();
         static std::shared_ptr<js_flex_layout_widget>
         create_flex_layout_widget();
+        static std::shared_ptr<js_image_widget> create_image_widget();
     };
 
     struct breeze_paint {
