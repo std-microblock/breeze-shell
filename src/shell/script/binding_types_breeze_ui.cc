@@ -226,6 +226,11 @@ void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
     }
 }
 
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, x, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, y, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, width, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, height, float)
+
 std::shared_ptr<breeze_ui::js_text_widget>
 breeze_ui::widgets_factory::create_text_widget() {
     auto text_widget = std::make_shared<ui::text_widget>();
@@ -433,10 +438,7 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    border_width, float)
 
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, x, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, y, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, width, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, height, float)
+
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size, bool)
 
 void breeze_ui::window::set_root_widget(

@@ -35,6 +35,15 @@ struct breeze_ui {
 
         void set_animation(std::string variable_name, bool enabled);
 
+        float get_x() const;
+        void set_x(float x);
+        float get_y() const;
+        void set_y(float y);
+        float get_width() const;
+        void set_width(float width);
+        float get_height() const;
+        void set_height(float height);
+
         std::variant<std::shared_ptr<js_widget>,
                      std::shared_ptr<js_text_widget>,
                      std::shared_ptr<js_flex_layout_widget>>
@@ -59,10 +68,6 @@ struct breeze_ui {
     type get_##name() const;                                                   \
     void set_##name(type);
 
-        DEFINE_PROP(float, x)
-        DEFINE_PROP(float, y)
-        DEFINE_PROP(float, width)
-        DEFINE_PROP(float, height)
         DEFINE_PROP(bool, auto_size)
 
         DEFINE_PROP(bool, horizontal)
