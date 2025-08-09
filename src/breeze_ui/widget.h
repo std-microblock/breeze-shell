@@ -229,8 +229,11 @@ struct widget_flex : public widget {
     reposition_children_flex(update_context &ctx,
                              std::vector<std::shared_ptr<widget>> &children);
     void update(update_context &ctx) override;
-};
 
+    struct spacer : public widget {
+        float size = 0;
+    };
+};
 // A widget that renders text
 struct text_widget : public widget {
     std::string text;

@@ -576,6 +576,8 @@ breeze_ui::window::create(std::string title, int width, int height) {
             win->$render_target->show();
             win->$render_target->start_loop();
         }
+
+        win->$render_target->close();
     }).detach();
     return win;
 }
