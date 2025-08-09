@@ -1,16 +1,19 @@
 {
-  "name": "preact-ui",
+  "name": "breeze-shell-types",
   "packageManager": "yarn@1.22.19",
   "devDependencies": {
     "esbuild": "^0.25.5"
   },
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "build-types": "node build-types.js",
+    "prepublishOnly": "yarn build-types"
   },
   "dependencies": {
     "@types/react": "18",
     "@types/react-reconciler": "^0.28.9",
     "react": "18",
     "react-reconciler": "0.29.2"
-  }
+  },
+  "version": "0.0.1"
 }
