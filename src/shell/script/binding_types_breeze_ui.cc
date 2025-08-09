@@ -8,6 +8,112 @@
 #include <print>
 
 namespace mb_shell::js {
+
+// Macro for getter/setter pairs with animation support
+#define IMPL_ANIMATED_PROP(class_name, widget_type, prop_name, prop_type)      \
+    prop_type class_name::get_##prop_name() const {                            \
+        if (!$widget)                                                          \
+            return prop_type{};                                                \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return prop_type{};                                                \
+        return widget->prop_name->dest();                                      \
+    }                                                                          \
+    void class_name::set_##prop_name(prop_type value) {                        \
+        if (!$widget)                                                          \
+            return;                                                            \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return;                                                            \
+        widget->prop_name->animate_to(value);                                  \
+    }
+
+// Macro for simple getter/setter pairs
+#define IMPL_SIMPLE_PROP(class_name, widget_type, prop_name, prop_type)        \
+    prop_type class_name::get_##prop_name() const {                            \
+        if (!$widget)                                                          \
+            return prop_type{};                                                \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return prop_type{};                                                \
+        return widget->prop_name;                                              \
+    }                                                                          \
+    void class_name::set_##prop_name(prop_type value) {                        \
+        if (!$widget)                                                          \
+            return;                                                            \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return;                                                            \
+        widget->prop_name = value;                                             \
+    }
+
+// Macro for callback function getter/setter pairs
+#define IMPL_CALLBACK_PROP(class_name, widget_type, prop_name, callback_type)  \
+    callback_type class_name::get_##prop_name() const {                        \
+        if (!$widget)                                                          \
+            return nullptr;                                                    \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return nullptr;                                                    \
+        return widget->prop_name;                                              \
+    }                                                                          \
+    void class_name::set_##prop_name(callback_type callback) {                 \
+        if (!$widget)                                                          \
+            return;                                                            \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return;                                                            \
+        widget->prop_name = callback;                                          \
+    }
+
+// Macro for color getter/setter pairs with animation
+#define IMPL_COLOR_PROP(class_name, widget_type, prop_name)                    \
+    std::optional<std::tuple<float, float, float, float>>                      \
+        class_name::get_##prop_name() const {                                  \
+        if (!$widget)                                                          \
+            return std::nullopt;                                               \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return std::nullopt;                                               \
+        auto color = *widget->prop_name;                                       \
+        return std::make_tuple(color[0], color[1], color[2], color[3]);        \
+    }                                                                          \
+    void class_name::set_##prop_name(                                          \
+        std::optional<std::tuple<float, float, float, float>> color) {         \
+        if (!$widget)                                                          \
+            return;                                                            \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget)                                                           \
+            return;                                                            \
+        if (color.has_value()) {                                               \
+            widget->prop_name.animate_to(                                      \
+                {std::get<0>(color.value()), std::get<1>(color.value()),       \
+                 std::get<2>(color.value()), std::get<3>(color.value())});     \
+        } else {                                                               \
+            widget->prop_name.animate_to({0.0f, 0.0f, 0.0f, 0.0f});            \
+        }                                                                      \
+    }
+
+// Macro for paint getter/setter pairs
+#define IMPL_PAINT_PROP(class_name, widget_type, prop_name)                    \
+    std::shared_ptr<breeze_ui::breeze_paint> class_name::get_##prop_name()     \
+        const {                                                                \
+        if (!$widget)                                                          \
+            return nullptr;                                                    \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget || !widget->prop_name)                                     \
+            return nullptr;                                                    \
+        return std::make_shared<breeze_paint>(*widget->prop_name);             \
+    }                                                                          \
+    void class_name::set_##prop_name(std::shared_ptr<breeze_paint> paint) {    \
+        if (!$widget)                                                          \
+            return;                                                            \
+        auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
+        if (!widget || !paint)                                                 \
+            return;                                                            \
+        widget->prop_name = paint->$paint;                                     \
+    }
+
 std::vector<std::shared_ptr<breeze_ui::js_widget>>
 breeze_ui::js_widget::children() const {
     std::vector<std::shared_ptr<js_widget>> result;
@@ -19,6 +125,7 @@ breeze_ui::js_widget::children() const {
     }
     return result;
 }
+
 std::string breeze_ui::js_text_widget::get_text() const {
     if (!$widget)
         return "";
@@ -134,10 +241,10 @@ struct widget_js_base : public ui::widget_flex {
     std::function<void(int)> on_click;
     std::function<void(float, float)> on_mouse_move;
     std::function<void()> on_mouse_enter;
-    std::function<void(ui::update_context &ctx)> on_mouse_leave;
-    std::function<void(ui::update_context &ctx)> on_mouse_down;
-    std::function<void(ui::update_context &ctx)> on_mouse_up;
-    std::function<void(ui::update_context &ctx)> on_mouse_wheel;
+    std::function<void()> on_mouse_leave;
+    std::function<void()> on_mouse_down;
+    std::function<void()> on_mouse_up;
+    std::function<void(int)> on_mouse_wheel;
     std::function<void(ui::update_context &ctx)> on_update;
 
     bool previous_hovered = false;
@@ -165,20 +272,20 @@ struct widget_js_base : public ui::widget_flex {
                     return;
             } else if (!ctx.hovered(this) && previous_hovered &&
                        on_mouse_leave) {
-                on_mouse_leave(ctx);
+                on_mouse_leave();
                 if (weak.expired())
                     return;
             }
 
             previous_hovered = ctx.hovered(this);
             if (ctx.mouse_down_on(this) && on_mouse_down) {
-                on_mouse_down(ctx);
+                on_mouse_down();
                 if (weak.expired())
                     return;
             }
 
             if (ctx.mouse_up && on_mouse_up) {
-                on_mouse_up(ctx);
+                on_mouse_up();
                 if (weak.expired())
                     return;
             }
@@ -194,7 +301,7 @@ struct widget_js_base : public ui::widget_flex {
             }
 
             if (ctx.scroll_y != 0 && on_mouse_wheel) {
-                on_mouse_wheel(ctx);
+                on_mouse_wheel(ctx.scroll_y);
                 if (weak.expired())
                     return;
             }
@@ -255,88 +362,23 @@ breeze_ui::widgets_factory::create_flex_layout_widget() {
     return res;
 }
 
-float breeze_ui::js_flex_layout_widget::get_padding_left() const {
-    if (!$widget)
-        return 0.0f;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return 0.0f;
-    return flex_widget->padding_left->dest();
-}
-void breeze_ui::js_flex_layout_widget::set_padding_left(float padding) {
-    if (!$widget)
-        return;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return;
-    flex_widget->padding_left->animate_to(padding);
-}
-float breeze_ui::js_flex_layout_widget::get_padding_right() const {
-    if (!$widget)
-        return 0.0f;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return 0.0f;
-    return flex_widget->padding_right->dest();
-}
-void breeze_ui::js_flex_layout_widget::set_padding_right(float padding) {
-    if (!$widget)
-        return;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return;
-    flex_widget->padding_right->animate_to(padding);
-}
-float breeze_ui::js_flex_layout_widget::get_padding_top() const {
-    if (!$widget)
-        return 0.0f;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return 0.0f;
-    return flex_widget->padding_top->dest();
-}
-void breeze_ui::js_flex_layout_widget::set_padding_top(float padding) {
-    if (!$widget)
-        return;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return;
-    flex_widget->padding_top->animate_to(padding);
-}
-float breeze_ui::js_flex_layout_widget::get_padding_bottom() const {
-    if (!$widget)
-        return 0.0f;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return 0.0f;
-    return flex_widget->padding_bottom->dest();
-}
-void breeze_ui::js_flex_layout_widget::set_padding_bottom(float padding) {
-    if (!$widget)
-        return;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return;
-    flex_widget->padding_bottom->animate_to(padding);
-}
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   padding_left, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   padding_right, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   padding_top, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   padding_bottom, float)
+
 std::tuple<float, float, float, float>
 breeze_ui::js_flex_layout_widget::get_padding() const {
     return {get_padding_left(), get_padding_right(), get_padding_top(),
             get_padding_bottom()};
 }
-bool breeze_ui::js_flex_layout_widget::get_horizontal() const {
-    return $widget && std::dynamic_pointer_cast<widget_js_base>($widget)
-               ? std::dynamic_pointer_cast<widget_js_base>($widget)->horizontal
-               : false;
-}
-void breeze_ui::js_flex_layout_widget::set_horizontal(bool horizontal) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->horizontal = horizontal;
-        }
-    }
-}
+
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, horizontal,
+                 bool)
 
 void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
                                                    float top, float bottom) {
@@ -345,6 +387,7 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
     set_padding_top(top);
     set_padding_bottom(bottom);
 }
+
 std::variant<std::shared_ptr<breeze_ui::js_widget>,
              std::shared_ptr<breeze_ui::js_text_widget>,
              std::shared_ptr<breeze_ui::js_flex_layout_widget>>
@@ -360,192 +403,35 @@ breeze_ui::js_widget::downcast() {
 
     return this->shared_from_this();
 }
+
 std::shared_ptr<breeze_ui::breeze_paint>
 breeze_ui::breeze_paint::from_color(std::string color) {
     auto paint = std::make_shared<breeze_paint>();
     paint->$paint = paint_color::from_string(color);
     return paint;
 }
-std::function<void(int)>
-breeze_ui::js_flex_layout_widget::get_on_click() const {
-    if (!$widget)
-        return nullptr;
-    auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-    if (!flex_widget)
-        return nullptr;
-    return flex_widget->on_click;
-}
-void breeze_ui::js_flex_layout_widget::set_on_click(
-    std::function<void(int)> on_click) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->on_click = on_click;
-        }
-    }
-}
-std::function<void(float, float)>
-breeze_ui::js_flex_layout_widget::get_on_mouse_move() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            return flex_widget->on_mouse_move;
-        }
-    }
-    return nullptr;
-}
-void breeze_ui::js_flex_layout_widget::set_on_mouse_move(
-    std::function<void(float, float)> on_mouse_move) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->on_mouse_move = on_mouse_move;
-        }
-    }
-}
-std::function<void()>
-breeze_ui::js_flex_layout_widget::get_on_mouse_enter() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            return flex_widget->on_mouse_enter;
-        }
-    }
-    return nullptr;
-}
-void breeze_ui::js_flex_layout_widget::set_on_mouse_enter(
-    std::function<void()> on_mouse_enter) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->on_mouse_enter = on_mouse_enter;
-        }
-    }
-}
-void breeze_ui::js_flex_layout_widget::set_background_color(
-    std::optional<std::tuple<float, float, float, float>> color) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            if (color.has_value()) {
-                flex_widget->background_color.animate_to(
-                    {std::get<0>(color.value()), std::get<1>(color.value()),
-                     std::get<2>(color.value()), std::get<3>(color.value())});
-            } else {
-                flex_widget->background_color.animate_to(
-                    {0.0f, 0.0f, 0.0f, 0.0f});
-            }
-        }
-    }
-}
-std::optional<std::tuple<float, float, float, float>>
-breeze_ui::js_flex_layout_widget::get_background_color() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            auto color = *flex_widget->background_color;
-            return std::make_tuple(color[0], color[1], color[2], color[3]);
-        }
-    }
-    return std::nullopt;
-}
-void breeze_ui::js_flex_layout_widget::set_background_paint(
-    std::shared_ptr<breeze_ui::breeze_paint> paint) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget && paint) {
-            flex_widget->background_paint = paint->$paint;
-        }
-    }
-}
-std::shared_ptr<breeze_ui::breeze_paint>
-breeze_ui::js_flex_layout_widget::get_background_paint() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            return std::make_shared<breeze_paint>(
-                *flex_widget->background_paint);
-        }
-    }
-    return nullptr;
-}
-void breeze_ui::js_flex_layout_widget::set_border_radius(float radius) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->border_radius->animate_to(radius);
-        }
-    }
-}
-float breeze_ui::js_flex_layout_widget::get_border_radius() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            return flex_widget->border_radius->dest();
-        }
-    }
-    return 0.0f;
-}
-void breeze_ui::js_flex_layout_widget::set_border_color(
-    std::optional<std::tuple<float, float, float, float>> color) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            if (color.has_value()) {
-                flex_widget->border_color.animate_to(
-                    {std::get<0>(color.value()), std::get<1>(color.value()),
-                     std::get<2>(color.value()), std::get<3>(color.value())});
-            }
-        }
-    }
-}
-std::optional<std::tuple<float, float, float, float>>
-breeze_ui::js_flex_layout_widget::get_border_color() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            auto color = *flex_widget->border_color;
-            return std::make_tuple(color[0], color[1], color[2], color[3]);
-        }
-    }
-    return std::nullopt;
-}
-void breeze_ui::js_flex_layout_widget::set_border_width(float width) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->border_width->animate_to(width);
-        }
-    }
-}
-float breeze_ui::js_flex_layout_widget::get_border_width() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            return flex_widget->border_width->dest();
-        }
-    }
-    return 0.0f;
-}
-void breeze_ui::js_flex_layout_widget::set_border_paint(
-    std::shared_ptr<breeze_paint> paint) {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget) {
-            flex_widget->border_paint = paint->$paint;
-        }
-    }
-}
-std::shared_ptr<breeze_ui::breeze_paint>
-breeze_ui::js_flex_layout_widget::get_border_paint() const {
-    if ($widget) {
-        auto flex_widget = std::dynamic_pointer_cast<widget_js_base>($widget);
-        if (flex_widget && flex_widget->border_paint) {
-            return std::make_shared<breeze_paint>(*flex_widget->border_paint);
-        }
-    }
-    return nullptr;
-}
+
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, on_click,
+                   std::function<void(int)>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   on_mouse_move, std::function<void(float, float)>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   on_mouse_enter, std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   on_mouse_leave, std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   on_mouse_down, std::function<void()>)
+
+IMPL_COLOR_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                background_color)
+IMPL_COLOR_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, border_color)
+IMPL_PAINT_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                background_paint)
+IMPL_PAINT_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, border_paint)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   border_radius, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   border_width, float)
 
 void breeze_ui::window::set_root_widget(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget) {
@@ -554,11 +440,13 @@ void breeze_ui::window::set_root_widget(
     std::lock_guard l($render_target->rt_lock);
     $render_target->root = widget->$widget;
 }
+
 void breeze_ui::window::close() {
     if (!$render_target)
         return;
     $render_target->close();
 }
+
 std::shared_ptr<breeze_ui::window>
 breeze_ui::window::create(std::string title, int width, int height) {
     auto rt = std::make_shared<ui::render_target>();
@@ -581,4 +469,28 @@ breeze_ui::window::create(std::string title, int width, int height) {
     }).detach();
     return win;
 }
+
+void breeze_ui::js_widget::set_animation(std::string variable_name,
+                                         bool enabled) {
+    if (!$widget)
+        return;
+    for (auto &anim_float : $widget->anim_floats) {
+        if (anim_float->name == variable_name) {
+            if (enabled) {
+                anim_float->set_duration(100);
+                anim_float->set_easing(ui::easing_type::ease_in_out);
+            } else {
+                anim_float->set_easing(ui::easing_type::mutation);
+            }
+        }
+    }
+}
+
+// Clean up macros
+#undef IMPL_ANIMATED_PROP
+#undef IMPL_SIMPLE_PROP
+#undef IMPL_CALLBACK_PROP
+#undef IMPL_COLOR_PROP
+#undef IMPL_PAINT_PROP
+
 } // namespace mb_shell::js

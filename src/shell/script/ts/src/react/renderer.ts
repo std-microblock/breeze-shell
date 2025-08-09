@@ -72,6 +72,20 @@ const rgba_to_hex = (rgba: [number, number, number, number]) => {
     return `#${r}${g}${b}${a}`;
 }
 
+const animatedVarsProp = {
+    set: (instance: shell.breeze_ui.js_text_widget, value: string[]) => {
+        for (const v of value) {
+            instance.set_animation(v, true);
+        }
+        // @ts-ignore
+        instance._last_animated_vars = value;
+    },
+    get: (instance: shell.breeze_ui.js_text_widget) => {
+        // @ts-ignore
+        return instance._last_animated_vars;
+    }
+}
+
 const componentMap = {
     text: {
         creator: shell.breeze_ui.widgets_factory.create_text_widget,
@@ -86,6 +100,7 @@ const componentMap = {
             },
             fontSize: getSetFactory('font_size'),
             color: getSetFactoryColor('color'),
+            animatedVars: animatedVarsProp
         }
     },
     flex: {
@@ -98,6 +113,10 @@ const componentMap = {
             paddingLeft: getSetFactory('padding_left'),
             onClick: getSetFactory('on_click'),
             onMouseEnter: getSetFactory('on_mouse_enter'),
+            onMouseLeave: getSetFactory('on_mouse_leave'),
+            onMouseDown: getSetFactory('on_mouse_down'),
+            onMouseUp: getSetFactory('on_mouse_up'),
+            onMouseMove: getSetFactory('on_mouse_move'),
             backgroundColor: getSetFactoryColor('background_color'),
             borderColor: getSetFactoryColor('border_color'),
             borderRadius: getSetFactory('border_radius'),
@@ -105,6 +124,7 @@ const componentMap = {
             backgroundPaint: getSetFactory('background_paint'),
             borderPaint: getSetFactory('border_paint'),
             horizontal: getSetFactory('horizontal'),
+            animatedVars: animatedVarsProp
         }
     }
 }

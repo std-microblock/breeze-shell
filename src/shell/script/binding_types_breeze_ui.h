@@ -33,6 +33,8 @@ struct breeze_ui {
         void append_child_after(std::shared_ptr<js_widget> child,
                                 int after_index);
 
+        void set_animation(std::string variable_name, bool enabled);
+
         std::variant<std::shared_ptr<js_widget>,
                      std::shared_ptr<js_text_widget>,
                      std::shared_ptr<js_flex_layout_widget>>
@@ -53,41 +55,39 @@ struct breeze_ui {
     };
 
     struct js_flex_layout_widget : public js_widget {
-        bool get_horizontal() const;
-        void set_horizontal(bool horizontal);
+#define DEFINE_PROP(type, name)                                                \
+    type get_##name() const;                                                   \
+    void set_##name(type);
 
-        float get_padding_left() const;
-        void set_padding_left(float padding);
-        float get_padding_right() const;
-        void set_padding_right(float padding);
-        float get_padding_top() const;
-        void set_padding_top(float padding);
-        float get_padding_bottom() const;
-        void set_padding_bottom(float padding);
+        DEFINE_PROP(bool, horizontal)
+        DEFINE_PROP(float, padding_left)
+        DEFINE_PROP(float, padding_right)
+        DEFINE_PROP(float, padding_top)
+        DEFINE_PROP(float, padding_bottom)
         std::tuple<float, float, float, float> get_padding() const;
         void set_padding(float left, float right, float top, float bottom);
-        std::function<void(int)> get_on_click() const;
-        void set_on_click(std::function<void(int)> on_click);
-        std::function<void(float, float)> get_on_mouse_move() const;
-        void set_on_mouse_move(std::function<void(float, float)> on_mouse_move);
-        std::function<void()> get_on_mouse_enter() const;
-        void set_on_mouse_enter(std::function<void()> on_mouse_enter);
+
+        DEFINE_PROP(std::function<void(int)>, on_click)
+        DEFINE_PROP(std::function<void(float, float)>, on_mouse_move)
+        DEFINE_PROP(std::function<void()>, on_mouse_enter)
+        DEFINE_PROP(std::function<void()>, on_mouse_leave)
+        DEFINE_PROP(std::function<void()>, on_mouse_down)
+
         void set_background_color(
             std::optional<std::tuple<float, float, float, float>> color);
         std::optional<std::tuple<float, float, float, float>>
         get_background_color() const;
-        void set_background_paint(std::shared_ptr<breeze_paint> paint);
-        std::shared_ptr<breeze_paint> get_background_paint() const;
-        void set_border_radius(float radius);
-        float get_border_radius() const;
+
+        DEFINE_PROP(std::shared_ptr<breeze_paint>, background_paint)
+        DEFINE_PROP(std::shared_ptr<breeze_paint>, border_paint)
+        DEFINE_PROP(float, border_radius)
         void set_border_color(
             std::optional<std::tuple<float, float, float, float>> color);
         std::optional<std::tuple<float, float, float, float>>
         get_border_color() const;
-        void set_border_width(float width);
-        float get_border_width() const;
-        void set_border_paint(std::shared_ptr<breeze_paint> paint);
-        std::shared_ptr<breeze_paint> get_border_paint() const;
+        DEFINE_PROP(float, border_width)
+
+#undef DEFINE_PROP
     };
 
     struct widgets_factory {

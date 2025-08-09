@@ -15,11 +15,16 @@ declare module 'react' {
         borderWidth?: number;
         backgroundPaint?: breeze_paint;
         borderPaint?: breeze_paint;
-        onClick?: () => void;
+        onClick?: (key: number) => void;
         onMouseEnter?: () => void;
+        onMouseLeave?: () => void;
+        onMouseDown?: () => void;
+        onMouseUp?: () => void;
+        onMouseMove?: (x: number, y: number) => void;
         horizontal?: boolean;
         children?: React.ReactNode | React.ReactNode[];
         key?: string | number;
+        animatedVars?: string[];
       },
       text: {
         text?: string[] | string;

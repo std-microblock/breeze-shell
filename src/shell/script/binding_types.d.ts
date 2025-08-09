@@ -33,6 +33,13 @@ export class js_widget {
      * @returns void
      */
     append_child_after(child: breeze_ui.js_widget, after_index: number): void
+	/**
+     * 
+     * @param variable_name: string
+     * @param enabled: boolean
+     * @returns void
+     */
+    set_animation(variable_name: string, enabled: boolean): void
 	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget
 }
 }
@@ -65,18 +72,22 @@ export class js_flex_layout_widget extends js_widget {
     set on_mouse_move(value: ((arg1: number, arg2: number) => void));
 	get on_mouse_enter(): (() => void);
     set on_mouse_enter(value: (() => void));
+	get on_mouse_leave(): (() => void);
+    set on_mouse_leave(value: (() => void));
+	get on_mouse_down(): (() => void);
+    set on_mouse_down(value: (() => void));
 	get background_color(): [number, number, number, number] | undefined;
     set background_color(value: [number, number, number, number] | undefined);
 	get background_paint(): breeze_ui.breeze_paint;
     set background_paint(value: breeze_ui.breeze_paint);
+	get border_paint(): breeze_ui.breeze_paint;
+    set border_paint(value: breeze_ui.breeze_paint);
 	get border_radius(): number;
     set border_radius(value: number);
 	get border_color(): [number, number, number, number] | undefined;
     set border_color(value: [number, number, number, number] | undefined);
 	get border_width(): number;
     set border_width(value: number);
-	get border_paint(): breeze_ui.breeze_paint;
-    set border_paint(value: breeze_ui.breeze_paint);
 	/**
      * 
      * @param left: number

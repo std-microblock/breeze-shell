@@ -117,6 +117,8 @@ While all other widgets are like `position: absolute`
 */
 struct widget : std::enable_shared_from_this<widget> {
     std::vector<sp_anim_float> anim_floats{};
+
+    std::vector<std::string> class_list{};
     sp_anim_float anim_float(auto &&...args) {
         auto anim = std::make_shared<animated_float>(
             std::forward<decltype(args)>(args)...);
@@ -124,8 +126,8 @@ struct widget : std::enable_shared_from_this<widget> {
         return anim;
     }
 
-    sp_anim_float x = anim_float(), y = anim_float(), width = anim_float(),
-                  height = anim_float();
+    sp_anim_float x = anim_float("x"), y = anim_float("y"),
+                  width = anim_float("width"), height = anim_float("height");
 
     float _debug_offset_cache[2];
     bool enable_child_clipping = false;
@@ -239,7 +241,7 @@ struct text_widget : public widget {
     std::string text;
     float font_size = 14;
     std::string font_family = "main";
-    animated_color color = {this, 0, 0, 0, 1};
+    animated_color color = {this, 0, 0, 0, 1, "txt"};
 
     void render(nanovg_context ctx) override;
 
