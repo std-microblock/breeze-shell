@@ -252,9 +252,8 @@ struct image_widget : public ui::widget {
             if (std::get_if<data_svg>(&image_data)) {
                 const auto &data = std::get<data_svg>(image_data);
                 auto svg = data.svg;
-                image = ctx.imageFromSVG(ui::nanovg_context::NSVGimageRAII(
-                                             nsvgParse(svg.data(), "px", 96))
-                                             .image);
+                
+                image = ctx.imageFromSVG(nsvgParse(svg.data(), "px", 96));
             }
         } 
 
@@ -365,7 +364,7 @@ struct widget_js_base : public ui::widget_flex {
 
     ui::sp_anim_float opacity = anim_float(255), border_radius = anim_float(0),
                       border_width = anim_float(0);
-    ui::animated_color background_color = {this, 0.2f, 0.2f, 0.2f, 0.6f},
+    ui::animated_color background_color = {this, 0.f, 0.f, 0.f, 0.f},
                        border_color = {this, 0.0f, 0.0f, 0.0f, 1.0f};
     bool inset_border = false;
 

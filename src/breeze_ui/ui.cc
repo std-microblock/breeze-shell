@@ -264,6 +264,8 @@ render_target::~render_target() {
     glfwDestroyWindow(window);
 }
 
+thread_local render_target *render_target::current = nullptr;
+
 std::expected<bool, std::string> render_target::init_global() {
     static std::atomic_bool initialized = false;
     if (initialized.exchange(true)) {
@@ -381,6 +383,7 @@ void render_target::render() {
         {
             std::lock_guard lock(rt_lock);
             root->owner_rt = this;
+            render_target::current = this;
             root->update(ctx);
             key_states.flip();
         }

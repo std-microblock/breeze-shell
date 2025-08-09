@@ -82,7 +82,7 @@ static_assert((bool)(test_pressed & key_state::pressed),
 struct render_target {
   std::shared_ptr<widget> root;
   GLFWwindow *window;
-
+  static thread_local render_target *current;
   // float: darkness of the acrylic effect, 0~1
   std::optional<float> acrylic = {};
   bool extend = false;

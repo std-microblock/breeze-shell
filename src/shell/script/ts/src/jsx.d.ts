@@ -36,6 +36,20 @@ declare module 'react' {
         fontSize?: number;
         color?: string;
         key?: string | number;
+        animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+      },
+      img: {
+        svg?: string;
+        key?: string | number;
+        animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
       }
     }
   }

@@ -86,6 +86,14 @@ const animatedVarsProp = {
     }
 }
 
+const commonProps = {
+    animatedVars: animatedVarsProp,
+    x: getSetFactory('x'),
+    y: getSetFactory('y'),
+    width: getSetFactory('width'),
+    height: getSetFactory('height'),
+}
+
 const componentMap = {
     text: {
         creator: shell.breeze_ui.widgets_factory.create_text_widget,
@@ -100,7 +108,7 @@ const componentMap = {
             },
             fontSize: getSetFactory('font_size'),
             color: getSetFactoryColor('color'),
-            animatedVars: animatedVarsProp
+            ...commonProps
         }
     },
     flex: {
@@ -124,12 +132,15 @@ const componentMap = {
             backgroundPaint: getSetFactory('background_paint'),
             borderPaint: getSetFactory('border_paint'),
             horizontal: getSetFactory('horizontal'),
-            animatedVars: animatedVarsProp,
-            x: getSetFactory('x'),
-            y: getSetFactory('y'),
-            width: getSetFactory('width'),
-            height: getSetFactory('height'),
-            autoSize: getSetFactory('auto_size')
+            autoSize: getSetFactory('auto_size'),
+            ...commonProps
+        }
+    },
+    img: {
+        creator: shell.breeze_ui.widgets_factory.create_image_widget,
+        props: {
+            svg: getSetFactory('svg'),
+            ...commonProps
         }
     }
 }

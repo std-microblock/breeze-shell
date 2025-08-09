@@ -466,7 +466,7 @@ void network::get_async(std::string url,
                         std::function<void(std::string)> callback,
                         std::function<void(std::string)> error_callback) {
     std::thread([url, callback, error_callback,
-                 &lock = menu_render::current.value()->rt->rt_lock]() {
+                 &lock = ui::render_target::current->rt_lock]() {
         try {
             auto res = get(url);
             std::lock_guard l(lock);
@@ -483,7 +483,7 @@ void network::post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback) {
     std::thread([url, data, callback, error_callback,
-                 &lock = menu_render::current.value()->rt->rt_lock]() {
+                 &lock = ui::render_target::current->rt_lock]() {
         try {
             auto res = post(url, data);
             std::lock_guard l(lock);
@@ -543,8 +543,7 @@ subproc_result_data subproc::run(std::string cmd) {
 }
 void subproc::run_async(std::string cmd,
                         std::function<void(subproc_result_data)> callback) {
-    std::thread([cmd, callback,
-                 &lock = menu_render::current.value()->rt->rt_lock]() {
+    std::thread([cmd, callback, &lock = ui::render_target::current->rt_lock]() {
         try {
             auto res = run(cmd);
             std::lock_guard l(lock);
@@ -640,7 +639,7 @@ void network::download_async(std::string url, std::string path,
                              std::function<void(std::string)> error_callback) {
 
     std::thread([url, path, callback, error_callback,
-                 &lock = menu_render::current.value()->rt->rt_lock]() {
+                 &lock = ui::render_target::current->rt_lock]() {
         try {
             auto data = get(url);
             fs::write_binary(path,
@@ -821,8 +820,7 @@ void subproc::open(std::string path, std::string args) {
 }
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
-    std::thread([path, callback, args,
-                 &lock = menu_render::current.value()->rt->rt_lock]() {
+    std::thread([path, callback, args, &lock = ui::render_target::current->rt_lock]() {
         try {
             open(path, args);
             std::lock_guard l(lock);
@@ -981,7 +979,7 @@ std::string infra::btoa(std::string str) {
 
 void fs::copy_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool, std::string)> callback) {
-    std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+    std::thread([=, &lock = ui::render_target::current->rt_lock] {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
@@ -1033,7 +1031,7 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
 
 void fs::move_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool)> callback) {
-    std::thread([=, &lock = menu_render::current.value()->rt->rt_lock] {
+    std::thread([=, &lock = ui::render_target::current->rt_lock] {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
