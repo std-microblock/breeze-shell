@@ -124,7 +124,12 @@ const componentMap = {
             backgroundPaint: getSetFactory('background_paint'),
             borderPaint: getSetFactory('border_paint'),
             horizontal: getSetFactory('horizontal'),
-            animatedVars: animatedVarsProp
+            animatedVars: animatedVarsProp,
+            x: getSetFactory('x'),
+            y: getSetFactory('y'),
+            width: getSetFactory('width'),
+            height: getSetFactory('height'),
+            autoSize: getSetFactory('auto_size')
         }
     }
 }

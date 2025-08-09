@@ -433,6 +433,12 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    border_width, float)
 
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, x, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, y, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, width, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, height, float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size, bool)
+
 void breeze_ui::window::set_root_widget(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget) {
     if (!$render_target)

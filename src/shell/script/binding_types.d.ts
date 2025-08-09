@@ -55,6 +55,16 @@ export class js_text_widget extends js_widget {
 }
 namespace breeze_ui {
 export class js_flex_layout_widget extends js_widget {
+	get x(): number;
+    set x(value: number);
+	get y(): number;
+    set y(value: number);
+	get width(): number;
+    set width(value: number);
+	get height(): number;
+    set height(value: number);
+	get auto_size(): boolean;
+    set auto_size(value: boolean);
 	get horizontal(): boolean;
     set horizontal(value: boolean);
 	get padding_left(): number;

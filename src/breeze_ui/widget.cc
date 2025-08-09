@@ -215,27 +215,21 @@ void ui::widget_flex::reposition_children_flex(
         }
     }
 
-    if (!auto_size) {
+    if (auto_size) {
         if (horizontal) {
-            target_width = *width;
+            width->animate_to(x - gap + *padding_left + *padding_right);
+            height->animate_to(target_height + *padding_top + *padding_bottom);
+
+            for (auto &child : children) {
+                child->height->animate_to(target_height);
+            }
         } else {
-            target_height = *height;
-        }
-    }
+            width->animate_to(target_width + *padding_left + *padding_right);
+            height->animate_to(y - gap + *padding_top + *padding_bottom);
 
-    if (horizontal) {
-        width->animate_to(x - gap + *padding_left + *padding_right);
-        height->animate_to(target_height + *padding_top + *padding_bottom);
-
-        for (auto &child : children) {
-            child->height->animate_to(target_height);
-        }
-    } else {
-        width->animate_to(target_width + *padding_left + *padding_right);
-        height->animate_to(y - gap + *padding_top + *padding_bottom);
-
-        for (auto &child : children) {
-            child->width->animate_to(target_width);
+            for (auto &child : children) {
+                child->width->animate_to(target_width);
+            }
         }
     }
 }

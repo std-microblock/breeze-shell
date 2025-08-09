@@ -25,6 +25,11 @@ declare module 'react' {
         children?: React.ReactNode | React.ReactNode[];
         key?: string | number;
         animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        autoSize?: boolean;
       },
       text: {
         text?: string[] | string;

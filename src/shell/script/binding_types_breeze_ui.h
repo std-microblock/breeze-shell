@@ -59,6 +59,12 @@ struct breeze_ui {
     type get_##name() const;                                                   \
     void set_##name(type);
 
+        DEFINE_PROP(float, x)
+        DEFINE_PROP(float, y)
+        DEFINE_PROP(float, width)
+        DEFINE_PROP(float, height)
+        DEFINE_PROP(bool, auto_size)
+
         DEFINE_PROP(bool, horizontal)
         DEFINE_PROP(float, padding_left)
         DEFINE_PROP(float, padding_right)
