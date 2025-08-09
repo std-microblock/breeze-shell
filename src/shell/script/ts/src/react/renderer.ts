@@ -77,10 +77,10 @@ const componentMap = {
         props: {
             text: {
                 set: (instance: shell.breeze_ui.js_text_widget, value: string[] | string) => {
-                    instance.set_text((Array.isArray(value)) ? value.join('') : value);
+                    instance.text = ((Array.isArray(value)) ? value.join('') : value);
                 },
                 get: (instance: shell.breeze_ui.js_text_widget) => {
-                    return instance.get_text();
+                    return instance.text;
                 }
             },
             fontSize: getSetFactory('font_size'),
@@ -228,7 +228,7 @@ const HostConfig: Reconciler.HostConfig<
         _internalHandle: any
     ) {
         const w = shell.breeze_ui.widgets_factory.create_text_widget();
-        w.set_text(text);
+        w.text = text;
         return w;
     },
 
@@ -335,7 +335,7 @@ const HostConfig: Reconciler.HostConfig<
         oldText: string,
         newText: string
     ): void {
-        textInstance.set_text(newText);
+        textInstance.text = newText;
     },
 
     insertBefore(parentInstance, child, beforeChild) {
@@ -349,7 +349,8 @@ const HostConfig: Reconciler.HostConfig<
 
     resetTextContent(instance: Instance): void {
         const text_w = instance.downcast();
-        if ('get_text' in text_w) {
+        if ('set_text' in text_w) {
+            // @ts-ignore
             text_w.set_text('');
         }
     }

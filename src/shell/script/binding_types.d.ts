@@ -38,67 +38,45 @@ export class js_widget {
 }
 namespace breeze_ui {
 export class js_text_widget extends js_widget {
-	get_text(): string
-	/**
-     * 
-     * @param text: string
-     * @returns void
-     */
-    set_text(text: string): void
-	get_font_size(): number
-	/**
-     * 
-     * @param size: number
-     * @returns void
-     */
-    set_font_size(size: number): void
-	get_color(): [number, number, number, number]
-	/**
-     * 
-     * @param color: [number, number, number, number] | undefined
-     * @returns void
-     */
-    set_color(color?: [number, number, number, number] | undefined): void
+	get text(): string;
+    set text(value: string);
+	get font_size(): number;
+    set font_size(value: number);
+	get color(): [number, number, number, number];
+    set color(value: [number, number, number, number] | undefined);
 }
 }
 namespace breeze_ui {
 export class js_flex_layout_widget extends js_widget {
-	get_horizontal(): boolean
-	/**
-     * 
-     * @param horizontal: boolean
-     * @returns void
-     */
-    set_horizontal(horizontal: boolean): void
-	get_padding_left(): number
-	/**
-     * 
-     * @param padding: number
-     * @returns void
-     */
-    set_padding_left(padding: number): void
-	get_padding_right(): number
-	/**
-     * 
-     * @param padding: number
-     * @returns void
-     */
-    set_padding_right(padding: number): void
-	get_padding_top(): number
-	/**
-     * 
-     * @param padding: number
-     * @returns void
-     */
-    set_padding_top(padding: number): void
-	get_padding_bottom(): number
-	/**
-     * 
-     * @param padding: number
-     * @returns void
-     */
-    set_padding_bottom(padding: number): void
-	get_padding(): [number, number, number, number]
+	get horizontal(): boolean;
+    set horizontal(value: boolean);
+	get padding_left(): number;
+    set padding_left(value: number);
+	get padding_right(): number;
+    set padding_right(value: number);
+	get padding_top(): number;
+    set padding_top(value: number);
+	get padding_bottom(): number;
+    set padding_bottom(value: number);
+	get padding(): [number, number, number, number];
+	get on_click(): ((arg1: number) => void);
+    set on_click(value: ((arg1: number) => void));
+	get on_mouse_move(): ((arg1: number, arg2: number) => void);
+    set on_mouse_move(value: ((arg1: number, arg2: number) => void));
+	get on_mouse_enter(): (() => void);
+    set on_mouse_enter(value: (() => void));
+	get background_color(): [number, number, number, number] | undefined;
+    set background_color(value: [number, number, number, number] | undefined);
+	get background_paint(): breeze_ui.breeze_paint;
+    set background_paint(value: breeze_ui.breeze_paint);
+	get border_radius(): number;
+    set border_radius(value: number);
+	get border_color(): [number, number, number, number] | undefined;
+    set border_color(value: [number, number, number, number] | undefined);
+	get border_width(): number;
+    set border_width(value: number);
+	get border_paint(): breeze_ui.breeze_paint;
+    set border_paint(value: breeze_ui.breeze_paint);
 	/**
      * 
      * @param left: number
@@ -108,69 +86,6 @@ export class js_flex_layout_widget extends js_widget {
      * @returns void
      */
     set_padding(left: number, right: number, top: number, bottom: number): void
-	get_on_click(): ((arg1: number) => void)
-	/**
-     * 
-     * @param on_click: ((arg1: number) => void)
-     * @returns void
-     */
-    set_on_click(on_click: ((arg1: number) => void)): void
-	get_on_mouse_move(): ((arg1: number, arg2: number) => void)
-	/**
-     * 
-     * @param on_mouse_move: ((arg1: number, arg2: number) => void)
-     * @returns void
-     */
-    set_on_mouse_move(on_mouse_move: ((arg1: number, arg2: number) => void)): void
-	get_on_mouse_enter(): (() => void)
-	/**
-     * 
-     * @param on_mouse_enter: (() => void)
-     * @returns void
-     */
-    set_on_mouse_enter(on_mouse_enter: (() => void)): void
-	/**
-     * 
-     * @param color: [number, number, number, number] | undefined
-     * @returns void
-     */
-    set_background_color(color?: [number, number, number, number] | undefined): void
-	get_background_color(): [number, number, number, number] | undefined
-	/**
-     * 
-     * @param paint: breeze_ui.breeze_paint
-     * @returns void
-     */
-    set_background_paint(paint: breeze_ui.breeze_paint): void
-	get_background_paint(): breeze_ui.breeze_paint
-	/**
-     * 
-     * @param radius: number
-     * @returns void
-     */
-    set_border_radius(radius: number): void
-	get_border_radius(): number
-	/**
-     * 
-     * @param color: [number, number, number, number] | undefined
-     * @returns void
-     */
-    set_border_color(color?: [number, number, number, number] | undefined): void
-	get_border_color(): [number, number, number, number] | undefined
-	/**
-     * 
-     * @param width: number
-     * @returns void
-     */
-    set_border_width(width: number): void
-	get_border_width(): number
-	/**
-     * 
-     * @param paint: breeze_ui.breeze_paint
-     * @returns void
-     */
-    set_border_paint(paint: breeze_ui.breeze_paint): void
-	get_border_paint(): breeze_ui.breeze_paint
 }
 }
 namespace breeze_ui {
@@ -195,15 +110,15 @@ export class folder_view_folder_item {
 	name(): string
 	modify_date(): string
 	path(): string
-	size(): size_t
+	size(): number
 	type(): string
 	/**
-     *     (0) 取消选择该项。
-     *     (1) 选择该项。
-     *     (3) 将项目置于编辑模式。
-     *     (4) 取消选择除指定项的所有项。
-     *     (8) 确保该项显示在视图中。
-     *     (16) 为项目提供焦点。
+     *       (0) 取消选择该项。
+     *       (1) 选择该项。
+     *       (3) 将项目置于编辑模式。
+     *       (4) 取消选择除指定项的所有项。
+     *       (8) 确保该项显示在视图中。
+     *       (16) 为项目提供焦点。
      * @param state: number
      * @returns void
      */
@@ -577,7 +492,7 @@ export class js_menu_data {
      *  位图图标
      *  Bitmap icon
      */
-    icon_bitmap?: size_t | value_reset | undefined
+    icon_bitmap?: number | value_reset | undefined
 	/**
      *  是否禁用
      *  Whether disabled
@@ -587,7 +502,7 @@ export class js_menu_data {
      *  仅作为信息标识，不影响行为
      *  Only for information, set this changes nothing
      */
-    wID?: int64_t | undefined
+    wID?: number | undefined
 	name_resid?: string | undefined
 	origin_name?: string | undefined
 }
@@ -640,7 +555,7 @@ export class menu_item_parent_item_controller {
 }
 export class window_prop_data {
 	key: string
-	value: size_t | string
+	value: number | string
 }
 export class caller_window_data {
 	props: Array<window_prop_data>
@@ -666,6 +581,11 @@ export class menu_info_basic_js {
 	context: js_menu_context
 }
 export class menu_controller {
+	/**
+     *  获取所有菜单项
+     *  Get all menu items
+     */
+    get items(): Array<menu_item_controller>;
 	/**
      *  检查菜单控制器是否有效
      *  Check if menu controller is valid
@@ -741,12 +661,6 @@ export class menu_controller {
       @returns void
      */
     clear(): void
-	/**
-     *  获取所有菜单项
-     *  Get all menu items
-      @returns Array<menu_item_controller>
-     */
-    get_items(): Array<menu_item_controller>
 	/**
      *  获取指定索引的菜单项
      *  Get menu item at index
@@ -1069,9 +983,9 @@ export class win32 {
 	/**
      * 
      * @param path: string
-     * @returns size_t
+     * @returns number
      */
-    static load_library(path: string): size_t
+    static load_library(path: string): number
 	/**
      * 
      * @param name: string
@@ -1081,16 +995,16 @@ export class win32 {
 	/**
      * 
      * @param path: string
-     * @returns size_t
+     * @returns number
      */
-    static load_file_icon(path: string): size_t
+    static load_file_icon(path: string): number
 	/**
      * 
      * @param key: string
      * @param name: string
-     * @returns int32_t
+     * @returns number
      */
-    static reg_get_dword(key: string, name: string): int32_t
+    static reg_get_dword(key: string, name: string): number
 	/**
      * 
      * @param key: string
@@ -1102,17 +1016,17 @@ export class win32 {
      * 
      * @param key: string
      * @param name: string
-     * @returns int64_t
+     * @returns number
      */
-    static reg_get_qword(key: string, name: string): int64_t
+    static reg_get_qword(key: string, name: string): number
 	/**
      * 
      * @param key: string
      * @param name: string
-     * @param value: int32_t
+     * @param value: number
      * @returns void
      */
-    static reg_set_dword(key: string, name: string, value: int32_t): void
+    static reg_set_dword(key: string, name: string, value: number): void
 	/**
      * 
      * @param key: string
@@ -1125,10 +1039,10 @@ export class win32 {
      * 
      * @param key: string
      * @param name: string
-     * @param value: int64_t
+     * @param value: number
      * @returns void
      */
-    static reg_set_qword(key: string, name: string, value: int64_t): void
+    static reg_set_qword(key: string, name: string, value: number): void
 	/**
      * 
      * @param key: string
@@ -1206,6 +1120,27 @@ export class infra {
      * @returns string
      */
     static btoa(str: string): string
+}
+export class ui {
+}
+namespace ui {
+export class window {
+	/**
+     * 
+     * @param title: string
+     * @param width: number
+     * @param height: number
+     * @returns ui.window
+     */
+    static create(title: string, width: number, height: number): ui.window
+	/**
+     * 
+     * @param widget: breeze_ui.js_widget
+     * @returns void
+     */
+    set_root_widget(widget: breeze_ui.js_widget): void
+	close(): void
+}
 }
 }
 

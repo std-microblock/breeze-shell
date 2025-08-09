@@ -2,17 +2,6 @@
 import { infra, win32 } from "mshell";
 import { memo, useEffect, useState } from "react";
 
-
-export const TestComponent = () => {
-    const [num, setNum] = useState(0);
-
-    return (
-        <flex horizontal={true} padding={10} backgroundColor="#000000ff">
-            <Calculator />
-        </flex>
-    );
-}
-
 export const Calculator = () => {
     const [display, setDisplay] = useState('0');
     const [previousValue, setPreviousValue] = useState<number | null>(null);
