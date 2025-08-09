@@ -306,7 +306,7 @@ struct app_list_widget : public ui::widget_flex {
 
     background_widget bg;
 
-    app_list_widget() : super(), bg(true) {
+    app_list_widget() : super(), bg(false) {
         horizontal = true;
         gap = 2;
     }
@@ -367,8 +367,8 @@ struct app_list_widget : public ui::widget_flex {
     void update(ui::update_context &ctx) override {
         super::update(ctx);
         update_active_stacks();
-        bg.width->reset_to(*width);
-        bg.height->reset_to(*height);
+        bg.width->animate_to(*width);
+        bg.height->animate_to(*height);
         bg.x->reset_to(*x);
         bg.y->reset_to(*y);
         bg.update(ctx);

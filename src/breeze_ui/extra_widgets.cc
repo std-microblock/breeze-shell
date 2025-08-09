@@ -154,7 +154,7 @@ thread_local void *acrylic_background_widget::last_hwnd = 0;
 void acrylic_background_widget::render(nanovg_context ctx) {
     widget::render(ctx);
 
-    SendMessageW((HWND)hwnd, WM_NCHITTEST, 0, 0);
+    PostMessageW((HWND)hwnd, WM_NCHITTEST, 0, 0);
 
     auto bg_color_tmp = bg_color;
     bg_color_tmp.a *= *opacity / 255.f;
