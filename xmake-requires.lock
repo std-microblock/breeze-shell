@@ -25,6 +25,9 @@
         ["breeze-glfw#31fecfc4"] = {
             version = "latest"
         },
+        ["breeze-ui#31fecfc4"] = {
+            version = "20250815.6"
+        },
         ["cinatra#31fecfc4"] = {
             repo = {
                 branch = "master",

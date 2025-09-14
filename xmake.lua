@@ -9,12 +9,12 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.releasedbg")
 
 includes("dependencies/blook.lua")
-includes("dependencies/glfw.lua")
 includes("dependencies/quickjs-ng.lua")
+includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3")
+add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3", "breeze-ui")
 
 add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
     configs = {
@@ -32,23 +32,10 @@ add_requireconfs("**.async_simple", {
     version = "18f3882be354d407af0f0674121dcddaeff36e26"
 })
 
-target("breeze_ui")
-    set_kind("static")
-    add_packages("glfw", "glad", "nanovg", "nanosvg", {
-        public = true
-    })
-    add_syslinks("dwmapi", "shcore")
-    add_files("src/breeze_ui/*.cc")
-    add_headerfiles("src/breeze_ui/*.h")
-    add_includedirs("src/", {
-        public = true
-    })
-    set_encodings("utf-8")
-
 target("ui_test")
     set_default(false)
     set_kind("binary")
-    add_deps("breeze_ui")
+    add_packages("breeze-ui")
     add_files("src/ui_test/*.cc")
     set_encodings("utf-8")
     add_tests("defualt")
@@ -61,8 +48,7 @@ target("shell")
         public = true
     })
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
-    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs")
-    add_deps("breeze_ui")
+    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs", "breeze-ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
         extensions = {".js"}
@@ -92,7 +78,7 @@ target("inject")
     set_kind("binary")
     add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32")
     add_files("src/inject/*.cc")
-    add_deps("breeze_ui")
+    add_packages("breeze-ui")
     set_basename("breeze")
     set_encodings("utf-8")
     add_rules("utils.bin2c", {
