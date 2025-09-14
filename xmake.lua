@@ -15,7 +15,7 @@ includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3", "breeze-ui")
+add_requires("blook d4a960497253bf696a624592093761baecc06749", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3", "breeze-ui")
 
 add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
     configs = {
