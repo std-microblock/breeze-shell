@@ -3,8 +3,8 @@
     "target": "ES2022",
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "module": "CommonJS",
-    "moduleResolution": "node10",
+    "module": "node16",
+    "moduleResolution": "node16",
     "types": [
       "./src/jsx.d.ts",
       "../binding_types.d.ts",
