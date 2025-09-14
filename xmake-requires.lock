@@ -3,38 +3,8 @@
         version = "1.0"
     },
     ["windows|x64"] = {
-        ["asio#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "1.34.2"
-        },
-        ["async_simple#4d66dd9c"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "18f3882b"
-        },
         ["blook d4a960497253bf696a624592093761baecc06749#31fecfc4"] = {
             version = "d4a96049"
-        },
-        ["breeze-glfw#31fecfc4"] = {
-            version = "latest"
-        },
-        ["breeze-ui#31fecfc4"] = {
-            version = "20250815.6"
-        },
-        ["cinatra#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "e329293f"
         },
         ["cmake#31fecfc4"] = {
             repo = {
@@ -44,78 +14,6 @@
             },
             version = "4.0.1"
         },
-        ["cpptrace v0.8.3#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "9ccddb5847ab789fe829f6c485989b489ea7c3d4",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "v0.8.3"
-        },
-        ["ctre#5a639230"] = {
-            repo = {
-                branch = "master",
-                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "v3.9.0"
-        },
-        ["frozen#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "1.2.0"
-        },
-        ["glad#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "7917c51f64652900f1d9a3091f7561d8c3aa936e",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "v0.1.36"
-        },
-        ["iguana#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "1.0.8"
-        },
-        ["jom#f26e00a1"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "1.1.4"
-        },
-        ["nanosvg#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "2022.07.09"
-        },
-        ["nanovg#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "e1b9ad14ffc4855386077641d9c4b87a136c6edc",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "2023.8.27"
-        },
-        ["nasm#f26e00a1"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "2.16.03"
-        },
         ["ninja#31fecfc4"] = {
             repo = {
                 branch = "master",
@@ -123,73 +21,6 @@
                 url = "https://github.com/xmake-io/xmake-repo.git"
             },
             version = "v1.12.1"
-        },
-        ["opengl#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "latest"
-        },
-        ["openssl#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "1.1.1-w"
-        },
-        ["python 3.x#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "3.13.2"
-        },
-        ["quickjs-ng#31fecfc4"] = {
-            version = "v0.8.0"
-        },
-        ["reflect-cpp#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "v0.19.0"
-        },
-        ["strawberry-perl#f26e00a1"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "5.32.0+1"
-        },
-        ["wintoast#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "7917c51f64652900f1d9a3091f7561d8c3aa936e",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "v1.3.1"
-        },
-        ["yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27#bcb8b196"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "b82a2192"
-        },
-        ["yyjson#31fecfc4"] = {
-            repo = {
-                branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
-            },
-            version = "0.11.1"
         },
         ["zasm c239a78b51c1b0060296193174d78b802f02a618#31fecfc4"] = {
             repo = {
