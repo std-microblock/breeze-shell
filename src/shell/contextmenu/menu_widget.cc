@@ -311,6 +311,9 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
   auto forkctx = ctx.with_offset(*x, *y + *scroll_top);
   update_children(forkctx, item_widgets);
   reposition_children_flex(forkctx, item_widgets);
+  for (auto &item : item_widgets) {
+    item->width->reset_to(*width);
+  }
   actual_height = height->dest();
   height->reset_to(std::min(max_height, height->dest()));
 
