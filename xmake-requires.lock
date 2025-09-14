@@ -20,7 +20,7 @@
             version = "18f3882b"
         },
         ["blook#31fecfc4"] = {
-            version = "latest"
+            version = "2025.09.14"
         },
         ["breeze-glfw#31fecfc4"] = {
             version = "latest"
@@ -190,6 +190,30 @@
                 url = "https://github.com/xmake-io/xmake-repo.git"
             },
             version = "0.11.1"
+        },
+        ["zasm 2025.03.02#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2025.03.02"
+        },
+        ["zycore-c v1.5.2#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.5.2"
+        },
+        ["zydis#31fecfc4"] = {
+            repo = {
+                branch = "master",
+                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v4.1.1"
         }
     }
 }
