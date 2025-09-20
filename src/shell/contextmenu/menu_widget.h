@@ -1,15 +1,16 @@
 #pragma once
-#include "../config.h"
-#include "animator.h"
+#include "shell/config.h"
+#include "breeze_ui/animator.h"
 #include "contextmenu.h"
-#include "extra_widgets.h"
-#include "nanovg_wrapper.h"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/extra_widgets.h"
+#include "breeze_ui/nanovg_wrapper.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <optional>
+#include "shell/widgets/background_widget.h"
 
 namespace mb_shell {
 
@@ -99,16 +100,15 @@ struct menu_widget : public ui::widget_flex {
   float actual_height = 0;
   ui::sp_anim_float scroll_top =
       anim_float(0, 200, ui::easing_type::ease_in_out);
-  std::shared_ptr<ui::rect_widget> bg;
+  std::shared_ptr<background_widget> bg;
 
-  std::shared_ptr<ui::rect_widget> bg_submenu;
+  std::shared_ptr<background_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
   std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
   std::vector<std::shared_ptr<widget>> item_widgets;
   menu_widget *parent_menu = nullptr;
 
-  std::shared_ptr<ui::rect_widget> create_bg(bool is_main);
   menu menu_data;
   menu_widget();
   popup_direction direction = popup_direction::bottom_right;

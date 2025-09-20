@@ -1,8 +1,8 @@
-#include "../utils.h"
+#include "shell/utils.h"
 #include "binding_types.hpp"
 
-#include "../contextmenu/menu_render.h"
-#include "../entry.h"
+#include "shell/contextmenu/menu_render.h"
+#include "shell/entry.h"
 
 #include <algorithm>
 #include <atlcomcli.h>
@@ -23,7 +23,7 @@
 #include <shobjidl_core.h>
 #include <stdio.h>
 
-#include "../logger.h"
+#include "shell/logger.h"
 
 #include <thread>
 #include <unordered_map>
@@ -33,7 +33,7 @@
 #include <winuser.h>
 
 #include "propkey.h"
-#include "ui.h"
+#include "breeze_ui/ui.h"
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
   wchar_t *path = new wchar_t[MAX_PATH];

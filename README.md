@@ -56,7 +56,7 @@ The config menu of breeze-shell can be found as you open your `Data Folder` and 
 
 ## Lightweight & Fast
 
-Breeze uses breeze-ui, which is implemented to be a cross-platform, simple,
+Breeze uses breeze_ui, which is implemented to be a cross-platform, simple,
 animation-friendly and fast ui library for modern C++, with the support of both
 NanoVG and ThorVG render context. This allowed Breeze to have a delicated user
 interface in ~2MiB.

@@ -5,9 +5,9 @@
 #include <thread>
 #include <vector>
 
-#include "animator.h"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/animator.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 
 static unsigned char g_icon_png[] = {
 #include "icon-small.png.h"
@@ -233,130 +233,7 @@ struct inject_ui_title : public ui::widget_flex {
   }
 };
 
-struct button_widget : public ui::padding_widget {
-  button_widget(const std::string &button_text) {
-    auto text = emplace_child<ui::text_widget>();
-    text->text = button_text;
-    text->font_size = 14;
-    text->color.reset_to({1, 1, 1, 0.95});
-
-    padding_bottom->reset_to(10);
-    padding_top->reset_to(10);
-    padding_left->reset_to(22);
-    padding_right->reset_to(20);
-
-    border_top.reset_to({1, 1, 1, 0.12});
-    border_right.reset_to({1, 1, 1, 0.04});
-    border_bottom.reset_to({1, 1, 1, 0.02});
-    border_left.reset_to({1, 1, 1, 0.04});
-  }
-
-  ui::animated_color border_top = {this, 0, 0, 0, 0},
-                     border_right = {this, 0, 0, 0, 0},
-                     border_bottom = {this, 0, 0, 0, 0},
-                     border_left = {this, 0, 0, 0, 0};
-
-  void render(ui::nanovg_context ctx) override {
-
-    ctx.fillColor(bg_color);
-    ctx.fillRoundedRect(*x, *y, *width, *height, 6);
-
-    float bw = 1.0f;
-
-    float radius = 6.0f;
-    // 4 edges
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_top);
-    ctx.moveTo(*x + radius, *y + bw / 2);
-    ctx.lineTo(*x + *width - radius, *y + bw / 2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_right);
-    ctx.moveTo(*x + *width - bw / 2, *y + radius);
-    ctx.lineTo(*x + *width - bw / 2, *y + *height - radius);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_bottom);
-    ctx.moveTo(*x + *width - radius, *y + *height - bw / 2);
-    ctx.lineTo(*x + radius, *y + *height - bw / 2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_left);
-    ctx.moveTo(*x + bw / 2, *y + *height - radius);
-    ctx.lineTo(*x + bw / 2, *y + radius);
-    ctx.stroke();
-
-    // 4 corners
-    float cr = radius - bw / 2;
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_right.blend(border_top));
-    ctx.moveTo(*x + *width - radius, *y + bw / 2);
-    ctx.arcTo(*x + *width - bw / 2, *y + bw / 2, *x + *width - bw / 2,
-              *y + radius, cr);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_bottom.blend(border_right));
-    ctx.moveTo(*x + *width - bw / 2, *y + *height - radius);
-    ctx.arcTo(*x + *width - bw / 2, *y + *height - bw / 2, *x + *width - radius,
-              *y + *height - bw / 2, cr);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_left.blend(border_bottom));
-    ctx.moveTo(*x + radius, *y + *height - bw / 2);
-    ctx.arcTo(*x + bw / 2, *y + *height - bw / 2, *x + bw / 2,
-              *y + *height - radius, cr);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeWidth(bw);
-    ctx.strokeColor(border_top.blend(border_left));
-    ctx.moveTo(*x + bw / 2, *y + radius);
-    ctx.arcTo(*x + bw / 2, *y + bw / 2, *x + radius, *y + bw / 2, cr);
-    ctx.stroke();
-
-    padding_widget::render(ctx);
-  }
-
-  ui::animated_color bg_color = {this, 40 / 255.f, 40 / 255.f, 40 / 255.f, 0.6};
-
-  virtual void on_click() = 0;
-
-  virtual void update_colors(bool is_active, bool is_hovered) {
-    if (is_active) {
-      bg_color.animate_to({0.3, 0.3, 0.3, 0.7});
-    } else if (is_hovered) {
-      bg_color.animate_to({0.35, 0.35, 0.35, 0.7});
-    } else {
-      bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
-    }
-  }
-  ui::update_context *ctx;
-  void update(ui::update_context &ctx) override {
-    padding_widget::update(ctx);
-
-    if (ctx.mouse_clicked_on_hit(this)) {
-      this->ctx = &ctx;
-      on_click();
-      this->ctx = nullptr;
-    }
-
-    update_colors(ctx.mouse_down_on(this), ctx.hovered(this));
-  }
-};
-
-struct start_when_startup_switch : public button_widget {
+struct start_when_startup_switch : public ui::button_widget {
   bool start_when_startup = false;
 
   static bool check_startup() {
@@ -442,7 +319,7 @@ void restart_explorer() {
   }
 }
 
-struct restart_explorer_btn : public button_widget {
+struct restart_explorer_btn : public ui::button_widget {
   restart_explorer_btn()
       : button_widget(english ? "Restart explorer" : "重启资源管理器") {}
 
@@ -452,7 +329,7 @@ struct restart_explorer_btn : public button_widget {
 };
 
 struct injector_ui_main;
-struct switch_lang_btn : public button_widget {
+struct switch_lang_btn : public ui::button_widget {
   switch_lang_btn() : button_widget(english ? "中文" : "English") {}
 
   void on_click() override {
@@ -485,7 +362,7 @@ void InjectAllConsistent() {
   }
 }
 
-struct inject_all_switch : public button_widget {
+struct inject_all_switch : public ui::button_widget {
   bool injecting_all = false;
   std::chrono::steady_clock::time_point last_check;
   inject_all_switch() : button_widget(english ? "Inject All" : "全局注入") {
@@ -541,7 +418,7 @@ struct inject_all_switch : public button_widget {
   }
 };
 
-struct inject_once_switch : public button_widget {
+struct inject_once_switch : public ui::button_widget {
   inject_once_switch() : button_widget(english ? "Inject Once" : "注入一次") {}
 
   void on_click() override {
@@ -552,7 +429,7 @@ struct inject_once_switch : public button_widget {
   }
 };
 
-struct data_dir_btn : public button_widget {
+struct data_dir_btn : public ui::button_widget {
   data_dir_btn() : button_widget(english ? "Data Folder" : "数据目录") {}
 
   void on_click() override {
@@ -723,13 +600,13 @@ void ShowCrashDialog() {
   btn_container->horizontal = true;
   btn_container->gap = 10;
 
-  class close_button : public button_widget {
+  class close_button : public ui::button_widget {
   public:
     close_button() : button_widget(english ? "Close" : "关闭") {}
     void on_click() override { exit(1); }
   };
 
-  class github_button : public button_widget {
+  class github_button : public ui::button_widget {
   public:
     github_button() : button_widget(english ? "Check GitHub" : "查看 GitHub") {}
     void on_click() override {

@@ -1,9 +1,9 @@
 #include "script.h"
-#include "../contextmenu/contextmenu.h"
+#include "shell/contextmenu/contextmenu.h"
 #include "binding_qjs.h"
 
-#include "../config.h"
-#include "../utils.h"
+#include "shell/config.h"
+#include "shell/utils.h"
 
 #include <algorithm>
 #include <future>
@@ -20,7 +20,7 @@
 #include "quickjs.h"
 #include "quickjspp.hpp"
 
-#include "../logger.h"
+#include "shell/logger.h"
 
 thread_local bool is_thread_js_main = false;
 

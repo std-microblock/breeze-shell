@@ -62,7 +62,8 @@ bool get_personalize_dword_value(const wchar_t *value_name) {
 }
 
 bool mb_shell::is_light_mode() {
-  return get_personalize_dword_value(L"AppsUseLightTheme");
+  static bool light_mode = get_personalize_dword_value(L"AppsUseLightTheme");
+  return light_mode ;
 }
 
 bool mb_shell::is_acrylic_available() {

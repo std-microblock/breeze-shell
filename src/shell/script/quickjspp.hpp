@@ -28,7 +28,7 @@
 #include <variant>
 #include <vector>
 
-#define NOMINMAX
+
 #include "Windows.h"
 extern thread_local bool is_thread_js_main;
 #if defined(__cpp_rtti)
