@@ -519,7 +519,6 @@ std::string folder_view_folder_item::type() {
   if (SUCCEEDED(SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
     LPWSTR type;
     if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &type))) {
-      wchar_t fileType[MAX_PATH];
       SHFILEINFOW sfi = {0};
       if (SHGetFileInfoW(type, 0, &sfi, sizeof(sfi), SHGFI_TYPENAME)) {
         CoTaskMemFree(type);
@@ -602,7 +601,7 @@ void window_titlebar_controller::show() { ShowWindow((HWND)$hwnd, SW_SHOW); }
 void window_titlebar_controller::hide() { ShowWindow((HWND)$hwnd, SW_HIDE); }
 
 void input_box_controller::set_text(std::string new_text) {
-  SetWindowTextW((HWND)$hwnd, mb_shell::utf8_to_wstring(new_text).c_str());
+  SetWindowTextW((HWND)$hwnd, mb_shell::wstring_to_utf8(new_text).c_str());
 }
 
 void input_box_controller::set_placeholder(std::string new_placeholder) {
@@ -666,7 +665,7 @@ void input_box_controller::set_selection(int start, int end) {
 
 void input_box_controller::insert_text(std::string new_text) {
   SendMessageW((HWND)$hwnd, EM_REPLACESEL, TRUE,
-               (LPARAM)mb_shell::wstring_to_utf8(new_text).c_str());
+               (LPARAM)mb_shell::utf8_to_wstring(new_text).c_str());
 }
 
 void input_box_controller::delete_text(int start, int end) {
