@@ -305,6 +305,12 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     GetWindowTextW(hWnd, title, sizeof(title));
     window_info.title = mb_shell::wstring_to_utf8(title);
 
+    // get window class name
+    char className[256];
+    if (GetClassNameA(hWnd, className, sizeof(className))) {
+      window_info.class_name = std::string(className);
+    }
+
     // get executable path
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
@@ -660,7 +666,7 @@ void input_box_controller::set_selection(int start, int end) {
 
 void input_box_controller::insert_text(std::string new_text) {
   SendMessageW((HWND)$hwnd, EM_REPLACESEL, TRUE,
-               (LPARAM)mb_shell::utf8_to_wstring(new_text).c_str());
+               (LPARAM)mb_shell::wstring_to_utf8(new_text).c_str());
 }
 
 void input_box_controller::delete_text(int start, int end) {

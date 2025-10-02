@@ -330,6 +330,7 @@ struct caller_window_data {
   bool visible;
   std::string executable_path;
   std::string title;
+  std::string class_name;  // 添加窗口类名字段
 };
 
 struct js_menu_context {
