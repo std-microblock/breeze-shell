@@ -601,7 +601,7 @@ void window_titlebar_controller::show() { ShowWindow((HWND)$hwnd, SW_SHOW); }
 void window_titlebar_controller::hide() { ShowWindow((HWND)$hwnd, SW_HIDE); }
 
 void input_box_controller::set_text(std::string new_text) {
-  SetWindowTextW((HWND)$hwnd, mb_shell::wstring_to_utf8(new_text).c_str());
+  SetWindowTextW((HWND)$hwnd, mb_shell::utf8_to_wstring(new_text).c_str());
 }
 
 void input_box_controller::set_placeholder(std::string new_placeholder) {
