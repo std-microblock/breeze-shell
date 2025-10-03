@@ -616,6 +616,7 @@ export class caller_window_data {
 	visible: boolean
 	executable_path: string
 	title: string
+	class_name: string
 }
 export class js_menu_context {
 	folder_view?: folder_view_controller | undefined

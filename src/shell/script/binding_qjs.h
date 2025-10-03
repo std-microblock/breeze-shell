@@ -719,6 +719,8 @@ template <> struct qjs::js_traits<mb_shell::js::caller_window_data> {
         obj.executable_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "executable_path"));
 
         obj.title = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "title"));
+        
+        obj.class_name = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "class_name"));
 
         return obj;
     }
@@ -747,6 +749,8 @@ template <> struct qjs::js_traits<mb_shell::js::caller_window_data> {
         JS_SetPropertyStr(ctx, obj, "executable_path", js_traits<std::string>::wrap(ctx, val.executable_path));
 
         JS_SetPropertyStr(ctx, obj, "title", js_traits<std::string>::wrap(ctx, val.title));
+        
+        JS_SetPropertyStr(ctx, obj, "class_name", js_traits<std::string>::wrap(ctx, val.class_name));
 
         return obj;
     }
@@ -766,6 +770,7 @@ template<> struct js_bind<mb_shell::js::caller_window_data> {
                 .fun<&mb_shell::js::caller_window_data::visible>("visible")
                 .fun<&mb_shell::js::caller_window_data::executable_path>("executable_path")
                 .fun<&mb_shell::js::caller_window_data::title>("title")
+                .fun<&mb_shell::js::caller_window_data::class_name>("class_name")
             ;
     }
 };

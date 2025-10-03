@@ -321,17 +321,18 @@ struct window_prop_data {
 };
 
 struct caller_window_data {
-    std::vector<window_prop_data> props;
-    int x;
-    int y;
-    int width;
-    int height;
-    bool maximized;
-    bool minimized;
-    bool focused;
-    bool visible;
-    std::string executable_path;
-    std::string title;
+  std::vector<window_prop_data> props;
+  int x;
+  int y;
+  int width;
+  int height;
+  bool maximized;
+  bool minimized;
+  bool focused;
+  bool visible;
+  std::string executable_path;
+  std::string title;
+  std::string class_name;  // 添加窗口类名字段
 };
 
 struct js_menu_context {

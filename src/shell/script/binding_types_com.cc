@@ -305,6 +305,12 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
     GetWindowTextW(hWnd, title, sizeof(title));
     window_info.title = mb_shell::wstring_to_utf8(title);
 
+    // get window class name
+    char className[256];
+    if (GetClassNameA(hWnd, className, sizeof(className))) {
+      window_info.class_name = std::string(className);
+    }
+
     // get executable path
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
@@ -513,7 +519,6 @@ std::string folder_view_folder_item::type() {
   if (SUCCEEDED(SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
     LPWSTR type;
     if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &type))) {
-      wchar_t fileType[MAX_PATH];
       SHFILEINFOW sfi = {0};
       if (SHGetFileInfoW(type, 0, &sfi, sizeof(sfi), SHGFI_TYPENAME)) {
         CoTaskMemFree(type);
