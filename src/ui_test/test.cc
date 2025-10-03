@@ -1,9 +1,9 @@
 #include "GLFW/glfw3.h"
-#include "animator.h"
-#include "extra_widgets.h"
-#include "nanovg_wrapper.h"
-#include "ui.h"
-#include "widget.h"
+#include "breeze_ui/animator.h"
+#include "breeze_ui/extra_widgets.h"
+#include "breeze_ui/nanovg_wrapper.h"
+#include "breeze_ui/ui.h"
+#include "breeze_ui/widget.h"
 #include <functional>
 #include <iostream>
 #include <memory>

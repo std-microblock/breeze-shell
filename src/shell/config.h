@@ -1,8 +1,8 @@
 #pragma once
 
-#include "animator.h"
+#include "breeze_ui/animator.h"
 #include "nanovg.h"
-#include "nanovg_wrapper.h"
+#include "breeze_ui/nanovg_wrapper.h"
 #include "utils.h"
 #include <filesystem>
 #include <memory>
@@ -24,6 +24,7 @@ struct config {
     float delay_scale = _default_animation.delay_scale;
 
     void apply_to(ui::sp_anim_float &anim, float delay = 0);
+    void apply_to(ui::animated_color &anim, float delay = 0);
     void operator()(ui::sp_anim_float &anim, float delay = 0);
   } default_animation;
 
@@ -100,6 +101,16 @@ struct config {
       int padding_horizontal = 0;
     } position;
   } context_menu;
+
+  struct taskbar {
+    struct theme {
+      struct animation {
+        animated_float_conf bg_color;
+        animated_float_conf active_indicator;
+      } animation;
+    } theme;
+  } taskbar;
+
   bool debug_console = false;
   // Restart to apply font/hook changes
   std::filesystem::path font_path_main = default_main_font();
@@ -117,5 +128,6 @@ struct config {
   static std::string dump_config();
 
   static std::filesystem::path data_directory();
+  void apply_fonts_to_nvg(NVGcontext *nvg);
 };
 } // namespace mb_shell

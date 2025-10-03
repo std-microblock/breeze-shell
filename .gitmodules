@@ -1,6 +1,3 @@
-[submodule "blook"]
-	path = dependencies/blook
-	url = https://github.com/std-microblock/blook
 [submodule "dependencies/glfw"]
 	path = dependencies/glfw
 	url = https://github.com/breeze-shell/glfw

@@ -165,8 +165,10 @@ void mb_shell::fix_win11_menu::install() {
               if (patch_area(ins.ptr()
                                  .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
                                  ->range_size(0xB50)
-                                 .disassembly()))
-                break;
+                                 .disassembly())) {
+                                  std::println("Patched shell32.dll for win11 menu fix");
+                                   break;
+                                  }
             }
           }
         }

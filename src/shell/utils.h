@@ -1,5 +1,6 @@
 #pragma once
 #include "nanovg.h"
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -10,7 +11,6 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
-#include <chrono>
 
 namespace mb_shell {
 std::string wstring_to_utf8(std::wstring const &str);
@@ -28,41 +28,41 @@ std::vector<std::string> split_string(const std::string &str, char delimiter);
 
 struct task_queue {
 public:
-  task_queue();
+    task_queue();
 
-  ~task_queue();
+    ~task_queue();
 
-  template <typename F, typename... Args>
-  auto add_task(F &&f, Args &&...args)
-      -> std::future<std::invoke_result_t<F, Args...>> {
-    using return_type = std::invoke_result_t<F, Args...>;
+    template <typename F, typename... Args>
+    auto add_task(F &&f, Args &&...args)
+        -> std::future<std::invoke_result_t<F, Args...>> {
+        using return_type = std::invoke_result_t<F, Args...>;
 
-    if (stop) {
-      throw std::runtime_error("add_task called on stopped task_queue");
+        if (stop) {
+            throw std::runtime_error("add_task called on stopped task_queue");
+        }
+
+        auto task = std::make_shared<std::packaged_task<return_type()>>(
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+
+        std::future<return_type> res = task->get_future();
+
+        {
+            std::lock_guard<std::mutex> lock(queue_mutex);
+            tasks.emplace([task]() { (*task)(); });
+        }
+
+        condition.notify_one();
+        return res;
     }
-
-    auto task = std::make_shared<std::packaged_task<return_type()>>(
-        std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-
-    std::future<return_type> res = task->get_future();
-
-    {
-      std::lock_guard<std::mutex> lock(queue_mutex);
-      tasks.emplace([task]() { (*task)(); });
-    }
-
-    condition.notify_one();
-    return res;
-  }
 
 private:
-  void run();
+    void run();
 
-  std::thread worker;
-  std::queue<std::function<void()>> tasks;
-  std::mutex queue_mutex;
-  std::condition_variable condition;
-  bool stop;
+    std::thread worker;
+    std::queue<std::function<void()>> tasks;
+    std::mutex queue_mutex;
+    std::condition_variable condition;
+    bool stop;
 };
 
 struct perf_counter {

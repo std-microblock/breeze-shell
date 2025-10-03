@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "types": [
+      "./src/jsx.d.ts",
+      "../binding_types.d.ts",
+      "./src/global.d.ts"
+    ],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationDir": "./dist/types"
+  }
+}

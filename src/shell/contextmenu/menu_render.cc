@@ -4,10 +4,10 @@
 #include "Windows.h"
 #include "menu_widget.h"
 
-#include "../entry.h"
-#include "../logger.h"
-#include "../script/binding_types.hpp"
-#include "ui.h"
+#include "shell//entry.h"
+#include "shell//logger.h"
+#include "shell//script/binding_types.hpp"
+#include "breeze_ui/ui.h"
 #include <mutex>
 #include <thread>
 
@@ -52,14 +52,7 @@ menu_render menu_render::create(int x, int y, menu menu) {
       return std::nullopt;
     });
 
-    nvgCreateFont(rt->nvg, "main",
-                  config::current->font_path_main.string().c_str());
-    nvgCreateFont(rt->nvg, "fallback",
-                  config::current->font_path_fallback.string().c_str());
-    nvgCreateFont(rt->nvg, "monospace",
-                  config::current->font_path_monospace.string().c_str());
-    nvgAddFallbackFont(rt->nvg, "main", "fallback");
-    nvgAddFallbackFont(rt->nvg, "monospace", "main");
+    config::current->apply_fonts_to_nvg(rt->nvg);
     return rt;
   }();
   auto render = menu_render(rt, std::nullopt);

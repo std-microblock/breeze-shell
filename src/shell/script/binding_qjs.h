@@ -3,7 +3,6 @@
 
 #pragma once
 #include "binding_types.h"
-#include "quickjs.h"
 #include "quickjspp.hpp"
 
 template <typename T>
@@ -49,11 +48,24 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::breeze_ui::js_widget>("breeze_ui::js_widget")
             .constructor<>()
+                .property<&mb_shell::js::breeze_ui::js_widget::get_x, &mb_shell::js::breeze_ui::js_widget::set_x>("x")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_y, &mb_shell::js::breeze_ui::js_widget::set_y>("y")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_width, &mb_shell::js::breeze_ui::js_widget::set_width>("width")
+                .property<&mb_shell::js::breeze_ui::js_widget::get_height, &mb_shell::js::breeze_ui::js_widget::set_height>("height")
                 .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child>("append_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::prepend_child>("prepend_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::remove_child>("remove_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child_after>("append_child_after")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_animation>("set_animation")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_x>("get_x")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_x>("set_x")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_y>("get_y")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_y>("set_y")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_width>("get_width")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_width>("set_width")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_height>("get_height")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_height>("set_height")
                 .fun<&mb_shell::js::breeze_ui::js_widget::downcast>("downcast")
             ;
     }
@@ -64,6 +76,9 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
         mod.class_<mb_shell::js::breeze_ui::js_text_widget>("breeze_ui::js_text_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_text_widget::get_text, &mb_shell::js::breeze_ui::js_text_widget::set_text>("text")
+                .property<&mb_shell::js::breeze_ui::js_text_widget::get_font_size, &mb_shell::js::breeze_ui::js_text_widget::set_font_size>("font_size")
+                .property<&mb_shell::js::breeze_ui::js_text_widget::get_color, &mb_shell::js::breeze_ui::js_text_widget::set_color>("color")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_text>("get_text")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::set_text>("set_text")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_font_size>("get_font_size")
@@ -79,6 +94,26 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
         mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("breeze_ui::js_flex_layout_widget")
             .constructor<>()
                 .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_auto_size>("auto_size")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_horizontal>("horizontal")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_left, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_left>("padding_left")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_right, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_right>("padding_right")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_top, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_top>("padding_top")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_bottom, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_padding_bottom>("padding_bottom")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding>("padding")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_click, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_click>("on_click")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_move, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_move>("on_mouse_move")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_enter, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_enter>("on_mouse_enter")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_leave, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_leave>("on_mouse_leave")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_down, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_down>("on_mouse_down")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_color>("background_color")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("background_paint")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("border_paint")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("border_radius")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("border_color")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("border_width")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size>("get_auto_size")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_auto_size>("set_auto_size")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_horizontal>("set_horizontal")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_padding_left>("get_padding_left")
@@ -97,18 +132,34 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_move>("set_on_mouse_move")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_enter>("get_on_mouse_enter")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_enter>("set_on_mouse_enter")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_leave>("get_on_mouse_leave")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_leave>("set_on_mouse_leave")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_down>("get_on_mouse_down")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_down>("set_on_mouse_down")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_color>("set_background_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_color>("get_background_color")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("set_background_paint")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint>("get_background_paint")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("set_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("set_background_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint>("get_border_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("set_border_paint")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius>("get_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("set_border_radius")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("set_border_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color>("get_border_color")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("set_border_width")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width>("get_border_width")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("set_border_paint")
-                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint>("get_border_paint")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("set_border_width")
+            ;
+    }
+};
+
+template<> struct js_bind<mb_shell::js::breeze_ui::js_image_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_image_widget>("breeze_ui::js_image_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_image_widget::get_svg, &mb_shell::js::breeze_ui::js_image_widget::set_svg>("svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::get_svg>("get_svg")
+                .fun<&mb_shell::js::breeze_ui::js_image_widget::set_svg>("set_svg")
             ;
     }
 };
@@ -132,6 +183,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
             ;
     }
 };
@@ -154,6 +206,30 @@ template<> struct js_bind<mb_shell::js::breeze_ui::breeze_paint> {
         mod.class_<mb_shell::js::breeze_ui::breeze_paint>("breeze_ui::breeze_paint")
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::breeze_paint::from_color>("from_color")
+            ;
+    }
+};
+
+template <> struct qjs::js_traits<mb_shell::js::breeze_ui::window> {
+    static mb_shell::js::breeze_ui::window unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::breeze_ui::window obj;
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::breeze_ui::window &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::breeze_ui::window> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::window>("breeze_ui::window")
+            .constructor<>()
+                .static_fun<&mb_shell::js::breeze_ui::window::create>("create")
+                .fun<&mb_shell::js::breeze_ui::window::set_root_widget>("set_root_widget")
+                .fun<&mb_shell::js::breeze_ui::window::close>("close")
             ;
     }
 };
@@ -788,6 +864,7 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::menu_controller>("menu_controller")
             .constructor<>()
+                .property<&mb_shell::js::menu_controller::get_items>("items")
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
                 .fun<&mb_shell::js::menu_controller::append_item_after>("append_item_after")
                 .fun<&mb_shell::js::menu_controller::append_widget_after>("append_widget_after")
@@ -1084,9 +1161,13 @@ inline void bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
 
+    js_bind<mb_shell::js::breeze_ui::js_image_widget>::bind(mod);
+
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::breeze_paint>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::window>::bind(mod);
 
     js_bind<mb_shell::js::folder_view_folder_item>::bind(mod);
 
