@@ -83,6 +83,7 @@ namespace mb_shell::js {
 // Macro for paint getter/setter pairs
 #define IMPL_PAINT_PROP(class_name, widget_type, prop_name)                    \
     std::shared_ptr<breeze_ui::breeze_paint> class_name::get_##prop_name()     \
+        const {                                                                \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget || !widget->prop_name)                                     \
             return nullptr;                                                    \
@@ -486,8 +487,7 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
 
-IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap,
-                 float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap, float)
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
     auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
     if (!widget)
@@ -519,8 +519,7 @@ void breeze_ui::js_flex_layout_widget::set_align_items(std::string align) {
     if (!widget)
         return;
 
-    if (auto val =
-            mb_shell::enum_from_string<ui::widget_flex::align>(align)) {
+    if (auto val = mb_shell::enum_from_string<ui::widget_flex::align>(align)) {
         widget->align_items = *val;
     }
 }

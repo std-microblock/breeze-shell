@@ -48,7 +48,7 @@ export class js_widget {
      * @returns void
      */
     set_animation(variable_name: string, enabled: boolean): void
-	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget
+	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_spacer_widget
 }
 }
 namespace breeze_ui {
