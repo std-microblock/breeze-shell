@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include "shell/widgets/background_widget.h"
+#include "scrollable_widget.h"
 
 namespace mb_shell {
 
@@ -92,21 +93,20 @@ enum class popup_direction {
   bottom_right,
 };
 struct menu_item_widget;
-struct menu_widget : public ui::widget_flex {
-  using super = ui::widget_flex;
+struct menu_widget : public scrollable_widget {
+  using super = scrollable_widget;
   float bg_padding_vertical = 6;
 
-  float max_height = 99999;
-  float actual_height = 0;
-  ui::sp_anim_float scroll_top =
-      anim_float(0, 200, ui::easing_type::ease_in_out);
   std::shared_ptr<background_widget> bg;
 
   std::shared_ptr<background_widget> bg_submenu;
   std::shared_ptr<menu_widget> current_submenu;
   std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
   std::vector<std::shared_ptr<widget>> rendering_submenus;
-  std::vector<std::shared_ptr<widget>> item_widgets;
+  
+  // item_widgets is now an alias for scrollable_children from base class
+  std::vector<std::shared_ptr<widget>>& item_widgets = scrollable_children;
+  
   menu_widget *parent_menu = nullptr;
 
   menu menu_data;

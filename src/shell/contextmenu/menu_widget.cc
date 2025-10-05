@@ -303,10 +303,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     bg_submenu->update(forkctx_1);
   }
 
-  // Update scrollable children (item_widgets) through base class
   scrollable_widget::update(ctx);
   
-  // Set width for all items
   for (auto &item : item_widgets) {
     item->width->reset_to(*width);
   }
@@ -520,7 +518,6 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     bg->render(ctx);
   }
 
-  // Render scrollable content (item_widgets) through base class
   scrollable_widget::render(ctx);
 
   auto ctx2 = ctx.with_offset(*x, *y);
