@@ -14,16 +14,12 @@ namespace mb_shell::js {
 // Macro for getter/setter pairs with animation support
 #define IMPL_ANIMATED_PROP(class_name, widget_type, prop_name, prop_type)      \
     prop_type class_name::get_##prop_name() const {                            \
-        if (!$widget)                                                          \
-            return prop_type{};                                                \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return prop_type{};                                                \
         return widget->prop_name->dest();                                      \
     }                                                                          \
     void class_name::set_##prop_name(prop_type value) {                        \
-        if (!$widget)                                                          \
-            return;                                                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return;                                                            \
@@ -33,16 +29,12 @@ namespace mb_shell::js {
 // Macro for simple getter/setter pairs
 #define IMPL_SIMPLE_PROP(class_name, widget_type, prop_name, prop_type)        \
     prop_type class_name::get_##prop_name() const {                            \
-        if (!$widget)                                                          \
-            return prop_type{};                                                \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return prop_type{};                                                \
         return widget->prop_name;                                              \
     }                                                                          \
     void class_name::set_##prop_name(prop_type value) {                        \
-        if (!$widget)                                                          \
-            return;                                                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return;                                                            \
@@ -52,16 +44,12 @@ namespace mb_shell::js {
 // Macro for callback function getter/setter pairs
 #define IMPL_CALLBACK_PROP(class_name, widget_type, prop_name, callback_type)  \
     callback_type class_name::get_##prop_name() const {                        \
-        if (!$widget)                                                          \
-            return nullptr;                                                    \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return nullptr;                                                    \
         return widget->prop_name;                                              \
     }                                                                          \
     void class_name::set_##prop_name(callback_type callback) {                 \
-        if (!$widget)                                                          \
-            return;                                                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return;                                                            \
@@ -72,8 +60,6 @@ namespace mb_shell::js {
 #define IMPL_COLOR_PROP(class_name, widget_type, prop_name)                    \
     std::optional<std::tuple<float, float, float, float>>                      \
         class_name::get_##prop_name() const {                                  \
-        if (!$widget)                                                          \
-            return std::nullopt;                                               \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return std::nullopt;                                               \
@@ -82,8 +68,6 @@ namespace mb_shell::js {
     }                                                                          \
     void class_name::set_##prop_name(                                          \
         std::optional<std::tuple<float, float, float, float>> color) {         \
-        if (!$widget)                                                          \
-            return;                                                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return;                                                            \
@@ -99,17 +83,12 @@ namespace mb_shell::js {
 // Macro for paint getter/setter pairs
 #define IMPL_PAINT_PROP(class_name, widget_type, prop_name)                    \
     std::shared_ptr<breeze_ui::breeze_paint> class_name::get_##prop_name()     \
-        const {                                                                \
-        if (!$widget)                                                          \
-            return nullptr;                                                    \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget || !widget->prop_name)                                     \
             return nullptr;                                                    \
         return std::make_shared<breeze_paint>(*widget->prop_name);             \
     }                                                                          \
     void class_name::set_##prop_name(std::shared_ptr<breeze_paint> paint) {    \
-        if (!$widget)                                                          \
-            return;                                                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget || !paint)                                                 \
             return;                                                            \
@@ -129,8 +108,6 @@ breeze_ui::js_widget::children() const {
 }
 
 std::string breeze_ui::js_text_widget::get_text() const {
-    if (!$widget)
-        return "";
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return "";
@@ -138,8 +115,6 @@ std::string breeze_ui::js_text_widget::get_text() const {
 }
 
 void breeze_ui::js_text_widget::set_text(std::string text) {
-    if (!$widget)
-        return;
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return;
@@ -148,8 +123,6 @@ void breeze_ui::js_text_widget::set_text(std::string text) {
 }
 
 int breeze_ui::js_text_widget::get_font_size() const {
-    if (!$widget)
-        return 0;
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return 0;
@@ -157,8 +130,6 @@ int breeze_ui::js_text_widget::get_font_size() const {
 }
 
 void breeze_ui::js_text_widget::set_font_size(int size) {
-    if (!$widget)
-        return;
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return;
@@ -168,8 +139,6 @@ void breeze_ui::js_text_widget::set_font_size(int size) {
 
 std::tuple<float, float, float, float>
 breeze_ui::js_text_widget::get_color() const {
-    if (!$widget)
-        return {0.0f, 0.0f, 0.0f, 0.0f};
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return {0.0f, 0.0f, 0.0f, 0.0f};
@@ -179,8 +148,6 @@ breeze_ui::js_text_widget::get_color() const {
 
 void breeze_ui::js_text_widget::set_color(
     std::optional<std::tuple<float, float, float, float>> color) {
-    if (!$widget)
-        return;
     auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
     if (!text_widget)
         return;
@@ -197,6 +164,7 @@ void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
                                               int after_index) {
     if (child && child->$widget) {
         $widget->children_dirty = true;
+        $widget->needs_repaint = true;
         if (after_index < 0) {
             after_index = $widget->children.size() + after_index + 1;
         }
@@ -224,6 +192,7 @@ void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
         if (it != $widget->children.end()) {
             $widget->children.erase(it);
             $widget->children_dirty = true;
+            $widget->needs_repaint = true;
         }
     }
 }
