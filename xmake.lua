@@ -1,6 +1,5 @@
 set_project("shell")
 set_policy("compatibility.version", "3.0")
-set_policy("package.requires_lock", true)
 local version = "0.1.30"
 
 set_exceptions("cxx")
@@ -15,7 +14,10 @@ includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook bd14b233104648822ac06a4029e06c4554eb0b01", "nanovg", "glad", "quickjs-ng", "nanosvg", "reflect-cpp", "wintoast", "cpptrace v0.8.3", "breeze-ui")
+add_requires("blook bd14b233104648822ac06a4029e06c4554eb0b01",
+    "nanovg", "glad", "quickjs-ng", "nanosvg",
+    "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
+
 
 add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
     configs = {
