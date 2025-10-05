@@ -758,6 +758,18 @@ export class menu_controller {
      */
     append_menu_after(data: js_menu_data, after_index: number): menu_item_controller
 	static create_detached(): menu_controller
+	/**
+     *  This method is only available for detached menu controllers
+     * @param x: number
+     * @param y: number
+     * @returns Promise<number>
+     */
+    show_at(x: number, y: number): Promise<number>
+	/**
+     *  This method is only available for detached menu controllers
+      @returns Promise<number>
+     */
+    show_at_cursor(): Promise<number>
 }
 export class clipboard {
 	/**

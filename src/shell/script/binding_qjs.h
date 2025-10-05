@@ -909,6 +909,8 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
                 .fun<&mb_shell::js::menu_controller::append_menu>("append_menu")
                 .fun<&mb_shell::js::menu_controller::append_menu_after>("append_menu_after")
                 .static_fun<&mb_shell::js::menu_controller::create_detached>("create_detached")
+                .fun<&mb_shell::js::menu_controller::show_at>("show_at")
+                .fun<&mb_shell::js::menu_controller::show_at_cursor>("show_at_cursor")
             ;
     }
 };

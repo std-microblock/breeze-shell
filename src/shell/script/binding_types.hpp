@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <future>
 #include <memory>
 #include <optional>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include <vector>
 
 #include "binding_types_breeze_ui.h"
-
 
 namespace mb_shell {
 struct mouse_menu_widget_main;
@@ -321,18 +321,18 @@ struct window_prop_data {
 };
 
 struct caller_window_data {
-  std::vector<window_prop_data> props;
-  int x;
-  int y;
-  int width;
-  int height;
-  bool maximized;
-  bool minimized;
-  bool focused;
-  bool visible;
-  std::string executable_path;
-  std::string title;
-  std::string class_name;
+    std::vector<window_prop_data> props;
+    int x;
+    int y;
+    int width;
+    int height;
+    bool maximized;
+    bool minimized;
+    bool focused;
+    bool visible;
+    std::string executable_path;
+    std::string title;
+    std::string class_name;
 };
 
 struct js_menu_context {
@@ -441,6 +441,11 @@ struct menu_controller {
     }
 
     static std::shared_ptr<menu_controller> create_detached();
+
+    // This method is only available for detached menu controllers
+    void show_at(int x, int y);
+    // This method is only available for detached menu controllers
+    void show_at_cursor();
 
     ~menu_controller();
 };

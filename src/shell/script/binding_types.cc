@@ -1,4 +1,5 @@
 #include "binding_types.hpp"
+#include "async_simple/Promise.h"
 #include "binding_types_breeze_ui.h"
 #include "quickjspp.hpp"
 #include <filesystem>
@@ -820,7 +821,8 @@ void subproc::open(std::string path, std::string args) {
 }
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
-    std::thread([path, callback, args, &lock = ui::render_target::current->rt_lock]() {
+    std::thread([path, callback, args,
+                 &lock = ui::render_target::current->rt_lock]() {
         try {
             open(path, args);
             std::lock_guard l(lock);
@@ -1089,6 +1091,7 @@ menu_controller::create_detached() {
     ctl->$menu = m;
     ctl->$menu_detached = m; // to keep it alive
     m->parent = m.get();
+    m->menu_data.is_top_level = true;
 
     return ctl;
 }
@@ -1408,5 +1411,31 @@ std::string win32::string_from_resid(std::string str) {
 }
 std::vector<std::string> win32::all_resids_from_string(std::string str) {
     return res_string_loader::get_all_ids_of_string(utf8_to_wstring(str));
+}
+void menu_controller::show_at(int x, int y) {
+    if (!valid() || !$menu_detached)
+        return;
+
+    std::thread([x, y, this]() mutable {
+        std::ignore = mb_shell::track_popup_menu(
+            menu{
+                .is_top_level = true,
+            },
+            x, y, [this](menu_render &render) {
+                auto menu_new =
+                    render.rt->root->get_child<mouse_menu_widget_main>()
+                        ->menu_wid;
+                menu_new->children = $menu_detached->children;
+                menu_new->item_widgets = $menu_detached->item_widgets;
+                $menu = menu_new;
+                $menu_detached = nullptr;
+            });
+    }).detach();
+}
+void menu_controller::show_at_cursor() {
+    POINT p;
+    if (GetCursorPos(&p)) {
+        show_at(p.x, p.y);
+    }
 }
 } // namespace mb_shell::js
