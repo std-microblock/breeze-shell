@@ -10,6 +10,7 @@
 #include "breeze_ui/nanovg_wrapper.h"
 #include "breeze_ui/ui.h"
 #include "breeze_ui/widget.h"
+#include "scrollable_widget.h"
 #include <algorithm>
 #include <iostream>
 #include <print>
@@ -302,20 +303,13 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     bg_submenu->update(forkctx_1);
   }
 
-  if (ctx.hovered(this)) {
-    scroll_top->animate_to(std::clamp(scroll_top->dest() + ctx.scroll_y * 100,
-                                      height->dest() - actual_height, 0.f));
-  }
-  widget::update(ctx);
-  ctx.hovered_hit(this);
-  auto forkctx = ctx.with_offset(*x, *y + *scroll_top);
-  update_children(forkctx, item_widgets);
-  reposition_children_flex(forkctx, item_widgets);
+  // Update scrollable children (item_widgets) through base class
+  scrollable_widget::update(ctx);
+  
+  // Set width for all items
   for (auto &item : item_widgets) {
     item->width->reset_to(*width);
   }
-  actual_height = height->dest();
-  height->reset_to(std::min(max_height, height->dest()));
 
   if (bg) {
     bg->update(ctx);
@@ -526,11 +520,8 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     bg->render(ctx);
   }
 
-  ctx.transaction([&] {
-    super::render(ctx);
-    ctx.scissor(*x, *y, *width, *height);
-    render_children(ctx.with_offset(*x, *y + *scroll_top), item_widgets);
-  });
+  // Render scrollable content (item_widgets) through base class
+  scrollable_widget::render(ctx);
 
   auto ctx2 = ctx.with_offset(*x, *y);
 
@@ -538,21 +529,6 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
     bg_submenu->render(ctx2);
   }
   render_children(ctx2, rendering_submenus);
-
-  // scrollbar
-  if (height->dest() < actual_height) {
-    auto scrollbar_width = config::current->context_menu.theme.scrollbar_width;
-    auto scrollbar_height = height->dest() * height->dest() / actual_height;
-    auto scrollbar_x = width->dest() - scrollbar_width - 2 + *x;
-    auto scrollbar_y = *y - *scroll_top / (actual_height - height->dest()) *
-                                (height->dest() - scrollbar_height);
-
-    float c = menu_render::current.value()->light_color ? 0 : 1;
-    ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
-    ctx.fillRoundedRect(scrollbar_x, scrollbar_y, scrollbar_width,
-                        scrollbar_height,
-                        config::current->context_menu.theme.scrollbar_radius);
-  }
 }
 void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
   this->opacity->after_animate = [this](float dest) {
