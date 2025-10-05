@@ -21,39 +21,46 @@ static auto renderer_thread = mb_shell::task_queue{};
 
 std::optional<int>
 mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
-                           std::function<void(menu_render &)> on_before_show) {
+                           std::function<void(menu_render &)> on_before_show, bool run_js) {
     auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer_thread.add_task([&]() {
-        perf_counter perf("mb_shell::track_popup_menu");
-        auto menu_render = menu_render::create(x, y, menu);
-        menu_render.rt->last_time = menu_render.rt->clock.now();
-        perf.end("menu_render::create");
+        try {
+            perf_counter perf("mb_shell::track_popup_menu");
+            auto menu_render = menu_render::create(x, y, menu, run_js);
+            menu_render.rt->last_time = menu_render.rt->clock.now();
+            perf.end("menu_render::create");
 
-        static HWND window = nullptr;
-        window = (HWND)menu_render.rt->hwnd();
-        // set keyboard hook to handle keyboard input
-        auto hook = SetWindowsHookExW(
-            WH_KEYBOARD,
-            [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
-                if (nCode == HC_ACTION) {
-                    PostMessageW(window,
-                                 lParam == WM_KEYDOWN ? WM_KEYDOWN : WM_KEYUP,
-                                 wParam, lParam);
-                    return 1;
-                }
-                return CallNextHookEx(NULL, nCode, wParam, lParam);
-            },
-            NULL, thread_id_orig);
+            static HWND window = nullptr;
+            window = (HWND)menu_render.rt->hwnd();
+            // set keyboard hook to handle keyboard input
+            auto hook = SetWindowsHookExW(
+                WH_KEYBOARD,
+                [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
+                    if (nCode == HC_ACTION) {
+                        PostMessageW(window,
+                                     lParam == WM_KEYDOWN ? WM_KEYDOWN
+                                                          : WM_KEYUP,
+                                     wParam, lParam);
+                        return 1;
+                    }
+                    return CallNextHookEx(NULL, nCode, wParam, lParam);
+                },
+                NULL, thread_id_orig);
 
-        SetWindowLongPtrW(window, GWL_EXSTYLE,
-                          GetWindowLongPtrW(window, GWL_EXSTYLE) |
-                              WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
-        if (on_before_show)
-            on_before_show(menu_render);
-        menu_render.rt->start_loop();
-        UnhookWindowsHookEx(hook);
+            SetWindowLongPtrW(window, GWL_EXSTYLE,
+                              GetWindowLongPtrW(window, GWL_EXSTYLE) |
+                                  WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
+            if (on_before_show)
+                on_before_show(menu_render);
+            menu_render.rt->start_loop();
+            UnhookWindowsHookEx(hook);
 
-        return menu_render.selected_menu;
+            return menu_render.selected_menu;
+        } catch (std::exception &e) {
+            std::cerr << "Exception in track_popup_menu: " << e.what()
+                      << std::endl;
+            return std::optional<int>{};
+        }
     });
     qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 

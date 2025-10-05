@@ -22,7 +22,7 @@ struct menu {
                                      bool is_top = true);
 };
 
-std::optional<int> track_popup_menu(menu menu, int x, int y, std::function<void(menu_render&)> on_before_show = {});
+std::optional<int> track_popup_menu(menu menu, int x, int y, std::function<void(menu_render&)> on_before_show = {}, bool run_js = true);
 
 struct owner_draw_menu_info {
     HBITMAP bitmap;
