@@ -86,6 +86,8 @@ export class js_flex_layout_widget extends js_widget {
     set on_mouse_leave(value: (() => void));
 	get on_mouse_down(): (() => void);
     set on_mouse_down(value: (() => void));
+	get on_mouse_up(): (() => void);
+    set on_mouse_up(value: (() => void));
 	get justify_content(): string;
     set justify_content(value: string);
 	get align_items(): string;

@@ -472,6 +472,8 @@ IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    on_mouse_leave, std::function<void()>)
 IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    on_mouse_down, std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                   on_mouse_up, std::function<void()>)
 
 IMPL_COLOR_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                 background_color)

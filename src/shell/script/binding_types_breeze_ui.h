@@ -87,6 +87,7 @@ struct breeze_ui {
         DEFINE_PROP(std::function<void()>, on_mouse_enter)
         DEFINE_PROP(std::function<void()>, on_mouse_leave)
         DEFINE_PROP(std::function<void()>, on_mouse_down)
+        DEFINE_PROP(std::function<void()>, on_mouse_up)
 
         std::string get_justify_content() const;
         void set_justify_content(std::string justify);
