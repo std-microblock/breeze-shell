@@ -21,6 +21,8 @@ declare module 'react' {
         onMouseDown?: () => void;
         onMouseUp?: () => void;
         onMouseMove?: (x: number, y: number) => void;
+        justifyContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly';
+        alignItems?: 'start' | 'center' | 'end' | 'stretch';
         horizontal?: boolean;
         children?: React.ReactNode | React.ReactNode[];
         key?: string | number;
@@ -30,6 +32,7 @@ declare module 'react' {
         width?: number;
         height?: number;
         autoSize?: boolean;
+        gap?: number;
       },
       text: {
         text?: string[] | string;

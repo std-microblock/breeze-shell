@@ -86,6 +86,10 @@ export class js_flex_layout_widget extends js_widget {
     set on_mouse_leave(value: (() => void));
 	get on_mouse_down(): (() => void);
     set on_mouse_down(value: (() => void));
+	get justify_content(): string;
+    set justify_content(value: string);
+	get align_items(): string;
+    set align_items(value: string);
 	get background_color(): [number, number, number, number] | undefined;
     set background_color(value: [number, number, number, number] | undefined);
 	get background_paint(): breeze_ui.breeze_paint;
@@ -1172,7 +1176,7 @@ export class infra {
 }
 
 declare module "mshell" {
-    export function println(...args: any[]);
+    export function println(...args: any[]): void;
     type size_t = number;
     type uint8_t = number;
     type uint16_t = number;

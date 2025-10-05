@@ -133,6 +133,9 @@ const componentMap = {
             borderPaint: getSetFactory('border_paint'),
             horizontal: getSetFactory('horizontal'),
             autoSize: getSetFactory('auto_size'),
+            justifyContent: getSetFactory('justify_content'),
+            alignItems: getSetFactory('align_items'),
+            gap: getSetFactory('gap'),
             ...commonProps
         }
     },

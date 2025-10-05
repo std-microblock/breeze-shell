@@ -12,6 +12,8 @@
 #include <string>
 #include <thread>
 
+#include "reflect.hpp"
+
 namespace mb_shell {
 std::string wstring_to_utf8(std::wstring const &str);
 std::wstring utf8_to_wstring(std::string const &str);
@@ -72,4 +74,37 @@ struct perf_counter {
     void end(std::optional<std::string> block_name = {});
     perf_counter(std::string name);
 };
+
+template<typename E>
+constexpr auto create_enum_map() {
+    constexpr auto min = reflect::enum_min(E{});
+    constexpr auto max = reflect::enum_max(E{});
+    constexpr size_t count = max - min + 1;
+    
+    std::array<std::pair<std::string_view, E>, count> map{};
+    
+    size_t index = 0;
+    for (int i = min; i <= max; ++i) {
+        E value = static_cast<E>(i);
+        auto name = reflect::enum_name(value);
+        if (!name.empty() && name != "") { // 过滤无效名称
+            map[index++] = {name, value};
+        }
+    }
+    
+    return map;
+}
+
+template<typename E>
+constexpr std::optional<E> enum_from_string(std::string_view str) {
+    static constexpr auto enum_map = create_enum_map<E>();
+    
+    for (const auto& [name, value] : enum_map) {
+        if (name == str) {
+            return value;
+        }
+    }
+    return std::nullopt;
+}
+
 } // namespace mb_shell

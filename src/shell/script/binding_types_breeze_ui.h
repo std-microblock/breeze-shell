@@ -86,6 +86,11 @@ struct breeze_ui {
         DEFINE_PROP(std::function<void()>, on_mouse_leave)
         DEFINE_PROP(std::function<void()>, on_mouse_down)
 
+        std::string get_justify_content() const;
+        void set_justify_content(std::string justify);
+        std::string get_align_items() const;
+        void set_align_items(std::string align);
+
         void set_background_color(
             std::optional<std::tuple<float, float, float, float>> color);
         std::optional<std::tuple<float, float, float, float>>
@@ -94,6 +99,7 @@ struct breeze_ui {
         DEFINE_PROP(std::shared_ptr<breeze_paint>, background_paint)
         DEFINE_PROP(std::shared_ptr<breeze_paint>, border_paint)
         DEFINE_PROP(float, border_radius)
+        DEFINE_PROP(float, gap)
         void set_border_color(
             std::optional<std::tuple<float, float, float, float>> color);
         std::optional<std::tuple<float, float, float, float>>

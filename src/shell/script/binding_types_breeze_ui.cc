@@ -7,6 +7,8 @@
 #include <memory>
 #include <print>
 
+#include "../utils.h"
+
 namespace mb_shell::js {
 
 // Macro for getter/setter pairs with animation support
@@ -252,10 +254,10 @@ struct image_widget : public ui::widget {
             if (std::get_if<data_svg>(&image_data)) {
                 const auto &data = std::get<data_svg>(image_data);
                 auto svg = data.svg;
-                
+
                 image = ctx.imageFromSVG(nsvgParse(svg.data(), "px", 96));
             }
-        } 
+        }
 
         if (image) {
             ctx.drawImage(*image, *x, *y, *width, *height);
@@ -488,6 +490,45 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
+                 
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap,
+                 float)
+std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
+    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    if (!widget)
+        return "";
+    return std::string(reflect::enum_name(widget->justify_content));
+}
+
+void breeze_ui::js_flex_layout_widget::set_justify_content(
+    std::string justify) {
+    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    if (!widget)
+        return;
+
+    if (auto val =
+            mb_shell::enum_from_string<ui::widget_flex::justify>(justify)) {
+        widget->justify_content = *val;
+    }
+}
+
+std::string breeze_ui::js_flex_layout_widget::get_align_items() const {
+    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    if (!widget)
+        return "";
+    return std::string(reflect::enum_name(widget->align_items));
+}
+
+void breeze_ui::js_flex_layout_widget::set_align_items(std::string align) {
+    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    if (!widget)
+        return;
+
+    if (auto val =
+            mb_shell::enum_from_string<ui::widget_flex::align>(align)) {
+        widget->align_items = *val;
+    }
+}
 
 void breeze_ui::window::set_root_widget(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget) {

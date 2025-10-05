@@ -106,6 +106,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_enter, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_enter>("on_mouse_enter")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_leave, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_leave>("on_mouse_leave")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_down, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_down>("on_mouse_down")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_justify_content, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_justify_content>("justify_content")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_align_items, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_align_items>("align_items")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_color>("background_color")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("background_paint")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("border_paint")
@@ -136,6 +138,10 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_leave>("set_on_mouse_leave")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_mouse_down>("get_on_mouse_down")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_mouse_down>("set_on_mouse_down")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_justify_content>("get_justify_content")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_justify_content>("set_justify_content")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_align_items>("get_align_items")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_align_items>("set_align_items")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_color>("set_background_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_color>("get_background_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint>("get_background_paint")
@@ -719,7 +725,7 @@ template <> struct qjs::js_traits<mb_shell::js::caller_window_data> {
         obj.executable_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "executable_path"));
 
         obj.title = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "title"));
-        
+
         obj.class_name = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "class_name"));
 
         return obj;
@@ -749,7 +755,7 @@ template <> struct qjs::js_traits<mb_shell::js::caller_window_data> {
         JS_SetPropertyStr(ctx, obj, "executable_path", js_traits<std::string>::wrap(ctx, val.executable_path));
 
         JS_SetPropertyStr(ctx, obj, "title", js_traits<std::string>::wrap(ctx, val.title));
-        
+
         JS_SetPropertyStr(ctx, obj, "class_name", js_traits<std::string>::wrap(ctx, val.class_name));
 
         return obj;

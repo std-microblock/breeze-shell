@@ -91,6 +91,7 @@ development. Install clangd plugin for full intellisense.
 - https://github.com/memononen/nanovg  
 - https://github.com/memononen/nanosvg  
 - https://github.com/freetype/freetype  
+- https://github.com/qlibs/reflect  
 
 #### Others
 - [@lipraty](https://github.com/lipraty)   - Icon Design
