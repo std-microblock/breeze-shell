@@ -288,6 +288,30 @@ breeze_ui::widgets_factory::create_image_widget() {
     return res;
 }
 
+std::shared_ptr<breeze_ui::js_spacer_widget>
+breeze_ui::widgets_factory::create_spacer_widget() {
+    auto iw = std::make_shared<ui::widget_flex::spacer>();
+
+    auto res = std::make_shared<js_spacer_widget>();
+    res->$widget = std::dynamic_pointer_cast<ui::widget>(iw);
+    return res;
+}
+
+void breeze_ui::js_spacer_widget::set_size(float size) {
+    auto w = $widget->downcast<ui::widget_flex::spacer>();
+    if (w) {
+        w->size = size;
+    }
+}
+
+float breeze_ui::js_spacer_widget::get_size() const {
+    auto w = $widget->downcast<ui::widget_flex::spacer>();
+    if (w) {
+        return w->size;
+    }
+    return 0;
+}
+
 struct widget_js_base : public ui::widget_flex {
     using super = ui::widget_flex;
 
@@ -444,7 +468,8 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
 std::variant<std::shared_ptr<breeze_ui::js_widget>,
              std::shared_ptr<breeze_ui::js_text_widget>,
              std::shared_ptr<breeze_ui::js_flex_layout_widget>,
-             std::shared_ptr<breeze_ui::js_image_widget>>
+             std::shared_ptr<breeze_ui::js_image_widget>,
+             std::shared_ptr<breeze_ui::js_spacer_widget>>
 breeze_ui::js_widget::downcast() {
 #define TRY_DOWNCAST(type)                                                     \
     if (auto casted =                                                          \
@@ -454,6 +479,7 @@ breeze_ui::js_widget::downcast() {
     TRY_DOWNCAST(js_text_widget);
     TRY_DOWNCAST(js_flex_layout_widget);
     TRY_DOWNCAST(js_image_widget);
+    TRY_DOWNCAST(js_spacer_widget);
 #undef TRY_DOWNCAST
 
     return this->shared_from_this();
@@ -490,7 +516,7 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
-                 
+
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap,
                  float)
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {

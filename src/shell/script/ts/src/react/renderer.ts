@@ -145,6 +145,12 @@ const componentMap = {
             svg: getSetFactory('svg'),
             ...commonProps
         }
+    },
+    spacer: {
+        creator: shell.breeze_ui.widgets_factory.create_spacer_widget,
+        props: {
+            size: getSetFactory('size'),
+        }
     }
 }
 

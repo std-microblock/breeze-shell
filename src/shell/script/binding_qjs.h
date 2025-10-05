@@ -112,6 +112,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("background_paint")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("border_paint")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("border_radius")
+                .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_gap, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_gap>("gap")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("border_color")
                 .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("border_width")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size>("get_auto_size")
@@ -150,6 +151,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("set_border_paint")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius>("get_border_radius")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("set_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_gap>("get_gap")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_gap>("set_gap")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("set_border_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color>("get_border_color")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width>("get_border_width")
@@ -166,6 +169,18 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_image_widget> {
                 .property<&mb_shell::js::breeze_ui::js_image_widget::get_svg, &mb_shell::js::breeze_ui::js_image_widget::set_svg>("svg")
                 .fun<&mb_shell::js::breeze_ui::js_image_widget::get_svg>("get_svg")
                 .fun<&mb_shell::js::breeze_ui::js_image_widget::set_svg>("set_svg")
+            ;
+    }
+};
+
+template<> struct js_bind<mb_shell::js::breeze_ui::js_spacer_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_spacer_widget>("breeze_ui::js_spacer_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_spacer_widget::get_size, &mb_shell::js::breeze_ui::js_spacer_widget::set_size>("size")
+                .fun<&mb_shell::js::breeze_ui::js_spacer_widget::get_size>("get_size")
+                .fun<&mb_shell::js::breeze_ui::js_spacer_widget::set_size>("set_size")
             ;
     }
 };
@@ -190,6 +205,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_spacer_widget>("create_spacer_widget")
             ;
     }
 };
@@ -1168,6 +1184,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_image_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::js_spacer_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::widgets_factory>::bind(mod);
 

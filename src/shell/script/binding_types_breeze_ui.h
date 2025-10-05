@@ -20,6 +20,7 @@ struct breeze_ui {
     struct js_flex_layout_widget;
     struct breeze_paint;
     struct js_image_widget;
+    struct js_spacer_widget;
     struct js_widget : public std::enable_shared_from_this<js_widget> {
         std::shared_ptr<ui::widget> $widget;
 
@@ -48,7 +49,8 @@ struct breeze_ui {
         std::variant<std::shared_ptr<js_widget>,
                      std::shared_ptr<js_text_widget>,
                      std::shared_ptr<js_flex_layout_widget>,
-                     std::shared_ptr<js_image_widget>>
+                     std::shared_ptr<js_image_widget>,
+                     std::shared_ptr<js_spacer_widget>>
         downcast();
         // // Note: You can only certain widgets that can be loaded with
         // `downcast()`.
@@ -114,11 +116,17 @@ struct breeze_ui {
         void set_svg(std::string svg);
     };
 
+    struct js_spacer_widget : public js_widget {
+        float get_size() const;
+        void set_size(float size);
+    };
+
     struct widgets_factory {
         static std::shared_ptr<js_text_widget> create_text_widget();
         static std::shared_ptr<js_flex_layout_widget>
         create_flex_layout_widget();
         static std::shared_ptr<js_image_widget> create_image_widget();
+        static std::shared_ptr<js_spacer_widget> create_spacer_widget();
     };
 
     struct breeze_paint {

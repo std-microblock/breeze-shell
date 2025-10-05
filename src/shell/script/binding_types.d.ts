@@ -98,6 +98,8 @@ export class js_flex_layout_widget extends js_widget {
     set border_paint(value: breeze_ui.breeze_paint);
 	get border_radius(): number;
     set border_radius(value: number);
+	get gap(): number;
+    set gap(value: number);
 	get border_color(): [number, number, number, number] | undefined;
     set border_color(value: [number, number, number, number] | undefined);
 	get border_width(): number;
@@ -120,10 +122,17 @@ export class js_image_widget extends js_widget {
 }
 }
 namespace breeze_ui {
+export class js_spacer_widget extends js_widget {
+	get size(): number;
+    set size(value: number);
+}
+}
+namespace breeze_ui {
 export class widgets_factory {
 	static create_text_widget(): breeze_ui.js_text_widget
 	static create_flex_layout_widget(): breeze_ui.js_flex_layout_widget
 	static create_image_widget(): breeze_ui.js_image_widget
+	static create_spacer_widget(): breeze_ui.js_spacer_widget
 }
 }
 namespace breeze_ui {

@@ -53,6 +53,10 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+      },
+      spacer: {
+        size?: number;
+        key?: string | number;
       }
     }
   }
