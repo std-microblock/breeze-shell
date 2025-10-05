@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 #include "shell/widgets/background_widget.h"
-#include "scrollable_widget.h"
+#include "shell/widgets/scrollable_widget.h"
 
 namespace mb_shell {
 

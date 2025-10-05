@@ -1,7 +1,7 @@
 #include "scrollable_widget.h"
-#include "menu_render.h"
 #include "nanovg.h"
 #include "shell/config.h"
+#include "shell/utils.h"
 #include <algorithm>
 
 namespace mb_shell {
@@ -59,7 +59,7 @@ void scrollable_widget::render_scrollbar(ui::nanovg_context ctx) {
         auto scrollbar_y = *y - *scroll_top / (actual_height - height->dest()) *
                                     (height->dest() - scrollbar_height);
 
-        float c = menu_render::current.value()->light_color ? 0 : 1;
+        float c = is_light_mode() ? 0 : 1;
         ctx.fillColor(nvgRGBAf(c, c, c, 0.1));
         ctx.fillRoundedRect(
             scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height,

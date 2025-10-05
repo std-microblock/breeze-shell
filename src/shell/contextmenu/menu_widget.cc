@@ -10,7 +10,7 @@
 #include "breeze_ui/nanovg_wrapper.h"
 #include "breeze_ui/ui.h"
 #include "breeze_ui/widget.h"
-#include "scrollable_widget.h"
+#include "shell/widgets/scrollable_widget.h"
 #include <algorithm>
 #include <iostream>
 #include <print>
