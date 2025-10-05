@@ -191,13 +191,13 @@
             },
             version = "0.11.1"
         },
-        ["zasm c239a78b51c1b0060296193174d78b802f02a618#31fecfc4"] = {
+        ["zasm 2025.03.02#31fecfc4"] = {
             repo = {
                 branch = "master",
-                commit = "dd0994a8a573ee729ea1fcd8412ab8f929a25b9b",
-                url = "https://gitee.com/tboox/xmake-repo.git"
+                commit = "0a5b22b8c2b2428f18a5e1513bed65d87b54fecd",
+                url = "https://github.com/xmake-io/xmake-repo.git"
             },
-            version = "c239a78b"
+            version = "2025.03.02"
         },
         ["zycore-c v1.5.2#31fecfc4"] = {
             repo = {
