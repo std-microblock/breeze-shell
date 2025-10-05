@@ -1,6 +1,6 @@
 
 #include "contextmenu.h"
-#include "shell//utils.h"
+#include "shell/utils.h"
 #include "menu_widget.h"
 #include "breeze_ui/ui.h"
 #include <algorithm>
@@ -8,12 +8,12 @@
 
 #include "menu_render.h"
 
-#include "shell//config.h"
-#include "shell//res_string_loader.h"
+#include "shell/config.h"
+#include "shell/res_string_loader.h"
 
-#include "shell//logger.h"
+#include "shell/logger.h"
 
-#include "shell//entry.h"
+#include "shell/entry.h"
 
 #include <consoleapi.h>
 #include <debugapi.h>
