@@ -1480,6 +1480,7 @@ public:
 
     Runtime() {
         rt = JS_NewRuntime();
+        JS_SetMaxStackSize(rt, 0);
         if (!rt)
             throw std::runtime_error{"qjs: Cannot create runtime"};
 
