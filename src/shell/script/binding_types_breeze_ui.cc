@@ -303,54 +303,61 @@ struct widget_js_base : public ui::widget_flex {
 
         try {
             if (on_update) {
-                on_update(ctx);
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_update]() mutable {
+                        callback(ctx);
+                    });
             }
 
-            auto weak = weak_from_this();
             if (ctx.hovered(this) && ctx.mouse_clicked && on_click) {
-                on_click(0);
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [callback = this->on_click]() mutable { callback(0); });
             }
 
             if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
-                on_mouse_enter();
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_mouse_enter]() mutable {
+                        callback();
+                    });
             } else if (!ctx.hovered(this) && previous_hovered &&
                        on_mouse_leave) {
-                on_mouse_leave();
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_mouse_leave]() mutable {
+                        callback();
+                    });
             }
 
             previous_hovered = ctx.hovered(this);
             if (ctx.mouse_down_on(this) && on_mouse_down) {
-                on_mouse_down();
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_mouse_down]() mutable {
+                        callback();
+                    });
             }
 
             if (ctx.mouse_up && on_mouse_up) {
-                on_mouse_up();
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_mouse_up]() mutable {
+                        callback();
+                    });
             }
 
             if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
                 prev_mouse_x = ctx.mouse_x;
                 prev_mouse_y = ctx.mouse_y;
                 if (on_mouse_move && ctx.hovered(this)) {
-                    on_mouse_move(ctx.mouse_x, ctx.mouse_y);
-                    if (weak.expired())
-                        return;
+                    ctx.rt.post_loop_thread_task(
+                        [=, callback = this->on_mouse_move]() mutable {
+                            callback(ctx.mouse_x, ctx.mouse_y);
+                        });
                 }
             }
 
             if (ctx.scroll_y != 0 && on_mouse_wheel) {
-                on_mouse_wheel(ctx.scroll_y);
-                if (weak.expired())
-                    return;
+                ctx.rt.post_loop_thread_task(
+                    [=, callback = this->on_mouse_wheel]() mutable {
+                        callback(ctx.scroll_y);
+                    });
             }
         } catch (const std::exception &e) {
             std::cerr << "Exception in widget update: " << e.what()
