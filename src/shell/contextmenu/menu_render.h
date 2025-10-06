@@ -5,7 +5,6 @@
 #include <memory>
 #include <optional>
 
-
 namespace mb_shell {
 struct menu_render {
     std::shared_ptr<ui::render_target> rt;

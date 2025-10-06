@@ -75,14 +75,13 @@ struct perf_counter {
     perf_counter(std::string name);
 };
 
-template<typename E>
-constexpr auto create_enum_map() {
+template <typename E> constexpr auto create_enum_map() {
     constexpr auto min = reflect::enum_min(E{});
     constexpr auto max = reflect::enum_max(E{});
     constexpr size_t count = max - min + 1;
-    
+
     std::array<std::pair<std::string_view, E>, count> map{};
-    
+
     size_t index = 0;
     for (int i = min; i <= max; ++i) {
         E value = static_cast<E>(i);
@@ -91,15 +90,15 @@ constexpr auto create_enum_map() {
             map[index++] = {name, value};
         }
     }
-    
+
     return map;
 }
 
-template<typename E>
+template <typename E>
 constexpr std::optional<E> enum_from_string(std::string_view str) {
     static constexpr auto enum_map = create_enum_map<E>();
-    
-    for (const auto& [name, value] : enum_map) {
+
+    for (const auto &[name, value] : enum_map) {
         if (name == str) {
             return value;
         }

@@ -1,6 +1,6 @@
 #pragma once
 namespace mb_shell {
-    struct fix_win11_menu {
-      static void install();
-    };
-}
+struct fix_win11_menu {
+    static void install();
+};
+} // namespace mb_shell

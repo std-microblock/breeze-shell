@@ -21,7 +21,8 @@ static auto renderer_thread = mb_shell::task_queue{};
 
 std::optional<int>
 mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
-                           std::function<void(menu_render &)> on_before_show, bool run_js) {
+                           std::function<void(menu_render &)> on_before_show,
+                           bool run_js) {
     auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer_thread.add_task([&]() {
         try {

@@ -11,7 +11,6 @@
 #include <mutex>
 #include <thread>
 
-
 namespace mb_shell {
 std::optional<menu_render *> menu_render::current{};
 menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
@@ -111,7 +110,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
                    rt->clock.now() - before_js)
                    .count());
     } else {
-      dbgout("Skipped running JS");
+        dbgout("Skipped running JS");
     }
 
     dbgout("Current menu: {}", menu_render::current.has_value());

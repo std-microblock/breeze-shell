@@ -13,7 +13,6 @@
 #include "script/script.h"
 #include "utils.h"
 
-
 #include "./contextmenu/contextmenu.h"
 #include "./contextmenu/menu_render.h"
 #include "./contextmenu/menu_widget.h"

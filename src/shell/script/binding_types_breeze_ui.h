@@ -46,11 +46,10 @@ struct breeze_ui {
         float get_height() const;
         void set_height(float height);
 
-        std::variant<std::shared_ptr<js_widget>,
-                     std::shared_ptr<js_text_widget>,
-                     std::shared_ptr<js_flex_layout_widget>,
-                     std::shared_ptr<js_image_widget>,
-                     std::shared_ptr<js_spacer_widget>>
+        std::variant<
+            std::shared_ptr<js_widget>, std::shared_ptr<js_text_widget>,
+            std::shared_ptr<js_flex_layout_widget>,
+            std::shared_ptr<js_image_widget>, std::shared_ptr<js_spacer_widget>>
         downcast();
         // // Note: You can only certain widgets that can be loaded with
         // `downcast()`.

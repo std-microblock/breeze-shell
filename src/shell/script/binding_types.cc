@@ -1423,7 +1423,8 @@ void menu_controller::show_at(int x, int y) {
             menu{
                 .is_top_level = true,
             },
-            x, y, [this, &prom](menu_render &render) {
+            x, y,
+            [this, &prom](menu_render &render) {
                 auto menu_new =
                     render.rt->root->get_child<mouse_menu_widget_main>()
                         ->menu_wid;
@@ -1432,7 +1433,8 @@ void menu_controller::show_at(int x, int y) {
                 $menu = menu_new;
                 $menu_detached = nullptr;
                 prom.set_value();
-            }, false);
+            },
+            false);
     }).detach();
     fut.wait();
 }

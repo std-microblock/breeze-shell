@@ -56,7 +56,8 @@ std::expected<void, std::string> taskbar_render::init() {
     SHAppBarMessage(ABM_WINDOWPOSCHANGED, &abd);
 
     auto taskbar = rt.root->emplace_child<taskbar::taskbar_widget>();
-    taskbar->width->reset_to((monitor.rcMonitor.right - monitor.rcMonitor.left) / rt.dpi_scale);
+    taskbar->width->reset_to(
+        (monitor.rcMonitor.right - monitor.rcMonitor.left) / rt.dpi_scale);
     taskbar->height->reset_to(height);
 
     return {};

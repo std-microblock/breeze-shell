@@ -13,21 +13,21 @@ namespace mb_shell {
  * Handles scroll input and renders a scrollbar when content exceeds max_height
  */
 struct scrollable_widget : public ui::widget_flex {
-  using super = ui::widget_flex;
+    using super = ui::widget_flex;
 
-  float max_height = 99999;
-  float actual_height = 0;
-  ui::sp_anim_float scroll_top =
-      anim_float(0, 200, ui::easing_type::ease_in_out);
-  std::vector<std::shared_ptr<ui::widget>> scrollable_children;
+    float max_height = 99999;
+    float actual_height = 0;
+    ui::sp_anim_float scroll_top =
+        anim_float(0, 200, ui::easing_type::ease_in_out);
+    std::vector<std::shared_ptr<ui::widget>> scrollable_children;
 
-  scrollable_widget();
+    scrollable_widget();
 
-  void update(ui::update_context &ctx) override;
-  void render(ui::nanovg_context ctx) override;
-  void update_scrollable_children(ui::update_context &ctx);
-  void render_scrollable_children(ui::nanovg_context ctx);
-  void render_scrollbar(ui::nanovg_context ctx);
+    void update(ui::update_context &ctx) override;
+    void render(ui::nanovg_context ctx) override;
+    void update_scrollable_children(ui::update_context &ctx);
+    void render_scrollable_children(ui::nanovg_context ctx);
+    void render_scrollbar(ui::nanovg_context ctx);
 };
 
 } // namespace mb_shell
