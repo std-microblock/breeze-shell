@@ -570,6 +570,7 @@ breeze_ui::window::create(std::string title, int width, int height) {
     auto win = std::make_shared<breeze_ui::window>();
     win->$render_target = std::move(rt);
     std::thread([win]() {
+        set_thread_name("breeze::js_window_renderer");
         if (auto res = win->$render_target->init(); res) {
             config::current->apply_fonts_to_nvg(win->$render_target->nvg);
             win->$render_target->show();

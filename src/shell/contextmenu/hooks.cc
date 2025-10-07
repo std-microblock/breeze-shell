@@ -26,6 +26,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
     auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer_thread.add_task([&]() {
         try {
+            set_thread_name("breeze::context_menu_renderer");
             perf_counter perf("mb_shell::track_popup_menu");
             auto menu_render = menu_render::create(x, y, menu, run_js);
             menu_render.rt->last_time = menu_render.rt->clock.now();

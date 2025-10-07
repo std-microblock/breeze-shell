@@ -229,3 +229,6 @@ std::string mb_shell::format_color(NVGcolor color) {
         static_cast<int>(color.g * 255), static_cast<int>(color.b * 255),
         static_cast<int>(color.a * 255));
 }
+void mb_shell::set_thread_name(const std::string &name) {
+    SetThreadDescription(GetCurrentThread(), utf8_to_wstring(name).c_str());
+}
