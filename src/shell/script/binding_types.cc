@@ -467,11 +467,10 @@ void network::get_async(std::string url,
                         std::function<void(std::string)> callback,
                         std::function<void(std::string)> error_callback) {
     std::thread([url, callback, error_callback,
-                 &lock = ui::render_target::current->rt_lock]() {
+                 &ctx = *qjs::Context::current]() {
         try {
             auto res = get(url);
-            std::lock_guard l(lock);
-            callback(res);
+            ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
             std::cerr << "Error in network::get_async: " << e.what()
                       << std::endl;
@@ -484,11 +483,10 @@ void network::post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback) {
     std::thread([url, data, callback, error_callback,
-                 &lock = ui::render_target::current->rt_lock]() {
+                 &ctx = *qjs::Context::current]() {
         try {
             auto res = post(url, data);
-            std::lock_guard l(lock);
-            callback(res);
+            ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
             std::cerr << "Error in network::post_async: " << e.what()
                       << std::endl;
@@ -544,11 +542,10 @@ subproc_result_data subproc::run(std::string cmd) {
 }
 void subproc::run_async(std::string cmd,
                         std::function<void(subproc_result_data)> callback) {
-    std::thread([cmd, callback, &lock = ui::render_target::current->rt_lock]() {
+    std::thread([cmd, callback, &ctx = *qjs::Context::current]() {
         try {
             auto res = run(cmd);
-            std::lock_guard l(lock);
-            callback(res);
+            ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
             std::cerr << "Error in subproc::run_async: " << e.what()
                       << std::endl;
@@ -640,12 +637,12 @@ void network::download_async(std::string url, std::string path,
                              std::function<void(std::string)> error_callback) {
 
     std::thread([url, path, callback, error_callback,
-                 &lock = ui::render_target::current->rt_lock]() {
+                 &ctx = *qjs::Context::current]() {
         try {
             auto data = get(url);
             fs::write_binary(path,
                              std::vector<uint8_t>(data.begin(), data.end()));
-            std::lock_guard l(lock);
+            ctx.enqueueJob([=]() { callback(); });
             callback();
         } catch (std::exception &e) {
             error_callback(e.what());
@@ -822,11 +819,10 @@ void subproc::open(std::string path, std::string args) {
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
     std::thread([path, callback, args,
-                 &lock = ui::render_target::current->rt_lock]() {
+                 &ctx = *qjs::Context::current]() {
         try {
             open(path, args);
-            std::lock_guard l(lock);
-            callback();
+            ctx.enqueueJob([=]() { callback(); });
         } catch (std::exception &e) {
             std::cerr << "Error in subproc::open_async: " << e.what()
                       << std::endl;
@@ -981,7 +977,7 @@ std::string infra::btoa(std::string str) {
 
 void fs::copy_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool, std::string)> callback) {
-    std::thread([=, &lock = ui::render_target::current->rt_lock] {
+    std::thread([=, &ctx = *qjs::Context::current] {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
@@ -1026,14 +1022,14 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
         }
 
         std::string utf8_path = wstring_to_utf8(final_path);
-        std::lock_guard l(lock);
-        callback(success, utf8_path);
+
+        ctx.enqueueJob([=]() { callback(success, utf8_path); });
     }).detach();
 }
 
 void fs::move_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool)> callback) {
-    std::thread([=, &lock = ui::render_target::current->rt_lock] {
+    std::thread([=, &ctx = *qjs::Context::current] {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
@@ -1043,8 +1039,7 @@ void fs::move_shfile(std::string src_path, std::string dest_path,
         FileOp.pTo = wdest.c_str();
 
         auto res = SHFileOperationW(&FileOp);
-        std::lock_guard l(lock);
-        callback(res == 0);
+        ctx.enqueueJob([=]() { callback(res == 0); });
     }).detach();
 }
 size_t win32::load_file_icon(std::string path) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -27,6 +28,8 @@ struct breeze_ui {
         js_widget() = default;
         js_widget(std::shared_ptr<ui::widget> widget) : $widget(widget) {}
         virtual ~js_widget() = default;
+
+        std::optional<std::unique_lock<std::recursive_mutex>> $rt_lock();
 
         std::vector<std::shared_ptr<js_widget>> children() const;
         void append_child(std::shared_ptr<js_widget> child);
