@@ -152,7 +152,10 @@ void script_context::watch_folder(const std::filesystem::path &path,
                                             JS_EVAL_FLAG_COMPILE_ONLY);
 
                     if (JS_IsException(func)) {
-                        std::cerr << "Error in file: " << path << std::endl;
+                        std::cerr << "Syntax Error in file: " << path << std::endl;
+                        auto val = qjs::Value{js->ctx, JS_GetException(js->ctx)};
+                        std::cerr << (std::string)val << (std::string)val["stack"]
+                                  << std::endl;
                         JS_FreeValue(js->ctx, func);
                         continue;
                     }
