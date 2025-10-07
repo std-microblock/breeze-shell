@@ -117,7 +117,7 @@ void main() {
         std::views::transform([](char c) { return std::tolower(c); }) |
         std::ranges::to<std::string>();
 
-    if (filename == "explorer.exe") {
+    if (filename == "explorer.exe" || filename == "360filebrowser64.exe") {
         init_render_global();
         res_string_loader::init();
         context_menu_hooks::install_common_hook();
