@@ -76,6 +76,12 @@ struct perf_counter {
     perf_counter(std::string name);
 };
 
+template <typename E> constexpr std::string_view string_from_enum(E e) {
+    return reflect::enum_name(e) |
+           std::views::transform([](char c) { return c == '_' ? '-' : c; }) |
+           std::ranges::to<std::string>();
+}
+
 template <typename E> constexpr auto create_enum_map() {
     constexpr auto min = reflect::enum_min(E{});
     constexpr auto max = reflect::enum_max(E{});
@@ -87,7 +93,7 @@ template <typename E> constexpr auto create_enum_map() {
     for (int i = min; i <= max; ++i) {
         E value = static_cast<E>(i);
         auto name = reflect::enum_name(value);
-        if (!name.empty() && name != "") { // 过滤无效名称
+        if (!name.empty() && name != "") {
             map[index++] = {name, value};
         }
     }
@@ -100,7 +106,10 @@ constexpr std::optional<E> enum_from_string(std::string_view str) {
     static constexpr auto enum_map = create_enum_map<E>();
 
     for (const auto &[name, value] : enum_map) {
-        if (name == str) {
+        // accept both '-' and '_' as word separators
+        if ((str |
+             std::views::transform([](char c) { return c == '-' ? '_' : c; }) |
+             std::ranges::to<std::string>()) == name) {
             return value;
         }
     }

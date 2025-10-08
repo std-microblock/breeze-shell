@@ -512,7 +512,7 @@ std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
     auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return "";
-    return std::string(reflect::enum_name(widget->justify_content));
+    return std::string(mb_shell::string_from_enum(widget->justify_content));
 }
 
 void breeze_ui::js_flex_layout_widget::set_justify_content(
@@ -531,7 +531,7 @@ std::string breeze_ui::js_flex_layout_widget::get_align_items() const {
     auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return "";
-    return std::string(reflect::enum_name(widget->align_items));
+    return std::string(mb_shell::string_from_enum(widget->align_items));
 }
 
 void breeze_ui::js_flex_layout_widget::set_align_items(std::string align) {
