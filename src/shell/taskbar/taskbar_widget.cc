@@ -299,8 +299,8 @@ struct app_list_stack_widget : public ui::widget {
     }
 };
 
-struct app_list_widget : public ui::widget_flex {
-    using super = ui::widget_flex;
+struct app_list_widget : public ui::flex_widget {
+    using super = ui::flex_widget;
     std::vector<
         std::pair<std::shared_ptr<app_list_stack_widget>, window_stack_info>>
         stacks;
@@ -618,7 +618,7 @@ taskbar_widget::taskbar_widget() {
     app_list->update_stacks();
     taskbar_widgets.insert(this);
 
-    emplace_child<ui::widget_flex::spacer>();
+    emplace_child<ui::flex_widget::spacer>();
     auto clock = emplace_child<clock_widget>();
     auto desktop_btn = emplace_child<desktop_button_widget>();
 

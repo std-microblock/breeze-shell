@@ -12,8 +12,8 @@ namespace mb_shell {
  * A widget that provides scrollable content with vertical scrollbar
  * Handles scroll input and renders a scrollbar when content exceeds max_height
  */
-struct scrollable_widget : public ui::widget_flex {
-    using super = ui::widget_flex;
+struct scrollable_widget : public ui::flex_widget {
+    using super = ui::flex_widget;
 
     float max_height = 99999;
     float actual_height = 0;

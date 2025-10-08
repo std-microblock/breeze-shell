@@ -217,7 +217,7 @@ int NewExplorerProcessAndInject() {
 
 static bool english = GetUserDefaultUILanguage() != 2052;
 
-struct inject_ui_title : public ui::widget_flex {
+struct inject_ui_title : public ui::flex_widget {
     inject_ui_title() {
         gap = 10;
 
@@ -467,7 +467,7 @@ struct breeze_icon : public ui::widget {
     }
 };
 
-struct injector_ui_main : public ui::widget_flex {
+struct injector_ui_main : public ui::flex_widget {
     ui::sp_anim_float opacity = anim_float(100);
     injector_ui_main() {
         x->reset_to(20);
@@ -479,9 +479,9 @@ struct injector_ui_main : public ui::widget_flex {
         emplace_child<breeze_icon>();
         emplace_child<inject_ui_title>();
 
-        auto switches_box = emplace_child<ui::widget_flex>();
+        auto switches_box = emplace_child<ui::flex_widget>();
         switches_box->gap = 7;
-        auto switches = switches_box->emplace_child<ui::widget_flex>();
+        auto switches = switches_box->emplace_child<ui::flex_widget>();
         switches->gap = 7;
         switches->horizontal = true;
 
@@ -489,7 +489,7 @@ struct injector_ui_main : public ui::widget_flex {
         switches->emplace_child<inject_once_switch>();
         switches->emplace_child<data_dir_btn>();
 
-        switches = switches_box->emplace_child<ui::widget_flex>();
+        switches = switches_box->emplace_child<ui::flex_widget>();
         switches->gap = 7;
         switches->horizontal = true;
         switches->emplace_child<start_when_startup_switch>();
@@ -515,7 +515,7 @@ struct injector_ui_main : public ui::widget_flex {
         ctx.fillPaint(bg);
         ctx.fill();
 
-        widget_flex::render(ctx);
+        flex_widget::render(ctx);
     }
 };
 
@@ -571,14 +571,14 @@ void ShowCrashDialog() {
 
     nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
 
-    auto error_ui = rt.root->emplace_child<ui::widget_flex>();
+    auto error_ui = rt.root->emplace_child<ui::flex_widget>();
     error_ui->gap = 15;
     error_ui->x->reset_to(20);
     error_ui->y->reset_to(0);
 
     error_ui->emplace_child<breeze_icon>();
 
-    auto msg_box = error_ui->emplace_child<ui::widget_flex>();
+    auto msg_box = error_ui->emplace_child<ui::flex_widget>();
     msg_box->gap = 10;
 
     auto title = msg_box->emplace_child<ui::text_widget>();
@@ -608,7 +608,7 @@ void ShowCrashDialog() {
     suggestion2->font_size = 14;
     suggestion2->color.reset_to({1, 1, 1, 0.9});
 
-    auto btn_container = error_ui->emplace_child<ui::widget_flex>();
+    auto btn_container = error_ui->emplace_child<ui::flex_widget>();
     btn_container->horizontal = true;
     btn_container->gap = 10;
 

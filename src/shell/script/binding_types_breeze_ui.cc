@@ -271,7 +271,7 @@ breeze_ui::widgets_factory::create_image_widget() {
 
 std::shared_ptr<breeze_ui::js_spacer_widget>
 breeze_ui::widgets_factory::create_spacer_widget() {
-    auto iw = std::make_shared<ui::widget_flex::spacer>();
+    auto iw = std::make_shared<ui::flex_widget::spacer>();
 
     auto res = std::make_shared<js_spacer_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(iw);
@@ -279,22 +279,22 @@ breeze_ui::widgets_factory::create_spacer_widget() {
 }
 
 void breeze_ui::js_spacer_widget::set_size(float size) {
-    auto w = $widget->downcast<ui::widget_flex::spacer>();
+    auto w = $widget->downcast<ui::flex_widget::spacer>();
     if (w) {
         w->size = size;
     }
 }
 
 float breeze_ui::js_spacer_widget::get_size() const {
-    auto w = $widget->downcast<ui::widget_flex::spacer>();
+    auto w = $widget->downcast<ui::flex_widget::spacer>();
     if (w) {
         return w->size;
     }
     return 0;
 }
 
-struct widget_js_base : public ui::widget_flex {
-    using super = ui::widget_flex;
+struct widget_js_base : public ui::flex_widget {
+    using super = ui::flex_widget;
 
     std::function<void(int)> on_click;
     std::function<void(float, float)> on_mouse_move;
@@ -509,7 +509,7 @@ IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap, float)
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
-    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return "";
     return std::string(reflect::enum_name(widget->justify_content));
@@ -517,29 +517,29 @@ std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
 
 void breeze_ui::js_flex_layout_widget::set_justify_content(
     std::string justify) {
-    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return;
 
     if (auto val =
-            mb_shell::enum_from_string<ui::widget_flex::justify>(justify)) {
+            mb_shell::enum_from_string<ui::flex_widget::justify>(justify)) {
         widget->justify_content = *val;
     }
 }
 
 std::string breeze_ui::js_flex_layout_widget::get_align_items() const {
-    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return "";
     return std::string(reflect::enum_name(widget->align_items));
 }
 
 void breeze_ui::js_flex_layout_widget::set_align_items(std::string align) {
-    auto widget = std::dynamic_pointer_cast<ui::widget_flex>($widget);
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)
         return;
 
-    if (auto val = mb_shell::enum_from_string<ui::widget_flex::align>(align)) {
+    if (auto val = mb_shell::enum_from_string<ui::flex_widget::align>(align)) {
         widget->align_items = *val;
     }
 }

@@ -19,7 +19,7 @@
 #include "shell/widgets/background_widget.h"
 
 namespace mb_shell::taskbar {
-struct taskbar_widget : public ui::widget_flex {
+struct taskbar_widget : public ui::flex_widget {
     taskbar_widget();
     ~taskbar_widget();
 };
