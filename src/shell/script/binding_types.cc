@@ -51,13 +51,13 @@ menu_controller::append_item_after(js_menu_data data, int after_index) {
     new_item->parent = m.get();
     ctl->set_data(data);
     while (after_index < 0) {
-        after_index = m->item_widgets.size() + after_index + 1;
+        after_index = m->children.size() + after_index + 1;
     }
 
-    if (after_index >= m->item_widgets.size()) {
-        m->item_widgets.push_back(new_item);
+    if (after_index >= m->children.size()) {
+        m->children.push_back(new_item);
     } else {
-        m->item_widgets.insert(m->item_widgets.begin() + after_index, new_item);
+        m->children.insert(m->children.begin() + after_index, new_item);
     }
     m->update_icon_width();
 
@@ -91,14 +91,14 @@ void menu_item_controller::set_position(int new_index) {
         if (!m)
             return;
 
-        if (new_index >= m->item_widgets.size())
+        if (new_index >= m->children.size())
             return;
         auto item = $item.lock();
-        m->item_widgets.erase(
-            std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
-            m->item_widgets.end());
+        m->children.erase(
+            std::remove(m->children.begin(), m->children.end(), item),
+            m->children.end());
 
-        m->item_widgets.insert(m->item_widgets.begin() + new_index, item);
+        m->children.insert(m->children.begin() + new_index, item);
         m->children_dirty = true;
     } else if (auto parent =
                    std::get_if<std::weak_ptr<menu_item_parent_widget>>(
@@ -202,9 +202,9 @@ void menu_item_controller::remove() {
 
     if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent);
         auto m = $menu->lock()) {
-        m->item_widgets.erase(
-            std::remove(m->item_widgets.begin(), m->item_widgets.end(), item),
-            m->item_widgets.end());
+        m->children.erase(
+            std::remove(m->children.begin(), m->children.end(), item),
+            m->children.end());
 
         m->children_dirty = true;
     } else if (auto parent =
@@ -280,10 +280,10 @@ std::shared_ptr<menu_item_controller> menu_controller::get_item(int index) {
     if (!m)
         return nullptr;
 
-    if (index >= m->item_widgets.size())
+    if (index >= m->children.size())
         return nullptr;
 
-    auto item = m->item_widgets[index]->downcast<menu_item_widget>();
+    auto item = m->children[index]->downcast<menu_item_widget>();
 
     auto controller = std::make_shared<menu_item_controller>();
     controller->$item = item;
@@ -301,8 +301,8 @@ menu_controller::get_items() {
 
     std::vector<std::shared_ptr<menu_item_controller>> items;
 
-    for (int i = 0; i < m->item_widgets.size(); i++) {
-        auto item = m->item_widgets[i]->downcast<menu_item_widget>();
+    for (int i = 0; i < m->children.size(); i++) {
+        auto item = m->children[i]->downcast<menu_item_widget>();
 
         auto controller = std::make_shared<menu_item_controller>();
         controller->$item = item;
@@ -560,7 +560,7 @@ void menu_controller::clear() {
         return;
 
     m->children_dirty = true;
-    m->item_widgets.clear();
+    m->children.clear();
     m->menu_data.items.clear();
 }
 
@@ -716,14 +716,14 @@ void menu_item_parent_item_controller::set_position(int new_index) {
 
     auto parent = item->parent->downcast<menu_widget>();
 
-    if (new_index >= parent->item_widgets.size())
+    if (new_index >= parent->children.size())
         return;
 
-    parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
-                                           parent->item_widgets.end(), item),
-                               parent->item_widgets.end());
+    parent->children.erase(std::remove(parent->children.begin(),
+                                           parent->children.end(), item),
+                               parent->children.end());
 
-    parent->item_widgets.insert(parent->item_widgets.begin() + new_index, item);
+    parent->children.insert(parent->children.begin() + new_index, item);
     parent->children_dirty = true;
     parent->update_icon_width();
 }
@@ -737,9 +737,9 @@ void menu_item_parent_item_controller::remove() {
 
     auto parent = item->parent->downcast<menu_widget>();
     parent->children_dirty = true;
-    parent->item_widgets.erase(std::remove(parent->item_widgets.begin(),
-                                           parent->item_widgets.end(), item),
-                               parent->item_widgets.end());
+    parent->children.erase(std::remove(parent->children.begin(),
+                                           parent->children.end(), item),
+                               parent->children.end());
 }
 bool menu_item_parent_item_controller::valid() {
     return !$item.expired() && !$menu.expired();
@@ -759,13 +759,13 @@ menu_controller::append_parent_item_after(int after_index) {
     new_item->parent = m.get();
 
     while (after_index < 0) {
-        after_index = m->item_widgets.size() + after_index + 1;
+        after_index = m->children.size() + after_index + 1;
     }
 
-    if (after_index >= m->item_widgets.size()) {
-        m->item_widgets.push_back(new_item);
+    if (after_index >= m->children.size()) {
+        m->children.push_back(new_item);
     } else {
-        m->item_widgets.insert(m->item_widgets.begin() + after_index, new_item);
+        m->children.insert(m->children.begin() + after_index, new_item);
     }
 
     m->update_icon_width();
@@ -1386,16 +1386,16 @@ void menu_controller::append_widget_after(
         return;
     m->children_dirty = true;
     while (after_index < 0) {
-        after_index = m->item_widgets.size() + after_index + 1;
+        after_index = m->children.size() + after_index + 1;
     }
 
     auto widget_wrapper =
         std::make_shared<mb_shell::menu_item_custom_widget>(widget->$widget);
 
-    if (after_index >= m->item_widgets.size()) {
-        m->item_widgets.push_back(widget_wrapper);
+    if (after_index >= m->children.size()) {
+        m->children.push_back(widget_wrapper);
     } else {
-        m->item_widgets.insert(m->item_widgets.begin() + after_index,
+        m->children.insert(m->children.begin() + after_index,
                                widget_wrapper);
     }
 
@@ -1424,7 +1424,7 @@ void menu_controller::show_at(int x, int y) {
                     render.rt->root->get_child<mouse_menu_widget_main>()
                         ->menu_wid;
                 menu_new->children = $menu_detached->children;
-                menu_new->item_widgets = $menu_detached->item_widgets;
+                menu_new->children = $menu_detached->children;
                 $menu = menu_new;
                 $menu_detached = nullptr;
                 prom.set_value();

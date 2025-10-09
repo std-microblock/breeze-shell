@@ -10,7 +10,6 @@
 #include "nanovg.h"
 #include "shell/config.h"
 #include "shell/utils.h"
-#include "shell/widgets/scrollable_widget.h"
 #include <algorithm>
 #include <iostream>
 #include <print>
@@ -308,16 +307,18 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
 
     if (bg_submenu) {
         bg_submenu->update(forkctx_1);
+        forkctx_1.hovered_hit(bg_submenu.get(), true);
     }
 
-    scrollable_widget::update(ctx);
+    ui::flex_widget::update(ctx);
 
-    for (auto &item : item_widgets) {
+    for (auto &item : children) {
         item->width->reset_to(*width);
     }
 
     if (bg) {
         bg->update(ctx);
+        ctx.hovered_hit(bg.get(), true);
     }
 
     // process keyboard actions
@@ -328,7 +329,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
         owner_rt &&
         (focused() ||
          std::ranges::any_of(
-             item_widgets,
+             children,
              [](const auto &item) { return item->focus_within(); }) ||
          (!owner_rt->focused_widget.has_value() && rendering_submenus.empty()));
 
@@ -370,9 +371,9 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
             }
         };
         if (ctx.key_pressed(GLFW_KEY_UP)) {
-            move_key(false, item_widgets);
+            move_key(false, children);
         } else if (ctx.key_pressed(GLFW_KEY_DOWN)) {
-            move_key(true, item_widgets);
+            move_key(true, children);
         } else if (ctx.key_pressed(GLFW_KEY_LEFT)) {
             // close submenu on left key
             if (parent_menu) {
@@ -389,8 +390,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
             }
         } else if (ctx.key_pressed(GLFW_KEY_RIGHT)) {
             auto focused_item = std::ranges::find_if(
-                item_widgets, [](const auto &item) { return item->focused(); });
-            if (focused_item != item_widgets.end()) {
+                children, [](const auto &item) { return item->focused(); });
+            if (focused_item != children.end()) {
                 if (auto wid =
                         (*focused_item)->downcast<menu_item_normal_widget>())
                     if (wid->item.submenu && !wid->submenu_wid) {
@@ -401,8 +402,8 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
         } else if (ctx.key_pressed(GLFW_KEY_ENTER) ||
                    ctx.key_pressed(GLFW_KEY_SPACE)) { // Enter or Space key
             auto focused_item = std::ranges::find_if(
-                item_widgets, [](const auto &item) { return item->focused(); });
-            if (focused_item != item_widgets.end()) {
+                children, [](const auto &item) { return item->focused(); });
+            if (focused_item != children.end()) {
                 if (auto wid =
                         (*focused_item)->downcast<menu_item_normal_widget>()) {
                     if (wid->item.action) {
@@ -419,7 +420,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
             }
         } else {
             auto menus_matching_key =
-                item_widgets | std::views::filter([&](const auto &item) {
+                children | std::views::filter([&](const auto &item) {
                     if (auto wid = item->template downcast<
                                    menu_item_normal_widget>()) {
                         if (!wid->item.hotkey)
@@ -534,7 +535,7 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
         bg->render(ctx);
     }
 
-    scrollable_widget::render(ctx);
+    super::render(ctx);
 
     auto ctx2 = ctx.with_offset(*x, *y);
 
@@ -625,7 +626,7 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
         return;
 
     animate_appear_started = true;
-    auto children = item_widgets | std::ranges::views::transform([](auto &w) {
+    auto children = this->children | std::ranges::views::transform([](auto &w) {
                         return std::dynamic_pointer_cast<menu_item_widget>(w);
                     });
 
@@ -813,10 +814,10 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
         auto &item = init_items[i];
         if (item.owner_draw) {
             auto mi = std::make_shared<menu_item_ownerdraw_widget>(item);
-            item_widgets.push_back(mi);
+            children.push_back(mi);
         } else {
             auto mi = std::make_shared<menu_item_normal_widget>(item);
-            item_widgets.push_back(mi);
+            children.push_back(mi);
         }
     }
 
@@ -826,21 +827,21 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
     this->menu_data = menu_data;
 }
 void mb_shell::menu_widget::update_icon_width() {
-    bool has_icon = std::ranges::any_of(item_widgets, [](auto &item) {
+    bool has_icon = std::ranges::any_of(children, [](auto &item) {
         if (!item->template downcast<menu_item_normal_widget>())
             return false;
         auto i = item->template downcast<menu_item_normal_widget>()->item;
         return i.icon_bitmap.has_value() || i.icon_svg.has_value();
     });
 
-    bool has_submenu = std::ranges::any_of(item_widgets, [](auto &item) {
+    bool has_submenu = std::ranges::any_of(children, [](auto &item) {
         if (!item->template downcast<menu_item_normal_widget>())
             return false;
         auto i = item->template downcast<menu_item_normal_widget>()->item;
         return i.submenu.has_value();
     });
 
-    for (auto &item : item_widgets) {
+    for (auto &item : children) {
         auto mi = item->template downcast<menu_item_normal_widget>();
         if (!mi)
             continue;
@@ -877,7 +878,7 @@ void mb_shell::menu_widget::close() {
             parent_menu->current_submenu = nullptr;
         }
 
-        for (auto &item : item_widgets) {
+        for (auto &item : children) {
             auto mi = item->downcast<menu_item_normal_widget>();
             if (mi) {
                 mi->hide_submenu();

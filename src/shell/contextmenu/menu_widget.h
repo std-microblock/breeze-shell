@@ -7,7 +7,6 @@
 #include "contextmenu.h"
 #include "shell/config.h"
 #include "shell/widgets/background_widget.h"
-#include "shell/widgets/scrollable_widget.h"
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -91,8 +90,8 @@ enum class popup_direction {
     bottom_right,
 };
 struct menu_item_widget;
-struct menu_widget : public scrollable_widget {
-    using super = scrollable_widget;
+struct menu_widget : public ui::flex_widget {
+    using super = ui::flex_widget;
     float bg_padding_vertical = 6;
 
     std::shared_ptr<background_widget> bg;
@@ -102,8 +101,6 @@ struct menu_widget : public scrollable_widget {
     std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
     std::vector<std::shared_ptr<widget>> rendering_submenus;
 
-    // item_widgets is now an alias for scrollable_children from base class
-    std::vector<std::shared_ptr<widget>> &item_widgets = scrollable_children;
 
     menu_widget *parent_menu = nullptr;
 
