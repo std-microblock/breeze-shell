@@ -15,7 +15,7 @@ namespace mb_shell {
 struct scrollable_widget : public ui::flex_widget {
     using super = ui::flex_widget;
 
-    float max_height = 99999;
+    float max_height = 9999999;
     float actual_height = 0;
     ui::sp_anim_float scroll_top =
         anim_float(0, 200, ui::easing_type::ease_in_out);

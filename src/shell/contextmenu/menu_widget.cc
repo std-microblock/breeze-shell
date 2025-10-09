@@ -695,7 +695,7 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     }
 
     menu_wid->max_height =
-        (ctx.screen.height - y) / ctx.rt.dpi_scale - padding_horizontal;
+        (ctx.screen.height - y - padding_horizontal) / ctx.rt.dpi_scale;
 
     return {x, y};
 }
