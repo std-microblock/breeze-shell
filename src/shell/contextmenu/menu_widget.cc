@@ -646,8 +646,8 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
     float anchor_y, popup_direction direction) {
 
     menu_wid->update(ctx);
-    auto menu_width = menu_wid->measure_width(ctx);
-    auto menu_height = menu_wid->measure_height(ctx);
+    auto menu_width = menu_wid->width->dest();
+    auto menu_height = menu_wid->height->dest();
 
     float x, y;
 
