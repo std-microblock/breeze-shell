@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <ranges>
 
 #include "reflect.hpp"
 
