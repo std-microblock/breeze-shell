@@ -57,7 +57,9 @@ export class js_text_widget extends js_widget {
     set text(value: string);
 	get font_size(): number;
     set font_size(value: number);
-	get color(): [number, number, number, number];
+	get max_width(): number;
+    set max_width(value: number);
+	get color(): [number, number, number, number] | undefined;
     set color(value: [number, number, number, number] | undefined);
 }
 }
@@ -75,6 +77,8 @@ export class js_flex_layout_widget extends js_widget {
     set padding_top(value: number);
 	get padding_bottom(): number;
     set padding_bottom(value: number);
+	get flex_grow(): number;
+    set flex_grow(value: number);
 	get padding(): [number, number, number, number];
 	get on_click(): ((arg1: number) => void);
     set on_click(value: ((arg1: number) => void));
@@ -762,14 +766,14 @@ export class menu_controller {
      *  This method is only available for detached menu controllers
      * @param x: number
      * @param y: number
-     * @returns Promise<number>
+     * @returns void
      */
-    show_at(x: number, y: number): Promise<number>
+    show_at(x: number, y: number): void
 	/**
      *  This method is only available for detached menu controllers
-      @returns Promise<number>
+      @returns void
      */
-    show_at_cursor(): Promise<number>
+    show_at_cursor(): void
 }
 export class clipboard {
 	/**

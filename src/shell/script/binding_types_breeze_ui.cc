@@ -1,3 +1,4 @@
+#include "shell/script/binding_types_breeze_ui.h"
 #include "binding_types.hpp"
 #include "breeze_ui/animator.h"
 #include "breeze_ui/ui.h"
@@ -41,6 +42,7 @@ namespace mb_shell::js {
             return;                                                            \
         auto lock = $rt_lock();                                                \
         widget->prop_name = value;                                             \
+        widget->needs_repaint = true;                                          \
     }
 
 // Macro for callback function getter/setter pairs
@@ -112,60 +114,10 @@ breeze_ui::js_widget::children() const {
     return result;
 }
 
-std::string breeze_ui::js_text_widget::get_text() const {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return "";
-    return text_widget->text;
-}
-
-void breeze_ui::js_text_widget::set_text(std::string text) {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return;
-    auto lock = $rt_lock();
-    text_widget->text = text;
-    text_widget->needs_repaint = true;
-}
-
-int breeze_ui::js_text_widget::get_font_size() const {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return 0;
-    return text_widget->font_size;
-}
-
-void breeze_ui::js_text_widget::set_font_size(int size) {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return;
-    auto lock = $rt_lock();
-    text_widget->font_size = size;
-    text_widget->needs_repaint = true;
-}
-
-std::tuple<float, float, float, float>
-breeze_ui::js_text_widget::get_color() const {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return {0.0f, 0.0f, 0.0f, 0.0f};
-    auto color_array = *text_widget->color;
-    return {color_array[0], color_array[1], color_array[2], color_array[3]};
-}
-
-void breeze_ui::js_text_widget::set_color(
-    std::optional<std::tuple<float, float, float, float>> color) {
-    auto text_widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
-    if (!text_widget)
-        return;
-    if (color.has_value()) {
-        text_widget->color.animate_to(
-            {std::get<0>(color.value()), std::get<1>(color.value()),
-             std::get<2>(color.value()), std::get<3>(color.value())});
-    } else {
-        text_widget->color.animate_to({0.0f, 0.0f, 0.0f, 0.0f});
-    }
-}
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, text, std::string);
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_size, int);
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, max_width, float);
+IMPL_COLOR_PROP(breeze_ui::js_text_widget, ui::text_widget, color);
 
 void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
                                               int after_index) {
@@ -317,25 +269,29 @@ struct widget_js_base : public ui::flex_widget {
                 ctx.rt.post_loop_thread_task(
                     [=, callback = this->on_update]() mutable {
                         callback(ctx);
-                    }, true);
+                    },
+                    true);
             }
 
             if (ctx.hovered(this) && ctx.mouse_clicked && on_click) {
                 ctx.rt.post_loop_thread_task(
-                    [callback = this->on_click]() mutable { callback(0); }, true);
+                    [callback = this->on_click]() mutable { callback(0); },
+                    true);
             }
 
             if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
                 ctx.rt.post_loop_thread_task(
                     [=, callback = this->on_mouse_enter]() mutable {
                         callback();
-                    }, true);
+                    },
+                    true);
             } else if (!ctx.hovered(this) && previous_hovered &&
                        on_mouse_leave) {
                 ctx.rt.post_loop_thread_task(
                     [=, callback = this->on_mouse_leave]() mutable {
                         callback();
-                    }, true);
+                    },
+                    true);
             }
 
             previous_hovered = ctx.hovered(this);
@@ -343,14 +299,14 @@ struct widget_js_base : public ui::flex_widget {
                 ctx.rt.post_loop_thread_task(
                     [=, callback = this->on_mouse_down]() mutable {
                         callback();
-                    }, true);
+                    },
+                    true);
             }
 
             if (ctx.mouse_up && on_mouse_up) {
                 ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_up]() mutable {
-                        callback();
-                    }, true);
+                    [=, callback = this->on_mouse_up]() mutable { callback(); },
+                    true);
             }
 
             if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
@@ -506,7 +462,8 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
-
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, flex_grow,
+                 float)
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap, float)
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
     auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);

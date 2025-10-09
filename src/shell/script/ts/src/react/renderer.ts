@@ -108,6 +108,7 @@ const componentMap = {
             },
             fontSize: getSetFactory('font_size'),
             color: getSetFactoryColor('color'),
+            maxWidth: getSetFactory('max_width'),
             ...commonProps
         }
     },
@@ -136,6 +137,7 @@ const componentMap = {
             justifyContent: getSetFactory('justify_content'),
             alignItems: getSetFactory('align_items'),
             gap: getSetFactory('gap'),
+            flexGrow: getSetFactory('flex_grow'),
             ...commonProps
         }
     },

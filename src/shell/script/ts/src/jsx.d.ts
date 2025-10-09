@@ -33,6 +33,7 @@ declare module 'react' {
         height?: number;
         autoSize?: boolean;
         gap?: number;
+        flexGrow?: number;
       },
       text: {
         text?: string[] | string;
@@ -44,6 +45,7 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        maxWidth?: number;
       },
       img: {
         svg?: string;
