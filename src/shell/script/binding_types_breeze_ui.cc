@@ -462,9 +462,18 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap, float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, max_height,
+                 float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 enable_child_clipping, bool)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 enable_scrolling, bool)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 crop_overflow, bool)
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, flex_grow,
                  float)
-IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, gap, float)
+
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
     auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
     if (!widget)

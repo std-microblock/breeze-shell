@@ -34,6 +34,10 @@ declare module 'react' {
         autoSize?: boolean;
         gap?: number;
         flexGrow?: number;
+        maxHeight?: number;
+        enableScrolling?: boolean;
+        enableChildClipping?: boolean;
+        cropOverflow?: boolean;
       },
       text: {
         text?: string[] | string;

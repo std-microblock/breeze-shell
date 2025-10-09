@@ -84,6 +84,10 @@ struct breeze_ui {
         DEFINE_PROP(float, padding_top)
         DEFINE_PROP(float, padding_bottom)
         DEFINE_PROP(float, flex_grow)
+        DEFINE_PROP(float, max_height)
+        DEFINE_PROP(bool, enable_scrolling)
+        DEFINE_PROP(bool, enable_child_clipping)
+        DEFINE_PROP(bool, crop_overflow)
         std::tuple<float, float, float, float> get_padding() const;
         void set_padding(float left, float right, float top, float bottom);
 

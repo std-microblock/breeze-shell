@@ -79,6 +79,14 @@ export class js_flex_layout_widget extends js_widget {
     set padding_bottom(value: number);
 	get flex_grow(): number;
     set flex_grow(value: number);
+	get max_height(): number;
+    set max_height(value: number);
+	get enable_scrolling(): boolean;
+    set enable_scrolling(value: boolean);
+	get enable_child_clipping(): boolean;
+    set enable_child_clipping(value: boolean);
+	get crop_overflow(): boolean;
+    set crop_overflow(value: boolean);
 	get padding(): [number, number, number, number];
 	get on_click(): ((arg1: number) => void);
     set on_click(value: ((arg1: number) => void));

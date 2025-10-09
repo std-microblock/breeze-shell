@@ -145,6 +145,11 @@
     "@types/prop-types" "*"
     csstype "^3.0.2"
 
+breeze-shell-types@^0.0.14:
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/breeze-shell-types/-/breeze-shell-types-0.0.14.tgz#eccff81d132510e8e5d0a2ad954bda450fe80255"
+  integrity sha512-pggWZUNT2l+HRnIfhWHgkFJGAOZVq+olAfJE1b6WYeFSEJSzP5XANubSSeKojb7CgRXq2OsgQcMXJeYRAW0U9Q==
+
 csstype@^3.0.2:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.3.tgz#d80ff294d114fb0e6ac500fbf85b60137d7eff81"
