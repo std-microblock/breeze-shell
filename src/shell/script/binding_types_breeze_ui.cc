@@ -507,6 +507,7 @@ void breeze_ui::window::set_root_widget(
         return;
     std::lock_guard l($render_target->rt_lock);
     $render_target->root = widget->$widget;
+    $render_target->root->needs_repaint = true;
 }
 
 void breeze_ui::window::close() {

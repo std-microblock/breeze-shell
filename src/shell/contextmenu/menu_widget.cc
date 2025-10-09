@@ -246,11 +246,19 @@ mb_shell::menu_widget::menu_widget() : super() {
     width->set_easing(ui::easing_type::mutation);
     height->set_easing(ui::easing_type::mutation);
     config::current->context_menu.theme.animation.main.y(y);
+    enable_scrolling = true;
+    int c = menu_render::current.value()->light_color ? 0 : 1;
+    scroll_bar_color = nvgRGBAf(c, c, c, 0.3);
+    scroll_bar_width = config::current->context_menu.theme.scrollbar_width;
+    scroll_bar_radius = config::current->context_menu.theme.scrollbar_radius;
 }
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
     if (dying_time) {
         if (dying_time.changed()) {
             y->animate_to(*y - 10);
+            int c = menu_render::current.value()->light_color ? 0 : 1;
+            scroll_bar_color =
+                nvgRGBAf(c, c, c, std::min(0.3 * dying_time.time / 200.f, 0.3));
         }
         if (bg_submenu)
             bg_submenu->opacity->animate_to(0);
@@ -329,8 +337,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
         owner_rt &&
         (focused() ||
          std::ranges::any_of(
-             children,
-             [](const auto &item) { return item->focus_within(); }) ||
+             children, [](const auto &item) { return item->focus_within(); }) ||
          (!owner_rt->focused_widget.has_value() && rendering_submenus.empty()));
 
     if (should_handle_keyboard) {
