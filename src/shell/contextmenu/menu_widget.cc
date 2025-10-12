@@ -27,7 +27,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
 
     auto icon_width = config::current->context_menu.theme.font_size + 2;
     auto has_icon = has_icon_padding || icon_img;
-    auto c = menu_render::current.value()->light_color ? 0 : 1;
+    auto c = mb_shell::is_light_mode() ? 0 : 1;
 
     if (item.type == menu_item::type::spacer) {
         ctx.fillColor(nvgRGBAf(c, c, c, 0.1 * *opacity / 255.f));
@@ -247,7 +247,7 @@ mb_shell::menu_widget::menu_widget() : super() {
     height->set_easing(ui::easing_type::mutation);
     config::current->context_menu.theme.animation.main.y(y);
     enable_scrolling = true;
-    int c = menu_render::current.value()->light_color ? 0 : 1;
+    int c = mb_shell::is_light_mode() ? 0 : 1;
     scroll_bar_color = nvgRGBAf(c, c, c, 0.3);
     scroll_bar_width = config::current->context_menu.theme.scrollbar_width;
     scroll_bar_radius = config::current->context_menu.theme.scrollbar_radius;
@@ -256,7 +256,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
     if (dying_time) {
         if (dying_time.changed()) {
             y->animate_to(*y - 10);
-            int c = menu_render::current.value()->light_color ? 0 : 1;
+            int c = mb_shell::is_light_mode() ? 0 : 1;
             scroll_bar_color =
                 nvgRGBAf(c, c, c, std::min(0.3 * dying_time.time / 200.f, 0.3));
         }
