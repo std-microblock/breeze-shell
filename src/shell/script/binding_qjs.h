@@ -271,6 +271,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::window> {
         mod.class_<mb_shell::js::breeze_ui::window>("breeze_ui::window")
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::window::create>("create")
+                .static_fun<&mb_shell::js::breeze_ui::window::create_ex>("create_ex")
                 .fun<&mb_shell::js::breeze_ui::window::set_root_widget>("set_root_widget")
                 .fun<&mb_shell::js::breeze_ui::window::close>("close")
             ;

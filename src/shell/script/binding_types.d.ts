@@ -171,6 +171,15 @@ export class window {
     static create(title: string, width: number, height: number): breeze_ui.window
 	/**
      * 
+     * @param title: string
+     * @param width: number
+     * @param height: number
+     * @param on_close: (() => void)
+     * @returns breeze_ui.window
+     */
+    static create_ex(title: string, width: number, height: number, on_close: (() => void)): breeze_ui.window
+	/**
+     * 
      * @param widget: breeze_ui.js_widget
      * @returns void
      */

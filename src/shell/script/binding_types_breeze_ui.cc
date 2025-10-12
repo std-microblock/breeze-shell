@@ -526,7 +526,8 @@ void breeze_ui::window::close() {
 }
 
 std::shared_ptr<breeze_ui::window>
-breeze_ui::window::create(std::string title, int width, int height) {
+breeze_ui::window::create_ex(std::string title, int width, int height,
+                  std::function<void()> on_close) {
     auto rt = std::make_shared<ui::render_target>();
     rt->acrylic = 0.1;
     rt->transparent = true;
@@ -536,12 +537,17 @@ breeze_ui::window::create(std::string title, int width, int height) {
 
     auto win = std::make_shared<breeze_ui::window>();
     win->$render_target = std::move(rt);
-    std::thread([win]() {
+
+    std::thread([win, on_close = std::move(on_close)]() {
         set_thread_name("breeze::js_window_renderer");
         if (auto res = win->$render_target->init(); res) {
             config::current->apply_fonts_to_nvg(win->$render_target->nvg);
             win->$render_target->show();
             win->$render_target->start_loop();
+        }
+
+        if (on_close) {
+            on_close();
         }
 
         win->$render_target->close();

@@ -146,7 +146,13 @@ struct breeze_ui {
 
     struct window {
         static std::shared_ptr<window> create(std::string title, int width,
-                                              int height);
+                                              int height) {
+            return create_ex(title, width, height, nullptr);
+        }
+
+        static std::shared_ptr<window>
+        create_ex(std::string title, int width, int height,
+                  std::function<void()> on_close);
 
         std::shared_ptr<ui::render_target> $render_target;
         void set_root_widget(
