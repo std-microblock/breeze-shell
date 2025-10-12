@@ -393,7 +393,7 @@ const HostConfig: Reconciler.HostConfig<
     insertBefore(parentInstance, child, beforeChild) {
         if (beforeChild) {
             parentInstance.append_child_after(child,
-                parentInstance.children().indexOf(beforeChild));
+                parentInstance.children().indexOf(beforeChild) - 1);
         } else {
             parentInstance.append_child(child);
         }

@@ -1380,7 +1380,6 @@ void notification::send_with_buttons(
 void menu_controller::append_widget_after(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget,
     int after_index) {
-
     if (!valid())
         return;
     auto m = $menu.lock();
