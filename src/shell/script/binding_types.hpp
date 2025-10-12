@@ -624,6 +624,7 @@ struct breeze {
     static std::string data_directory();
     static bool is_light_theme();
     static std::string user_language();
+    static void set_can_reload_js(bool can);
 };
 
 struct win32 {

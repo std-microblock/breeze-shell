@@ -73,7 +73,7 @@ void main() {
             std::filesystem::create_directories(script_dir);
 
         ctx.watch_folder(script_dir, [&]() {
-            return !context_menu_hooks::has_active_menu.load();
+            return !context_menu_hooks::block_js_reload.load();
         });
     }).detach();
 

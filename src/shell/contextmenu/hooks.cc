@@ -15,7 +15,7 @@
 #include "Windows.h"
 #include "shlobj_core.h"
 
-std::atomic_bool mb_shell::context_menu_hooks::has_active_menu = false;
+std::atomic_bool mb_shell::context_menu_hooks::block_js_reload = false;
 
 static auto renderer_thread = mb_shell::task_queue{};
 
@@ -67,7 +67,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
     qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 
     auto selected_menu = selected_menu_future.get();
-    mb_shell::context_menu_hooks::has_active_menu = false;
+    mb_shell::context_menu_hooks::block_js_reload = false;
 
     return selected_menu;
 }
@@ -90,7 +90,7 @@ void mb_shell::context_menu_hooks::install_common_hook() {
         }
 
         entry::main_window_loop_hook.install(hWnd);
-        has_active_menu = true;
+        block_js_reload = true;
 
         perf_counter perf("TrackPopupMenuEx");
         menu menu = menu::construct_with_hmenu(hMenu, hWnd);

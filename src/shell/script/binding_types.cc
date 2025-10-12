@@ -21,6 +21,8 @@
 // Compile Information
 #include "shell/build_info.h"
 
+#include "shell/contextmenu/hooks.h"
+
 #include "script.h"
 #include "winhttp.h"
 
@@ -1438,5 +1440,8 @@ void menu_controller::show_at_cursor() {
     if (GetCursorPos(&p)) {
         show_at(p.x, p.y);
     }
+}
+void breeze::set_can_reload_js(bool can) {
+    mb_shell::context_menu_hooks::block_js_reload.store(!can);
 }
 } // namespace mb_shell::js

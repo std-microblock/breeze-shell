@@ -1047,6 +1047,12 @@ export class breeze {
 	static data_directory(): string
 	static is_light_theme(): boolean
 	static user_language(): string
+	/**
+     * 
+     * @param can: boolean
+     * @returns void
+     */
+    static set_can_reload_js(can: boolean): void
 }
 export class win32 {
 	/**

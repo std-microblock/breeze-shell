@@ -1106,6 +1106,7 @@ template<> struct js_bind<mb_shell::js::breeze> {
                 .static_fun<&mb_shell::js::breeze::data_directory>("data_directory")
                 .static_fun<&mb_shell::js::breeze::is_light_theme>("is_light_theme")
                 .static_fun<&mb_shell::js::breeze::user_language>("user_language")
+                .static_fun<&mb_shell::js::breeze::set_can_reload_js>("set_can_reload_js")
             ;
     }
 };
