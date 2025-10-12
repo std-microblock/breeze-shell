@@ -1442,6 +1442,6 @@ void menu_controller::show_at_cursor() {
     }
 }
 void breeze::set_can_reload_js(bool can) {
-    mb_shell::context_menu_hooks::block_js_reload.store(!can);
+    mb_shell::context_menu_hooks::block_js_reload.fetch_add(can ? -1 : 1);
 }
 } // namespace mb_shell::js
