@@ -67,7 +67,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
     qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 
     auto selected_menu = selected_menu_future.get();
-    mb_shell::context_menu_hooks::block_js_reload = 0;
+    mb_shell::context_menu_hooks::block_js_reload.fetch_sub(1);
 
     return selected_menu;
 }
