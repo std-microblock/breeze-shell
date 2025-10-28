@@ -665,6 +665,7 @@ export class menu_info_basic_js {
 	context: js_menu_context
 }
 export class menu_controller {
+	get widget(): breeze_ui.js_widget | undefined;
 	/**
      *  获取所有菜单项
      *  Get all menu items

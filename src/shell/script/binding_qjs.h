@@ -908,7 +908,9 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::menu_controller>("menu_controller")
             .constructor<>()
+                .property<&mb_shell::js::menu_controller::get_widget>("widget")
                 .property<&mb_shell::js::menu_controller::get_items>("items")
+                .fun<&mb_shell::js::menu_controller::get_widget>("get_widget")
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
                 .fun<&mb_shell::js::menu_controller::append_item_after>("append_item_after")
                 .fun<&mb_shell::js::menu_controller::append_widget_after>("append_widget_after")

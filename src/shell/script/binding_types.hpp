@@ -354,6 +354,8 @@ struct menu_controller {
     std::weak_ptr<mb_shell::menu_widget> $menu;
     std::shared_ptr<mb_shell::menu_widget> $menu_detached;
 
+    std::optional<std::shared_ptr<breeze_ui::js_widget>> get_widget();
+
     // 检查菜单控制器是否有效
     // Check if menu controller is valid
     bool valid();

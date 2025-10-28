@@ -721,9 +721,9 @@ void menu_item_parent_item_controller::set_position(int new_index) {
     if (new_index >= parent->children.size())
         return;
 
-    parent->children.erase(std::remove(parent->children.begin(),
-                                           parent->children.end(), item),
-                               parent->children.end());
+    parent->children.erase(
+        std::remove(parent->children.begin(), parent->children.end(), item),
+        parent->children.end());
 
     parent->children.insert(parent->children.begin() + new_index, item);
     parent->children_dirty = true;
@@ -739,9 +739,9 @@ void menu_item_parent_item_controller::remove() {
 
     auto parent = item->parent->downcast<menu_widget>();
     parent->children_dirty = true;
-    parent->children.erase(std::remove(parent->children.begin(),
-                                           parent->children.end(), item),
-                               parent->children.end());
+    parent->children.erase(
+        std::remove(parent->children.begin(), parent->children.end(), item),
+        parent->children.end());
 }
 bool menu_item_parent_item_controller::valid() {
     return !$item.expired() && !$menu.expired();
@@ -820,8 +820,7 @@ void subproc::open(std::string path, std::string args) {
 }
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
-    std::thread([path, callback, args,
-                 &ctx = *qjs::Context::current]() {
+    std::thread([path, callback, args, &ctx = *qjs::Context::current]() {
         try {
             open(path, args);
             ctx.enqueueJob([=]() { callback(); });
@@ -1396,8 +1395,7 @@ void menu_controller::append_widget_after(
     if (after_index >= m->children.size()) {
         m->children.push_back(widget_wrapper);
     } else {
-        m->children.insert(m->children.begin() + after_index,
-                               widget_wrapper);
+        m->children.insert(m->children.begin() + after_index, widget_wrapper);
     }
 
     m->update_icon_width();
@@ -1442,5 +1440,15 @@ void menu_controller::show_at_cursor() {
 }
 void breeze::set_can_reload_js(bool can) {
     mb_shell::context_menu_hooks::block_js_reload.fetch_add(can ? -1 : 1);
+}
+std::optional<std::shared_ptr<breeze_ui::js_widget>>
+menu_controller::get_widget() {
+    if (!valid())
+        return std::nullopt;
+    auto m = $menu.lock();
+    if (!m)
+        return std::nullopt;
+
+    return std::make_shared<breeze_ui::js_widget>(m);
 }
 } // namespace mb_shell::js
