@@ -5,4 +5,4 @@ foreach ($pidx in $pids) {
 
 
 xmake b --yes inject
-xmake b --yes shell && xmake r inject new
+(xmake b --yes shell) -and (xmake r inject new)
