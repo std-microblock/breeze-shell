@@ -529,7 +529,7 @@ std::shared_ptr<breeze_ui::window>
 breeze_ui::window::create_ex(std::string title, int width, int height,
                   std::function<void()> on_close) {
     auto rt = std::make_shared<ui::render_target>();
-    rt->acrylic = 0.1;
+    rt->acrylic = is_light_mode() ? 1 : 0.1;
     rt->transparent = true;
     rt->width = width;
     rt->height = height;
