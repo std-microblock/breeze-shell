@@ -19,11 +19,12 @@ const setTimeout = __mshell.infra.setTimeout;
 const clearTimeout = __mshell.infra.clearTimeout;
 `
       },
-      alias: {
-        react: 'react',
-        'react-reconciler': 'react-reconciler',
-      }
+      jsx: "transform",
+      tsconfigRaw: "{}",
+      jsxFactory: "h",
+      jsxFragment: "Fragment"
     });
+
     console.log('Build completed successfully');
   } catch (error) {
     console.error('Build failed:', error);
