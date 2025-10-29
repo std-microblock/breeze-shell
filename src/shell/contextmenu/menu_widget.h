@@ -6,6 +6,7 @@
 #include "breeze_ui/widget.h"
 #include "contextmenu.h"
 #include "shell/config.h"
+#include "shell/utils.h"
 #include "shell/widgets/background_widget.h"
 #include <algorithm>
 #include <functional>
@@ -101,7 +102,6 @@ struct menu_widget : public ui::flex_widget {
     std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
     std::vector<std::shared_ptr<widget>> rendering_submenus;
 
-
     menu_widget *parent_menu = nullptr;
 
     menu menu_data;
@@ -118,6 +118,25 @@ struct menu_widget : public ui::flex_widget {
 
     bool check_hit(const ui::update_context &ctx) override;
     void close();
+};
+
+struct screenside_button_group_widget : public ui::flex_widget {
+    struct button_widget : public ui::widget {
+        using super = ui::widget;
+        std::string icon_svg;
+        std::optional<ui::NVGImage> icon{};
+        std::function<void()> on_click;
+        button_widget(std::string icon_svg);
+
+        ui::sp_anim_float bg_opacity = anim_float(0, 200);
+
+        void update(ui::update_context &ctx) override;
+
+        void render(ui::nanovg_context ctx) override;
+    };
+
+    using super = ui::flex_widget;
+    screenside_button_group_widget();
 };
 
 struct mouse_menu_widget_main : public ui::widget {

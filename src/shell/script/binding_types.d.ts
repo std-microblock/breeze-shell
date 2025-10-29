@@ -660,9 +660,19 @@ export class js_menu_context {
 	input_box?: input_box_controller | undefined
 	window_info: caller_window_data
 }
+export class screenside_button_controller {
+	/**
+     * 
+     * @param icon_svg: string
+     * @param on_click: (() => void)
+     * @returns void
+     */
+    add_button(icon_svg: string, on_click: (() => void)): void
+}
 export class menu_info_basic_js {
 	menu: menu_controller
 	context: js_menu_context
+	screenside_button: screenside_button_controller
 }
 export class menu_controller {
 	get widget(): breeze_ui.js_widget | undefined;

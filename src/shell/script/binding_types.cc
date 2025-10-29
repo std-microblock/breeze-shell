@@ -1451,4 +1451,16 @@ menu_controller::get_widget() {
 
     return std::make_shared<breeze_ui::js_widget>(m);
 }
+void screenside_button_controller::add_button(std::string icon_svg,
+                                              std::function<void()> on_click) {
+    if ($menu.expired())
+        return;
+    auto menu = $menu.lock();
+    auto button = std::make_shared<screenside_button_group_widget::button_widget>(icon_svg);
+    button->on_click = on_click;
+    if(auto group = menu->get_child<screenside_button_group_widget>()) {
+        group->children.push_back(button);
+        group->children_dirty = true;
+    }
+}
 } // namespace mb_shell::js

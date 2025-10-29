@@ -582,6 +582,8 @@ mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
     : widget(), anchor_x(x), anchor_y(y) {
     menu_wid = std::make_shared<menu_widget>();
     menu_wid->init_from_data(menu_data);
+
+    emplace_child<screenside_button_group_widget>();
 }
 void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     ui::widget::update(ctx);
@@ -1036,4 +1038,59 @@ float mb_shell::menu_item_custom_widget::measure_width(
 float mb_shell::menu_item_custom_widget::measure_height(
     ui::update_context &ctx) {
     return custom_widget->measure_height(ctx);
+}
+mb_shell::screenside_button_group_widget::screenside_button_group_widget()
+    : super() {
+    padding_left->reset_to(8);
+    padding_right->reset_to(8);
+    padding_top->reset_to(8);
+    padding_bottom->reset_to(8);
+
+    gap = 4;
+    horizontal = true;
+}
+mb_shell::screenside_button_group_widget::button_widget::button_widget(
+    std::string icon_svg)
+    : icon_svg(std::move(icon_svg)) {
+    bg_opacity->reset_to(0);
+
+    width->reset_to(30);
+    height->reset_to(30);
+    config::current->context_menu.theme.animation.item.opacity(bg_opacity, 0);
+}
+void mb_shell::screenside_button_group_widget::button_widget::update(
+    ui::update_context &ctx) {
+    super::update(ctx);
+    if (ctx.mouse_down_on(this)) {
+        bg_opacity->animate_to(0.6f);
+    } else if (ctx.hovered(this)) {
+        bg_opacity->animate_to(0.8f);
+    } else {
+        bg_opacity->animate_to(1);
+    }
+
+    if (ctx.mouse_clicked_on(this)) {
+        if (on_click) {
+            on_click();
+        }
+    }
+
+    ctx.hovered_hit(this);
+}
+void mb_shell::screenside_button_group_widget::button_widget::render(
+    ui::nanovg_context ctx) {
+    super::render(ctx);
+
+    float icon_size = std::min(*width, *height) - 8.f;
+    if (!icon) {
+        icon = ctx.imageFromSVG(nsvgParse(icon_svg.data(), "px", 96));
+    }
+
+    if (icon) {
+        float c = is_light_mode() ? 1 : 0;
+        ctx.fillColor(nvgRGBAf(c, c, c, *bg_opacity));
+        ctx.fillCircle(*x + *width / 2, *y + *height / 2, icon_size / 2 + 4);
+        ctx.drawImage(*icon, *x + (*width - icon_size) / 2,
+                      *y + (*height - icon_size) / 2, icon_size, icon_size);
+    }
 }

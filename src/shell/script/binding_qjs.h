@@ -860,6 +860,28 @@ template<> struct js_bind<mb_shell::js::js_menu_context> {
     }
 };
 
+template <> struct qjs::js_traits<mb_shell::js::screenside_button_controller> {
+    static mb_shell::js::screenside_button_controller unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::screenside_button_controller obj;
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::screenside_button_controller &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::screenside_button_controller> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::screenside_button_controller>("screenside_button_controller")
+            .constructor<>()
+                .fun<&mb_shell::js::screenside_button_controller::add_button>("add_button")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::menu_info_basic_js> {
     static mb_shell::js::menu_info_basic_js unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::menu_info_basic_js obj;
@@ -867,6 +889,8 @@ template <> struct qjs::js_traits<mb_shell::js::menu_info_basic_js> {
         obj.menu = js_traits<std::shared_ptr<mb_shell::js::menu_controller>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "menu"));
 
         obj.context = js_traits<std::shared_ptr<mb_shell::js::js_menu_context>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "context"));
+
+        obj.screenside_button = js_traits<std::shared_ptr<mb_shell::js::screenside_button_controller>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "screenside_button"));
 
         return obj;
     }
@@ -878,6 +902,8 @@ template <> struct qjs::js_traits<mb_shell::js::menu_info_basic_js> {
 
         JS_SetPropertyStr(ctx, obj, "context", js_traits<std::shared_ptr<mb_shell::js::js_menu_context>>::wrap(ctx, val.context));
 
+        JS_SetPropertyStr(ctx, obj, "screenside_button", js_traits<std::shared_ptr<mb_shell::js::screenside_button_controller>>::wrap(ctx, val.screenside_button));
+
         return obj;
     }
 };
@@ -887,6 +913,7 @@ template<> struct js_bind<mb_shell::js::menu_info_basic_js> {
             .constructor<>()
                 .fun<&mb_shell::js::menu_info_basic_js::menu>("menu")
                 .fun<&mb_shell::js::menu_info_basic_js::context>("context")
+                .fun<&mb_shell::js::menu_info_basic_js::screenside_button>("screenside_button")
             ;
     }
 };
@@ -1243,6 +1270,8 @@ inline void bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::caller_window_data>::bind(mod);
 
     js_bind<mb_shell::js::js_menu_context>::bind(mod);
+
+    js_bind<mb_shell::js::screenside_button_controller>::bind(mod);
 
     js_bind<mb_shell::js::menu_info_basic_js>::bind(mod);
 

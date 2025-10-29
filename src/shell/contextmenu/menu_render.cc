@@ -97,7 +97,9 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
 
     js::menu_info_basic_js menu_info{
         .menu = std::make_shared<js::menu_controller>(menu_wid->menu_wid),
-        .context = current_js_context};
+        .context = current_js_context,
+        .screenside_button = std::make_shared<js::screenside_button_controller>(menu_wid),
+    };
 
     if (run_js) {
         dbgout("[perf] JS plugins start");

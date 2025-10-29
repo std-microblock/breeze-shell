@@ -345,9 +345,14 @@ struct js_menu_context {
 };
 
 struct menu_controller;
+struct screenside_button_controller {
+    std::weak_ptr<mb_shell::mouse_menu_widget_main> $menu;
+    void add_button(std::string icon_svg, std::function<void()> on_click);
+};
 struct menu_info_basic_js {
     std::shared_ptr<menu_controller> menu;
     std::shared_ptr<js_menu_context> context;
+    std::shared_ptr<screenside_button_controller> screenside_button;
 };
 
 struct menu_controller {
