@@ -5,7 +5,7 @@ package("breeze-glfw")
 
 package("breeze-ui")
     add_urls("https://github.com/std-microblock/breeze-ui.git")
-    add_versions("2025.10.13", "f7a4dc9e74526a2919d82428bf0adf30574790c2")
+    add_versions("2025.10.29+4", "88a092a2724dbcc9d9ffb8c4d31ec8b2e6965b9d")
     add_deps("breeze-glfw", "nanovg", "glad", "nanosvg")
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
 
