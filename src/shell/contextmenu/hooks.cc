@@ -9,6 +9,7 @@
 #include "blook/blook.h"
 #include <atlcomcli.h>
 #include <atomic>
+#include <print>
 #include <shobjidl_core.h>
 #include <thread>
 
@@ -31,6 +32,12 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             auto menu_render = menu_render::create(x, y, menu, run_js);
             menu_render.rt->last_time = menu_render.rt->clock.now();
             perf.end("menu_render::create");
+
+            // If holds Shift key when opening the menu, refresh the font cache
+            if (GetKeyState(VK_SHIFT) & 0x8000) {
+                std::println("Refreshing font cache...");
+                menu_render.reset_fons_cache();
+            }
 
             static HWND window = nullptr;
             window = (HWND)menu_render.rt->hwnd();

@@ -1,4 +1,5 @@
 #include "menu_render.h"
+#include "shell/utils.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 #include "Windows.h"
@@ -140,5 +141,49 @@ menu_render &menu_render::operator=(menu_render &&t) {
     rt = std::move(t.rt);
     selected_menu = std::move(t.selected_menu);
     return *this;
+}
+// struct NVGcontext {
+// 	NVGparams params;
+// 	float* commands;
+// 	int ccommands;
+// 	int ncommands;
+// 	float commandx, commandy;
+// 	NVGstate states[NVG_MAX_STATES];
+// 	int nstates;
+// 	NVGpathCache* cache;
+// 	float tessTol;
+// 	float distTol;
+// 	float fringeWidth;
+// 	float devicePxRatio;
+// 	struct FONScontext* fs;
+// 	int fontImages[NVG_MAX_FONTIMAGES];
+// 	int fontImageIdx;
+// 	int drawCallCount;
+// 	int fillTriCount;
+// 	int strokeTriCount;
+// 	int textTriCount;
+// };
+// HACK: By finding the third readable pointer from NVGcontext, we can get the FONScontext
+struct FONScontext;
+extern "C" int fonsResetAtlas(FONScontext* stash, int width, int height);
+void menu_render::reset_fons_cache() {
+    if (!rt)
+        return;
+    auto nvg = rt->nvg;
+    char* ptr = reinterpret_cast<char *>(nvg);
+    size_t offset = sizeof(NVGparams) + sizeof(float *);
+    int ptr_count = 0;
+    for (size_t i = 0; i < 1024; i += 4) {
+        void **p = reinterpret_cast<void **>(ptr + offset + i);
+        if (is_memory_readable(*p)) {
+            ptr_count++;
+            if (ptr_count == 2) {
+                auto fons = reinterpret_cast<struct FONScontext *>(*p);
+                fonsResetAtlas(fons, 512, 512);
+                return;
+            }
+        }
+    }
+
 }
 }; // namespace mb_shell
