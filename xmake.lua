@@ -88,6 +88,5 @@ target("inject")
         extensions = {".png"}
     })
     add_files("resources/icon-small.png")
-    -- set_policy("windows.manifest.uac", "admin")
     add_ldflags("/subsystem:windows")
     
