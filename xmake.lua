@@ -14,7 +14,7 @@ includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook bd14b233104648822ac06a4029e06c4554eb0b01",
+add_requires("blook d74d6c7e0f13fe787f0dfb461c56c96a4495cf91",
     "nanovg", "glad", "quickjs-ng", "nanosvg",
     "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
 
