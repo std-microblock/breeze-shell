@@ -3,7 +3,7 @@ foreach ($pidx in $pids) {
     Stop-Process -Id $pidx -Force
 }
 
-xmake f --toolchain=clang-cl -m releasedbg -y --asan=y
+xmake f --toolchain=clang-cl -m releasedbg -y --asan=y -c
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }

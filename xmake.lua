@@ -25,11 +25,9 @@ add_requires("blook 3524a931af49be471840e5312fb0c18e888706fd",
 
 if has_config("asan") then
     add_requires("quickjs-ng", {
-        configs = {asan = true},
-        debug = true
+        configs = {asan = true}
     })
     add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
-    set_optimize("none")
     -- set_policy("build.sanitizer.undefined", true)
     -- set_toolset("ld", "lld-link")
     -- set_toolset("sh", "lld-link")

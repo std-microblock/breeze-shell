@@ -37,24 +37,24 @@ package("quickjs-ng")
 
         local configs = {}
         table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")
-        if package:is_plat("windows") then
-            if package:is_debug() then
-                -- add /debug to link flags
-                table.insert(configs, "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
-                table.insert(configs, "-DCMAKE_SHARED_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
+        -- if package:is_plat("windows") then
+        --     if package:is_debug() then
+        --         -- add /debug to link flags
+        --         table.insert(configs, "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
+        --         table.insert(configs, "-DCMAKE_SHARED_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
 
-                -- also add /DEBUG to cflags, and /Zi to cxxflags
-                table.insert(configs, "-DCMAKE_C_FLAGS_RELEASE=/Zi /DEBUG")
-                table.insert(configs, "-DCMAKE_CXX_FLAGS_RELEASE=/Zi /DEBUG")
-            end
-        end
+        --         -- also add /DEBUG to cflags, and /Zi to cxxflags
+        --         table.insert(configs, "-DCMAKE_C_FLAGS_RELEASE=/Zi /DEBUG")
+        --         table.insert(configs, "-DCMAKE_CXX_FLAGS_RELEASE=/Zi /DEBUG")
+        --     end
+        -- end
 
         table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_CONFIG_ASAN=" .. (package:config("asan") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_CONFIG_MSAN=" .. (package:config("msan") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_CONFIG_UBSAN=" .. (package:config("ubsan") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_BUILD_LIBC=" .. (package:config("libc") and "ON" or "OFF"))
-        
+
         if package:config("shared") and package:is_plat("windows") then
             table.insert(configs, "-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON")
         end
