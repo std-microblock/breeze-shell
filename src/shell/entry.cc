@@ -34,6 +34,7 @@
 #include <iostream>
 #include <objbase.h>
 #include <optional>
+#include <print>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -53,7 +54,6 @@ namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
 void main() {
     set_thread_locale_utf8();
-
     AllocConsole();
     freopen("CONOUT$", "w", stdout);
     freopen("CONOUT$", "w", stderr);
@@ -63,16 +63,15 @@ void main() {
     install_error_handlers();
     config::run_config_loader();
 
+    static script_context script_ctx;
     std::thread([]() {
-        script_context ctx;
-
         auto data_dir = config::data_directory();
         auto script_dir = data_dir / "scripts";
 
         if (!std::filesystem::exists(script_dir))
             std::filesystem::create_directories(script_dir);
 
-        ctx.watch_folder(script_dir, [&]() {
+        script_ctx.watch_folder(script_dir, [&]() {
             return !context_menu_hooks::block_js_reload.load();
         });
     }).detach();
@@ -132,43 +131,59 @@ void main() {
     }
 
     if (filename == "rundll32.exe") {
-        SetProcessDPIAware();
-        CoInitialize(nullptr);
-        std::thread([]() {
-            CPPTRACE_TRY {
-                SetThreadDpiAwarenessContext(
-                    DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-                taskbar_render taskbar;
-                auto monitor =
-                    MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
-                if (!monitor) {
-                    MessageBoxW(NULL, L"Failed to get primary monitor",
-                                L"Error", MB_ICONERROR);
-                    return;
-                }
-                taskbar.monitor.cbSize = sizeof(MONITORINFO);
-                if (GetMonitorInfoW(monitor, &taskbar.monitor) == 0) {
-                    MessageBoxW(NULL,
-                                (L"Failed to get monitor info: " +
-                                 std::to_wstring(GetLastError()))
-                                    .c_str(),
-                                L"Error", MB_ICONERROR);
-                    return;
-                }
-                taskbar.position = taskbar_render::menu_position::bottom;
-                if (auto res = taskbar.init(); !res) {
-                    MessageBoxW(NULL, L"Failed to initialize taskbar", L"Error",
-                                MB_ICONERROR);
-                    return;
-                }
+        auto command_line = std::wstring(GetCommandLineW());
 
-                taskbar.rt.start_loop();
-            }
-            CPPTRACE_CATCH(const std::exception &e) {
-                std::cerr << "Error in taskbar thread: " << e.what()
-                          << std::endl;
-                cpptrace::from_current_exception().print();
-            }
+        if (command_line.contains(L"-taskbar")) {
+            SetProcessDPIAware();
+            CoInitialize(nullptr);
+            std::thread([]() {
+                CPPTRACE_TRY {
+                    SetThreadDpiAwarenessContext(
+                        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+                    taskbar_render taskbar;
+                    auto monitor =
+                        MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
+                    if (!monitor) {
+                        MessageBoxW(NULL, L"Failed to get primary monitor",
+                                    L"Error", MB_ICONERROR);
+                        return;
+                    }
+                    taskbar.monitor.cbSize = sizeof(MONITORINFO);
+                    if (GetMonitorInfoW(monitor, &taskbar.monitor) == 0) {
+                        MessageBoxW(NULL,
+                                    (L"Failed to get monitor info: " +
+                                     std::to_wstring(GetLastError()))
+                                        .c_str(),
+                                    L"Error", MB_ICONERROR);
+                        return;
+                    }
+                    taskbar.position = taskbar_render::menu_position::bottom;
+                    if (auto res = taskbar.init(); !res) {
+                        MessageBoxW(NULL, L"Failed to initialize taskbar",
+                                    L"Error", MB_ICONERROR);
+                        return;
+                    }
+
+                    taskbar.rt.start_loop();
+                }
+                CPPTRACE_CATCH(const std::exception &e) {
+                    std::cerr << "Error in taskbar thread: " << e.what()
+                              << std::endl;
+                    cpptrace::from_current_exception().print();
+                }
+            }).detach();
+        }
+    }
+
+    if (filename == "asan_test.exe") {
+        // ASAN environment
+        init_render_global();
+        ShowWindow(GetConsoleWindow(), SW_SHOW);
+        std::thread([]() {
+            script_ctx.js_ready_future.wait();
+            script_ctx.js->enqueueJob([]() {
+                script_ctx.js->eval("globalThis.showConfigPage()", "asan.js");
+            });
         }).detach();
     }
 }
@@ -177,10 +192,6 @@ void main() {
 int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
-        auto cmdline = std::string(GetCommandLineA());
-
-        std::ranges::transform(cmdline, cmdline.begin(), tolower);
-
         mb_shell::main();
         break;
     }

@@ -1,6 +1,11 @@
 set_project("shell")
-set_policy("compatibility.version", "3.0")
 local version = "0.1.31"
+
+option("asan")
+    set_default(false)
+    set_showmenu(true)
+    set_description("Enable AddressSanitizer (ASan) support")
+option_end()
 
 set_exceptions("cxx")
 set_languages("c++2b")
@@ -15,9 +20,22 @@ includes("dependencies/breeze-ui.lua")
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook d74d6c7e0f13fe787f0dfb461c56c96a4495cf91",
-    "nanovg", "glad", "quickjs-ng", "nanosvg",
+    "nanovg", "glad", "nanosvg",
     "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
 
+if has_config("asan") then
+    add_requires("quickjs-ng", {
+        configs = {asan = true},
+        debug = true
+    })
+    add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
+    set_optimize("none")
+    -- set_policy("build.sanitizer.undefined", true)
+    -- set_toolset("ld", "lld-link")
+    -- set_toolset("sh", "lld-link")
+else
+    add_requires("quickjs-ng")
+end
 
 add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
     configs = {
@@ -44,7 +62,6 @@ target("ui_test")
     add_tests("defualt")
 
 target("shell")
-    add_headerfiles()
     set_kind("shared")
     add_headerfiles("src/shell/**.h")
     add_includedirs("src/", {
@@ -76,6 +93,18 @@ target("shell")
     add_files("src/shell/script/script.js")
     add_files("src/shell/**/*.cc", "src/shell/*.cc", "src/shell/**/*.c")
     set_encodings("utf-8")
+
+    if has_config("asan") then
+        set_policy("build.sanitizer.address", true)
+    end
+
+target("asan_test")
+    set_kind("binary")
+    add_deps("shell")
+    add_files("src/asan/asan_main.cc")
+    if has_config("asan") then
+        set_policy("build.sanitizer.address", true)
+    end
 
 target("inject")
     set_kind("binary")

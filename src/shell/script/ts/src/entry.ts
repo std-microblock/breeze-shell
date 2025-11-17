@@ -55,3 +55,4 @@ shell.menu_controller.add_menu_listener(ctx => {
 globalThis.plugin = plugin as any
 globalThis.React = React
 globalThis.createRenderer = createRenderer
+globalThis.showConfigPage = showConfigPage

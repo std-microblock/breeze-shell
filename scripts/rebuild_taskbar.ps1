@@ -3,4 +3,4 @@ foreach ($pidx in $pids) {
     Stop-Process -Id $pidx -Force
 }
 
-xmake r --yes shell taskbar
+xmake r --yes shell taskbar -- -taskbar

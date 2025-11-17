@@ -329,7 +329,7 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
         }
 
         if constexpr (is_vector<U>::value) {
-            if (JS_IsArray(ctx, v) == 1) {
+            if (JS_IsArray(v) == 1) {
                 auto firstElement = JS_GetPropertyUint32(ctx, v, 0);
                 bool ok = isCompatible<std::decay_t<typename U::value_type>>(
                     ctx, firstElement);
@@ -341,7 +341,7 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
         }
 
         if constexpr (is_pair<U>::value) {
-            if (JS_IsArray(ctx, v) == 1) {
+            if (JS_IsArray(v) == 1) {
                 // todo: check length?
                 auto firstElement = JS_GetPropertyUint32(ctx, v, 0);
                 auto secondElement = JS_GetPropertyUint32(ctx, v, 1);
@@ -392,7 +392,7 @@ template <typename... Ts> struct js_traits<std::variant<Ts...>> {
         case JS_TAG_FUNCTION_BYTECODE:
             return is_callable<T>::value;
         case JS_TAG_OBJECT:
-            if (JS_IsArray(ctx, v) == 1)
+            if (JS_IsArray(v) == 1)
                 return is_vector<T>::value || is_pair<T>::value;
             if constexpr (is_shared_ptr<T>::value) {
                 if (JS_GetClassID(v) == js_traits<T>::QJSClassId)
@@ -1346,7 +1346,7 @@ public:
             JS_FreeValue(ctx, v);
     }
 
-    bool isError() const { return JS_IsError(ctx, v); }
+    bool isError() const { return JS_IsError(v); }
 
     /** Conversion helper function: value.as<T>()
      * @tparam T type to convert to
@@ -1504,7 +1504,7 @@ private:
     static void promise_unhandled_rejection_tracker(JSContext *ctx,
                                                     JSValue promise,
                                                     JSValue reason,
-                                                    JS_BOOL is_handled,
+                                                    bool is_handled,
                                                     void *opaque);
 
     static JSModuleDef *module_loader(JSContext *ctx, const char *module_name,
@@ -1937,6 +1937,7 @@ template <> struct js_traits<Value> {
     }
 
     static JSValue wrap(JSContext *ctx, Value v) noexcept {
+        assert(ctx);
         assert(JS_GetRuntime(ctx) == JS_GetRuntime(v.ctx));
         return v.release();
     }
@@ -2081,7 +2082,7 @@ template <class T> struct js_traits<std::vector<T>> {
     }
 
     static std::vector<T> unwrap(JSContext *ctx, JSValueConst jsarr) {
-        int e = JS_IsArray(ctx, jsarr);
+        int e = JS_IsArray(jsarr);
         if (e == 0)
             JS_ThrowTypeError(
                 ctx, "js_traits<std::vector<T>>::unwrap expects array");
@@ -2116,7 +2117,7 @@ template <typename U, typename V> struct js_traits<std::pair<U, V>> {
     }
 
     static std::pair<U, V> unwrap(JSContext *ctx, JSValueConst jsarr) {
-        int e = JS_IsArray(ctx, jsarr);
+        int e = JS_IsArray(jsarr);
         if (e == 0)
             JS_ThrowTypeError(ctx, "js_traits<%s>::unwrap expects array",
                               QJSPP_TYPENAME(std::pair<U, V>));
@@ -2160,7 +2161,7 @@ template <typename... T> struct js_traits<std::tuple<T...>> {
         }
     }
     static std::tuple<T...> unwrap(JSContext *ctx, JSValueConst jsarr) {
-        if (!JS_IsArray(ctx, jsarr)) {
+        if (!JS_IsArray(jsarr)) {
             JS_ThrowTypeError(ctx, "Expected an array");
             throw exception{ctx};
         }
@@ -2271,7 +2272,7 @@ inline Value exception::get() { return context().getException(); }
 inline void Runtime::promise_unhandled_rejection_tracker(JSContext *ctx,
                                                          JSValue promise,
                                                          JSValue reason,
-                                                         JS_BOOL is_handled,
+                                                         bool is_handled,
                                                          void *opaque) {
     auto &context = Context::get(ctx);
     if (context.onUnhandledPromiseRejection) {

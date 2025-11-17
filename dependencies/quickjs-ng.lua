@@ -6,7 +6,7 @@ package("quickjs-ng")
     add_urls("https://github.com/quickjs-ng/quickjs/archive/refs/tags/$(version).tar.gz",
              "https://github.com/quickjs-ng/quickjs.git", {submodules = false})
 
-    add_versions("v0.8.0", "7e60e1e0dcd07d25664331308a2f4aee2a88d60d85896e828d25df7c3d40204e")
+    add_versions("v0.11.0", "v0.11.0")
 
     add_configs("libc", {description = "Build standard library modules as part of the library", default = false, type = "boolean"})
 
@@ -15,7 +15,6 @@ package("quickjs-ng")
     end
 
     add_deps("cmake")
-
     if on_check then
         on_check("windows", function (package)
             local vs_toolset = package:toolchain("msvc"):config("vs_toolset")
@@ -26,8 +25,8 @@ package("quickjs-ng")
             end
         end)
         on_check("wasm", "cross", function (package)
-            if package:version():eq("0.8.0") then
-                raise("package(quickjs-ng v0.8.0) unsupported platform")
+            if package:version():eq("0.11.0") then
+                raise("package(quickjs-ng v0.11.0) unsupported platform")
             end
         end)
     end
@@ -37,9 +36,9 @@ package("quickjs-ng")
         io.replace("CMakeLists.txt", "if(NOT WIN32 AND NOT EMSCRIPTEN)", "if(0)", {plain = true})
 
         local configs = {}
-        table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:is_debug() and "Debug" or "Release"))
+        table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")
         if package:is_plat("windows") then
-            if false then
+            if package:is_debug() then
                 -- add /debug to link flags
                 table.insert(configs, "-DCMAKE_EXE_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
                 table.insert(configs, "-DCMAKE_SHARED_LINKER_FLAGS_RELEASE=\"/DEBUG\"")
@@ -51,10 +50,11 @@ package("quickjs-ng")
         end
 
         table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
-        table.insert(configs, "-DCONFIG_ASAN=" .. (package:config("asan") and "ON" or "OFF"))
-        table.insert(configs, "-DCONFIG_MSAN=" .. (package:config("msan") and "ON" or "OFF"))
-        table.insert(configs, "-DCONFIG_UBSAN=" .. (package:config("ubsan") and "ON" or "OFF"))
-        table.insert(configs, "-DBUILD_QJS_LIBC=" .. (package:config("libc") and "ON" or "OFF"))
+        table.insert(configs, "-DQJS_CONFIG_ASAN=" .. (package:config("asan") and "ON" or "OFF"))
+        table.insert(configs, "-DQJS_CONFIG_MSAN=" .. (package:config("msan") and "ON" or "OFF"))
+        table.insert(configs, "-DQJS_CONFIG_UBSAN=" .. (package:config("ubsan") and "ON" or "OFF"))
+        table.insert(configs, "-DQJS_BUILD_LIBC=" .. (package:config("libc") and "ON" or "OFF"))
+        io.replace("CMakeLists.txt", "add_executable(test_conv\n    tests/test_conv.c\n)", "", {plain = true})
         if package:config("shared") and package:is_plat("windows") then
             table.insert(configs, "-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON")
         end

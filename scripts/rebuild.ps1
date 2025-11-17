@@ -5,4 +5,8 @@ foreach ($pidx in $pids) {
 
 
 xmake b --yes inject
-(xmake b --yes shell) -and (xmake r inject new)
+xmake b --yes shell
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+xmake r inject new
