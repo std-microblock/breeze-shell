@@ -12,7 +12,7 @@
 <h1>Breeze Shell</h1>
 <h5>Bring fluency & delication back to Windows</h5>
 <div>
-  <img width=500 src=./resources/preview1.webp />
+  <img src=https://github.com/user-attachments/assets/7da2bbba-2270-496b-995e-dbb56f9049ef />
 </div>
 </div>
 
