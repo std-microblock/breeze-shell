@@ -1,0 +1,197 @@
+#include "qjs_sanitizer.h"
+
+#include "blook/hook.h"
+#include "quickjs.h"
+#include <blook/blook.h>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <thread>
+
+#define FN(name) {#name, (void *)&name}
+static const std::unordered_map<std::string, void *> func_to_hook = {
+    FN(JS_NewObject),
+    FN(JS_NewArray),
+    FN(JS_NewCFunction),
+    FN(JS_NewCFunctionData),
+    FN(JS_NewPromiseCapability),
+    FN(JS_NewString),
+    FN(JS_NewObjectProto),
+    FN(JS_NewArrayBuffer),
+    FN(JS_NewDate),
+    FN(JS_NewSymbol),
+    FN(JS_NewArrayBufferCopy),
+    FN(JS_NewTypedArray),
+    FN(JS_NewUint8Array),
+    FN(JS_NewUint8ArrayCopy),
+    FN(JS_NewCFunction2),
+    FN(JS_NewCFunction3),
+    FN(JS_NewCFunctionData2),
+    FN(JS_NewCModule),
+    FN(JS_ParseJSON),
+    FN(JS_JSONStringify),
+    FN(JS_WriteObject),
+    FN(JS_ReadObject),
+    FN(JS_EvalFunction),
+    FN(JS_LoadModule),
+    FN(JS_SetConstructor),
+    FN(JS_SetPropertyFunctionList),
+    FN(JS_AddModuleExport),
+    FN(JS_AddModuleExportList),
+    FN(JS_SetModuleExport),
+    FN(JS_SetModuleExportList),
+    FN(JS_FreeContext),
+    FN(JS_DupContext),
+    FN(JS_SetContextOpaque),
+    FN(JS_GetContextOpaque),
+    FN(JS_GetRuntime),
+    FN(JS_SetClassProto),
+    FN(JS_GetClassProto),
+    FN(JS_GetFunctionProto),
+    FN(JS_AddIntrinsicBaseObjects),
+    FN(JS_AddIntrinsicDate),
+    FN(JS_AddIntrinsicEval),
+    FN(JS_AddIntrinsicRegExpCompiler),
+    FN(JS_AddIntrinsicRegExp),
+    FN(JS_AddIntrinsicJSON),
+    FN(JS_AddIntrinsicProxy),
+    FN(JS_AddIntrinsicMapSet),
+    FN(JS_AddIntrinsicTypedArrays),
+    FN(JS_AddIntrinsicPromise),
+    FN(JS_AddIntrinsicBigInt),
+    FN(JS_AddIntrinsicWeakRef),
+    FN(JS_AddPerformance),
+    FN(JS_AddIntrinsicDOMException),
+    FN(JS_IsEqual),
+    FN(JS_IsStrictEqual),
+    FN(JS_IsSameValue),
+    FN(JS_IsSameValueZero),
+    FN(JS_Throw),
+    FN(JS_GetException),
+    FN(JS_HasException),
+    FN(JS_SetUncatchableError),
+    FN(JS_ClearUncatchableError),
+    FN(JS_ResetUncatchableError),
+    FN(JS_NewError),
+    FN(JS_NewInternalError),
+    FN(JS_NewPlainError),
+    FN(JS_NewRangeError),
+    FN(JS_NewReferenceError),
+    FN(JS_NewSyntaxError),
+    FN(JS_NewTypeError),
+    FN(JS_ThrowInternalError),
+    FN(JS_ThrowPlainError),
+    FN(JS_ThrowRangeError),
+    FN(JS_ThrowReferenceError),
+    FN(JS_ThrowSyntaxError),
+    FN(JS_ThrowTypeError),
+    FN(JS_ThrowDOMException),
+    FN(JS_ThrowOutOfMemory),
+    FN(JS_FreeValue),
+    FN(JS_DupValue),
+    FN(JS_ToBool),
+    FN(JS_ToNumber),
+    FN(JS_ToInt32),
+    FN(JS_ToInt64),
+    FN(JS_ToIndex),
+    FN(JS_ToFloat64),
+    FN(JS_ToBigInt64),
+    FN(JS_ToBigUint64),
+    FN(JS_ToInt64Ext),
+    FN(JS_NewStringLen),
+    FN(JS_NewTwoByteString),
+    FN(JS_NewAtomString),
+    FN(JS_ToString),
+    FN(JS_ToPropertyKey),
+    FN(JS_ToCStringLen2),
+    FN(JS_FreeCString),
+    FN(JS_NewObjectProtoClass),
+    FN(JS_NewObjectClass),
+    FN(JS_NewObjectFrom),
+    FN(JS_NewObjectFromStr),
+    FN(JS_ToObject),
+    FN(JS_ToObjectString),
+    FN(JS_IsFunction),
+    FN(JS_IsConstructor),
+    FN(JS_SetConstructorBit),
+    FN(JS_NewArrayFrom),
+    FN(JS_GetProxyTarget),
+    FN(JS_GetProxyHandler),
+    FN(JS_GetProperty),
+    FN(JS_GetPropertyUint32),
+    FN(JS_GetPropertyInt64),
+    FN(JS_GetPropertyStr),
+    FN(JS_SetProperty),
+    FN(JS_SetPropertyUint32),
+    FN(JS_SetPropertyInt64),
+    FN(JS_SetPropertyStr),
+    FN(JS_HasProperty),
+    FN(JS_IsExtensible),
+    FN(JS_PreventExtensions),
+    FN(JS_DeleteProperty),
+    FN(JS_SetPrototype),
+    FN(JS_GetPrototype),
+    FN(JS_GetLength),
+    FN(JS_SetLength),
+    FN(JS_SealObject),
+    FN(JS_FreezeObject),
+    FN(JS_GetOwnPropertyNames),
+    FN(JS_GetOwnProperty),
+    FN(JS_FreePropertyEnum),
+    FN(JS_Call),
+    FN(JS_Invoke),
+    FN(JS_CallConstructor),
+    FN(JS_CallConstructor2),
+    FN(JS_Eval),
+    FN(JS_Eval2),
+    FN(JS_EvalThis),
+    FN(JS_EvalThis2),
+    FN(JS_GetGlobalObject),
+    FN(JS_IsInstanceOf),
+    FN(JS_DefineProperty),
+    FN(JS_DefinePropertyValue),
+    FN(JS_DefinePropertyValueUint32),
+    FN(JS_DefinePropertyValueStr),
+    FN(JS_DefinePropertyGetSet),
+    FN(JS_GetOpaque2),
+    FN(JS_DetachArrayBuffer),
+    FN(JS_GetArrayBuffer),
+    FN(JS_GetUint8Array),
+    FN(JS_GetTypedArrayBuffer),
+    FN(JS_PromiseState),
+    FN(JS_PromiseResult),
+    FN(JS_SetIsHTMLDDA),
+    FN(JS_GetImportMeta),
+    FN(JS_GetModuleName),
+    FN(JS_GetModuleNamespace),
+    FN(JS_EnqueueJob),
+    FN(JS_WriteObject2),
+    FN(JS_ReadObject2),
+    FN(JS_ResolveModule),
+    FN(JS_GetScriptOrModuleName),
+};
+
+static std::mutex thread_context_map_mutex;
+static std::unordered_map<JSContext *, std::thread::id> thread_context_map;
+
+void mb_shell::qjs_sanitizer_enable() {
+    for (const auto &[name, addr] : func_to_hook) {
+        blook::VEHHookManager::instance().add_breakpoint(
+            blook::VEHHookManager::SoftwareBreakpoint {
+                .address = addr
+            }, [name](blook::VEHHookManager::VEHHookContext &ctx) {
+                std::lock_guard lock(thread_context_map_mutex);
+                auto js_ctx = reinterpret_cast<JSContext *>(ctx.exception_info->ContextRecord->Rcx);
+                if (thread_context_map.find(js_ctx) == thread_context_map.end()) {
+                    thread_context_map[js_ctx] = std::this_thread::get_id();
+                } else {
+                    auto existing_thread_id = thread_context_map[js_ctx];
+                    if (existing_thread_id != std::this_thread::get_id()) {
+                        // Detected cross-thread JS context access
+                        std::cerr << "Detected cross-thread access to JSContext in function " << name << std::endl;
+                    }
+                }
+            }
+        );
+    }
+}

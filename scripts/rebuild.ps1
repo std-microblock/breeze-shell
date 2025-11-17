@@ -3,7 +3,7 @@ foreach ($pidx in $pids) {
     Stop-Process -Id $pidx -Force
 }
 
-
+xmake f --toolchain=clang-cl -m releasedbg -y
 xmake b --yes inject
 xmake b --yes shell
 if ($LASTEXITCODE -ne 0) {

@@ -50,6 +50,8 @@
 
 #include "cpptrace/from_current.hpp"
 
+#include "qjs_sanitizer.h"
+
 namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
 void main() {

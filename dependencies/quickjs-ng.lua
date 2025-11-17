@@ -54,7 +54,7 @@ package("quickjs-ng")
         table.insert(configs, "-DQJS_CONFIG_MSAN=" .. (package:config("msan") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_CONFIG_UBSAN=" .. (package:config("ubsan") and "ON" or "OFF"))
         table.insert(configs, "-DQJS_BUILD_LIBC=" .. (package:config("libc") and "ON" or "OFF"))
-        io.replace("CMakeLists.txt", "add_executable(test_conv\n    tests/test_conv.c\n)", "", {plain = true})
+        
         if package:config("shared") and package:is_plat("windows") then
             table.insert(configs, "-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON")
         end
