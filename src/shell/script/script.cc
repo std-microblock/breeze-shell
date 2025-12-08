@@ -122,6 +122,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
         dbgout("Creating JS thread");
         menu_callbacks_js.clear();
 
+        is_js_ready.exchange(false);
         js_thread.emplace(
             [&, this, ss = stop_signal]() {
                 CPPTRACE_TRY {
@@ -131,7 +132,8 @@ void script_context::watch_folder(const std::filesystem::path &path,
                     rt = std::make_shared<qjs::Runtime>();
                     JS_UpdateStackTop(rt->rt);
                     js = std::make_shared<qjs::Context>(*rt);
-                    js_ready_promise.set_value();
+
+                    is_js_ready.exchange(true);
                     bind();
                     try {
                         JS_UpdateStackTop(rt->rt);

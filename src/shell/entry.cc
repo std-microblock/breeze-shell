@@ -182,7 +182,7 @@ void main() {
         init_render_global();
         ShowWindow(GetConsoleWindow(), SW_SHOW);
         std::thread([]() {
-            script_ctx.js_ready_future.wait();
+            script_ctx.is_js_ready.wait(true);
             script_ctx.js->enqueueJob([]() {
                 script_ctx.js->eval("globalThis.showConfigPage()", "asan.js");
             });

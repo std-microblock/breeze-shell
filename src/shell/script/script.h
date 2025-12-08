@@ -16,11 +16,9 @@ struct script_context {
     std::shared_ptr<qjs::Runtime> rt;
     std::shared_ptr<qjs::Context> js;
 
-private:
-    std::promise<void> js_ready_promise{};
 
 public:
-    std::future<void> js_ready_future = js_ready_promise.get_future();
+    std::atomic<bool> is_js_ready{false};
 
     std::shared_ptr<int> stop_signal = std::make_shared<int>(0);
     script_context();
