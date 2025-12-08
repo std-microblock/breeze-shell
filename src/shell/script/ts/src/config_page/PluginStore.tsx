@@ -71,12 +71,12 @@ const PluginStore = memo(() => {
                                     installed ? (have_update ? '#FFA500' : '#2979FF') : (shell.breeze.is_light_theme() ? '#C0C0C0aa' : '#505050aa')
                                 } />
                                 <flex gap={10} padding={10} borderRadius={8}
-                                    flexGrow={1} horizontal >
+                                    flexGrow={1} horizontal>
                                     <flex gap={10} alignItems="stretch" flexGrow={1}>
                                         <Text fontSize={18}>{plugin.name}</Text>
                                         <Text>{plugin.description}</Text>
                                     </flex>
-                                    <flex gap={10} alignItems="center">
+                                    <flex gap={10} alignItems="center" flexShrink={0}>
                                         <Button onClick={() => installPlugin(plugin)}>
                                             <Text>{installingPlugins.has(plugin.name) ? t("安装中...") : (installed ? (have_update ? `更新 (${local_version} -> ${plugin.version})` : '已安装') : '安装')}</Text>
                                         </Button>

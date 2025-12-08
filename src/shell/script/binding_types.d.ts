@@ -79,6 +79,8 @@ export class js_flex_layout_widget extends js_widget {
     set padding_bottom(value: number);
 	get flex_grow(): number;
     set flex_grow(value: number);
+	get flex_shrink(): number;
+    set flex_shrink(value: number);
 	get max_height(): number;
     set max_height(value: number);
 	get enable_scrolling(): boolean;

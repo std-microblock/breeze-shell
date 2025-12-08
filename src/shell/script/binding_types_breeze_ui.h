@@ -84,6 +84,7 @@ struct breeze_ui {
         DEFINE_PROP(float, padding_top)
         DEFINE_PROP(float, padding_bottom)
         DEFINE_PROP(float, flex_grow)
+        DEFINE_PROP(float, flex_shrink)
         DEFINE_PROP(float, max_height)
         DEFINE_PROP(bool, enable_scrolling)
         DEFINE_PROP(bool, enable_child_clipping)

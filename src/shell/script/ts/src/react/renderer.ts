@@ -138,6 +138,7 @@ const componentMap = {
             alignItems: getSetFactory('align_items'),
             gap: getSetFactory('gap'),
             flexGrow: getSetFactory('flex_grow'),
+            flexShrink: getSetFactory('flex_shrink'),
             maxHeight: getSetFactory('max_height'),
             enableScrolling: getSetFactory('enable_scrolling'),
             enableChildClipping: getSetFactory('enable_child_clipping'),

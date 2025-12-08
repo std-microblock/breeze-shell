@@ -34,6 +34,7 @@ declare module 'react' {
         autoSize?: boolean;
         gap?: number;
         flexGrow?: number;
+        flexShrink?: number;
         maxHeight?: number;
         enableScrolling?: boolean;
         enableChildClipping?: boolean;
