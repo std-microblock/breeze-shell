@@ -632,6 +632,7 @@ struct breeze {
     static bool is_light_theme();
     static std::string user_language();
     static void set_can_reload_js(bool can);
+    static bool should_show_settings_button();
 };
 
 struct win32 {

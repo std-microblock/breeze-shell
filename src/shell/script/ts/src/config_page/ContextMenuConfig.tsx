@@ -143,6 +143,11 @@ const ContextMenuConfig = memo(() => {
                     setNestedValue(newConfig, "hotkeys", v);
                     update(newConfig);
                 }} />
+                <Toggle label={t("在左上角显示设置按钮")} value={getNestedValue(config, "show_settings_button") ?? true} onChange={(v) => {
+                    const newConfig = { ...config };
+                    setNestedValue(newConfig, "show_settings_button", v);
+                    update(newConfig);
+                }} />
             </flex>
         </flex>
     );

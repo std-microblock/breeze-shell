@@ -1075,6 +1075,7 @@ export class breeze {
      * @returns void
      */
     static set_can_reload_js(can: boolean): void
+	static should_show_settings_button(): boolean
 }
 export class win32 {
 	/**

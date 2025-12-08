@@ -29,10 +29,11 @@ shell.menu_controller.add_menu_listener(ctx => {
         })
     }
 
-    ctx.screenside_button.add_button(SVG_CONFIG, () => {
-        ctx.menu.close()
-        showConfigPage()
-    })
+    if (shell.breeze.should_show_settings_button())
+        ctx.screenside_button.add_button(SVG_CONFIG, () => {
+            ctx.menu.close()
+            showConfigPage()
+        })
 
     // fixtures
     for (const items of ctx.menu.items) {

@@ -624,6 +624,9 @@ std::string breeze::version() { return BREEZE_VERSION; }
 std::string breeze::data_directory() {
     return config::data_directory().generic_string();
 }
+bool breeze::should_show_settings_button() {
+    return mb_shell::config::current->context_menu.show_settings_button;
+}
 std::vector<std::string> fs::readdir(std::string path) {
     std::vector<std::string> result;
     std::ranges::copy(std::filesystem::directory_iterator(path) |
