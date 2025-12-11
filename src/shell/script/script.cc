@@ -124,16 +124,14 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
         is_js_ready.exchange(false);
         js_thread.emplace(
-            [&, this, ss = stop_signal]() {
+            [&, this, stop_signal = stop_signal]() {
                 CPPTRACE_TRY {
-
                     is_thread_js_main = true;
                     set_thread_locale_utf8();
                     rt = std::make_shared<qjs::Runtime>();
                     JS_UpdateStackTop(rt->rt);
                     js = std::make_shared<qjs::Context>(*rt);
 
-                    is_js_ready.exchange(true);
                     bind();
                     try {
                         JS_UpdateStackTop(rt->rt);
@@ -252,34 +250,40 @@ void script_context::watch_folder(const std::filesystem::path &path,
                         }
                     }
 
+                    is_js_ready.exchange(true);
+                    is_js_ready.notify_all();
+
                     while (auto ptr = js) {
                         if (ptr->ctx) {
-                            while (JS_IsJobPending(rt->rt) && !*ss) {
+                            while (ptr->has_pending_job && !*stop_signal) {
+                                std::unique_lock lock2(ptr->js_mutex);
                                 auto ctx = ptr->ctx;
-                                auto ctx1 = ctx;
-                                auto res = JS_ExecutePendingJob(rt->rt, &ctx1);
+                                auto res = JS_ExecutePendingJob(rt->rt, &ctx);
                                 if (res == -999) {
                                     has_update = true;
                                     dbgout("JS loop critical error! "
                                            "Restarting...");
                                     return;
                                 }
+                                lock2.unlock();
+                                std::this_thread::yield();
                                 std::lock_guard lock(ptr->js_job_start_mutex);
                                 ptr->has_pending_job = JS_IsJobPending(rt->rt);
                             }
                         }
-                        if (*ss)
+                        if (*stop_signal)
                             break;
                         std::unique_lock lock(js->js_job_start_mutex);
                         if (js->has_pending_job)
                             continue;
                         js->js_job_start_cv.wait_for(
-                            lock, std::chrono::milliseconds(100),
-                            [&]() { return js->has_pending_job || *ss; });
+                            lock, std::chrono::milliseconds(100), [&]() {
+                                return js->has_pending_job || *stop_signal;
+                            });
                     }
                     is_thread_js_main = false;
-
-                } CPPTRACE_CATCH (std::exception &e) {
+                }
+                CPPTRACE_CATCH(std::exception & e) {
                     std::cerr << "Fatal error in JS thread: " << e.what()
                               << std::endl;
                     cpptrace::from_current_exception().print();

@@ -14,7 +14,6 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.releasedbg")
 
 includes("dependencies/blook.lua")
-includes("dependencies/quickjs-ng.lua")
 includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
@@ -24,15 +23,7 @@ add_requires("blook 3524a931af49be471840e5312fb0c18e888706fd",
     "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
 
 if has_config("asan") then
-    add_requires("quickjs-ng", {
-        configs = {asan = true}
-    })
     add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
-    -- set_policy("build.sanitizer.undefined", true)
-    -- set_toolset("ld", "lld-link")
-    -- set_toolset("sh", "lld-link")
-else
-    add_requires("quickjs-ng")
 end
 
 add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
@@ -65,8 +56,11 @@ target("shell")
     add_includedirs("src/", {
         public = true
     })
+
+    add_includedirs("src/shell/script/quickjs")
+
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
-    add_packages("blook", "quickjs-ng", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs", "breeze-ui")
+    add_packages("blook", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs", "breeze-ui")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
         extensions = {".js"}
@@ -89,7 +83,7 @@ target("shell")
         end
     end)
     add_files("src/shell/script/script.js")
-    add_files("src/shell/**/*.cc", "src/shell/*.cc", "src/shell/**/*.c")
+    add_files("src/shell/**.cc", "src/shell/**.c")
     set_encodings("utf-8")
 
     if has_config("asan") then
