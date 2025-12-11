@@ -2008,10 +2008,13 @@ void JS_SetSharedArrayBufferFunctions(JSRuntime *rt,
     rt->sab_funcs = *sf;
 }
 
+extern void qjs_notify_job_enqueued(JSContext*);
+
 /* return 0 if OK, < 0 if exception */
 int JS_EnqueueJob(JSContext *ctx, JSJobFunc *job_func,
                   int argc, JSValueConst *argv)
 {
+    qjs_notify_job_enqueued(ctx);
     JSRuntime *rt = ctx->rt;
     JSJobEntry *e;
     int i;

@@ -20,7 +20,6 @@ struct script_context {
 public:
     std::atomic<bool> is_js_ready{false};
 
-    std::shared_ptr<int> stop_signal = std::make_shared<int>(0);
     script_context();
     void bind();
 

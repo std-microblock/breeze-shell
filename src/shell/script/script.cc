@@ -114,17 +114,20 @@ void script_context::watch_folder(const std::filesystem::path &path,
     auto reload_all = [&]() {
         dbgout("Reloading all scripts");
 
-        *stop_signal = true;
-        stop_signal = std::make_shared<int>(false);
+        if (js) {
+            js->pending_job_count.exchange(-1);
+            js->pending_job_count.notify_all();
+            if (js_thread)
+                js_thread->join();
+            js->pending_job_count.exchange(0);
+        }
 
-        if (js_thread)
-            js_thread->join();
         dbgout("Creating JS thread");
         menu_callbacks_js.clear();
 
         is_js_ready.exchange(false);
         js_thread.emplace(
-            [&, this, stop_signal = stop_signal]() {
+            [&, this]() {
                 CPPTRACE_TRY {
                     is_thread_js_main = true;
                     set_thread_locale_utf8();
@@ -253,33 +256,26 @@ void script_context::watch_folder(const std::filesystem::path &path,
                     is_js_ready.exchange(true);
                     is_js_ready.notify_all();
 
-                    while (auto ptr = js) {
-                        if (ptr->ctx) {
-                            while (ptr->has_pending_job && !*stop_signal) {
-                                std::unique_lock lock2(ptr->js_mutex);
-                                auto ctx = ptr->ctx;
-                                auto res = JS_ExecutePendingJob(rt->rt, &ctx);
-                                if (res == -999) {
-                                    has_update = true;
-                                    dbgout("JS loop critical error! "
-                                           "Restarting...");
-                                    return;
-                                }
-                                lock2.unlock();
-                                std::this_thread::yield();
-                                std::lock_guard lock(ptr->js_job_start_mutex);
-                                ptr->has_pending_job = JS_IsJobPending(rt->rt);
+                    while (true) {
+                        while (js->pending_job_count.load() > 0) {
+                            std::unique_lock lock(js->js_mutex);
+                            auto ctx = js->ctx;
+                            if (auto res = JS_ExecutePendingJob(rt->rt, &ctx);
+                                res < 0) {
+                                std::cerr << "Error executing pending JS job: ";
+                                auto val = qjs::Value{js->ctx,
+                                                      JS_GetException(js->ctx)};
+                                std::cerr << (std::string)val
+                                          << (std::string)val["stack"]
+                                          << std::endl;
                             }
+                            lock.unlock();
+                            js->pending_job_count.fetch_sub(1);
+                            std::this_thread::yield();
                         }
-                        if (*stop_signal)
+                        js->pending_job_count.wait(0);
+                        if (js->pending_job_count.load() == -1)
                             break;
-                        std::unique_lock lock(js->js_job_start_mutex);
-                        if (js->has_pending_job)
-                            continue;
-                        js->js_job_start_cv.wait_for(
-                            lock, std::chrono::milliseconds(100), [&]() {
-                                return js->has_pending_job || *stop_signal;
-                            });
                     }
                     is_thread_js_main = false;
                 }
@@ -290,7 +286,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
                     cpptrace::rethrow_and_wrap_if_needed();
                 }
             },
-            104857600); // 100 MB stack
+            10485760); // 10 MB stack
     };
 
     reload_all();
@@ -316,3 +312,9 @@ void script_context::watch_folder(const std::filesystem::path &path,
 }
 
 } // namespace mb_shell
+
+extern "C" void qjs_notify_job_enqueued(JSContext *jsctx) {
+    auto &ctx = qjs::Context::get(jsctx);
+    ctx.pending_job_count.fetch_add(1);
+    ctx.pending_job_count.notify_all();
+}

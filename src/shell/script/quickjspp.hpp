@@ -3,6 +3,7 @@
 #include "quickjs.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
@@ -1550,10 +1551,8 @@ public:
     JSContext *ctx;
     thread_local static Context *current;
     // for starting jobs quickly
-    std::condition_variable js_job_start_cv = {};
-    std::mutex js_job_start_mutex = {};
+    std::atomic_int pending_job_count = 0;
     std::recursive_mutex js_mutex;
-    bool has_pending_job = false;
     /** Module wrapper
      * Workaround for lack of opaque pointer for module load function by keeping
      * a list of modules in qjs::Context.
@@ -2235,8 +2234,7 @@ template <typename Key> property_proxy<Key>::operator Value() const {
 } // namespace detail
 
 template <typename Function> void Context::enqueueJob(Function &&job) {
-    std::lock_guard<std::mutex> lock(js_job_start_mutex);
-    std::unique_lock lock2(js_mutex);
+    std::unique_lock lock(js_mutex);
     JSValue job_val = js_traits<std::function<void()>>::wrap(
         ctx, std::forward<Function>(job));
     JSValueConst arg = job_val;
@@ -2259,8 +2257,6 @@ template <typename Function> void Context::enqueueJob(Function &&job) {
         },
         1, &arg);
 
-    has_pending_job = true;
-    js_job_start_cv.notify_all();
     JS_FreeValue(ctx, job_val);
     if (err < 0)
         throw exception{ctx};
