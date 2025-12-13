@@ -39,6 +39,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             perf.end("menu_render::create");
 
             if (shift_pressed && menu_render.rt->nvg) {
+                std::println("Resetting font atlas due to shift key pressed");
                 nvgFonsResetAtlas(menu_render.rt->nvg);
             }
 
