@@ -1,5 +1,5 @@
 set_project("shell")
-local version = "0.1.31"
+local version = "0.1.32"
 
 option("asan")
     set_default(false)
