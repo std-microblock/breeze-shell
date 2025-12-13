@@ -18,8 +18,7 @@ includes("dependencies/breeze-ui.lua")
 
 set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook 3524a931af49be471840e5312fb0c18e888706fd",
-    "nanovg", "glad", "nanosvg",
+add_requires("blook 3524a931af49be471840e5312fb0c18e888706fd", "glad",
     "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
 
 if has_config("asan") then

@@ -2,6 +2,7 @@
 #include "blook/memo.h"
 #include "contextmenu.h"
 #include "menu_render.h"
+#include "nanovg.h"
 #include "shell/config.h"
 #include "shell/entry.h"
 #include "shell/script/quickjspp.hpp"
@@ -29,9 +30,17 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
         try {
             set_thread_name("breeze::context_menu_renderer");
             perf_counter perf("mb_shell::track_popup_menu");
+
+            bool shift_pressed =
+                (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+
             auto menu_render = menu_render::create(x, y, menu, run_js);
             menu_render.rt->last_time = menu_render.rt->clock.now();
             perf.end("menu_render::create");
+
+            if (shift_pressed && menu_render.rt->nvg) {
+                nvgFonsResetAtlas(menu_render.rt->nvg);
+            }
 
             static HWND window = nullptr;
             window = (HWND)menu_render.rt->hwnd();
