@@ -10,7 +10,7 @@ package("blook")
         add_syslinks("advapi32")
     end
 
-    add_deps("zasm 2024.05.14")
+    add_deps("zasm")
 
     on_install("windows", function (package)
         import("package.tools.xmake").install(package, {}, {target = "blook"})

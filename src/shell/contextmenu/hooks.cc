@@ -172,8 +172,8 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                 if (!lpClassName) {
                     return std::wstring(L"");
                 }
-                if (blook::Pointer((void *)lpClassName).try_read<int>()) {
-                    return std::wstring(lpClassName);
+                if (auto class_name = blook::Pointer((void *)lpClassName).try_read_utf16_string()) {
+                    return class_name.value();
                 } else {
                     // read as registered class
                     wchar_t class_name_buffer[256];

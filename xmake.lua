@@ -16,9 +16,8 @@ add_rules("mode.releasedbg")
 includes("dependencies/blook.lua")
 includes("dependencies/breeze-ui.lua")
 
-set_runtimes("MT")
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook dd51b45ad765274a0b5394b70d9982c948e26c74", "glad",
+add_requires("blook 57184918425c1d3a9cc6e9ff56edf641a3e0cb2a", "glad",
     "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
 
 if has_config("asan") then

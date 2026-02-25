@@ -166,8 +166,8 @@ void mb_shell::fix_win11_menu::install() {
                         auto xrefs = ins.xrefs();
                         if (xrefs.empty())
                             continue;
-                        if (auto ptr = xrefs[0].try_read<void *>();
-                            ptr.has_value() && ptr.value() == extraInfo) {
+                        if (auto ptr = xrefs[0].try_read_pointer();
+                            ptr && ptr->data() == extraInfo) {
                             if (patch_area(ins.ptr()
                                                .find_upwards({0xCC, 0xCC, 0xCC,
                                                               0xCC, 0xCC})
