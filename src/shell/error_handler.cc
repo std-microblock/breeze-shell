@@ -46,73 +46,51 @@ inline void output_crash_header(std::stringstream &ss) {
 }
 
 std::string GetExceptionName(EXCEPTION_POINTERS *ExceptionInfo) {
-    std::string exceptionName;
-    switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
+    auto code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+    switch (code) {
     case EXCEPTION_ACCESS_VIOLATION:
-        exceptionName = "ACCESS_VIOLATION";
-        break;
+        return "ACCESS_VIOLATION";
     case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-        exceptionName = "ARRAY_BOUNDS_EXCEEDED";
-        break;
+        return "ARRAY_BOUNDS_EXCEEDED";
     case EXCEPTION_BREAKPOINT:
-        exceptionName = "BREAKPOINT";
-        break;
+        return "BREAKPOINT";
     case EXCEPTION_DATATYPE_MISALIGNMENT:
-        exceptionName = "DATATYPE_MISALIGNMENT";
-        break;
+        return "DATATYPE_MISALIGNMENT";
     case EXCEPTION_FLT_DENORMAL_OPERAND:
-        exceptionName = "FLT_DENORMAL_OPERAND";
-        break;
+        return "FLT_DENORMAL_OPERAND";
     case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-        exceptionName = "FLT_DIVIDE_BY_ZERO";
-        break;
+        return "FLT_DIVIDE_BY_ZERO";
     case EXCEPTION_FLT_INEXACT_RESULT:
-        exceptionName = "FLT_INEXACT_RESULT";
-        break;
+        return "FLT_INEXACT_RESULT";
     case EXCEPTION_FLT_INVALID_OPERATION:
-        exceptionName = "FLT_INVALID_OPERATION";
-        break;
+        return "FLT_INVALID_OPERATION";
     case EXCEPTION_FLT_OVERFLOW:
-        exceptionName = "FLT_OVERFLOW";
-        break;
+        return "FLT_OVERFLOW";
     case EXCEPTION_FLT_STACK_CHECK:
-        exceptionName = "FLT_STACK_CHECK";
-        break;
+        return "FLT_STACK_CHECK";
     case EXCEPTION_FLT_UNDERFLOW:
-        exceptionName = "FLT_UNDERFLOW";
-        break;
+        return "FLT_UNDERFLOW";
     case EXCEPTION_ILLEGAL_INSTRUCTION:
-        exceptionName = "ILLEGAL_INSTRUCTION";
-        break;
+        return "ILLEGAL_INSTRUCTION";
     case EXCEPTION_IN_PAGE_ERROR:
-        exceptionName = "IN_PAGE_ERROR";
-        break;
+        return "IN_PAGE_ERROR";
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
-        exceptionName = "INT_DIVIDE_BY_ZERO";
-        break;
+        return "INT_DIVIDE_BY_ZERO";
     case EXCEPTION_INT_OVERFLOW:
-        exceptionName = "INT_OVERFLOW";
-        break;
+        return "INT_OVERFLOW";
     case EXCEPTION_INVALID_DISPOSITION:
-        exceptionName = "INVALID_DISPOSITION";
-        break;
+        return "INVALID_DISPOSITION";
     case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-        exceptionName = "NONCONTINUABLE_EXCEPTION";
-        break;
+        return "NONCONTINUABLE_EXCEPTION";
     case EXCEPTION_PRIV_INSTRUCTION:
-        exceptionName = "PRIV_INSTRUCTION";
-        break;
+        return "PRIV_INSTRUCTION";
     case EXCEPTION_SINGLE_STEP:
-        exceptionName = "SINGLE_STEP";
-        break;
+        return "SINGLE_STEP";
     case EXCEPTION_STACK_OVERFLOW:
-        exceptionName = "STACK_OVERFLOW";
-        break;
+        return "STACK_OVERFLOW";
     default:
-        exceptionName = "UNKNOWN";
-        break;
+        return std::format("UNKNOWN_{}", code);
     }
-    return exceptionName;
 }
 
 void mb_shell::install_error_handlers() {
@@ -150,6 +128,15 @@ void mb_shell::install_error_handlers() {
         ss << "RBP: " << std::hex << ex->ContextRecord->Rbp << std::endl;
         ss << "RSP: " << std::hex << ex->ContextRecord->Rsp << std::endl;
         ss << "RIP: " << std::hex << ex->ContextRecord->Rip << std::endl;
+
+        ss << "Object trace:" << std::endl;
+        const auto obj_trace = cpptrace::object_trace::current();
+        int i = 0;
+        for (auto &&frm : obj_trace) {
+            i++;
+            ss << frm.object_address << " " << frm.raw_address << " "
+               << frm.object_path << std::endl;
+        }
 
         ss << "Stack trace:" << std::endl;
         ss << cpptrace::stacktrace::current().to_string() << std::endl;
