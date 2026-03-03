@@ -36,11 +36,11 @@
 #include "propkey.h"
 
 std::string folder_id_to_path(PIDLIST_ABSOLUTE pidl) {
-    wchar_t *path = new wchar_t[MAX_PATH];
-    SHGetPathFromIDListW(pidl, path);
-    std::wstring wpath = path;
-    delete[] path;
-    return mb_shell::wstring_to_utf8(std::wstring(wpath.begin(), wpath.end()));
+    std::vector<wchar_t> path(MAX_PATH);
+    if (!SHGetPathFromIDListW(pidl, path.data())) {
+        return "";
+    }
+    return mb_shell::wstring_to_utf8(path.data());
 }
 
 PIDLIST_ABSOLUTE path_to_folder_id(std::string path) {
@@ -220,12 +220,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
                        (void *)hWnd);
                 // Check if the foreground window is an Explorer window
 
-                if (IShellBrowser *psb = GetIShellBrowserRecursive(hWnd)) {
-                    IShellView *psv;
+                if (CComPtr<IShellBrowser> psb = GetIShellBrowserRecursive(hWnd)) {
                     perf.end("IShellBrowser - GetIShellBrowserRecursive");
-                    dbgout("shell browser: {}\n", (void *)psb);
+                    dbgout("shell browser: {}\n", (void *)psb.p);
+
+                    CComPtr<IShellView> psv;
                     if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
-                        IFolderView *pfv;
+                        CComPtr<IFolderView> pfv;
                         if (SUCCEEDED(psv->QueryInterface(IID_IFolderView,
                                                           (void **)&pfv))) {
                             // It's an Explorer window
@@ -233,63 +234,54 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
                                 std::make_shared<folder_view_controller>();
                             auto fv = *event_data.folder_view;
                             fv->$hwnd = hWnd;
-                            fv->$controller = psb;
+                            fv->$controller = psb.p;
                             fv->$render_target =
                                 menu_render::current.value()->rt.get();
 
-                            int focusIndex;
-                            pfv->GetFocusedItem(&focusIndex);
-                            if (focusIndex >= 0) {
-                                PIDLIST_ABSOLUTE pidl;
-                                if (SUCCEEDED(pfv->Item(focusIndex, &pidl))) {
-                                    fv->focused_file_path =
-                                        folder_id_to_path(pidl);
+                            int focusIndex = -1;
+                            if (SUCCEEDED(pfv->GetFocusedItem(&focusIndex)) && focusIndex >= 0) {
+                                PIDLIST_ABSOLUTE pidl = nullptr;
+                                if (SUCCEEDED(pfv->Item(focusIndex, &pidl)) && pidl) {
+                                    fv->focused_file_path = folder_id_to_path(pidl);
                                     CoTaskMemFree(pidl);
                                 }
                             }
 
-                            IShellItem *psi;
+                            CComPtr<IShellItem> psi;
                             if (SUCCEEDED(pfv->GetFolder(IID_IShellItem,
                                                          (void **)&psi))) {
-                                PWSTR pszPath;
+                                PWSTR pszPath = nullptr;
                                 if (SUCCEEDED(psi->GetDisplayName(
-                                        SIGDN_FILESYSPATH, &pszPath))) {
+                                        SIGDN_FILESYSPATH, &pszPath)) && pszPath) {
                                     fv->current_path =
                                         mb_shell::wstring_to_utf8(pszPath);
                                     CoTaskMemFree(pszPath);
                                 }
-                                psi->Release();
                             }
 
-                            IShellItemArray *psia;
+                            CComPtr<IShellItemArray> psia;
                             if (SUCCEEDED(pfv->Items(SVGIO_SELECTION,
                                                      IID_IShellItemArray,
                                                      (void **)&psia))) {
-                                DWORD count;
+                                DWORD count = 0;
                                 if (SUCCEEDED(psia->GetCount(&count))) {
                                     for (DWORD i = 0; i < count; i++) {
-                                        IShellItem *psi;
-                                        if (SUCCEEDED(
-                                                psia->GetItemAt(i, &psi))) {
-                                            PWSTR pszPath;
-                                            if (SUCCEEDED(psi->GetDisplayName(
+                                        CComPtr<IShellItem> item;
+                                        if (SUCCEEDED(psia->GetItemAt(i, &item))) {
+                                            PWSTR pszPath = nullptr;
+                                            if (SUCCEEDED(item->GetDisplayName(
                                                     SIGDN_FILESYSPATH,
-                                                    &pszPath))) {
+                                                    &pszPath)) && pszPath) {
                                                 fv->selected_files.push_back(
                                                     mb_shell::wstring_to_utf8(
                                                         pszPath));
                                                 CoTaskMemFree(pszPath);
                                             }
-                                            psi->Release();
                                         }
                                     }
                                 }
-                                psia->Release();
                             }
-
-                            pfv->Release();
                         }
-                        psv->Release();
                     }
                 } else {
                     dbgout("Failed to get IShellBrowser");
@@ -368,12 +360,15 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 }
 
 void folder_view_controller::change_folder(std::string new_folder_path) {
-    IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-    std::wstring wpath = mb_shell::utf8_to_wstring(new_folder_path);
+    auto *browser = static_cast<IShellBrowser *>($controller);
+    if (!browser) {
+        return;
+    }
 
-    PIDLIST_ABSOLUTE pidl;
+    std::wstring wpath = mb_shell::utf8_to_wstring(new_folder_path);
+    PIDLIST_ABSOLUTE pidl = nullptr;
     if (SUCCEEDED(
-            SHParseDisplayName(wpath.c_str(), nullptr, &pidl, 0, nullptr))) {
+            SHParseDisplayName(wpath.c_str(), nullptr, &pidl, 0, nullptr)) && pidl) {
         browser->BrowseObject(pidl, SBSP_ABSOLUTE);
         CoTaskMemFree(pidl);
     }
@@ -393,21 +388,24 @@ void folder_view_controller::refresh() { change_folder(current_path); }
 std::vector<std::shared_ptr<folder_view_folder_item>>
 folder_view_controller::items() {
     std::vector<std::shared_ptr<folder_view_folder_item>> items;
-    IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-    IShellView *view;
+    auto *browser = static_cast<IShellBrowser *>($controller);
+    if (!browser) {
+        return items;
+    }
 
+    CComPtr<IShellView> view;
     if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
-        IFolderView *folder_view;
+        CComPtr<IFolderView> folder_view;
         if (SUCCEEDED(
                 view->QueryInterface(IID_IFolderView, (void **)&folder_view))) {
-            int item_count;
+            int item_count = 0;
             if (SUCCEEDED(folder_view->ItemCount(SVGIO_ALLVIEW, &item_count))) {
                 for (int i = 0; i < item_count; i++) {
-                    PIDLIST_ABSOLUTE pidl;
-                    if (SUCCEEDED(folder_view->Item(i, &pidl))) {
+                    PIDLIST_ABSOLUTE pidl = nullptr;
+                    if (SUCCEEDED(folder_view->Item(i, &pidl)) && pidl) {
                         auto item = std::make_shared<folder_view_folder_item>();
                         item->$handler = pidl;
-                        item->$controller = view;
+                        item->$controller = view.p;
                         item->index = i;
                         item->parent_path = current_path;
                         item->$render_target = $render_target;
@@ -415,22 +413,22 @@ folder_view_controller::items() {
                     }
                 }
             }
-
-            folder_view->Release();
         }
-        view->Release();
     }
 
     return items;
 }
 
 void folder_view_controller::select(int index, int state) {
-    IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
+    auto *browser = static_cast<IShellBrowser *>($controller);
+    if (!browser) {
+        return;
+    }
 
-    entry::main_window_loop_hook.add_task([=]() {
-        IShellView *view;
+    entry::main_window_loop_hook.add_task([browser, index, state]() {
+        CComPtr<IShellView> view;
         if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
-            IFolderView *folder_view;
+            CComPtr<IFolderView> folder_view;
             if (SUCCEEDED(view->QueryInterface(IID_IFolderView,
                                                (void **)&folder_view))) {
                 folder_view->SelectItem(index, state);
@@ -440,39 +438,47 @@ void folder_view_controller::select(int index, int state) {
 }
 
 void folder_view_controller::select_none() {
-    IShellBrowser *browser = static_cast<IShellBrowser *>($controller);
-    entry::main_window_loop_hook.add_task([=]() {
-        IShellView *view;
+    auto *browser = static_cast<IShellBrowser *>($controller);
+    if (!browser) {
+        return;
+    }
+
+    entry::main_window_loop_hook.add_task([browser]() {
+        CComPtr<IShellView> view;
         if (SUCCEEDED(browser->QueryActiveShellView(&view))) {
             view->SelectItem(nullptr, SVSI_DESELECTOTHERS);
-            view->Release();
         }
     });
 }
 
 std::string folder_view_folder_item::name() {
-    PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    auto pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    if (!pidl) {
+        return "";
+    }
 
-    IShellItem *item;
+    CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR name;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &name))) {
+        LPWSTR name = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &name)) && name) {
             std::wstring wname(name);
             CoTaskMemFree(name);
-            item->Release();
             return mb_shell::wstring_to_utf8(wname);
         }
-        item->Release();
     }
     return "";
 }
 std::string folder_view_folder_item::modify_date() {
-    PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
-    IShellItem *item;
+    auto pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    if (!pidl) {
+        return "";
+    }
+
+    CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        IShellItem2 *item2;
+        CComPtr<IShellItem2> item2;
         if (SUCCEEDED(item->QueryInterface(IID_IShellItem2, (void **)&item2))) {
             FILETIME ft;
             if (SUCCEEDED(item2->GetFileTime(PKEY_DateModified, &ft))) {
@@ -481,25 +487,24 @@ std::string folder_view_folder_item::modify_date() {
                 wchar_t date[100];
                 GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL,
                                date, 100);
-                item2->Release();
-                item->Release();
                 return mb_shell::wstring_to_utf8(date);
             }
-            item2->Release();
         }
-        item->Release();
     }
     return "";
 }
 
 std::string folder_view_folder_item::path() {
-    PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    auto pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    if (!pidl) {
+        return "";
+    }
 
     CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR path;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &path))) {
+        LPWSTR path = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &path)) && path) {
             std::wstring name(path);
             CoTaskMemFree(path);
             std::filesystem::path p(parent_path);
@@ -511,49 +516,57 @@ std::string folder_view_folder_item::path() {
 }
 
 size_t folder_view_folder_item::size() {
-    PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
-    IShellItem *item;
+    auto pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    if (!pidl) {
+        return 0;
+    }
+
+    CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        IShellItem2 *item2;
+        CComPtr<IShellItem2> item2;
         if (SUCCEEDED(item->QueryInterface(IID_IShellItem2, (void **)&item2))) {
             ULONGLONG size;
             if (SUCCEEDED(item2->GetUInt64(PKEY_Size, &size))) {
-                item2->Release();
-                item->Release();
                 return static_cast<size_t>(size);
             }
-            item2->Release();
         }
-        item->Release();
     }
     return 0;
 }
 
 std::string folder_view_folder_item::type() {
-    PIDLIST_ABSOLUTE pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
-    IShellItem *item;
+    auto pidl = static_cast<PIDLIST_ABSOLUTE>($handler);
+    if (!pidl) {
+        return "";
+    }
+
+    CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR type;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &type))) {
+        LPWSTR type = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &type)) && type) {
             SHFILEINFOW sfi = {0};
             if (SHGetFileInfoW(type, 0, &sfi, sizeof(sfi), SHGFI_TYPENAME)) {
                 CoTaskMemFree(type);
-                item->Release();
                 return mb_shell::wstring_to_utf8(sfi.szTypeName);
             }
             CoTaskMemFree(type);
         }
-        item->Release();
     }
     return "";
 }
 
 void folder_view_folder_item::select(int state) {
     CComPtr<IShellView> sv = static_cast<IShellView *>($controller);
+    if (!sv) {
+        return;
+    }
+
     entry::main_window_loop_hook.add_task(
-        [=, h = $handler]() { sv->SelectItem((PCUITEMID_CHILD)h, state); });
+        [sv, h = $handler, state]() {
+            sv->SelectItem((PCUITEMID_CHILD)h, state);
+        });
 }
 
 constexpr UINT ID_EDIT_COPY = 0x0001;
