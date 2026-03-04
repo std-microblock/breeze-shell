@@ -8,3 +8,7 @@ export { PluginMoreButton } from "./PluginMoreButton";
 export { PluginItem } from "./PluginItem";
 export { SimpleMarkdownRender } from "./SimpleMarkdownRender";
 export { iconElement } from "./Icon";
+export { Select } from "./Select";
+export { NumberBox } from "./NumberBox";
+export { ThemeCustomEditor } from "./ThemeCustomEditor";
+export { AnimationCustomEditor } from "./AnimationCustomEditor";

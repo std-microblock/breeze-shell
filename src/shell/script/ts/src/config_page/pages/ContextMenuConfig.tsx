@@ -1,5 +1,5 @@
 import * as shell from "mshell";
-import { Button, Text, Toggle } from "../components";
+import { Button, Text, Toggle, ThemeCustomEditor, AnimationCustomEditor } from "../components";
 import { ContextMenuContext, DebugConsoleContext, LanguageContext } from "../contexts";
 import { getNestedValue, setNestedValue } from "../utils";
 import { useTranslation } from "../hooks";
@@ -12,6 +12,8 @@ const ContextMenuConfig = memo(() => {
     const { language, setLanguage } = useContext(LanguageContext)!;
     const { t } = useTranslation();
     const [, forceUpdate] = useState(0);
+    const [showThemeEditor, setShowThemeEditor] = useState(false);
+    const [showAnimationEditor, setShowAnimationEditor] = useState(false);
 
     const languages = [
         { code: 'zh-CN', name: '简体中文' },
@@ -43,24 +45,51 @@ const ContextMenuConfig = memo(() => {
         return newPreset;
     };
 
-    const checkPresetMatch = (current: any, preset: any) => {
+    const checkPresetMatch = (current: any, preset: any, excludeKeys: string[] = []) => {
         if (!current) return false;
         if (!preset) return false;
-        return Object.keys(preset).every(key => JSON.stringify(current[key]) === JSON.stringify(preset[key]));
+        return Object.keys(preset).every(key => {
+            if (excludeKeys.includes(key)) return true;
+            return JSON.stringify(current[key]) === JSON.stringify(preset[key]);
+        });
     };
 
-    const getCurrentPreset = (current: any, presets: any) => {
+    const getCurrentPreset = (current: any, presets: any, excludeKeys: string[] = []) => {
         if (!current) return "default";
         for (const [name, preset] of Object.entries(presets)) {
-            if (preset && checkPresetMatch(current, preset)) {
+            if (preset && checkPresetMatch(current, preset, excludeKeys)) {
                 return name;
             }
         }
         return "custom";
     };
 
-    const currentThemePreset = getCurrentPreset(currentTheme, theme_presets);
+    const currentThemePreset = getCurrentPreset(currentTheme, theme_presets, ["animation"]);
     const currentAnimationPreset = getCurrentPreset(currentAnimation, animation_presets);
+
+    if (showThemeEditor) {
+        return (
+            <ThemeCustomEditor
+                theme={currentTheme}
+                onUpdate={(newTheme) => {
+                    update({ ...config, theme: newTheme });
+                }}
+                onClose={() => setShowThemeEditor(false)}
+            />
+        );
+    }
+
+    if (showAnimationEditor) {
+        return (
+            <AnimationCustomEditor
+                animation={currentAnimation}
+                onUpdate={(newAnimation) => {
+                    update({ ...config, theme: { ...config.theme, animation: newAnimation } });
+                }}
+                onClose={() => setShowAnimationEditor(false)}
+            />
+        );
+    }
 
     return (
         <flex gap={20} alignItems="stretch" width={500} autoSize={false}>
@@ -77,11 +106,13 @@ const ContextMenuConfig = memo(() => {
                                 try {
                                     let newTheme;
                                     if (!theme_presets[name]) {
-                                        newTheme = undefined;
+                                        // 保留animation配置
+                                        const currentAnim = config?.theme?.animation;
+                                        newTheme = currentAnim ? { animation: currentAnim } : undefined;
                                     } else {
                                         newTheme = applyPreset(theme_presets[name], config?.theme, theme_presets);
                                     }
-                                    update(newTheme ? { ...config, theme: newTheme } : { ...config, theme: undefined });
+                                    update({ ...config, theme: newTheme });
                                 } catch (e) {
                                     shell.println(e);
                                 }
@@ -90,6 +121,12 @@ const ContextMenuConfig = memo(() => {
                             <Text fontSize={14}>{t(`preset.${name}`)}</Text>
                         </Button>
                     ))}
+                    <Button
+                        selected={currentThemePreset === "custom"}
+                        onClick={() => setShowThemeEditor(true)}
+                    >
+                        <Text fontSize={14}>{t("preset.custom")}</Text>
+                    </Button>
                 </flex>
             </flex>
 
@@ -99,6 +136,7 @@ const ContextMenuConfig = memo(() => {
                     {Object.keys(animation_presets).map(name => (
                         <Button
                             key={name}
+                            selected={name === currentAnimationPreset}
                             onClick={() => {
                                 try {
                                     let newAnimation;
@@ -116,6 +154,12 @@ const ContextMenuConfig = memo(() => {
                             <Text fontSize={14}>{t(`preset.${name}`)}</Text>
                         </Button>
                     ))}
+                    <Button
+                        selected={currentAnimationPreset === "custom"}
+                        onClick={() => setShowAnimationEditor(true)}
+                    >
+                        <Text fontSize={14}>{t("preset.custom")}</Text>
+                    </Button>
                 </flex>
             </flex>
 

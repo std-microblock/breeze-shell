@@ -20,16 +20,19 @@ export const applyPreset = (preset: any, origin: any, presets: any) => {
     return newPreset;
 };
 
-export const checkPresetMatch = (current: any, preset: any) => {
+export const checkPresetMatch = (current: any, preset: any, excludeKeys: string[] = []) => {
     if (!current) return false;
     if (!preset) return false;
-    return Object.keys(preset).every(key => JSON.stringify(current[key]) === JSON.stringify(preset[key]));
+    return Object.keys(preset).every(key => {
+        if (excludeKeys.includes(key)) return true;
+        return JSON.stringify(current[key]) === JSON.stringify(preset[key]);
+    });
 };
 
-export const getCurrentPreset = (current: any, presets: any) => {
+export const getCurrentPreset = (current: any, presets: any, excludeKeys: string[] = []) => {
     if (!current) return "默认";
     for (const [name, preset] of Object.entries(presets)) {
-        if (preset && checkPresetMatch(current, preset)) {
+        if (preset && checkPresetMatch(current, preset, excludeKeys)) {
             return name;
         }
     }

@@ -77,6 +77,44 @@
     "none": "None",
     "custom": "Custom"
   },
+  "customEditor": {
+    "theme": {
+      "title": "Custom Theme",
+      "done": "Done",
+      "sizeSettings": "Size Settings",
+      "radius": "Border Radius",
+      "itemHeight": "Item Height",
+      "itemGap": "Item Gap",
+      "itemRadius": "Item Radius",
+      "margin": "Margin",
+      "padding": "Padding",
+      "textAndIcon": "Text & Icon",
+      "fontSize": "Font Size",
+      "textPadding": "Text Padding",
+      "iconPadding": "Icon Padding",
+      "rightIconPadding": "Right Icon Padding",
+      "effects": "Effects",
+      "useDwm": "Use DWM Corners",
+      "acrylic": "Acrylic Effect",
+      "backgroundOpacity": "Background Opacity"
+    },
+    "animation": {
+      "title": "Custom Animation",
+      "done": "Done",
+      "itemOpacity": "Item - Opacity",
+      "itemX": "Item - X Axis",
+      "mainBg": "Main Background",
+      "submenuBg": "Submenu Background",
+      "duration": "Duration",
+      "easing": "Easing",
+      "delayScale": "Delay Scale",
+      "opacityDuration": "Opacity Duration",
+      "linear": "Linear",
+      "easeIn": "Ease In",
+      "easeOut": "Ease Out",
+      "easeInOut": "Ease In Out"
+    }
+  },
   "test": {
     "title": "Test",
     "crash": "Crash"

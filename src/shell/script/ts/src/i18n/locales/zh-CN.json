@@ -77,6 +77,44 @@
     "none": "无",
     "custom": "自定义"
   },
+  "customEditor": {
+    "theme": {
+      "title": "自定义主题",
+      "done": "完成",
+      "sizeSettings": "尺寸设置",
+      "radius": "圆角大小",
+      "itemHeight": "项高度",
+      "itemGap": "项间距",
+      "itemRadius": "项圆角",
+      "margin": "外边距",
+      "padding": "内边距",
+      "textAndIcon": "文本与图标",
+      "fontSize": "字体大小",
+      "textPadding": "文本内边距",
+      "iconPadding": "图标内边距",
+      "rightIconPadding": "右侧图标边距",
+      "effects": "效果设置",
+      "useDwm": "使用DWM圆角",
+      "acrylic": "亚克力效果",
+      "backgroundOpacity": "背景透明度"
+    },
+    "animation": {
+      "title": "自定义动画",
+      "done": "完成",
+      "itemOpacity": "菜单项 - 透明度",
+      "itemX": "菜单项 - X轴",
+      "mainBg": "主菜单背景",
+      "submenuBg": "子菜单背景",
+      "duration": "持续时长",
+      "easing": "动画曲线",
+      "delayScale": "延迟缩放",
+      "opacityDuration": "透明度时长",
+      "linear": "线性",
+      "easeIn": "缓入",
+      "easeOut": "缓出",
+      "easeInOut": "缓入缓出"
+    }
+  },
   "test": {
     "title": "测试",
     "crash": "崩溃"

@@ -66,7 +66,7 @@ target("shell")
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
-    add_rules("utils.bin2c", {
+    add_rules("utils.bin2obj", {
         extensions = {".js"}
     })
     set_version(version)

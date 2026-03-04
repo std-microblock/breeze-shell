@@ -25,12 +25,11 @@
 
 thread_local bool is_thread_js_main = false;
 
-static unsigned char script_js_bytes[] = {
-#include "script.js.h"
-};
-
-std::string breeze_script_js = std::string(
-    reinterpret_cast<char *>(script_js_bytes), sizeof(script_js_bytes) - 1);
+extern "C" const uint8_t _binary_script_js_start[];
+extern "C" const uint8_t _binary_script_js_end[];
+std::string breeze_script_js =
+    std::string(reinterpret_cast<const char *>(_binary_script_js_start),
+                reinterpret_cast<const char *>(_binary_script_js_end));
 
 namespace mb_shell {
 
