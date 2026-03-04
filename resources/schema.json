@@ -456,6 +456,10 @@
       "type": "array",
       "items": { "type": "string" },
       "default": []
+    },
+    "language": {
+      "title": "Language",
+      "type": "string"
     }
   }
 }
