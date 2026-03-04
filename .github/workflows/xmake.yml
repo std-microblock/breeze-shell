@@ -47,11 +47,8 @@ jobs:
         path: ./build/windows/x64/
         name: windows-build
 
-    - name: Setup Scoop and install sentry-cli
+    - name: Setup Scoop
       uses: MinoruSekine/setup-scoop@v1
-      with:
-        buckets: main
-        apps: sentry-cli
 
     - name: Upload PDBs to Sentry
       shell: pwsh
@@ -60,6 +57,7 @@ jobs:
         SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
         SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       run: |
+        scoop install sentry-cli
         sentry-cli debug-files upload --include-sources ./build/windows/x64/
 
     - name: Create Archive
