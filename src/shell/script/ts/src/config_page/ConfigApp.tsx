@@ -7,7 +7,8 @@ import {
     PluginLoadOrderContext,
     UpdateDataContext,
     NotificationContext,
-    PluginSourceContext
+    PluginSourceContext,
+    LanguageContext
 } from "./contexts";
 import Sidebar from "./Sidebar";
 import ContextMenuConfig from "./pages/ContextMenuConfig";
@@ -15,6 +16,7 @@ import UpdatePage from "./pages/UpdatePage";
 import PluginStore from "./pages/PluginStore";
 import PluginConfig from "./pages/PluginConfig";
 import { useState, useEffect } from "react";
+import { changeLanguage, getCurrentLanguage } from "../i18n";
 
 export const ConfigApp = () => {
     const [activePage, setActivePage] = useState('context-menu');
@@ -27,6 +29,7 @@ export const ConfigApp = () => {
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const [currentPluginSource, setCurrentPluginSource] = useState<string>('Enlysure');
     const [cachedPluginIndex, setCachedPluginIndex] = useState<any>(null);
+    const [language, setLanguageState] = useState<string>(getCurrentLanguage());
 
     useEffect(() => {
         const current_config_path = shell.breeze.data_directory() + '/config.json';
@@ -36,6 +39,11 @@ export const ConfigApp = () => {
         setContextMenuConfig(parsed.context_menu || {});
         setDebugConsole(parsed.debug_console || false);
         setPluginLoadOrder(parsed.plugin_load_order || []);
+
+        if (parsed.language) {
+            setLanguageState(parsed.language);
+            changeLanguage(parsed.language);
+        }
     }, []);
 
     const updateContextMenu = (newConfig: any) => {
@@ -59,8 +67,17 @@ export const ConfigApp = () => {
         saveConfig(newGlobal);
     };
 
+    const setLanguage = (lang: string) => {
+        setLanguageState(lang);
+        changeLanguage(lang);
+        const newGlobal = { ...config, language: lang };
+        setConfig(newGlobal);
+        saveConfig(newGlobal);
+    };
+
     return (
-        <ContextMenuContext.Provider value={{ config: contextMenuConfig, update: updateContextMenu }}>
+        <LanguageContext.Provider value={{ language, setLanguage }}>
+            <ContextMenuContext.Provider value={{ config: contextMenuConfig, update: updateContextMenu }}>
             <DebugConsoleContext.Provider value={{ value: debugConsole, update: updateDebugConsole }}>
                 <PluginLoadOrderContext.Provider value={{ order: pluginLoadOrder, update: updatePluginLoadOrder }}>
                     <UpdateDataContext.Provider value={{ updateData, setUpdateData }}>
@@ -96,6 +113,7 @@ export const ConfigApp = () => {
                 </PluginLoadOrderContext.Provider>
             </DebugConsoleContext.Provider>
         </ContextMenuContext.Provider>
+        </LanguageContext.Provider>
     );
 };
 

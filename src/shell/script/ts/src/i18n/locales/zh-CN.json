@@ -1,0 +1,80 @@
+{
+  "app": {
+    "title": "Breeze Shell",
+    "manage": "管理 Breeze Shell"
+  },
+  "sidebar": {
+    "mainConfig": "主配置",
+    "update": "更新",
+    "pluginStore": "插件商店",
+    "pluginConfig": "插件配置",
+    "updateSource": "更新源"
+  },
+  "settings": {
+    "title": "Breeze 设置",
+    "theme": "主题",
+    "animation": "动画",
+    "misc": "杂项",
+    "language": "语言",
+    "debugConsole": "调试控制台",
+    "vsync": "垂直同步",
+    "ignoreOwnerDraw": "忽略自绘菜单",
+    "reverseIfOpenToUp": "向上展开时反向排列",
+    "tryWin11RoundCorner": "尝试使用 Windows 11 圆角",
+    "acrylicBackground": "亚克力背景效果",
+    "hotkeys": "键盘热键",
+    "showSettingsButton": "在左上角显示设置按钮"
+  },
+  "plugin": {
+    "title": "插件",
+    "config": "插件配置",
+    "store": "插件市场",
+    "source": "插件源",
+    "priorityLoad": "优先加载插件",
+    "installed": "已安装插件",
+    "setPriority": "设为优先加载",
+    "cancelPriority": "取消优先加载",
+    "installSuccess": "插件安装成功: ",
+    "installFailed": "插件安装失败: ",
+    "installing": "安装中...",
+    "install": "安装",
+    "update": "更新",
+    "notInstalled": "未安装",
+    "alreadyInstalled": "已安装",
+    "configParseFailed": "配置文件解析失败: ",
+    "configChanged": "配置文件变更: "
+  },
+  "update": {
+    "title": "更新",
+    "currentVersion": "当前版本",
+    "latestVersion": "最新版本",
+    "changelog": "更新日志",
+    "updating": "更新中...",
+    "updateSuccess": "新版本已下载，将于下次重启资源管理器生效",
+    "updateFailed": "更新失败: ",
+    "cannotMoveFile": "无法移动当前文件"
+  },
+  "common": {
+    "loading": "加载中...",
+    "loadFailed": "加载失败",
+    "pleaseWait": "请稍候",
+    "switching": "切换源中...",
+    "switchSuccess": "切换源成功",
+    "networkError": "网络错误",
+    "delete": "删除",
+    "version": "版本: ",
+    "author": "作者: ",
+    "currentSource": "当前源: ",
+    "changeSource": "换源"
+  },
+  "preset": {
+    "default": "默认",
+    "compact": "紧凑",
+    "loose": "宽松",
+    "rounded": "圆角",
+    "square": "方角",
+    "fast": "快速",
+    "none": "无",
+    "custom": "自定义"
+  }
+}

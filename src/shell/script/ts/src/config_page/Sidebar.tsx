@@ -41,7 +41,7 @@ const Sidebar = memo(({
     const handleSourceChange = (sourceName: string) => {
         setCurrentPluginSource(sourceName);
         setCachedPluginIndex(null);
-        setLoadingMessage(t("切换源中..."));
+        setLoadingMessage(t("common.switching"));
 
         shell.network.get_async(PLUGIN_SOURCES[sourceName] + 'plugins-index.json', (data: string) => {
             setCachedPluginIndex(data);
@@ -49,7 +49,7 @@ const Sidebar = memo(({
             setLoadingMessage(null);
         }, (e: any) => {
             shell.println('Failed to fetch update data:', e);
-            setErrorMessage(t("加载失败"));
+            setErrorMessage(t("common.loadFailed"));
             setLoadingMessage(null);
         });
     };
@@ -72,10 +72,10 @@ const Sidebar = memo(({
                 {iconElement(ICON_BREEZE, 24)}
                 <Text fontSize={18}>Breeze</Text>
             </flex>
-            <SidebarItem onClick={() => setActivePage('context-menu')} icon={ICON_CONTEXT_MENU} isActive={activePage === 'context-menu'}>主配置</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>更新</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>插件商店</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>插件配置</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('context-menu')} icon={ICON_CONTEXT_MENU} isActive={activePage === 'context-menu'}>{t('sidebar.mainConfig')}</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>{t('sidebar.update')}</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>{t('sidebar.pluginStore')}</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>{t('sidebar.pluginConfig')}</SidebarItem>
             <spacer />
 
             {/* 错误提示 */}
@@ -124,7 +124,7 @@ const Sidebar = memo(({
                     });
                 });
             }}>
-                <Text fontSize={12}>{`${t("更新源")} - ${currentPluginSource}`}</Text>
+                <Text fontSize={12}>{`${t("sidebar.updateSource")} - ${currentPluginSource}`}</Text>
             </Button>
         </flex>
     );

@@ -48,14 +48,14 @@ const PluginConfig = memo(() => {
     const showContextMenu = (pluginName: string) => {
         showMenu(menu => {
             menu.append_menu({
-                name: isPrioritized(pluginName) ? '取消优先加载' : '设为优先加载',
+                name: isPrioritized(pluginName) ? t('plugin.cancelPriority') : t('plugin.setPriority'),
                 action() {
                     togglePrioritize(pluginName);
                     menu.close();
                 }
             });
             menu.append_menu({
-                name: t("删除"),
+                name: t("common.delete"),
                 action() {
                     handleDeletePlugin(pluginName);
                     menu.close();
@@ -72,12 +72,12 @@ const PluginConfig = memo(() => {
 
     return (
         <flex gap={20} width={580} height={550} autoSize={false} alignItems="stretch">
-            <Text fontSize={24}>{t("插件配置")}</Text>
+            <Text fontSize={24}>{t("plugin.config")}</Text>
 
             <flex enableScrolling maxHeight={500} alignItems="stretch">
                 {prioritizedPlugins.length > 0 && (
                     <flex gap={10} alignItems="stretch" paddingBottom={10} paddingTop={10}>
-                        <Text fontSize={16}>{t("优先加载插件")}</Text>
+                        <Text fontSize={16}>{t("plugin.priorityLoad")}</Text>
                         {prioritizedPlugins.map(name => {
                             const isEnabled = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + name + '.js');
                             return (
@@ -96,7 +96,7 @@ const PluginConfig = memo(() => {
                     </flex>
                 )}
                 <flex gap={10} alignItems="stretch">
-                    {prioritizedPlugins.length === 0 && <Text fontSize={16}>{t("已安装插件")}</Text>}
+                    {prioritizedPlugins.length === 0 && <Text fontSize={16}>{t("plugin.installed")}</Text>}
                     {regularPlugins.map(name => {
                         const isEnabled = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + name + '.js');
                         return (

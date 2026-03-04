@@ -1,15 +1,22 @@
 import * as shell from "mshell";
 import { Button, Text, Toggle } from "../components";
-import { ContextMenuContext, DebugConsoleContext } from "../contexts";
+import { ContextMenuContext, DebugConsoleContext, LanguageContext } from "../contexts";
 import { getNestedValue, setNestedValue } from "../utils";
 import { useTranslation } from "../hooks";
 import { theme_presets, animation_presets } from "../constants";
-import { memo, useContext } from "react";
+import { memo, useContext, useState } from "react";
 
 const ContextMenuConfig = memo(() => {
     const { config, update } = useContext(ContextMenuContext)!;
     const { value: debugConsole, update: updateDebugConsole } = useContext(DebugConsoleContext)!;
+    const { language, setLanguage } = useContext(LanguageContext)!;
     const { t } = useTranslation();
+    const [, forceUpdate] = useState(0);
+
+    const languages = [
+        { code: 'zh-CN', name: '简体中文' },
+        { code: 'en-US', name: 'English' }
+    ];
 
     const currentTheme = config?.theme;
     const currentAnimation = config?.theme?.animation;
@@ -43,13 +50,13 @@ const ContextMenuConfig = memo(() => {
     };
 
     const getCurrentPreset = (current: any, presets: any) => {
-        if (!current) return "默认";
+        if (!current) return "default";
         for (const [name, preset] of Object.entries(presets)) {
             if (preset && checkPresetMatch(current, preset)) {
                 return name;
             }
         }
-        return "自定义";
+        return "custom";
     };
 
     const currentThemePreset = getCurrentPreset(currentTheme, theme_presets);
@@ -57,10 +64,10 @@ const ContextMenuConfig = memo(() => {
 
     return (
         <flex gap={20} alignItems="stretch" width={500} autoSize={false}>
-            <Text fontSize={24}>{t("Breeze 设置")}</Text>
+            <Text fontSize={24}>{t("settings.title")}</Text>
             <flex />
             <flex gap={10}>
-                <Text fontSize={18}>{t("主题")}</Text>
+                <Text fontSize={18}>{t("settings.theme")}</Text>
                 <flex horizontal gap={10}>
                     {Object.keys(theme_presets).map(name => (
                         <Button
@@ -80,14 +87,14 @@ const ContextMenuConfig = memo(() => {
                                 }
                             }}
                         >
-                            <Text fontSize={14}>{name}</Text>
+                            <Text fontSize={14}>{t(`preset.${name}`)}</Text>
                         </Button>
                     ))}
                 </flex>
             </flex>
 
             <flex gap={10}>
-                <Text fontSize={18}>{t("动画")}</Text>
+                <Text fontSize={18}>{t("settings.animation")}</Text>
                 <flex horizontal gap={10}>
                     {Object.keys(animation_presets).map(name => (
                         <Button
@@ -106,46 +113,64 @@ const ContextMenuConfig = memo(() => {
                                 }
                             }}
                         >
-                            <Text fontSize={14}>{name}</Text>
+                            <Text fontSize={14}>{t(`preset.${name}`)}</Text>
+                        </Button>
+                    ))}
+                </flex>
+            </flex>
+
+            <flex gap={10}>
+                <Text fontSize={18}>{t("settings.language")}</Text>
+                <flex horizontal gap={10}>
+                    {languages.map(lang => (
+                        <Button
+                            key={lang.code}
+                            selected={language === lang.code}
+                            onClick={() => {
+                                setLanguage(lang.code);
+                                forceUpdate(n => n + 1);
+                            }}
+                        >
+                            <Text fontSize={14}>{lang.name}</Text>
                         </Button>
                     ))}
                 </flex>
             </flex>
 
             <flex gap={10} alignItems="stretch" justifyContent="center">
-                <Text fontSize={18}>{t("杂项")}</Text>
-                <Toggle label={t("调试控制台")} value={debugConsole} onChange={updateDebugConsole} />
-                <Toggle label={t("垂直同步")} value={getNestedValue(config, "vsync") ?? true} onChange={(v) => {
+                <Text fontSize={18}>{t("settings.misc")}</Text>
+                <Toggle label={t("settings.debugConsole")} value={debugConsole} onChange={updateDebugConsole} />
+                <Toggle label={t("settings.vsync")} value={getNestedValue(config, "vsync") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "vsync", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("忽略自绘菜单")} value={getNestedValue(config, "ignore_owner_draw") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.ignoreOwnerDraw")} value={getNestedValue(config, "ignore_owner_draw") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "ignore_owner_draw", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("向上展开时反向排列")} value={getNestedValue(config, "reverse_if_open_to_up") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.reverseIfOpenToUp")} value={getNestedValue(config, "reverse_if_open_to_up") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "reverse_if_open_to_up", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("尝试使用 Windows 11 圆角")} value={getNestedValue(config, "theme.use_dwm_if_available") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.tryWin11RoundCorner")} value={getNestedValue(config, "theme.use_dwm_if_available") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "theme.use_dwm_if_available", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("亚克力背景效果")} value={getNestedValue(config, "theme.acrylic") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.acrylicBackground")} value={getNestedValue(config, "theme.acrylic") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "theme.acrylic", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("键盘热键")} value={getNestedValue(config, "hotkeys") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.hotkeys")} value={getNestedValue(config, "hotkeys") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "hotkeys", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("在左上角显示设置按钮")} value={getNestedValue(config, "show_settings_button") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.showSettingsButton")} value={getNestedValue(config, "show_settings_button") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "show_settings_button", v);
                     update(newConfig);

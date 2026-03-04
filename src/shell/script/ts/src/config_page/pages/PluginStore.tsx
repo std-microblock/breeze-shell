@@ -28,7 +28,7 @@ const PluginStore = memo(() => {
         const url = PLUGIN_SOURCES[currentPluginSource] + plugin.path;
         shell.network.get_async(url, (data: string) => {
             shell.fs.write(path, data);
-            shell.println(t('插件安装成功: ') + plugin.name);
+            shell.println(t('plugin.installSuccess') + plugin.name);
             setInstallingPlugins(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(plugin.name);
@@ -36,7 +36,7 @@ const PluginStore = memo(() => {
             });
         }, (e: any) => {
             shell.println(e);
-            setErrorMessage(t('插件安装失败: ') + plugin.name);
+            setErrorMessage(t('plugin.installFailed') + plugin.name);
             setInstallingPlugins(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(plugin.name);
@@ -49,7 +49,7 @@ const PluginStore = memo(() => {
 
     return (
         <flex gap={20}>
-            <Text fontSize={24}>{t("插件市场")}</Text>
+            <Text fontSize={24}>{t("plugin.store")}</Text>
             <flex gap={10} alignItems="stretch" width={570} height={500} autoSize={false}>
                 <flex enableScrolling maxHeight={500} alignItems="stretch">
                     {plugins.map((plugin: any) => {
@@ -62,7 +62,7 @@ const PluginStore = memo(() => {
                         }
                         const installed = install_path !== null;
                         const local_version_match = installed ? shell.fs.read(install_path).match(/\/\/ @version:\s*(.*)/) : null;
-                        const local_version = local_version_match ? local_version_match[1] : '未安装';
+                        const local_version = local_version_match ? local_version_match[1] : t('plugin.notInstalled');
                         const have_update = installed && local_version !== plugin.version;
 
                         return (
@@ -78,7 +78,7 @@ const PluginStore = memo(() => {
                                     </flex>
                                     <flex gap={10} alignItems="center" flexShrink={0}>
                                         <Button onClick={() => installPlugin(plugin)}>
-                                            <Text>{installingPlugins.has(plugin.name) ? t("安装中...") : (installed ? (have_update ? `更新 (${local_version} -> ${plugin.version})` : '已安装') : '安装')}</Text>
+                                            <Text>{installingPlugins.has(plugin.name) ? t("plugin.installing") : (installed ? (have_update ? `${t("plugin.update")} (${local_version} -> ${plugin.version})` : t('plugin.alreadyInstalled')) : t('plugin.install'))}</Text>
                                         </Button>
                                     </flex>
                                 </flex>

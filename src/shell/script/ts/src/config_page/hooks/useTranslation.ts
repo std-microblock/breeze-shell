@@ -1,44 +1,8 @@
-import * as shell from "mshell";
+import i18next from "../../i18n";
 
 export const useTranslation = () => {
-    const currentLang = shell.breeze.user_language() === 'zh-CN' ? 'zh-CN' : 'en-US';
     const t = (key: string) => {
-        const languages = {
-            'zh-CN': {
-                "管理 Breeze Shell": "管理 Breeze Shell",
-                "插件市场": "插件市场",
-                "加载中...": "加载中...",
-                "更新中...": "更新中...",
-                "安装中...": "安装中...",
-                "新版本已下载，将于下次重启资源管理器生效": "新版本已下载，将于下次重启资源管理器生效",
-                "更新失败: ": "更新失败: ",
-                "插件安装成功: ": "插件安装成功: ",
-                "版本: ": "版本: ",
-                "作者: ": "作者: ",
-                "删除": "删除",
-                "Breeze 设置": "Breeze 设置",
-                "优先加载插件": "优先加载插件",
-                "调试控制台": "调试控制台",
-                "垂直同步": "垂直同步",
-                "忽略自绘菜单": "忽略自绘菜单",
-                "向上展开时反向排列": "向上展开时反向排列",
-                "尝试使用 Windows 11 圆角": "尝试使用 Windows 11 圆角",
-                "亚克力背景效果": "亚克力背景效果",
-                "主题": "主题",
-                "动画": "动画",
-                "当前源: ": "当前源: ",
-                "插件": "插件",
-                "插件源": "插件源",
-                "换源": "换源",
-                "请稍候": "请稍候",
-                "切换源中...": "切换源中...",
-                "加载失败": "加载失败",
-                "网络错误": "网络错误",
-                "切换源成功": "切换源成功"
-            },
-            'en-US': {}
-        };
-        return languages[currentLang][key] || key;
+        return i18next.t(key);
     };
-    return { t, currentLang };
+    return { t, currentLang: i18next.language };
 };

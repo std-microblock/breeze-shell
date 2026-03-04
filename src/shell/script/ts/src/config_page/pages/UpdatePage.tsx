@@ -20,7 +20,7 @@ const UpdatePage = memo(() => {
     }, []);
 
     if (!updateData) {
-        return <Text>{t("加载中...")}</Text>;
+        return <Text>{t("common.loading")}</Text>;
     }
 
     const remote_version = updateData.shell.version;
@@ -35,13 +35,13 @@ const UpdatePage = memo(() => {
 
         const downloadNewShell = () => {
             shell.network.download_async(url, shellPath, () => {
-                shell.println(t('新版本已下载，将于下次重启资源管理器生效'));
+                shell.println(t('update.updateSuccess'));
                 setIsUpdating(false);
                 set_exist_old_file(true);
             }, e => {
-                shell.println(t('更新失败: ') + e);
+                shell.println(t('update.updateFailed') + e);
                 setIsUpdating(false);
-                setErrorMessage(t('更新失败: ') + e);
+                setErrorMessage(t('update.updateFailed') + e);
             });
         };
 
@@ -53,9 +53,9 @@ const UpdatePage = memo(() => {
                         shell.fs.rename(shellPath, shellOldPath);
                         downloadNewShell();
                     } catch (e) {
-                        shell.println(t('更新失败: ') + '无法移动当前文件');
+                        shell.println(t('update.updateFailed') + t('update.cannotMoveFile'));
                         setIsUpdating(false);
-                        setErrorMessage(t('更新失败: ') + '无法移动当前文件');
+                        setErrorMessage(t('update.updateFailed') + t('update.cannotMoveFile'));
                     }
                 } else {
                     shell.fs.rename(shellPath, shellOldPath);
@@ -65,26 +65,26 @@ const UpdatePage = memo(() => {
                 downloadNewShell();
             }
         } catch (e) {
-            shell.println(t('更新失败: ') + e);
+            shell.println(t('update.updateFailed') + e);
             setIsUpdating(false);
-            setErrorMessage(t('更新失败: ') + e);
+            setErrorMessage(t('update.updateFailed') + e);
         }
     };
 
     return (
         <flex gap={20}>
-            <Text fontSize={24}>{t("插件市场")}</Text>
+            <Text fontSize={24}>{t("plugin.store")}</Text>
             <flex gap={10}>
-                <Text>{`当前版本: ${current_version}`}</Text>
-                <Text>{`最新版本: ${remote_version}`}</Text>
+                <Text>{`${t("update.currentVersion")}: ${current_version}`}</Text>
+                <Text>{`${t("update.latestVersion")}: ${remote_version}`}</Text>
                 <Button onClick={current_version === remote_version || isUpdating ? () => { } : updateShell}>
                     <Text>{
-                        isUpdating ? t("更新中...") :
-                            exist_old_file ? t("新版本已下载，将于下次重启资源管理器生效") : (current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`)}</Text>
+                        isUpdating ? t("update.updating") :
+                            exist_old_file ? t("update.updateSuccess") : (current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`)}</Text>
                 </Button>
             </flex>
             <flex gap={10}>
-                <Text>更新日志:</Text>
+                <Text>{t("update.changelog")}</Text>
                 <flex enableScrolling maxHeight={500} width={550} gap={10}>
                     <SimpleMarkdownRender text={updateData.shell.changelog} maxWidth={550} />
                 </flex>

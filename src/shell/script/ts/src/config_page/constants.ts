@@ -1,42 +1,5 @@
 import * as shell from "mshell";
 
-export const languages = {
-    'zh-CN': {
-        "管理 Breeze Shell": "管理 Breeze Shell",
-        "插件市场": "插件市场",
-        "加载中...": "加载中...",
-        "更新中...": "更新中...",
-        "安装中...": "安装中...",
-        "新版本已下载，将于下次重启资源管理器生效": "新版本已下载，将于下次重启资源管理器生效",
-        "更新失败: ": "更新失败: ",
-        "插件安装成功: ": "插件安装成功: ",
-        "版本: ": "版本: ",
-        "作者: ": "作者: ",
-        "删除": "删除",
-        "Breeze 设置": "Breeze 设置",
-        "优先加载插件": "优先加载插件",
-        "调试控制台": "调试控制台",
-        "垂直同步": "垂直同步",
-        "忽略自绘菜单": "忽略自绘菜单",
-        "向上展开时反向排列": "向上展开时反向排列",
-        "尝试使用 Windows 11 圆角": "尝试使用 Windows 11 圆角",
-        "亚克力背景效果": "亚克力背景效果",
-        "主题": "主题",
-        "动画": "动画",
-        "当前源: ": "当前源: ",
-        "插件": "插件",
-        "插件源": "插件源",
-        "换源": "换源",
-        "请稍候": "请稍候",
-        "切换源中...": "切换源中...",
-        "加载失败": "加载失败",
-        "网络错误": "网络错误",
-        "切换源成功": "切换源成功"
-    },
-    'en-US': {
-    }
-};
-
 export const PLUGIN_SOURCES = {
     'Github Raw': 'https://raw.githubusercontent.com/breeze-shell/plugins-packed/refs/heads/main/',
     'Enlysure': 'https://breeze.enlysure.com/',
@@ -58,8 +21,8 @@ export const SIDEBAR_WIDTH = 170;
 
 // Theme presets
 export const theme_presets = {
-    "默认": null,
-    "紧凑": {
+    "default": null,
+    "compact": {
         radius: 4.0,
         item_height: 20.0,
         item_gap: 2.0,
@@ -71,7 +34,7 @@ export const theme_presets = {
         right_icon_padding: 16.0,
         multibutton_line_gap: -4.0
     },
-    "宽松": {
+    "loose": {
         radius: 6.0,
         item_height: 24.0,
         item_gap: 4.0,
@@ -83,11 +46,11 @@ export const theme_presets = {
         right_icon_padding: 20.0,
         multibutton_line_gap: -6.0
     },
-    "圆角": {
+    "rounded": {
         radius: 12.0,
         item_radius: 12.0
     },
-    "方角": {
+    "square": {
         radius: 0.0,
         item_radius: 0.0
     }
@@ -99,8 +62,8 @@ export const anim_none = {
 };
 
 export const animation_presets = {
-    "默认": null,
-    "快速": {
+    "default": null,
+    "fast": {
         "item": {
             "opacity": {
                 "delay_scale": 0
@@ -118,7 +81,7 @@ export const animation_presets = {
             "opacity": anim_none,
         }
     },
-    "无": {
+    "none": {
         "item": {
             "opacity": anim_none,
             "width": anim_none,

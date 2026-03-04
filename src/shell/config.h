@@ -123,6 +123,8 @@ struct config {
     bool avoid_resize_ui = false;
     std::vector<std::string> plugin_load_order = {};
 
+    std::string language;
+
     std::string $schema;
     static std::unique_ptr<config> current;
     static void read_config();

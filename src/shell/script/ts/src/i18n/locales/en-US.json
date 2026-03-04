@@ -1,0 +1,80 @@
+{
+  "app": {
+    "title": "Breeze Shell",
+    "manage": "Manage Breeze Shell"
+  },
+  "sidebar": {
+    "mainConfig": "Main Config",
+    "update": "Update",
+    "pluginStore": "Plugin Store",
+    "pluginConfig": "Plugin Config",
+    "updateSource": "Update Source"
+  },
+  "settings": {
+    "title": "Breeze Settings",
+    "theme": "Theme",
+    "animation": "Animation",
+    "misc": "Miscellaneous",
+    "language": "Language",
+    "debugConsole": "Debug Console",
+    "vsync": "Vertical Sync",
+    "ignoreOwnerDraw": "Ignore Owner Draw",
+    "reverseIfOpenToUp": "Reverse When Opening Upward",
+    "tryWin11RoundCorner": "Try Windows 11 Round Corners",
+    "acrylicBackground": "Acrylic Background",
+    "hotkeys": "Hotkeys",
+    "showSettingsButton": "Show Settings Button in Top Left"
+  },
+  "plugin": {
+    "title": "Plugins",
+    "config": "Plugin Config",
+    "store": "Plugin Store",
+    "source": "Plugin Source",
+    "priorityLoad": "Priority Load Plugins",
+    "installed": "Installed Plugins",
+    "setPriority": "Set Priority Load",
+    "cancelPriority": "Cancel Priority Load",
+    "installSuccess": "Plugin installed: ",
+    "installFailed": "Plugin installation failed: ",
+    "installing": "Installing...",
+    "install": "Install",
+    "update": "Update",
+    "notInstalled": "Not Installed",
+    "alreadyInstalled": "Installed",
+    "configParseFailed": "Config file parse failed: ",
+    "configChanged": "Config file changed: "
+  },
+  "update": {
+    "title": "Update",
+    "currentVersion": "Current Version",
+    "latestVersion": "Latest Version",
+    "changelog": "Changelog",
+    "updating": "Updating...",
+    "updateSuccess": "New version downloaded, will take effect next time the file manager is restarted",
+    "updateFailed": "Update failed: ",
+    "cannotMoveFile": "Cannot move current file"
+  },
+  "common": {
+    "loading": "Loading...",
+    "loadFailed": "Load Failed",
+    "pleaseWait": "Please Wait",
+    "switching": "Switching source...",
+    "switchSuccess": "Switch Success",
+    "networkError": "Network Error",
+    "delete": "Delete",
+    "version": "Version: ",
+    "author": "Author: ",
+    "currentSource": "Current source: ",
+    "changeSource": "Change Source"
+  },
+  "preset": {
+    "default": "Default",
+    "compact": "Compact",
+    "loose": "Loose",
+    "rounded": "Rounded",
+    "square": "Square",
+    "fast": "Fast",
+    "none": "None",
+    "custom": "Custom"
+  }
+}
