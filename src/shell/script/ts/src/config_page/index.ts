@@ -3,10 +3,10 @@ export { ConfigApp as default } from './ConfigApp';
 
 // Export individual components
 export { default as Sidebar } from './Sidebar';
-export { default as ContextMenuConfig } from './ContextMenuConfig';
-export { default as UpdatePage } from './UpdatePage';
-export { default as PluginStore } from './PluginStore';
-export { default as PluginConfig } from './PluginConfig';
+export { default as ContextMenuConfig } from './pages/ContextMenuConfig';
+export { default as UpdatePage } from './pages/UpdatePage';
+export { default as PluginStore } from './pages/PluginStore';
+export { default as PluginConfig } from './pages/PluginConfig';
 
 // Export UI components
 export {
@@ -35,7 +35,6 @@ export {
 export {
     getNestedValue,
     setNestedValue,
-    useTranslation,
     getAllSubkeys,
     applyPreset,
     checkPresetMatch,
@@ -48,6 +47,12 @@ export {
     isPluginInstalled,
     getPluginVersion
 } from './utils';
+
+// Export hooks
+export {
+    useTranslation,
+    useHoverActive
+} from './hooks';
 
 // Export constants
 export {

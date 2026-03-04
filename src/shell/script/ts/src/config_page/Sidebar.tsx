@@ -11,7 +11,7 @@ import {
     PLUGIN_SOURCES
 } from "./constants";
 import { UpdateDataContext, NotificationContext, PluginSourceContext } from "./contexts";
-import { useTranslation } from "./utils";
+import { useTranslation } from "./hooks";
 
 const Sidebar = memo(({
     activePage,

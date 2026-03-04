@@ -10,10 +10,10 @@ import {
     PluginSourceContext
 } from "./contexts";
 import Sidebar from "./Sidebar";
-import ContextMenuConfig from "./ContextMenuConfig";
-import UpdatePage from "./UpdatePage";
-import PluginStore from "./PluginStore";
-import PluginConfig from "./PluginConfig";
+import ContextMenuConfig from "./pages/ContextMenuConfig";
+import UpdatePage from "./pages/UpdatePage";
+import PluginStore from "./pages/PluginStore";
+import PluginConfig from "./pages/PluginConfig";
 import { useState, useEffect } from "react";
 
 export const ConfigApp = () => {
