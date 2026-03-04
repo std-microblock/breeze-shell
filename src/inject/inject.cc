@@ -20,6 +20,8 @@ static unsigned char g_icon_png[] = {
 #include <psapi.h>
 #include <shellapi.h>
 
+#include "Shlobj.h"
+
 namespace fs = std::filesystem;
 
 std::wstring GetModuleDirectory() {
@@ -520,6 +522,17 @@ struct injector_ui_main : public ui::flex_widget {
     }
 };
 
+std::string getFontPath() {
+    char fontsPath[MAX_PATH];
+    SHGetSpecialFolderPathA(NULL, fontsPath, CSIDL_FONTS, FALSE);
+
+    const auto p = std::filesystem::path(fontsPath);
+    if (std::filesystem::exists(p / "msyh.ttc")) return (p / "msyh.ttc").string();
+    if (std::filesystem::exists(p / "simsun.ttc")) return (p / "simsun.ttc").string();
+    if (std::filesystem::exists(p / "segoeui.ttf")) return (p / "segoeui.ttf").string();
+    throw std::runtime_error("no font found");
+}
+
 void StartInjectUI() {
     if (auto r = ui::render_target::init_global(); !r) {
         std::cerr << "Failed to initialize global render target." << std::endl;
@@ -535,7 +548,7 @@ void StartInjectUI() {
         std::cerr << "Failed to initialize render target." << std::endl;
         return;
     }
-    nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+    nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
     rt.root->emplace_child<injector_ui_main>();
     rt.start_loop();
 }
@@ -570,7 +583,7 @@ void ShowCrashDialog() {
         return;
     }
 
-    nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");
+    nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
 
     auto error_ui = rt.root->emplace_child<ui::flex_widget>();
     error_ui->gap = 15;
