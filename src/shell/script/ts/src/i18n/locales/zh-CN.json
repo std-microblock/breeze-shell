@@ -76,5 +76,9 @@
     "fast": "快速",
     "none": "无",
     "custom": "自定义"
+  },
+  "test": {
+    "title": "测试",
+    "crash": "崩溃"
   }
 }

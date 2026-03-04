@@ -8,7 +8,6 @@
 
 #include "blook/blook.h"
 #include "blook/memo.h"
-#include "cpptrace/basic.hpp"
 #include "utils.h"
 #include "zasm/base/immediate.hpp"
 #include "zasm/x86/mnemonic.hpp"
@@ -22,8 +21,6 @@
 #pragma comment(lib, "ntdll")
 #include <string>
 #include <vector>
-
-#include "cpptrace/from_current.hpp"
 
 #define REG_KEY_PATH_LENGTH 1024
 
@@ -118,7 +115,7 @@ void mb_shell::fix_win11_menu::install() {
 
     // approch 2: patch the shell32.dll to predent the shift key is pressed
     std::thread([=]() {
-        CPPTRACE_TRY {
+        try {
             if (auto shell32 = proc->module("shell32.dll")) {
                 // mov ecx, 10
                 // call GetKeyState/GetAsyncKeyState
@@ -181,11 +178,8 @@ void mb_shell::fix_win11_menu::install() {
                     }
                 }
             }
-        }
-        CPPTRACE_CATCH(...) {
-            std::println("Failed to patch shell32.dll for win11 menu fix:");
-
-            cpptrace::from_current_exception().print();
+        } catch (...) {
+            std::println("Failed to patch shell32.dll for win11 menu fix");
         }
     }).detach();
 }

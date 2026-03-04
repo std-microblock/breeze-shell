@@ -1,184 +1,67 @@
 #include "error_handler.h"
 
-#include <exception>
-#include <format>
-#include <fstream>
-#include <ios>
-#include <iostream>
-#include <sstream>
 #include <string>
 
 #include "build_info.h"
 #include "config.h"
-
-#include "cpptrace/basic.hpp"
 #include "utils.h"
 
-#include "Windows.h"
-#include "cpptrace/cpptrace.hpp"
+#include "sentry.h"
+#include "wintoastlib.h"
 
-void show_console() {
-    if (!GetConsoleWindow()) {
-        AllocConsole();
-        freopen("CONOUT$", "w", stdout);
-        freopen("CONOUT$", "w", stderr);
+void show_crash_toast() {
+    using namespace WinToastLib;
+
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        WinToast::instance()->setAppName(L"Breeze");
+        WinToast::instance()->setAppUserModelId(L"breeze-shell");
+        WinToast::instance()->initialize();
     }
-    ShowWindow(GetConsoleWindow(), SW_SHOW);
-    SetForegroundWindow(GetConsoleWindow());
-}
 
-inline void output_crash_header(std::stringstream &ss) {
-    ss << "Breeze Shell " << BREEZE_VERSION << " crash report" << std::endl;
-    ss << "----------------------------------------" << std::endl;
-    ss << "Build date: " << BREEZE_BUILD_DATE_TIME << std::endl;
-    ss << "Git commit hash: " << BREEZE_GIT_COMMIT_HASH << std::endl;
-    ss << "Commit page: https://github.com/std-microblock/breeze-shell/commit/"
-       << BREEZE_GIT_COMMIT_HASH << std::endl;
-    ss << "Git branch: " << BREEZE_GIT_BRANCH_NAME << std::endl;
-    ss << "Data directory: " << mb_shell::config::data_directory() << std::endl;
-    ss << "Windows version: "
-       << (mb_shell::is_win11_or_later() ? "11 or later" : "10 or earlier")
-       << std::endl;
-    ss << "----------------------------------------" << std::endl;
-    ss << "Config:" << std::endl;
-    ss << mb_shell::config::dump_config() << std::endl;
-    ss << "----------------------------------------" << std::endl;
-}
+    WinToastTemplate templ(WinToastTemplate::ImageAndText02);
+    templ.setTextField(L"Explorer 崩溃了", WinToastTemplate::FirstLine);
+    templ.setTextField(L"这可能是 Breeze Shell 或其他 Shell Extension / "
+                       L"插件造成的。崩溃日志已发送。",
+                       WinToastTemplate::SecondLine);
 
-std::string GetExceptionName(EXCEPTION_POINTERS *ExceptionInfo) {
-    auto code = ExceptionInfo->ExceptionRecord->ExceptionCode;
-    switch (code) {
-    case EXCEPTION_ACCESS_VIOLATION:
-        return "ACCESS_VIOLATION";
-    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-        return "ARRAY_BOUNDS_EXCEEDED";
-    case EXCEPTION_BREAKPOINT:
-        return "BREAKPOINT";
-    case EXCEPTION_DATATYPE_MISALIGNMENT:
-        return "DATATYPE_MISALIGNMENT";
-    case EXCEPTION_FLT_DENORMAL_OPERAND:
-        return "FLT_DENORMAL_OPERAND";
-    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-        return "FLT_DIVIDE_BY_ZERO";
-    case EXCEPTION_FLT_INEXACT_RESULT:
-        return "FLT_INEXACT_RESULT";
-    case EXCEPTION_FLT_INVALID_OPERATION:
-        return "FLT_INVALID_OPERATION";
-    case EXCEPTION_FLT_OVERFLOW:
-        return "FLT_OVERFLOW";
-    case EXCEPTION_FLT_STACK_CHECK:
-        return "FLT_STACK_CHECK";
-    case EXCEPTION_FLT_UNDERFLOW:
-        return "FLT_UNDERFLOW";
-    case EXCEPTION_ILLEGAL_INSTRUCTION:
-        return "ILLEGAL_INSTRUCTION";
-    case EXCEPTION_IN_PAGE_ERROR:
-        return "IN_PAGE_ERROR";
-    case EXCEPTION_INT_DIVIDE_BY_ZERO:
-        return "INT_DIVIDE_BY_ZERO";
-    case EXCEPTION_INT_OVERFLOW:
-        return "INT_OVERFLOW";
-    case EXCEPTION_INVALID_DISPOSITION:
-        return "INVALID_DISPOSITION";
-    case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-        return "NONCONTINUABLE_EXCEPTION";
-    case EXCEPTION_PRIV_INSTRUCTION:
-        return "PRIV_INSTRUCTION";
-    case EXCEPTION_SINGLE_STEP:
-        return "SINGLE_STEP";
-    case EXCEPTION_STACK_OVERFLOW:
-        return "STACK_OVERFLOW";
-    default:
-        return std::format("UNKNOWN_{}", code);
-    }
+    static struct WinToastEventHandler : public IWinToastHandler {
+        void toastActivated() const override {}
+        void toastActivated(int actionIndex) const override {}
+        void toastActivated(const char *) const override {}
+        void toastDismissed(WinToastDismissalReason state) const override {}
+        void toastFailed() const override {}
+    } handler;
+    WinToast::instance()->showToast(templ, &handler);
 }
 
 void mb_shell::install_error_handlers() {
-    SetUnhandledExceptionFilter([](PEXCEPTION_POINTERS ex) -> LONG {
-        show_console();
+    sentry_options_t *options = sentry_options_new();
+    sentry_options_set_dsn(options,
+                           "https://"
+                           "159f800f906ad4d9e04d139d5db21fbd@o4510630644744192."
+                           "ingest.de.sentry.io/4510987356274768");
 
-        std::ofstream file(config::data_directory().string() +
-                           "\\crash_report.txt");
+    sentry_options_set_release(options, "breeze-shell@" BREEZE_VERSION);
+    sentry_options_set_environment(options, "production");
 
-        std::stringstream ss;
-        output_crash_header(ss);
-        ss << "Exception code: " << std::hex
-           << ex->ExceptionRecord->ExceptionCode << "(" << GetExceptionName(ex)
-           << ")" << std::endl;
-        ss << "Exception flags: " << std::hex
-           << ex->ExceptionRecord->ExceptionFlags << std::endl;
-        ss << "Exception address: " << std::hex
-           << ex->ExceptionRecord->ExceptionAddress << std::endl;
-        ss << "Registers:" << std::endl;
+    auto db_path = config::data_directory() / ".sentry-native";
+    sentry_options_set_database_path(options, db_path.string().c_str());
 
-        ss << "RAX: " << std::hex << ex->ContextRecord->Rax << std::endl;
-        ss << "RBX: " << std::hex << ex->ContextRecord->Rbx << std::endl;
-        ss << "RCX: " << std::hex << ex->ContextRecord->Rcx << std::endl;
-        ss << "RDX: " << std::hex << ex->ContextRecord->Rdx << std::endl;
-        ss << "R8: " << std::hex << ex->ContextRecord->R8 << std::endl;
-        ss << "R9: " << std::hex << ex->ContextRecord->R9 << std::endl;
-        ss << "R10: " << std::hex << ex->ContextRecord->R10 << std::endl;
-        ss << "R11: " << std::hex << ex->ContextRecord->R11 << std::endl;
-        ss << "R12: " << std::hex << ex->ContextRecord->R12 << std::endl;
-        ss << "R13: " << std::hex << ex->ContextRecord->R13 << std::endl;
-        ss << "R14: " << std::hex << ex->ContextRecord->R14 << std::endl;
-        ss << "R15: " << std::hex << ex->ContextRecord->R15 << std::endl;
-        ss << "RDI: " << std::hex << ex->ContextRecord->Rdi << std::endl;
-        ss << "RSI: " << std::hex << ex->ContextRecord->Rsi << std::endl;
-        ss << "RBP: " << std::hex << ex->ContextRecord->Rbp << std::endl;
-        ss << "RSP: " << std::hex << ex->ContextRecord->Rsp << std::endl;
-        ss << "RIP: " << std::hex << ex->ContextRecord->Rip << std::endl;
+    sentry_options_set_handler_path(options, nullptr);
 
-        ss << "Object trace:" << std::endl;
-        const auto obj_trace = cpptrace::object_trace::current();
-        int i = 0;
-        for (auto &&frm : obj_trace) {
-            i++;
-            ss << frm.object_address << " " << frm.raw_address << " "
-               << frm.object_path << std::endl;
-        }
-
-        ss << "Stack trace:" << std::endl;
-        ss << cpptrace::stacktrace::current().to_string() << std::endl;
-
-        if (file.is_open()) {
-            file << ss.str();
-            file.flush();
-            file.close();
-        }
-        std::cerr << ss.str();
-
-        Sleep(5000);
-        return EXCEPTION_CONTINUE_EXECUTION;
-    });
-
-    std::set_terminate([]() {
-        show_console();
-
-        std::stringstream ss;
-        output_crash_header(ss);
-        try {
-            throw std::current_exception();
-        } catch (const std::exception &e) {
-            ss << "Uncaught exception: " << e.what() << std::endl;
-        } catch (...) {
-            ss << "Uncaught exception of unknown type" << std::endl;
-        }
-
-        ss << "Stack trace:" << std::endl;
-        ss << cpptrace::stacktrace::current().to_string() << std::endl;
-
-        std::ofstream file(config::data_directory().string() +
-                           "\\crash_report.txt");
-
-        if (file.is_open()) {
-            file << ss.str();
-            file.flush();
-            file.close();
-        }
-
-        std::cerr << ss.str();
-
-        Sleep(5000);
-    });
+    sentry_options_set_before_send(
+        options,
+        [](sentry_value_t event, void *hint, void *closure) -> sentry_value_t {
+            show_crash_toast();
+            return event;
+        },
+        nullptr);
+    sentry_init(options);
+    sentry_set_tag("git_commit", BREEZE_GIT_COMMIT_HASH);
+    sentry_set_tag("git_branch", BREEZE_GIT_BRANCH_NAME);
+    sentry_set_tag("build_date", BREEZE_BUILD_DATE_TIME);
+    sentry_set_tag("windows_version",
+                   mb_shell::is_win11_or_later() ? "11+" : "10-");
 }

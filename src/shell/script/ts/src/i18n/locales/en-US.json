@@ -76,5 +76,9 @@
     "fast": "Fast",
     "none": "None",
     "custom": "Custom"
+  },
+  "test": {
+    "title": "Test",
+    "crash": "Crash"
   }
 }

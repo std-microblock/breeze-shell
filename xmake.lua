@@ -8,17 +8,23 @@ option("asan")
 option_end()
 
 set_exceptions("cxx")
-set_languages("c++2b")
+set_languages("c++2b", "c11")
 set_warnings("all") 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.releasedbg")
 
 includes("dependencies/blook.lua")
 includes("dependencies/breeze-ui.lua")
+includes("dependencies/sentry-native.lua")
 
+add_requires("sentry-native", {
+    configs = {
+        backend = "breakpad"
+    }
+})
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook 57184918425c1d3a9cc6e9ff56edf641a3e0cb2a", "glad",
-    "reflect-cpp", "wintoast v1.3.1", "cpptrace v0.8.3", "breeze-ui")
+    "reflect-cpp", "wintoast v1.3.1", "breeze-ui")
 
 if has_config("asan") then
     add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
@@ -58,7 +64,7 @@ target("shell")
     add_includedirs("src/shell/script/quickjs")
 
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
-    add_packages("blook", "reflect-cpp", "wintoast", "cpptrace", "yalantinglibs", "breeze-ui")
+    add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2c", {
         extensions = {".js"}

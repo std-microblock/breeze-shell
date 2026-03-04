@@ -8,6 +8,7 @@ import {
     ICON_UPDATE,
     ICON_PLUGIN_STORE,
     ICON_PLUGIN_CONFIG,
+    ICON_TEST,
     PLUGIN_SOURCES
 } from "./constants";
 import { UpdateDataContext, NotificationContext, PluginSourceContext } from "./contexts";
@@ -76,6 +77,7 @@ const Sidebar = memo(({
             <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>{t('sidebar.update')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>{t('sidebar.pluginStore')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>{t('sidebar.pluginConfig')}</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('test')} icon={ICON_TEST} isActive={activePage === 'test'}>{t('test.title')}</SidebarItem>
             <spacer />
 
             {/* 错误提示 */}

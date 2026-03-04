@@ -1143,6 +1143,7 @@ template<> struct js_bind<mb_shell::js::breeze> {
                 .static_fun<&mb_shell::js::breeze::should_show_settings_button>("should_show_settings_button")
                 .static_fun<&mb_shell::js::breeze::current_process_name>("current_process_name")
                 .static_fun<&mb_shell::js::breeze::current_process_path>("current_process_path")
+                .static_fun<&mb_shell::js::breeze::crash>("crash")
             ;
     }
 };

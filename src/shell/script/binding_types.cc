@@ -1670,4 +1670,8 @@ std::string breeze::current_process_path() {
 
     return process_path;
 }
+void breeze::crash() {
+    int *x = (int *)0xffff;
+    (*x)++;
+}
 } // namespace mb_shell::js

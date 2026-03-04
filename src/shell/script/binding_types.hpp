@@ -635,6 +635,7 @@ struct breeze {
     static bool should_show_settings_button();
     static std::string current_process_name();
     static std::string current_process_path();
+    static void crash();
 };
 
 struct win32 {

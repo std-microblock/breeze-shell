@@ -48,8 +48,6 @@
 
 #include <Windows.h>
 
-#include "cpptrace/from_current.hpp"
-
 #include "qjs_sanitizer.h"
 
 namespace mb_shell {
@@ -138,7 +136,7 @@ void main() {
             SetProcessDPIAware();
             CoInitialize(nullptr);
             std::thread([]() {
-                CPPTRACE_TRY {
+                try {
                     SetThreadDpiAwarenessContext(
                         DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
                     taskbar_render taskbar;
@@ -167,10 +165,9 @@ void main() {
 
                     taskbar.rt.start_loop();
                 }
-                CPPTRACE_CATCH(const std::exception &e) {
+                catch(const std::exception &e) {
                     std::cerr << "Error in taskbar thread: " << e.what()
                               << std::endl;
-                    cpptrace::from_current_exception().print();
                 }
             }).detach();
         }

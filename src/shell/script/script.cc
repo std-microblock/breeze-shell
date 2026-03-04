@@ -1,6 +1,5 @@
 #include "script.h"
 #include "binding_qjs.h"
-#include "cpptrace/exceptions.hpp"
 #include "shell/contextmenu/contextmenu.h"
 
 #include "shell/config.h"
@@ -23,8 +22,6 @@
 #include "quickjspp.hpp"
 
 #include "shell/logger.h"
-
-#include "cpptrace/from_current.hpp"
 
 thread_local bool is_thread_js_main = false;
 
@@ -128,7 +125,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
         is_js_ready.exchange(false);
         js_thread.emplace(
             [&, this]() {
-                CPPTRACE_TRY {
+                try {
                     is_thread_js_main = true;
                     set_thread_locale_utf8();
                     rt = std::make_shared<qjs::Runtime>();
@@ -278,12 +275,9 @@ void script_context::watch_folder(const std::filesystem::path &path,
                             break;
                     }
                     is_thread_js_main = false;
-                }
-                CPPTRACE_CATCH(std::exception & e) {
+                } catch (std::exception &e) {
                     std::cerr << "Fatal error in JS thread: " << e.what()
                               << std::endl;
-                    cpptrace::from_current_exception().print();
-                    cpptrace::rethrow_and_wrap_if_needed();
                 }
             },
             10485760); // 10 MB stack

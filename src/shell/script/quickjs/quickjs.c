@@ -6177,7 +6177,7 @@ static void mark_children(JSRuntime *rt, JSGCObjectHeader *gp,
         }
         break;
     default:
-        asm {int3}
+        // asm {int3}
         abort();
     }
 }
