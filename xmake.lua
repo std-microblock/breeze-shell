@@ -104,7 +104,7 @@ target("asan_test")
 
 target("inject")
     set_kind("binary")
-    add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32")
+    add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32", "taskschd", "ole32", "oleaut32", "taskschd", "comsupp")
     add_files("src/inject/*.cc")
     add_packages("breeze-ui")
     set_basename("breeze")

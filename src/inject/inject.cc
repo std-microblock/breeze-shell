@@ -17,8 +17,11 @@ static unsigned char g_icon_png[] = {
 
 #include "data_directory.inc"
 #include <TlHelp32.h>
+#include <comdef.h>
 #include <psapi.h>
 #include <shellapi.h>
+#include <taskschd.h>
+
 
 #include "Shlobj.h"
 
@@ -314,6 +317,496 @@ struct start_when_startup_switch : public ui::button_widget {
     }
 };
 
+enum class StartupPriority { Disabled = 0, Normal = 1, High = 2 };
+
+struct startup_priority_selector : public ui::flex_widget {
+    StartupPriority current_priority = StartupPriority::Disabled;
+
+    startup_priority_selector() {
+        horizontal = true;
+        gap = 0;
+        current_priority = get_current_priority();
+
+        const char *labels_en[] = {"Disabled", "Startup", "High Priority"};
+        const char *labels_zh[] = {"不自启动", "自启动", "高优先级自启动"};
+        const char **labels = english ? labels_en : labels_zh;
+
+        for (int i = 0; i < 3; i++) {
+            auto segment =
+                std::make_shared<priority_segment_button>(labels[i], i);
+            segment->priority = (StartupPriority)i;
+            segment->selector = this;
+            add_child(segment);
+        }
+    }
+
+    struct priority_segment_button : public ui::button_widget {
+        StartupPriority priority;
+        startup_priority_selector *selector = nullptr;
+        int position = 0;
+        priority_segment_button(const char *label_text, int pos)
+            : button_widget(label_text), position(pos) {
+            padding_left->reset_to(16);
+            padding_right->reset_to(16);
+        }
+
+        void on_click() override {
+            if (selector) {
+                selector->set_priority(priority);
+            }
+        }
+
+        void update_colors(bool is_active, bool is_hovered) override {
+            bool is_current =
+                (selector && selector->current_priority == priority);
+
+            if (is_current) {
+                if (is_hovered) {
+                    bg_color.animate_to({0.3, 0.8, 0.3, 0.7});
+                } else {
+                    bg_color.animate_to({0.2, 0.7, 0.2, 0.6});
+                }
+            } else {
+                if (is_active) {
+                    bg_color.animate_to({0.3, 0.3, 0.3, 0.7});
+                } else if (is_hovered) {
+                    bg_color.animate_to({0.35, 0.35, 0.35, 0.7});
+                } else {
+                    bg_color.animate_to({0.3, 0.3, 0.3, 0.6});
+                }
+            }
+        }
+
+        void render(ui::nanovg_context ctx) override {
+            ctx.fillColor(bg_color);
+
+            float radius = 6.0f;
+            if (position == 0) {
+                ctx.beginPath();
+                ctx.roundedRectVarying(*x, *y, *width, *height, radius, 0, 0,
+                                       radius);
+                ctx.fill();
+            } else if (position == 2) {
+                ctx.beginPath();
+                ctx.roundedRectVarying(*x, *y, *width, *height, 0, radius,
+                                       radius, 0);
+                ctx.fill();
+            } else {
+                ctx.fillRect(*x, *y, *width, *height);
+            }
+
+            float bw = 1.0f;
+            float cr = radius - bw / 2;
+
+            if (position == 0) {
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_top);
+                ctx.moveTo(*x + radius, *y + bw / 2);
+                ctx.lineTo(*x + *width, *y + bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_right);
+                ctx.moveTo(*x + *width, *y);
+                ctx.lineTo(*x + *width, *y + *height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_bottom);
+                ctx.moveTo(*x + *width, *y + *height - bw / 2);
+                ctx.lineTo(*x + radius, *y + *height - bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_left);
+                ctx.moveTo(*x + bw / 2, *y + *height - radius);
+                ctx.lineTo(*x + bw / 2, *y + radius);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_top.blend(border_left));
+                ctx.moveTo(*x + bw / 2, *y + radius);
+                ctx.arcTo(*x + bw / 2, *y + bw / 2, *x + radius, *y + bw / 2,
+                          cr);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_left.blend(border_bottom));
+                ctx.moveTo(*x + radius, *y + *height - bw / 2);
+                ctx.arcTo(*x + bw / 2, *y + *height - bw / 2, *x + bw / 2,
+                          *y + *height - radius, cr);
+                ctx.stroke();
+
+            } else if (position == 2) {
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_top);
+                ctx.moveTo(*x, *y + bw / 2);
+                ctx.lineTo(*x + *width - radius, *y + bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_right);
+                ctx.moveTo(*x + *width - bw / 2, *y + radius);
+                ctx.lineTo(*x + *width - bw / 2, *y + *height - radius);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_bottom);
+                ctx.moveTo(*x + *width - radius, *y + *height - bw / 2);
+                ctx.lineTo(*x, *y + *height - bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_left);
+                ctx.moveTo(*x, *y);
+                ctx.lineTo(*x, *y + *height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_right.blend(border_top));
+                ctx.moveTo(*x + *width - radius, *y + bw / 2);
+                ctx.arcTo(*x + *width - bw / 2, *y + bw / 2,
+                          *x + *width - bw / 2, *y + radius, cr);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_bottom.blend(border_right));
+                ctx.moveTo(*x + *width - bw / 2, *y + *height - radius);
+                ctx.arcTo(*x + *width - bw / 2, *y + *height - bw / 2,
+                          *x + *width - radius, *y + *height - bw / 2, cr);
+                ctx.stroke();
+
+            } else {
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_top);
+                ctx.moveTo(*x, *y + bw / 2);
+                ctx.lineTo(*x + *width, *y + bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_right);
+                ctx.moveTo(*x + *width, *y);
+                ctx.lineTo(*x + *width, *y + *height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_bottom);
+                ctx.moveTo(*x + *width, *y + *height - bw / 2);
+                ctx.lineTo(*x, *y + *height - bw / 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeWidth(bw);
+                ctx.strokeColor(border_left);
+                ctx.moveTo(*x, *y);
+                ctx.lineTo(*x, *y + *height);
+                ctx.stroke();
+            }
+
+            padding_widget::render(ctx);
+        }
+    };
+
+    static StartupPriority get_current_priority() {
+        HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        bool need_uninit = SUCCEEDED(hr);
+
+        ITaskService *pService = NULL;
+        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                              IID_ITaskService, (void **)&pService);
+
+        if (SUCCEEDED(hr)) {
+            hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(),
+                                   _variant_t());
+            if (SUCCEEDED(hr)) {
+                ITaskFolder *pRootFolder = NULL;
+                hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+                if (SUCCEEDED(hr)) {
+                    IRegisteredTask *pTask = NULL;
+                    hr = pRootFolder->GetTask(_bstr_t(L"breeze-shell-startup"),
+                                              &pTask);
+                    if (SUCCEEDED(hr)) {
+                        ITaskDefinition *pTaskDef = NULL;
+                        hr = pTask->get_Definition(&pTaskDef);
+                        if (SUCCEEDED(hr)) {
+                            ITaskSettings *pSettings = NULL;
+                            hr = pTaskDef->get_Settings(&pSettings);
+                            if (SUCCEEDED(hr)) {
+                                int priority = 0;
+                                hr = pSettings->get_Priority(&priority);
+                                pSettings->Release();
+                                pTaskDef->Release();
+                                pTask->Release();
+                                pRootFolder->Release();
+                                pService->Release();
+                                if (need_uninit)
+                                    CoUninitialize();
+
+                                if (priority <= 4)
+                                    return StartupPriority::High;
+                                return StartupPriority::Normal;
+                            }
+                            pTaskDef->Release();
+                        }
+                        pTask->Release();
+                    }
+                    pRootFolder->Release();
+                }
+            }
+            pService->Release();
+        }
+
+        if (need_uninit)
+            CoUninitialize();
+
+        if (start_when_startup_switch::check_startup()) {
+            return StartupPriority::Normal;
+        }
+
+        return StartupPriority::Disabled;
+    }
+
+    static bool is_elevated() {
+        BOOL elevated = FALSE;
+        HANDLE token = NULL;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
+            TOKEN_ELEVATION elevation;
+            DWORD size = sizeof(TOKEN_ELEVATION);
+            if (GetTokenInformation(token, TokenElevation, &elevation,
+                                    sizeof(elevation), &size)) {
+                elevated = elevation.TokenIsElevated;
+            }
+            CloseHandle(token);
+        }
+        return elevated;
+    }
+
+    static void elevate_and_restart() {
+        wchar_t path[MAX_PATH];
+        GetModuleFileNameW(NULL, path, MAX_PATH);
+
+        SHELLEXECUTEINFOW sei = {sizeof(sei)};
+        sei.lpVerb = L"runas";
+        sei.lpFile = path;
+        sei.lpParameters = L"";
+        sei.nShow = SW_SHOW;
+
+        if (ShellExecuteExW(&sei)) {
+            ExitProcess(0);
+        }
+    }
+
+    static bool create_scheduled_task(StartupPriority priority) {
+        if (priority == StartupPriority::Disabled ||
+            priority == StartupPriority::Normal) {
+            return delete_scheduled_task();
+        }
+
+        HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        bool need_uninit = SUCCEEDED(hr);
+
+        ITaskService *pService = NULL;
+        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                              IID_ITaskService, (void **)&pService);
+
+        if (FAILED(hr)) {
+            if (need_uninit)
+                CoUninitialize();
+            return false;
+        }
+
+        hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(),
+                               _variant_t());
+        if (FAILED(hr)) {
+            pService->Release();
+            if (need_uninit)
+                CoUninitialize();
+            return false;
+        }
+
+        ITaskFolder *pRootFolder = NULL;
+        hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+        if (FAILED(hr)) {
+            pService->Release();
+            if (need_uninit)
+                CoUninitialize();
+            return false;
+        }
+
+        pRootFolder->DeleteTask(_bstr_t(L"breeze-shell-startup"), 0);
+
+        ITaskDefinition *pTask = NULL;
+        hr = pService->NewTask(0, &pTask);
+        if (FAILED(hr)) {
+            pRootFolder->Release();
+            pService->Release();
+            if (need_uninit)
+                CoUninitialize();
+            return false;
+        }
+
+        IRegistrationInfo *pRegInfo = NULL;
+        hr = pTask->get_RegistrationInfo(&pRegInfo);
+        if (SUCCEEDED(hr)) {
+            pRegInfo->put_Author(_bstr_t(L"breeze-shell"));
+            pRegInfo->put_Description(
+                _bstr_t(L"Start breeze-shell on system startup"));
+            pRegInfo->Release();
+        }
+
+        IPrincipal *pPrincipal = NULL;
+        hr = pTask->get_Principal(&pPrincipal);
+        if (SUCCEEDED(hr)) {
+            pPrincipal->put_RunLevel(TASK_RUNLEVEL_HIGHEST);
+            pPrincipal->Release();
+        }
+
+        ITaskSettings *pSettings = NULL;
+        hr = pTask->get_Settings(&pSettings);
+        if (SUCCEEDED(hr)) {
+            pSettings->put_StartWhenAvailable(VARIANT_TRUE);
+            pSettings->put_DisallowStartIfOnBatteries(VARIANT_FALSE);
+            pSettings->put_StopIfGoingOnBatteries(VARIANT_FALSE);
+            pSettings->put_AllowDemandStart(VARIANT_TRUE);
+            pSettings->put_Enabled(VARIANT_TRUE);
+
+            pSettings->put_Priority(4);
+
+            pSettings->Release();
+        }
+
+        ITriggerCollection *pTriggerCollection = NULL;
+        hr = pTask->get_Triggers(&pTriggerCollection);
+        if (SUCCEEDED(hr)) {
+            ITrigger *pTrigger = NULL;
+            hr = pTriggerCollection->Create(TASK_TRIGGER_LOGON, &pTrigger);
+            if (SUCCEEDED(hr)) {
+                ILogonTrigger *pLogonTrigger = NULL;
+                hr = pTrigger->QueryInterface(IID_ILogonTrigger,
+                                              (void **)&pLogonTrigger);
+                if (SUCCEEDED(hr)) {
+                    pLogonTrigger->put_Id(_bstr_t(L"LogonTriggerId"));
+                    pLogonTrigger->put_Enabled(VARIANT_TRUE);
+                    pLogonTrigger->Release();
+                }
+                pTrigger->Release();
+            }
+            pTriggerCollection->Release();
+        }
+
+        IActionCollection *pActionCollection = NULL;
+        hr = pTask->get_Actions(&pActionCollection);
+        if (SUCCEEDED(hr)) {
+            IAction *pAction = NULL;
+            hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
+            if (SUCCEEDED(hr)) {
+                IExecAction *pExecAction = NULL;
+                hr = pAction->QueryInterface(IID_IExecAction,
+                                             (void **)&pExecAction);
+                if (SUCCEEDED(hr)) {
+                    wchar_t path[MAX_PATH];
+                    GetModuleFileNameW(NULL, path, MAX_PATH);
+                    pExecAction->put_Path(_bstr_t(path));
+                    pExecAction->put_Arguments(_bstr_t(L"inject-consistent"));
+                    pExecAction->Release();
+                }
+                pAction->Release();
+            }
+            pActionCollection->Release();
+        }
+
+        IRegisteredTask *pRegisteredTask = NULL;
+        hr = pRootFolder->RegisterTaskDefinition(
+            _bstr_t(L"breeze-shell-startup"), pTask, TASK_CREATE_OR_UPDATE,
+            _variant_t(), _variant_t(), TASK_LOGON_INTERACTIVE_TOKEN,
+            _variant_t(L""), &pRegisteredTask);
+
+        bool success = SUCCEEDED(hr);
+
+        if (pRegisteredTask)
+            pRegisteredTask->Release();
+        pTask->Release();
+        pRootFolder->Release();
+        pService->Release();
+        if (need_uninit)
+            CoUninitialize();
+
+        return success;
+    }
+
+    static bool delete_scheduled_task() {
+        HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        bool need_uninit = SUCCEEDED(hr);
+
+        ITaskService *pService = NULL;
+        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                              IID_ITaskService, (void **)&pService);
+
+        if (SUCCEEDED(hr)) {
+            hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(),
+                                   _variant_t());
+            if (SUCCEEDED(hr)) {
+                ITaskFolder *pRootFolder = NULL;
+                hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+                if (SUCCEEDED(hr)) {
+                    pRootFolder->DeleteTask(_bstr_t(L"breeze-shell-startup"),
+                                            0);
+                    pRootFolder->Release();
+                }
+            }
+            pService->Release();
+        }
+
+        if (need_uninit)
+            CoUninitialize();
+        return true;
+    }
+
+    void set_priority(StartupPriority priority) {
+        bool has_task_scheduler =
+            (get_current_priority() == StartupPriority::High);
+        bool need_delete_task =
+            has_task_scheduler && (priority != StartupPriority::High);
+
+        if (need_delete_task && !is_elevated()) {
+            elevate_and_restart();
+            return;
+        }
+
+        if (priority == StartupPriority::Disabled) {
+            start_when_startup_switch::set_startup(false);
+            delete_scheduled_task();
+        } else if (priority == StartupPriority::Normal) {
+            delete_scheduled_task();
+            start_when_startup_switch::set_startup(true);
+        } else {
+            if (!is_elevated()) {
+                elevate_and_restart();
+                return;
+            }
+            start_when_startup_switch::set_startup(false);
+            create_scheduled_task(priority);
+        }
+
+        current_priority = get_current_priority();
+    }
+};
+
 void restart_explorer() {
     std::vector<DWORD> pids = GetExplorerPIDs();
     for (DWORD pid : pids) {
@@ -492,10 +985,11 @@ struct injector_ui_main : public ui::flex_widget {
         switches->emplace_child<inject_once_switch>();
         switches->emplace_child<data_dir_btn>();
 
+        switches_box->emplace_child<startup_priority_selector>();
+
         switches = switches_box->emplace_child<ui::flex_widget>();
         switches->gap = 7;
         switches->horizontal = true;
-        switches->emplace_child<start_when_startup_switch>();
         switches->emplace_child<restart_explorer_btn>();
         switches->emplace_child<switch_lang_btn>();
     }
@@ -527,9 +1021,12 @@ std::string getFontPath() {
     SHGetSpecialFolderPathA(NULL, fontsPath, CSIDL_FONTS, FALSE);
 
     const auto p = std::filesystem::path(fontsPath);
-    if (std::filesystem::exists(p / "msyh.ttc")) return (p / "msyh.ttc").string();
-    if (std::filesystem::exists(p / "simsun.ttc")) return (p / "simsun.ttc").string();
-    if (std::filesystem::exists(p / "segoeui.ttf")) return (p / "segoeui.ttf").string();
+    if (std::filesystem::exists(p / "msyh.ttc"))
+        return (p / "msyh.ttc").string();
+    if (std::filesystem::exists(p / "simsun.ttc"))
+        return (p / "simsun.ttc").string();
+    if (std::filesystem::exists(p / "segoeui.ttf"))
+        return (p / "segoeui.ttf").string();
     throw std::runtime_error("no font found");
 }
 
@@ -542,7 +1039,7 @@ void StartInjectUI() {
     rt.acrylic = 0.1;
     rt.transparent = true;
     rt.width = 400;
-    rt.height = 230;
+    rt.height = 270;
     rt.title = "";
     if (auto r = rt.init(); !r) {
         std::cerr << "Failed to initialize render target." << std::endl;
