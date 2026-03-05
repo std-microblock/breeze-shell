@@ -20,7 +20,7 @@ const OptionGroup = ({ label, children }: { label: string; children: React.React
     return (
         <flex gap={6} backgroundColor={breeze.is_light_theme() ? '#ffffff40' : '#2a2a2a40'} padding={16} borderRadius={14}>
             <Text fontSize={15}>{label}</Text>
-            <flex gap={5} paddingLeft={20}>
+            <flex gap={5} paddingLeft={20} alignItems="stretch">
                 {children}
             </flex>
         </flex>
