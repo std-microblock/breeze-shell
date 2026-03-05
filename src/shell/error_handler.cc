@@ -23,7 +23,7 @@ void show_crash_toast() {
     WinToastTemplate templ(WinToastTemplate::ImageAndText02);
     templ.setTextField(L"Explorer 崩溃了", WinToastTemplate::FirstLine);
     templ.setTextField(L"这可能是 Breeze Shell 或其他 Shell Extension / "
-                       L"插件造成的。崩溃日志已发送。",
+                       L"插件造成的。崩溃日志将自动上传。",
                        WinToastTemplate::SecondLine);
 
     static struct WinToastEventHandler : public IWinToastHandler {
