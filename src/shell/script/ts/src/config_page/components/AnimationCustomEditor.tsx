@@ -1,8 +1,9 @@
 import * as shell from "mshell";
-import { Button, Text, NumberBox, Select } from "../components";
-import React, { memo } from "react";
+import { Button, Text, NumberBox, Select, iconElement } from "../components";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import { breeze } from "mshell";
 import { useTranslation } from "../hooks";
+import { ICON_EXPAND_LESS, ICON_EXPAND_MORE } from "../constants";
 
 interface AnimatedFloatConf {
     duration?: number;
@@ -59,7 +60,7 @@ const AnimatedPropertyEditor = memo(({
                 <NumberBox
                     label={t("customEditor.animation.duration")}
                     value={value.duration ?? 200}
-                    onChange={(v) => onChange({ ...value, duration: v })}
+                    onChange={(v) => onChange({ ...value, duration: Math.round(v) })}
                     min={0}
                     max={2000}
                     step={50}
@@ -67,7 +68,7 @@ const AnimatedPropertyEditor = memo(({
                 <NumberBox
                     label={t("customEditor.animation.delayScale")}
                     value={value.delay_scale ?? 1.0}
-                    onChange={(v) => onChange({ ...value, delay_scale: v })}
+                    onChange={(v) => onChange({ ...value, delay_scale: Math.round(v * 10) / 10 })}
                     min={0}
                     max={5}
                     step={0.1}
@@ -88,49 +89,49 @@ const PropertyGroupEditor = memo(({
     title,
     groupKey,
     properties,
-    animation,
+    groupData,
     onUpdate,
     easingOptions
 }: {
     title: string;
     groupKey: string;
     properties: Array<{ key: string; label: string }>;
-    animation: AnimationConfig;
-    onUpdate: (animation: AnimationConfig) => void;
+    groupData: any;
+    onUpdate: (groupKey: string, propKey: string, value: AnimatedFloatConf) => void;
     easingOptions: Array<{ value: string; label: string }>;
 }) => {
     const isLightTheme = breeze.is_light_theme();
-
-    const updateProperty = (propKey: string, value: AnimatedFloatConf) => {
-        const newAnim = { ...animation };
-        if (!newAnim[groupKey]) newAnim[groupKey] = {};
-        newAnim[groupKey][propKey] = value;
-        onUpdate(newAnim);
-    };
-
+    const [folded, setFolded] = useState(true);
     const getPropertyValue = (propKey: string): AnimatedFloatConf => {
-        return animation?.[groupKey]?.[propKey] ?? {};
+        return groupData?.[propKey] ?? {};
     };
 
     return (
         <flex
-            gap={10}
             backgroundColor={isLightTheme ? '#ffffff50' : '#2a2a2a50'}
             padding={16}
             borderRadius={14}
+            animatedVars={['height', 'width']}
+            alignItems="stretch"
         >
-            <Text fontSize={16}>{title}</Text>
-            <flex gap={8} paddingLeft={10}>
-                {properties.map(({ key, label }) => (
-                    <AnimatedPropertyEditor
-                        key={key}
-                        label={label}
-                        value={getPropertyValue(key)}
-                        onChange={(value) => updateProperty(key, value)}
-                        easingOptions={easingOptions}
-                    />
-                ))}
+            <flex autoSize={false} width={480} height={0} />
+            <flex onClick={() => setFolded(!folded)} horizontal justifyContent="space-between">
+                <Text fontSize={16}>{title}</Text>
+                {folded && iconElement(ICON_EXPAND_MORE, 16)}
             </flex>
+            {
+                !folded && <flex gap={8} paddingLeft={10} paddingTop={10}>
+                    {properties.map(({ key, label }) => (
+                        <AnimatedPropertyEditor
+                            key={key}
+                            label={label}
+                            value={getPropertyValue(key)}
+                            onChange={(value) => onUpdate(groupKey, key, value)}
+                            easingOptions={easingOptions}
+                        />
+                    ))}
+                </flex>
+            }
         </flex>
     );
 });
@@ -146,15 +147,21 @@ export const AnimationCustomEditor = memo(({
 }) => {
     const { t } = useTranslation();
 
-    const easingOptions = [
+    const handleUpdate = useCallback((groupKey: string, propKey: string, value: AnimatedFloatConf) => {
+        const newAnim = { ...animation };
+        newAnim[groupKey] = { ...(animation[groupKey] || {}), [propKey]: value };
+        onUpdate(newAnim);
+    }, [animation, onUpdate]);
+
+    const easingOptions = useMemo(() => [
         { value: "mutation", label: t("preset.none") },
         { value: "linear", label: t("customEditor.animation.linear") },
         { value: "ease_in", label: t("customEditor.animation.easeIn") },
         { value: "ease_out", label: t("customEditor.animation.easeOut") },
         { value: "ease_in_out", label: t("customEditor.animation.easeInOut") }
-    ];
+    ], [t]);
 
-    const animationGroups = [
+    const animationGroups = useMemo(() => [
         {
             title: t("customEditor.animation.menuItem"),
             groupKey: "item",
@@ -187,7 +194,7 @@ export const AnimationCustomEditor = memo(({
                 { key: "h", label: t("customEditor.animation.height") }
             ]
         }
-    ];
+    ], [t]);
 
     return (
         <flex
@@ -215,8 +222,8 @@ export const AnimationCustomEditor = memo(({
                         title={group.title}
                         groupKey={group.groupKey}
                         properties={group.properties}
-                        animation={animation}
-                        onUpdate={onUpdate}
+                        groupData={animation?.[group.groupKey]}
+                        onUpdate={handleUpdate}
                         easingOptions={easingOptions}
                     />
                 ))}

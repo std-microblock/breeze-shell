@@ -1,20 +1,8 @@
 import * as shell from "mshell";
 import { Button, Text, NumberBox, Toggle } from "../components";
-import React, { memo, useState, useMemo } from "react";
+import React, { memo } from "react";
 import { breeze } from "mshell";
 import { useTranslation } from "../hooks";
-
-const debounce = (func: Function, delay: number) => {
-    let timer = null;
-    return function (...args: any[]) {
-        if (timer)
-            clearTimeout(timer)
-        timer = setTimeout(() => {
-            timer = null;
-            func(...args)
-        }, delay)
-    }
-};
 
 const OptionGroup = ({ label, children }: { label: string; children: React.ReactNode }) => {
     return (
@@ -36,21 +24,15 @@ export const ThemeCustomEditor = memo(({
     onUpdate: (theme: any) => void;
     onClose: () => void;
 }) => {
-    const isLightTheme = breeze.is_light_theme();
     const { t } = useTranslation();
-    const [localTheme, setLocalTheme] = useState(theme);
-
-    const debouncedSave = useMemo(
-        () => debounce((newTheme: any) => {
-            onUpdate(newTheme);
-        }, 500),
-        [onUpdate]
-    );
 
     const updateValue = (key: string, value: any) => {
-        const newTheme = { ...localTheme, [key]: value };
-        setLocalTheme(newTheme);
-        debouncedSave(newTheme);
+        const newTheme = { ...theme, [key]: value };
+        onUpdate(newTheme);
+    };
+
+    const roundValue = (value: number, step: number): number => {
+        return Math.round(value / step) * step;
     };
 
     return (
@@ -76,48 +58,48 @@ export const ThemeCustomEditor = memo(({
                     <OptionGroup label={t("customEditor.theme.sizeSettings")}>
                         <NumberBox
                             label={t("customEditor.theme.radius")}
-                            value={localTheme?.radius ?? 6.0}
-                            onChange={(v) => updateValue('radius', v)}
+                            value={theme?.radius ?? 6.0}
+                            onChange={(v) => updateValue('radius', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.itemHeight")}
-                            value={localTheme?.item_height ?? 23.0}
-                            onChange={(v) => updateValue('item_height', v)}
+                            value={theme?.item_height ?? 23.0}
+                            onChange={(v) => updateValue('item_height', Math.round(v))}
                             min={15}
                             max={40}
                             step={1}
                         />
                         <NumberBox
                             label={t("customEditor.theme.itemGap")}
-                            value={localTheme?.item_gap ?? 3.0}
-                            onChange={(v) => updateValue('item_gap', v)}
+                            value={theme?.item_gap ?? 3.0}
+                            onChange={(v) => updateValue('item_gap', roundValue(v, 0.5))}
                             min={0}
                             max={10}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.itemRadius")}
-                            value={localTheme?.item_radius ?? 5.0}
-                            onChange={(v) => updateValue('item_radius', v)}
+                            value={theme?.item_radius ?? 5.0}
+                            onChange={(v) => updateValue('item_radius', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.margin")}
-                            value={localTheme?.margin ?? 5.0}
-                            onChange={(v) => updateValue('margin', v)}
+                            value={theme?.margin ?? 5.0}
+                            onChange={(v) => updateValue('margin', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.padding")}
-                            value={localTheme?.padding ?? 6.0}
-                            onChange={(v) => updateValue('padding', v)}
+                            value={theme?.padding ?? 6.0}
+                            onChange={(v) => updateValue('padding', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
@@ -129,32 +111,32 @@ export const ThemeCustomEditor = memo(({
                     <OptionGroup label={t("customEditor.theme.textAndIcon")}>
                         <NumberBox
                             label={t("customEditor.theme.fontSize")}
-                            value={localTheme?.font_size ?? 14.0}
-                            onChange={(v) => updateValue('font_size', v)}
+                            value={theme?.font_size ?? 14.0}
+                            onChange={(v) => updateValue('font_size', Math.round(v))}
                             min={10}
                             max={24}
                             step={1}
                         />
                         <NumberBox
                             label={t("customEditor.theme.textPadding")}
-                            value={localTheme?.text_padding ?? 8.0}
-                            onChange={(v) => updateValue('text_padding', v)}
+                            value={theme?.text_padding ?? 8.0}
+                            onChange={(v) => updateValue('text_padding', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.iconPadding")}
-                            value={localTheme?.icon_padding ?? 4.0}
-                            onChange={(v) => updateValue('icon_padding', v)}
+                            value={theme?.icon_padding ?? 4.0}
+                            onChange={(v) => updateValue('icon_padding', roundValue(v, 0.5))}
                             min={0}
                             max={20}
                             step={0.5}
                         />
                         <NumberBox
                             label={t("customEditor.theme.rightIconPadding")}
-                            value={localTheme?.right_icon_padding ?? 20.0}
-                            onChange={(v) => updateValue('right_icon_padding', v)}
+                            value={theme?.right_icon_padding ?? 20.0}
+                            onChange={(v) => updateValue('right_icon_padding', Math.round(v))}
                             min={0}
                             max={40}
                             step={1}
@@ -164,18 +146,18 @@ export const ThemeCustomEditor = memo(({
                     <OptionGroup label={t("customEditor.theme.effects")}>
                         <Toggle
                             label={t("customEditor.theme.useDwm")}
-                            value={localTheme?.use_dwm_if_available ?? true}
+                            value={theme?.use_dwm_if_available ?? true}
                             onChange={(v) => updateValue('use_dwm_if_available', v)}
                         />
                         <Toggle
                             label={t("customEditor.theme.acrylic")}
-                            value={localTheme?.acrylic ?? true}
+                            value={theme?.acrylic ?? true}
                             onChange={(v) => updateValue('acrylic', v)}
                         />
                         <NumberBox
                             label={t("customEditor.theme.backgroundOpacity")}
-                            value={localTheme?.background_opacity ?? 1.0}
-                            onChange={(v) => updateValue('background_opacity', v)}
+                            value={theme?.background_opacity ?? 1.0}
+                            onChange={(v) => updateValue('background_opacity', roundValue(v, 0.05))}
                             min={0}
                             max={1}
                             step={0.05}

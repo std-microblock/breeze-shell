@@ -21,6 +21,7 @@
   "types": "./dist/types/type_entry.d.ts",
   "dependencies": {
     "breeze-shell-types": "^0.0.14",
-    "i18next": "^25.8.14"
+    "i18next": "^25.8.14",
+    "react-i18next": "^16.5.6"
   }
 }

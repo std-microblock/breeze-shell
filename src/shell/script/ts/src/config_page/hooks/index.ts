@@ -1,2 +1,2 @@
 export { useHoverActive } from "./useHoverActive";
-export { useTranslation } from "./useTranslation";
+export { useTranslation } from "react-i18next";
