@@ -78,8 +78,8 @@ const NumberBoxControl = ({
                 onClick={onDecrease}
                 backgroundColor={
                     decreaseHover.isActive ? (isLightTheme ? '#d0d0d0' : '#404040') :
-                    decreaseHover.isHovered ? (isLightTheme ? '#e8e8e8' : '#353535') :
-                    (isLightTheme ? '#ffffff00' : '#2a2a2a00')
+                        decreaseHover.isHovered ? (isLightTheme ? '#e8e8e8' : '#353535') :
+                            (isLightTheme ? '#ffffff00' : '#2a2a2a00')
                 }
                 borderRadius={4}
                 onMouseEnter={decreaseHover.onMouseEnter}
@@ -99,7 +99,9 @@ const NumberBoxControl = ({
                 autoSize={false}
             >
                 <Text fontSize={13} color={isLightTheme ? [40, 40, 40, 255] : [220, 220, 220, 255]}>
-                    {value.toFixed(step < 1 ? 1 : 0)}
+                    {value.toFixed(
+                        step < 1 ? Math.ceil(-Math.log10(step)) : 0
+                    )}
                 </Text>
             </flex>
             <flex
@@ -110,8 +112,8 @@ const NumberBoxControl = ({
                 onClick={onIncrease}
                 backgroundColor={
                     increaseHover.isActive ? (isLightTheme ? '#d0d0d0' : '#404040') :
-                    increaseHover.isHovered ? (isLightTheme ? '#e8e8e8' : '#353535') :
-                    (isLightTheme ? '#ffffff00' : '#2a2a2a00')
+                        increaseHover.isHovered ? (isLightTheme ? '#e8e8e8' : '#353535') :
+                            (isLightTheme ? '#ffffff00' : '#2a2a2a00')
                 }
                 borderRadius={4}
                 onMouseEnter={increaseHover.onMouseEnter}
