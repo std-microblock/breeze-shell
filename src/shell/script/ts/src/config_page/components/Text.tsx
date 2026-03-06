@@ -5,17 +5,24 @@ export const Text = memo((({
     children,
     fontSize = 14,
     maxWidth = -1,
-    color
+    color,
+    opacity
 }: {
     children: string;
     fontSize?: number;
     maxWidth?: number;
     color?: string | number[];
+    opacity?: number;
 }) => {
     if (!color) color = breeze.is_light_theme() ? '#000000ff' : '#ffffffff'
     if (color instanceof Array)
         color = `#${color.slice(0, 4).map(c => c.toString(16).padStart(2, '0')).join('')}`;
-
+    if (opacity !== undefined) {
+        const origAlpha = parseInt(color.slice(7, 9), 16);
+        const newAlpha = Math.round(origAlpha * opacity);
+        color = color.slice(0, 7) + newAlpha.toString(16).padStart(2, '0');
+    }
+    
     return (
         <text
             text={children}

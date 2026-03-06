@@ -101,14 +101,17 @@
     "animation": {
       "title": "自定义动画",
       "done": "完成",
-      "itemOpacity": "菜单项 - 透明度",
-      "itemX": "菜单项 - X轴",
+      "menuItem": "菜单项动画",
       "mainBg": "主菜单背景",
       "submenuBg": "子菜单背景",
+      "opacity": "透明度",
+      "x": "X 轴位移",
+      "y": "Y 轴位移",
+      "width": "宽度",
+      "height": "高度",
       "duration": "持续时长",
       "easing": "动画曲线",
       "delayScale": "延迟缩放",
-      "opacityDuration": "透明度时长",
       "linear": "线性",
       "easeIn": "缓入",
       "easeOut": "缓出",
@@ -117,6 +120,8 @@
   },
   "test": {
     "title": "测试",
-    "crash": "崩溃"
+    "cpu_exception_crash": "异常崩溃",
+    "cpp_exception_crash": "C++ 异常崩溃",
+    "js_exception_crash": "JavaScript 异常崩溃"
   }
 }

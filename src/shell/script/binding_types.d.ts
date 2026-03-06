@@ -1078,7 +1078,8 @@ export class breeze {
 	static should_show_settings_button(): boolean
 	static current_process_name(): string
 	static current_process_path(): string
-	static crash(): void
+	static crash_cpu_exception(): void
+	static crash_cpp_exception(): void
 }
 export class win32 {
 	/**

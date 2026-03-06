@@ -4,28 +4,146 @@ import React, { memo } from "react";
 import { breeze } from "mshell";
 import { useTranslation } from "../hooks";
 
+interface AnimatedFloatConf {
+    duration?: number;
+    easing?: string;
+    delay_scale?: number;
+}
 
-const OptionGroup = ({ label, children }: { label: string; children: React.ReactNode }) => {
+interface AnimationConfig {
+    item?: {
+        opacity?: AnimatedFloatConf;
+        x?: AnimatedFloatConf;
+        y?: AnimatedFloatConf;
+        width?: AnimatedFloatConf;
+    };
+    main_bg?: {
+        opacity?: AnimatedFloatConf;
+        x?: AnimatedFloatConf;
+        y?: AnimatedFloatConf;
+        w?: AnimatedFloatConf;
+        h?: AnimatedFloatConf;
+    };
+    submenu_bg?: {
+        opacity?: AnimatedFloatConf;
+        x?: AnimatedFloatConf;
+        y?: AnimatedFloatConf;
+        w?: AnimatedFloatConf;
+        h?: AnimatedFloatConf;
+    };
+}
+
+const AnimatedPropertyEditor = memo(({
+    label,
+    value,
+    onChange,
+    easingOptions
+}: {
+    label: string;
+    value: AnimatedFloatConf;
+    onChange: (value: AnimatedFloatConf) => void;
+    easingOptions: Array<{ value: string; label: string }>;
+}) => {
+    const { t } = useTranslation();
+    const isLightTheme = breeze.is_light_theme();
+
     return (
-        <flex gap={6} backgroundColor={breeze.is_light_theme() ? '#ffffff40' : '#2a2a2a40'} padding={16} borderRadius={14}>
-            <Text fontSize={15}>{label}</Text>
-            <flex gap={5} paddingLeft={20}>
-                {children}
+        <flex
+            gap={8}
+            backgroundColor={isLightTheme ? '#ffffff30' : '#1a1a1a30'}
+            padding={12}
+            borderRadius={10}
+        >
+            <Text fontSize={13} opacity={0.8}>{label}</Text>
+            <flex horizontal gap={10}>
+                <NumberBox
+                    label={t("customEditor.animation.duration")}
+                    value={value.duration ?? 200}
+                    onChange={(v) => onChange({ ...value, duration: v })}
+                    min={0}
+                    max={2000}
+                    step={50}
+                />
+                <NumberBox
+                    label={t("customEditor.animation.delayScale")}
+                    value={value.delay_scale ?? 1.0}
+                    onChange={(v) => onChange({ ...value, delay_scale: v })}
+                    min={0}
+                    max={5}
+                    step={0.1}
+                />
+            </flex>
+
+            <Select
+                label={t("customEditor.animation.easing")}
+                value={value.easing ?? 'ease_in_out'}
+                options={easingOptions}
+                onChange={(v) => onChange({ ...value, easing: v })}
+            />
+        </flex>
+    );
+});
+
+const PropertyGroupEditor = memo(({
+    title,
+    groupKey,
+    properties,
+    animation,
+    onUpdate,
+    easingOptions
+}: {
+    title: string;
+    groupKey: string;
+    properties: Array<{ key: string; label: string }>;
+    animation: AnimationConfig;
+    onUpdate: (animation: AnimationConfig) => void;
+    easingOptions: Array<{ value: string; label: string }>;
+}) => {
+    const isLightTheme = breeze.is_light_theme();
+
+    const updateProperty = (propKey: string, value: AnimatedFloatConf) => {
+        const newAnim = { ...animation };
+        if (!newAnim[groupKey]) newAnim[groupKey] = {};
+        newAnim[groupKey][propKey] = value;
+        onUpdate(newAnim);
+    };
+
+    const getPropertyValue = (propKey: string): AnimatedFloatConf => {
+        return animation?.[groupKey]?.[propKey] ?? {};
+    };
+
+    return (
+        <flex
+            gap={10}
+            backgroundColor={isLightTheme ? '#ffffff50' : '#2a2a2a50'}
+            padding={16}
+            borderRadius={14}
+        >
+            <Text fontSize={16}>{title}</Text>
+            <flex gap={8} paddingLeft={10}>
+                {properties.map(({ key, label }) => (
+                    <AnimatedPropertyEditor
+                        key={key}
+                        label={label}
+                        value={getPropertyValue(key)}
+                        onChange={(value) => updateProperty(key, value)}
+                        easingOptions={easingOptions}
+                    />
+                ))}
             </flex>
         </flex>
     );
-}
+});
 
 export const AnimationCustomEditor = memo(({
     animation,
     onUpdate,
     onClose
 }: {
-    animation: any;
-    onUpdate: (animation: any) => void;
+    animation: AnimationConfig;
+    onUpdate: (animation: AnimationConfig) => void;
     onClose: () => void;
 }) => {
-    const isLightTheme = breeze.is_light_theme();
     const { t } = useTranslation();
 
     const easingOptions = [
@@ -36,126 +154,72 @@ export const AnimationCustomEditor = memo(({
         { value: "ease_in_out", label: t("customEditor.animation.easeInOut") }
     ];
 
-    const updateItemAnim = (prop: string, key: string, value: any) => {
-        const newAnim = { ...animation };
-        if (!newAnim.item) newAnim.item = {};
-        if (!newAnim.item[prop]) newAnim.item[prop] = {};
-        newAnim.item[prop][key] = value;
-        onUpdate(newAnim);
-    };
-
-    const updateBgAnim = (bgType: string, prop: string, key: string, value: any) => {
-        const newAnim = { ...animation };
-        if (!newAnim[bgType]) newAnim[bgType] = {};
-        if (!newAnim[bgType][prop]) newAnim[bgType][prop] = {};
-        newAnim[bgType][prop][key] = value;
-        onUpdate(newAnim);
-    };
-
-    const getItemAnimValue = (prop: string, key: string, defaultValue: any) => {
-        return animation?.item?.[prop]?.[key] ?? defaultValue;
-    };
-
-    const getBgAnimValue = (bgType: string, prop: string, key: string, defaultValue: any) => {
-        return animation?.[bgType]?.[prop]?.[key] ?? defaultValue;
-    };
+    const animationGroups = [
+        {
+            title: t("customEditor.animation.menuItem"),
+            groupKey: "item",
+            properties: [
+                { key: "opacity", label: t("customEditor.animation.opacity") },
+                { key: "x", label: t("customEditor.animation.x") },
+                { key: "y", label: t("customEditor.animation.y") },
+                { key: "width", label: t("customEditor.animation.width") }
+            ]
+        },
+        {
+            title: t("customEditor.animation.mainBg"),
+            groupKey: "main_bg",
+            properties: [
+                { key: "opacity", label: t("customEditor.animation.opacity") },
+                { key: "x", label: t("customEditor.animation.x") },
+                { key: "y", label: t("customEditor.animation.y") },
+                { key: "w", label: t("customEditor.animation.width") },
+                { key: "h", label: t("customEditor.animation.height") }
+            ]
+        },
+        {
+            title: t("customEditor.animation.submenuBg"),
+            groupKey: "submenu_bg",
+            properties: [
+                { key: "opacity", label: t("customEditor.animation.opacity") },
+                { key: "x", label: t("customEditor.animation.x") },
+                { key: "y", label: t("customEditor.animation.y") },
+                { key: "w", label: t("customEditor.animation.width") },
+                { key: "h", label: t("customEditor.animation.height") }
+            ]
+        }
+    ];
 
     return (
         <flex
             gap={20}
             alignItems="stretch"
-            width={600}
+            width={700}
             enableScrolling
-            maxHeight={550}
+            maxHeight={600}
             paddingLeft={25}
             paddingRight={25}
             paddingTop={5}
+            paddingBottom={20}
         >
             <flex horizontal justifyContent="space-between" alignItems="center">
-                <Text fontSize={20}>{t("customEditor.animation.title")}</Text>
+                <Text fontSize={22}>{t("customEditor.animation.title")}</Text>
                 <Button onClick={onClose}>
                     <Text fontSize={14}>{t("customEditor.animation.done")}</Text>
                 </Button>
             </flex>
 
-            <flex gap={10}>
-                <OptionGroup label={t("customEditor.animation.itemOpacity")}>
-                    <NumberBox
-                        label={t("customEditor.animation.duration")}
-                        value={getItemAnimValue('opacity', 'duration', 200)}
-                        onChange={(v) => updateItemAnim('opacity', 'duration', v)}
-                        min={0}
-                        max={1000}
-                        step={50}
+            <flex gap={15}>
+                {animationGroups.map((group) => (
+                    <PropertyGroupEditor
+                        key={group.groupKey}
+                        title={group.title}
+                        groupKey={group.groupKey}
+                        properties={group.properties}
+                        animation={animation}
+                        onUpdate={onUpdate}
+                        easingOptions={easingOptions}
                     />
-                    <NumberBox
-                        label={t("customEditor.animation.delayScale")}
-                        value={getItemAnimValue('opacity', 'delay_scale', 1.0)}
-                        onChange={(v) => updateItemAnim('opacity', 'delay_scale', v)}
-                        min={0}
-                        max={5}
-                        step={0.1}
-                    />
-                    <Select
-                        label={t("customEditor.animation.easing")}
-                        value={getItemAnimValue('opacity', 'easing', 'ease_in_out')}
-                        options={easingOptions}
-                        onChange={(v) => updateItemAnim('opacity', 'easing', v)}
-                    />
-                </OptionGroup>
-
-
-                <OptionGroup label={t("customEditor.animation.itemX")}>
-                    <NumberBox
-                        label={t("customEditor.animation.duration")}
-                        value={getItemAnimValue('x', 'duration', 200)}
-                        onChange={(v) => updateItemAnim('x', 'duration', v)}
-                        min={0}
-                        max={1000}
-                        step={50}
-                    />
-                    <Select
-                        label={t("customEditor.animation.easing")}
-                        value={getItemAnimValue('x', 'easing', 'ease_in_out')}
-                        options={easingOptions}
-                        onChange={(v) => updateItemAnim('x', 'easing', v)}
-                    />
-                </OptionGroup>
-
-                <OptionGroup label={t("customEditor.animation.mainBg")}>
-                    <NumberBox
-                        label={t("customEditor.animation.opacityDuration")}
-                        value={getBgAnimValue('main_bg', 'opacity', 'duration', 200)}
-                        onChange={(v) => updateBgAnim('main_bg', 'opacity', 'duration', v)}
-                        min={0}
-                        max={1000}
-                        step={50}
-                    />
-                    <Select
-                        label={t("customEditor.animation.easing")}
-                        value={getBgAnimValue('main_bg', 'opacity', 'easing', 'ease_in_out')}
-                        options={easingOptions}
-                        onChange={(v) => updateBgAnim('main_bg', 'opacity', 'easing', v)}
-                    />
-                </OptionGroup>
-
-
-                <OptionGroup label={t("customEditor.animation.submenuBg")}>
-                    <NumberBox
-                        label={t("customEditor.animation.opacityDuration")}
-                        value={getBgAnimValue('submenu_bg', 'opacity', 'duration', 200)}
-                        onChange={(v) => updateBgAnim('submenu_bg', 'opacity', 'duration', v)}
-                        min={0}
-                        max={1000}
-                        step={50}
-                    />
-                    <Select
-                        label={t("customEditor.animation.easing")}
-                        value={getBgAnimValue('submenu_bg', 'opacity', 'easing', 'ease_in_out')}
-                        options={easingOptions}
-                        onChange={(v) => updateBgAnim('submenu_bg', 'opacity', 'easing', v)}
-                    />
-                </OptionGroup>
+                ))}
             </flex>
         </flex>
     );
