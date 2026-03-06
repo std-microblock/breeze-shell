@@ -1,5 +1,6 @@
 #include "error_handler.h"
 
+#include <exception>
 #include <string>
 
 #include "build_info.h"
@@ -8,6 +9,48 @@
 
 #include "sentry.h"
 #include "wintoastlib.h"
+
+#include <signal.h>
+#include <windows.h>
+
+#ifndef STATUS_FATAL_APP_EXIT
+#define STATUS_FATAL_APP_EXIT 0x40000015L
+#endif
+
+static void (*g_previous_sigabrt_handler)(int) = nullptr;
+
+static void handle_sigabrt(int signum) {
+    CONTEXT context;
+    RtlCaptureContext(&context);
+
+    EXCEPTION_RECORD record;
+    memset(&record, 0, sizeof(record));
+    record.ExceptionCode = STATUS_FATAL_APP_EXIT;
+    record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+
+#if defined(_M_AMD64)
+    record.ExceptionAddress = (PVOID)context.Rip;
+#elif defined(_M_IX86)
+    record.ExceptionAddress = (PVOID)context.Eip;
+#elif defined(_M_ARM64)
+    record.ExceptionAddress = (PVOID)context.Pc;
+#endif
+
+    EXCEPTION_POINTERS exception_pointers;
+    exception_pointers.ContextRecord = &context;
+    exception_pointers.ExceptionRecord = &record;
+
+    sentry_ucontext_t uctx;
+    uctx.exception_ptrs = exception_pointers;
+    sentry_handle_exception(&uctx);
+
+    if (g_previous_sigabrt_handler && g_previous_sigabrt_handler != SIG_DFL &&
+        g_previous_sigabrt_handler != SIG_IGN) {
+        g_previous_sigabrt_handler(signum);
+    }
+
+    TerminateProcess(GetCurrentProcess(), 3);
+}
 
 void show_crash_toast() {
     using namespace WinToastLib;
@@ -64,4 +107,15 @@ void mb_shell::install_error_handlers() {
     sentry_set_tag("build_date", BREEZE_BUILD_DATE_TIME);
     sentry_set_tag("windows_version",
                    mb_shell::is_win11_or_later() ? "11+" : "10-");
+
+    g_previous_sigabrt_handler = signal(SIGABRT, handle_sigabrt);
+}
+
+void mb_shell::cleanup_error_handlers() {
+    if (g_previous_sigabrt_handler) {
+        signal(SIGABRT, g_previous_sigabrt_handler);
+        g_previous_sigabrt_handler = nullptr;
+    }
+
+    sentry_close();
 }
