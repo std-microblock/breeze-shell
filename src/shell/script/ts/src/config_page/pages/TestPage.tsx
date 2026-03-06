@@ -20,6 +20,13 @@ const TestPage = memo(() => {
                     <Text fontSize={16}>{t("test.js_exception_crash")}</Text>
                 </Button>
             </flex>
+
+
+            <flex autoSize={false} width={100} height={200} alignItems="center" justifyContent="center" backgroundColor="#0000ff" >
+                <flex backgroundColor="#ff0000">
+                    <Text fontSize={16} color="#ffffff">Hello，你好</Text>
+                </flex>
+            </flex>
         </flex>
     );
 });
