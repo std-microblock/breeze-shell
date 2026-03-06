@@ -1135,7 +1135,6 @@ template<> struct js_bind<mb_shell::js::breeze> {
                 .static_fun<&mb_shell::js::breeze::version>("version")
                 .static_fun<&mb_shell::js::breeze::hash>("hash")
                 .static_fun<&mb_shell::js::breeze::branch>("branch")
-                .static_fun<&mb_shell::js::breeze::build_date>("build_date")
                 .static_fun<&mb_shell::js::breeze::data_directory>("data_directory")
                 .static_fun<&mb_shell::js::breeze::is_light_theme>("is_light_theme")
                 .static_fun<&mb_shell::js::breeze::user_language>("user_language")

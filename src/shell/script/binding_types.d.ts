@@ -1065,7 +1065,6 @@ export class breeze {
 	static version(): string
 	static hash(): string
 	static branch(): string
-	static build_date(): string
 	static data_directory(): string
 	static is_light_theme(): boolean
 	static user_language(): string

@@ -104,7 +104,6 @@ void mb_shell::install_error_handlers() {
     sentry_init(options);
     sentry_set_tag("git_commit", BREEZE_GIT_COMMIT_HASH);
     sentry_set_tag("git_branch", BREEZE_GIT_BRANCH_NAME);
-    sentry_set_tag("build_date", BREEZE_BUILD_DATE_TIME);
     sentry_set_tag("windows_version",
                    mb_shell::is_win11_or_later() ? "11+" : "10-");
 

@@ -688,7 +688,6 @@ std::optional<std::string> win32::env(std::string name) {
 
 std::string breeze::hash() { return BREEZE_GIT_COMMIT_HASH; }
 std::string breeze::branch() { return BREEZE_GIT_BRANCH_NAME; }
-std::string breeze::build_date() { return BREEZE_BUILD_DATE_TIME; }
 std::vector<std::shared_ptr<mb_shell::js::menu_item_controller>>
 menu_item_parent_item_controller::children() {
     if (!valid())
