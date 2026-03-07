@@ -3,8 +3,8 @@ package("breeze-glfw")
     set_urls("https://github.com/breeze-shell/glfw.git")
     add_versions("2026.03.07+1", "a79c32a7d9ef4cd8a15b5f8ccbcdf9510c48da03")
 
-local BREEZE_UI_VER = "2026.03.07+14"
-local BREEZE_UI_HASH = "9396e25b041b35786f5abb2f405e4edec504ed9a"
+local BREEZE_UI_VER = "2026.03.07+15"
+local BREEZE_UI_HASH = "584d9d313ec12ac4725f6696773415aba477ce87"
 
 package("breeze-nanosvg")
     add_urls("https://github.com/std-microblock/breeze-ui.git")
