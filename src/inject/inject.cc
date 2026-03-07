@@ -1,9 +1,10 @@
 #include <chrono>
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <spdlog/spdlog.h>
 
 #include "breeze_ui/animator.h"
 #include "breeze_ui/ui.h"
@@ -62,13 +63,12 @@ void GetDebugPrivilege() {
 
     if (!OpenProcessToken(GetCurrentProcess(),
                           TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        std::cerr << "OpenProcessToken failed: " << GetLastError() << std::endl;
+        spdlog::error( "OpenProcessToken failed: %d", GetLastError());
         return;
     }
 
     if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
-        std::cerr << "LookupPrivilegeValue failed: " << GetLastError()
-                  << std::endl;
+        spdlog::error( "LookupPrivilegeValue failed: %d", GetLastError());
         CloseHandle(hToken);
         return;
     }
@@ -79,8 +79,7 @@ void GetDebugPrivilege() {
 
     if (!AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(TOKEN_PRIVILEGES),
                                NULL, NULL)) {
-        std::cerr << "AdjustTokenPrivileges failed: " << GetLastError()
-                  << std::endl;
+        spdlog::error( "AdjustTokenPrivileges failed: %d", GetLastError());
         CloseHandle(hToken);
         return;
     }
@@ -100,7 +99,7 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
 
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetPID);
     if (hProcess == NULL) {
-        std::cerr << "OpenProcess failed: " << GetLastError() << std::endl;
+        spdlog::error( "OpenProcess failed: %d", GetLastError());
         return 1;
     }
 
@@ -108,15 +107,14 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         VirtualAllocEx(hProcess, NULL, (dllPath.size() + 1) * sizeof(wchar_t),
                        MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     if (remoteString == NULL) {
-        std::cerr << "VirtualAllocEx failed: " << GetLastError() << std::endl;
+        spdlog::error( "VirtualAllocEx failed: %d", GetLastError());
         CloseHandle(hProcess);
         return 1;
     }
 
     if (!WriteProcessMemory(hProcess, remoteString, dllPath.data(),
                             (dllPath.size() + 1) * sizeof(wchar_t), NULL)) {
-        std::cerr << "WriteProcessMemory failed: " << GetLastError()
-                  << std::endl;
+        spdlog::error( "WriteProcessMemory failed: %d", GetLastError());
         VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return 1;
@@ -129,8 +127,7 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
     HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, loadLibraryW,
                                         remoteString, 0, NULL);
     if (hThread == NULL) {
-        std::cerr << "CreateRemoteThread failed: " << GetLastError()
-                  << std::endl;
+        spdlog::error( "CreateRemoteThread failed: %d", GetLastError());
         VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return 1;
@@ -143,11 +140,10 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         WaitForSingleObject(hProcess, INFINITE);
         auto exitCode = 0;
         if (!GetExitCodeProcess(hProcess, (LPDWORD)&exitCode)) {
-            std::cerr << "GetExitCodeProcess failed: " << GetLastError()
-                      << std::endl;
+            spdlog::error( "GetExitCodeProcess failed: %d", GetLastError());
         }
         if (exitCode != 0) {
-            std::cerr << "Process exited with code: " << exitCode << std::endl;
+            spdlog::error( "Process exited with code: %d", exitCode);
             if (++crash_count >= MAX_CRASH_COUNT) {
                 ShowCrashDialog();
             }
@@ -157,7 +153,7 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         CloseHandle(hProcess);
     }).detach();
 
-    std::cout << "DLL injected successfully." << std::endl;
+    spdlog::info( "DLL injected successfully.");
     return 0;
 }
 
@@ -165,7 +161,7 @@ bool IsInjected(DWORD targetPID, std::wstring &dllPath) {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                                   FALSE, targetPID);
     if (hProcess == NULL) {
-        std::cerr << "OpenProcess failed: " << GetLastError() << std::endl;
+        spdlog::error( "OpenProcess failed: {}", GetLastError());
         return false;
     }
 
@@ -213,7 +209,7 @@ int NewExplorerProcessAndInject() {
     }
 
     if (targetPID == 0) {
-        std::cerr << "Could not find new explorer.exe process." << std::endl;
+        spdlog::error( "Could not find new explorer.exe process.");
         return 1;
     }
 
@@ -1032,7 +1028,7 @@ std::string getFontPath() {
 
 void StartInjectUI() {
     if (auto r = ui::render_target::init_global(); !r) {
-        std::cerr << "Failed to initialize global render target." << std::endl;
+        spdlog::error( "Failed to initialize global render target.");
         return;
     }
     ui::render_target rt;
@@ -1042,7 +1038,7 @@ void StartInjectUI() {
     rt.height = 270;
     rt.title = "";
     if (auto r = rt.init(); !r) {
-        std::cerr << "Failed to initialize render target." << std::endl;
+        spdlog::error( "Failed to initialize render target.");
         return;
     }
     nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
@@ -1062,7 +1058,7 @@ void ShowCrashDialog() {
                     MB_ICONERROR | MB_OK);
     };
     if (auto r = ui::render_target::init_global(); !r) {
-        std::cerr << "Failed to initialize global render target." << std::endl;
+        spdlog::error( "Failed to initialize global render target.");
         show_by_messagebox();
         return;
     }
@@ -1075,7 +1071,7 @@ void ShowCrashDialog() {
     rt.title = "";
 
     if (auto r = rt.init(); !r) {
-        std::cerr << "Failed to initialize render target." << std::endl;
+        spdlog::error( "Failed to initialize render target.");
         show_by_messagebox();
         return;
     }
@@ -1220,7 +1216,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
 
         try {
-            std::println("breeze-shell injector started.");
+            spdlog::info( "breeze-shell injector started.");
         } catch (std::exception &) {
             freopen("NUL", "w", stdout);
             freopen("NUL", "w", stderr);
@@ -1237,7 +1233,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             HANDLE mutex =
                 CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
             if (GetLastError() == ERROR_ALREADY_EXISTS) {
-                std::cerr << "Another instance is running." << std::endl;
+                spdlog::error( "Another instance is running.");
                 return 1;
             }
 
@@ -1251,7 +1247,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             InjectAllConsistent();
         } else {
-            std::cerr << "Invalid argument." << std::endl;
+            spdlog::error( "Invalid argument.");
         }
     }
 

@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <numbers>
 #include <vector>
+#include <fmt/format.h>
 
 namespace mb_shell {
 paint_color paint_color::from_string(const std::string &str) {
@@ -125,7 +126,7 @@ rgba_color rgba_color::from_string(const std::string &str) {
     return parse_color(str);
 }
 std::string rgba_color::to_string() const {
-    return std::format("#{0:02x}{1:02x}{2:02x}{3:02x}",
+    return fmt::format("#{0:02x}{1:02x}{2:02x}{3:02x}",
                        static_cast<int>(r * 255), static_cast<int>(g * 255),
                        static_cast<int>(b * 255), static_cast<int>(a * 255));
 }

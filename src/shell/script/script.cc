@@ -10,12 +10,14 @@
 #include <future>
 #include <iostream>
 #include <mutex>
+#include <numeric>
 #include <print>
 #include <ranges>
 #include <sstream>
 #include <string_view>
 #include <thread>
 #include <unordered_set>
+
 
 #include "FileWatch.hpp"
 #include "quickjs.h"
@@ -34,14 +36,10 @@ std::string breeze_script_js =
 namespace mb_shell {
 
 void println(qjs::rest<std::string> args) {
-    std::stringstream ss;
-    for (auto &arg : args) {
-        ss << arg << " ";
-    }
-    ss << std::endl;
-    auto ws = utf8_to_wstring(ss.str());
-    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), ws.c_str(), ws.size(),
-                  nullptr, nullptr);
+    spdlog::info(std::ranges::fold_left(
+        args, std::string(), [](const std::string &a, const std::string &b) {
+            return a + b + " ";
+        }));
 }
 
 void script_context::bind() {
@@ -108,7 +106,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
     std::optional<WindowsThreadWrapper> js_thread;
     auto reload_all = [&]() {
-        dbgout("Reloading all scripts");
+        spdlog::info("Reloading all scripts");
 
         if (js) {
             js->pending_job_count.exchange(-1);
@@ -118,7 +116,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
             js->pending_job_count.exchange(0);
         }
 
-        dbgout("Creating JS thread");
+        spdlog::info("Creating JS thread");
         menu_callbacks_js.clear();
 
         is_js_ready.exchange(false);
@@ -291,7 +289,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
                 return;
             }
 
-            dbgout("File change detected: {}", path);
+            spdlog::info("File change detected: {}", path);
             has_update = true;
         });
 

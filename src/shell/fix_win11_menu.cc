@@ -1,10 +1,11 @@
 #include "fix_win11_menu.h"
 
 #include <cstdlib>
-#include <print>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <spdlog/spdlog.h>
 
 #include "blook/blook.h"
 #include "blook/memo.h"
@@ -170,8 +171,7 @@ void mb_shell::fix_win11_menu::install() {
                                                               0xCC, 0xCC})
                                                ->range_size(0xB50)
                                                .disassembly())) {
-                                std::println(
-                                    "Patched shell32.dll for win11 menu fix");
+                                spdlog::info( "Patched shell32.dll for win11 menu fix");
                                 break;
                             }
                         }
@@ -179,7 +179,7 @@ void mb_shell::fix_win11_menu::install() {
                 }
             }
         } catch (...) {
-            std::println("Failed to patch shell32.dll for win11 menu fix");
+            spdlog::error( "Failed to patch shell32.dll for win11 menu fix");
         }
     }).detach();
 }

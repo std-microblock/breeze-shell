@@ -8,7 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <print>
+#include <spdlog/spdlog.h>
 #include <thread>
 #include <vector>
 
@@ -105,8 +105,7 @@ struct dying_widget_test : public ui::widget {
 int main() {
 
     if (auto res = ui::render_target::init_global(); !res) {
-        std::println("Failed to initialize global render target: {}",
-                     res.error());
+        spdlog::error( "Failed to initialize global render target: %s", res.error().c_str());
         return 1;
     }
 
@@ -116,7 +115,7 @@ int main() {
     // rt.transparent = false;
 
     if (auto res = rt.init(); !res) {
-        std::println("Failed to initialize render target: {}", res.error());
+        spdlog::error( "Failed to initialize render target: %s", res.error().c_str());
         return 1;
     }
     nvgCreateFont(rt.nvg, "main", "C:\\WINDOWS\\FONTS\\msyh.ttc");

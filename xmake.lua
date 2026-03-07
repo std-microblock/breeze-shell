@@ -24,9 +24,7 @@ add_requires("sentry-native", {
 })
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook 57184918425c1d3a9cc6e9ff56edf641a3e0cb2a", "glad",
-    "reflect-cpp", "wintoast v1.3.1", "breeze-ui")
-
-add_requires("watcher")
+    "reflect-cpp", "wintoast v1.3.1", "breeze-ui", "watcher", "fmt", "spdlog")
 
 if has_config("asan") then
     add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
@@ -66,7 +64,7 @@ target("shell")
     add_includedirs("src/shell/script/quickjs")
 
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
-    add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher")
+    add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2obj", {
         extensions = {".js"}
@@ -108,7 +106,7 @@ target("inject")
     set_kind("binary")
     add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32", "taskschd", "ole32", "oleaut32", "taskschd", "comsupp")
     add_files("src/inject/*.cc")
-    add_packages("breeze-ui")
+    add_packages("breeze-ui", "spdlog", "fmt")
     set_basename("breeze")
     set_encodings("utf-8")
     add_rules("utils.bin2c", {

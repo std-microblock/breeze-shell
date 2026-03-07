@@ -68,7 +68,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
 
     // set the position of the window to fullscreen in this monitor + padding
 
-    dbgout("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
+    spdlog::info("Monitor: {} {} {} {}", monitor_info.rcMonitor.left,
            monitor_info.rcMonitor.top, monitor_info.rcMonitor.right,
            monitor_info.rcMonitor.bottom);
 
@@ -104,20 +104,20 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
     };
 
     if (run_js) {
-        dbgout("[perf] JS plugins start");
+        spdlog::info("[perf] JS plugins start");
         auto before_js = rt->clock.now();
         for (auto &listener : menu_callbacks_js) {
             listener->operator()(menu_info);
         }
-        dbgout("[perf] JS plugins costed {}ms",
+        spdlog::info("[perf] JS plugins costed {}ms",
                std::chrono::duration_cast<std::chrono::milliseconds>(
                    rt->clock.now() - before_js)
                    .count());
     } else {
-        dbgout("Skipped running JS");
+        spdlog::info("Skipped running JS");
     }
 
-    dbgout("Current menu: {}", menu_render::current.has_value());
+    spdlog::info("Current menu: {}", menu_render::current.has_value());
     return render;
 }
 

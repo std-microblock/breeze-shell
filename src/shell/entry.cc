@@ -34,7 +34,7 @@
 #include <iostream>
 #include <objbase.h>
 #include <optional>
-#include <print>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -179,7 +179,7 @@ void main() {
         ShowWindow(GetConsoleWindow(), SW_SHOW);
         std::thread([]() {
             script_ctx.is_js_ready.wait(false);
-            std::println("Is js ready: {}", script_ctx.is_js_ready.load());
+            spdlog::info( "Is js ready: %d", script_ctx.is_js_ready.load());
             script_ctx.js->enqueueJob([]() {
                 script_ctx.js->eval("globalThis.showConfigPage()", "asan.js");
             });

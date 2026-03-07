@@ -19,7 +19,8 @@
 #include <debugapi.h>
 #include <future>
 #include <iostream>
-#include <print>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 #include <ranges>
 #include <string>
 #include <thread>
@@ -153,8 +154,7 @@ menu menu::construct_with_hmenu(
         info.dwTypeData = buffer;
         info.cch = 256;
         if (!GetMenuItemInfoW(hMenu, i, TRUE, &info)) {
-            std::cout << "Failed to get menu item info: " << GetLastError()
-                      << std::endl;
+            spdlog::warn( "Failed to get menu item info: %lu", GetLastError());
             continue;
         }
 
@@ -169,7 +169,7 @@ menu menu::construct_with_hmenu(
         if (info.fType & MFT_RADIOCHECK || info.fState & MFS_CHECKED) {
             auto c = is_light_mode() ? 0 : 1;
             if ((!item.icon_bitmap && !item.icon_svg)) {
-                item.icon_svg = std::format(
+                item.icon_svg = fmt::format(
                     R"#(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path opacity="0.7" fill="none" stroke="{}" stroke-width="2" d="M2 8l4 4 8-8"/></svg>)#",
                     c ? "white" : "black");
             }
@@ -273,7 +273,7 @@ menu menu::construct_with_hmenu(
                                 item.icon_bitmap = (size_t)result;
                                 if (config::current->context_menu
                                         .search_large_dwItemData_range) {
-                                    dbgout("Found icon at offset: {}", offset);
+                                    spdlog::info("Found icon at offset: {}", offset);
                                 }
                                 break;
                             }

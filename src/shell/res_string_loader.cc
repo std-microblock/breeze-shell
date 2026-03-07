@@ -2,7 +2,7 @@
 #include <atomic>
 #include <fstream>
 #include <mutex>
-#include <print>
+#include <spdlog/spdlog.h>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -185,9 +185,7 @@ void EnumerateStringResources(
                         if (auto res =
                                 GetMenuItemInfoW(hMenu, id, FALSE, &info);
                             !res) {
-                            std::println(
-                                "Failed to get menu item info for id {}: {}",
-                                id, GetLastError());
+                            spdlog::warn( "Failed to get menu item info for id %d: %lu", id, GetLastError());
                             continue;
                         }
 
@@ -199,9 +197,7 @@ void EnumerateStringResources(
                             info.dwTypeData = name.data();
                             info.cch = static_cast<UINT>(name.size());
                             if (!GetMenuItemInfoW(hMenu, id, FALSE, &info)) {
-                                std::println(
-                                    "Failed to get menu item info for id {}",
-                                    id);
+                                spdlog::warn( "Failed to get menu item info for id %d", id);
                                 continue;
                             }
                         }
@@ -262,7 +258,7 @@ void res_string_loader::init_known_strings() {
     for (auto &dll : res_dlls) {
         load_all_res_strings(dll);
     }
-    dbgout("[perf] init_known_strings took {}ms",
+    spdlog::info("[perf] init_known_strings took {}ms",
            std::chrono::duration_cast<std::chrono::milliseconds>(
                std::chrono::high_resolution_clock::now() - now)
                .count());

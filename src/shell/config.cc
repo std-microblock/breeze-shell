@@ -40,7 +40,7 @@ void config::write_config() {
     auto config_file = data_directory() / "config.json";
     std::ofstream ofs(config_file);
     if (!ofs) {
-        std::cerr << "Failed to write config file." << std::endl;
+        spdlog::error("Failed to write config file.");
         return;
     }
 
@@ -55,7 +55,7 @@ void config::read_config() {
         auto config_file = data_directory() / "config.json";
         std::ofstream ofs(config_file);
         if (!ofs) {
-            std::cerr << "Failed to write config file." << std::endl;
+            spdlog::error("Failed to write config file.");
         }
 
         ofs << R"({
@@ -63,9 +63,7 @@ void config::read_config() {
 })";
     }
     if (!ifs) {
-        std::cerr
-            << "Config file could not be opened. Using default config instead."
-            << std::endl;
+        spdlog::warn("Config file could not be opened. Using default config instead.");
         config::current = std::make_unique<config>();
         config::current->debug_console = true;
     } else {
@@ -81,10 +79,9 @@ void config::read_config() {
             json = rfl::json::read<config, rfl::NoExtraFields,
                                    rfl::DefaultIfMissing>(json_str);
             config::current = std::make_unique<config>(json.value());
-            std::cout << "Config reloaded." << std::endl;
+            spdlog::info("Config reloaded.");
         } else {
-            std::cerr << "Failed to read config file: " << json.error().what()
-                      << "\nUsing default config instead." << std::endl;
+            spdlog::error("Failed to read config file: {}\nUsing default config instead.", json.error().what());
             config::current = std::make_unique<config>();
             config::current->debug_console = true;
         }
@@ -92,7 +89,7 @@ void config::read_config() {
 #else
 #pragma message                                                                \
     "We don't support loading config file on MSVC because of a bug in MSVC."
-    dbgout("We don't support loading config file when compiled with MSVC "
+    spdlog::info("We don't support loading config file when compiled with MSVC "
            "because of a bug in MSVC.");
     config::current = std::make_unique<config>();
     config::current->debug_console = true;
@@ -123,7 +120,7 @@ std::filesystem::path config::data_directory() {
 }
 void config::run_config_loader() {
     auto config_path = config::data_directory() / "config.json";
-    dbgout("config file: {}", config_path.string());
+    spdlog::info("config file: {}", config_path.string());
     config::read_config();
 
     static auto watcher =

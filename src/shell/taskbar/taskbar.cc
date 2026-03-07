@@ -5,6 +5,8 @@
 
 #include <shellapi.h>
 
+#include <spdlog/spdlog.h>
+
 #include "shell/config.h"
 
 namespace mb_shell {
@@ -17,7 +19,7 @@ std::expected<void, std::string> taskbar_render::init() {
         return std::unexpected(res.error());
     }
 
-    std::println("Taskbar Monitor: {}, {}, {}, {}", monitor.rcMonitor.left,
+    spdlog::info( "Taskbar Monitor: %d, %d, %d, %d", monitor.rcMonitor.left,
                  monitor.rcMonitor.top, monitor.rcMonitor.right,
                  monitor.rcMonitor.bottom);
 

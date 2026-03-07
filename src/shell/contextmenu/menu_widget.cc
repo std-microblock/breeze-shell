@@ -12,7 +12,8 @@
 #include "shell/utils.h"
 #include <algorithm>
 #include <iostream>
-#include <print>
+#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 #include <ranges>
 #include <vector>
 
@@ -88,7 +89,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     // Draw right icon (submenu indicator)
     if (item.submenu) {
         if (!icon_unfold_img) {
-            auto icon_unfold = std::format(
+            auto icon_unfold = fmt::format(
                 R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
                 c ? "white" : "black");
             auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
@@ -773,7 +774,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     auto [x, y] =
         calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
-    dbgout("Calibrated position: {} {} in screen {} {}", x, y, ctx.screen.width,
+    spdlog::info("Calibrated position: {} {} in screen {} {}", x, y, ctx.screen.width,
            ctx.screen.height);
 
     if (animated) {
@@ -793,7 +794,7 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
     menu_wid->reset_animation(direction == popup_direction::top_left ||
                               direction == popup_direction::top_right);
 
-    dbgout("Calibrated direction: {}",
+    spdlog::info("Calibrated direction: {}",
            direction == popup_direction::top_left       ? "top_left"
            : direction == popup_direction::top_right    ? "top_right"
            : direction == popup_direction::bottom_left  ? "bottom_left"
@@ -830,7 +831,7 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
         }
     }
 
-    dbgout("Menu widget init from data: {}", menu_data.items.size());
+    spdlog::info("Menu widget init from data: {}", menu_data.items.size());
 
     update_icon_width();
     this->menu_data = menu_data;

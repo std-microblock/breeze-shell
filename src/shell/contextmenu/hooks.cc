@@ -10,7 +10,7 @@
 #include "blook/blook.h"
 #include <atlcomcli.h>
 #include <atomic>
-#include <print>
+#include <spdlog/spdlog.h>
 #include <shobjidl_core.h>
 #include <thread>
 
@@ -38,7 +38,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             perf.end("menu_render::create");
 
             if (shift_pressed && menu_render.rt->nvg) {
-                std::println("Resetting font atlas due to shift key pressed");
+                spdlog::info( "Resetting font atlas due to shift key pressed");
                 nvgFonsResetAtlas(menu_render.rt->nvg);
             }
 
@@ -320,7 +320,7 @@ void mb_shell::context_menu_hooks::install_GetUIObjectOf_hook() {
 
     auto pGetUIObjectOf =
         blook::Pointer((void *)functionToGetGetUIObjectOfVptr(psf2Desktop));
-    std::println("GetUIObjectOf ptr: {}", pGetUIObjectOf.data());
+    spdlog::info( "GetUIObjectOf ptr: {}", pGetUIObjectOf.data());
 
     /**
      prototype:
@@ -339,7 +339,7 @@ HRESULT GetUIObjectOf(
     GetUIObjectOfHook->install(+[](void *thiz, HWND hwndOwner, UINT cidl,
                                    PCUITEMID_CHILD_ARRAY apidl, REFIID riid,
                                    UINT *rgfReserved, void **ppv) -> HRESULT {
-        std::println("GetUIObjectOf called");
+        spdlog::info( "GetUIObjectOf called");
         auto res = GetUIObjectOfHook->call_trampoline<HRESULT>(
             thiz, hwndOwner, cidl, apidl, riid, rgfReserved, ppv);
 
@@ -348,7 +348,7 @@ HRESULT GetUIObjectOf(
             return res;
         }
 
-        std::println("Upgrading context menu");
+        spdlog::info( "Upgrading context menu");
         IContextMenu *pdcm = (IContextMenu *)(*ppv);
         if (SUCCEEDED(res) && pdcm) {
             CComPtr<IContextMenu> pCM(pdcm);
@@ -392,5 +392,5 @@ HRESULT GetUIObjectOf(
 
         return res;
     });
-    std::println("GetUIObjectOf hook installed");
+    spdlog::info( "GetUIObjectOf hook installed");
 }

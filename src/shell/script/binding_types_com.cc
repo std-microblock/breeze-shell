@@ -130,7 +130,7 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
         for (auto &[h, b] : browsers) {
             CComPtr<IShellView> psv;
             if (h == hwnd && SUCCEEDED(b->QueryActiveShellView(&psv))) {
-                mb_shell::dbgout("Found: {} {}", (void *)h, (void *)b.p);
+                mb_shell::spdlog::info("Found: {} {}", (void *)h, (void *)b.p);
                 return b;
             }
         }
@@ -219,7 +219,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
                         class_name == "DirectUIHWND" ||
                         class_name == "SHELLDLL_DefView" ||
                         class_name == "CabinetWClass") {
-                        dbgout("Target window is a folder view (hwnd: {})\n",
+                        spdlog::info("Target window is a folder view (hwnd: {})\n",
                                (void *)hWnd);
                         // Check if the foreground window is an Explorer window
 
@@ -227,7 +227,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
                                 GetIShellBrowserRecursive(hWnd)) {
                             perf.end(
                                 "IShellBrowser - GetIShellBrowserRecursive");
-                            dbgout("shell browser: {}\n", (void *)psb.p);
+                            spdlog::info("shell browser: {}\n", (void *)psb.p);
 
                             CComPtr<IShellView> psv;
                             if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
@@ -301,13 +301,13 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
                                 }
                             }
                         } else {
-                            dbgout("Failed to get IShellBrowser");
+                            spdlog::info("Failed to get IShellBrowser");
                         }
                     }
                 }
             }();
         } __except (EXCEPTION_CONTINUE_EXECUTION) {
-            dbgout("Get IShellBrowser crashed!");
+            spdlog::info("Get IShellBrowser crashed!");
         }
     }();
     perf.end("IShellBrowser");

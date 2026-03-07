@@ -2,11 +2,12 @@
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 #include <codecvt>
 #include <iostream>
-#include <print>
 #include <sstream>
 #include <vector>
 
 #include <locale>
+
+#include <fmt/format.h>
 
 #include "windows.h"
 #include <dwmapi.h>
@@ -197,7 +198,7 @@ void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
     auto now = std::chrono::high_resolution_clock::now();
 
     if (block_name) {
-        dbgout(
+        spdlog::info(
             "[perf] {}: {}ms / {} {}ms", block_name.value(),
             std::chrono::duration_cast<std::chrono::milliseconds>(now -
                                                                   last_end)
@@ -206,7 +207,7 @@ void mb_shell::perf_counter::end(std::optional<std::string> block_name) {
             std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
                 .count());
     } else {
-        dbgout(
+        spdlog::info(
             "[perf] {}: {}ms", name,
             std::chrono::duration_cast<std::chrono::milliseconds>(now - start)
                 .count());
@@ -224,7 +225,7 @@ std::vector<std::string> mb_shell::split_string(const std::string &str,
     return result;
 }
 std::string mb_shell::format_color(NVGcolor color) {
-    return std::format(
+    return fmt::format(
         "#{0:02x}{1:02x}{2:02x}{3:02x}", static_cast<int>(color.r * 255),
         static_cast<int>(color.g * 255), static_cast<int>(color.b * 255),
         static_cast<int>(color.a * 255));
