@@ -130,7 +130,7 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
         for (auto &[h, b] : browsers) {
             CComPtr<IShellView> psv;
             if (h == hwnd && SUCCEEDED(b->QueryActiveShellView(&psv))) {
-                mb_shell::spdlog::info("Found: {} {}", (void *)h, (void *)b.p);
+                spdlog::info("Found: {} {}", (void *)h, (void *)b.p);
                 return b;
             }
         }
