@@ -12,6 +12,7 @@
 
 #include "utils.h"
 #include "windows.h"
+#include "wtr/watcher.hpp"
 
 namespace rfl {
 template <> struct Reflector<mb_shell::paint_color> {
@@ -124,16 +125,13 @@ void config::run_config_loader() {
     auto config_path = config::data_directory() / "config.json";
     dbgout("config file: {}", config_path.string());
     config::read_config();
-    std::thread([config_path]() {
-        auto last_mod = std::filesystem::last_write_time(config_path);
-        while (true) {
-            if (std::filesystem::last_write_time(config_path) != last_mod) {
-                last_mod = std::filesystem::last_write_time(config_path);
+
+    static auto watcher =
+        wtr::watch(config::data_directory(), [](const wtr::event &e) {
+            if (e.path_name.filename() == "config.json") {
                 config::read_config();
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }).detach();
+        });
 }
 void config::animated_float_conf::apply_to(ui::sp_anim_float &anim,
                                            float delay) {
