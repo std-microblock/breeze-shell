@@ -117,43 +117,43 @@ void mb_shell::fix_win11_menu::install() {
     // approch 2: patch the shell32.dll to predent the shift key is pressed
     std::thread([=]() {
         try {
+
+            auto patch_area = [&](auto mem) {
+                for (auto it = mem.begin(); it != mem.end(); ++it) {
+                    auto &insn = *it;
+                    if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
+                        if (insn->getOperand(0) == zasm::x86::ecx &&
+                            insn->getOperand(1).template holds<zasm::Imm>() &&
+                            insn->getOperand(1)
+                                    .template get<zasm::Imm>()
+                                    .template value<int>() == 0x10) {
+                            auto &next = *std::next(it);
+                            if (next->getMnemonic() ==
+                                    zasm::x86::Mnemonic::Call &&
+                                next->getOperand(0)
+                                    .template holds<zasm::Mem>()) {
+                                insn.ptr()
+                                    .reassembly([](auto a) {
+                                        a.mov(zasm::x86::ecx, 0x10);
+                                        a.mov(zasm::x86::eax, 0xffff);
+                                        a.nop();
+                                        a.nop();
+                                    })
+                                    .patch();
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            };
+
             if (auto shell32 = proc->module("shell32.dll")) {
                 // mov ecx, 10
                 // call GetKeyState/GetAsyncKeyState
                 auto disasm = shell32.value()->section(".text")->disassembly();
-
-                auto patch_area = [&](auto mem) {
-                    for (auto it = mem.begin(); it != mem.end(); ++it) {
-                        auto &insn = *it;
-                        if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
-                            if (insn->getOperand(0) == zasm::x86::ecx &&
-                                insn->getOperand(1)
-                                    .template holds<zasm::Imm>() &&
-                                insn->getOperand(1)
-                                        .template get<zasm::Imm>()
-                                        .template value<int>() == 0x10) {
-                                auto &next = *std::next(it);
-                                if (next->getMnemonic() ==
-                                        zasm::x86::Mnemonic::Call &&
-                                    next->getOperand(0)
-                                        .template holds<zasm::Mem>()) {
-                                    insn.ptr()
-                                        .reassembly([](auto a) {
-                                            a.mov(zasm::x86::ecx, 0x10);
-                                            a.mov(zasm::x86::eax, 0xffff);
-                                            a.nop();
-                                            a.nop();
-                                        })
-                                        .patch();
-
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-
-                    return false;
-                };
 
                 // the function to determine if show win10 menu or win11 menu
                 // calls SetMessageExtraInfo, so we use it as a hint
@@ -171,15 +171,34 @@ void mb_shell::fix_win11_menu::install() {
                                                               0xCC, 0xCC})
                                                ->range_size(0xB50)
                                                .disassembly())) {
-                                spdlog::info( "Patched shell32.dll for win11 menu fix");
+                                spdlog::info(
+                                    "Patched shell32.dll for win11 menu fix");
                                 break;
                             }
                         }
                     }
                 }
             }
+
+            if (auto explorerframe = proc->module("ExplorerFrame.dll")) {
+                /*
+                CNscTree::ShouldShowMiniMenu
+
+                1801ca353  b910000000         mov     ecx, 0x10
+                1801ca358  48ff1521cb0700     call    qword [rel GetKeyState]
+                */
+
+                if (auto res =
+                        explorerframe.value()->section(".text")->find_one(
+                            {0xb9, 0x10, 0x00, 0x00, 0x00, 0x48, 0xff, 0x15,
+                             0x21, 0xcb, 0x07, 0x00})) {
+                    if (patch_area(res->range_size(0x20).disassembly()))
+                        spdlog::info(
+                            "Patched explorerframe.dll for win11 menu fix");
+                }
+            }
         } catch (...) {
-            spdlog::error( "Failed to patch shell32.dll for win11 menu fix");
+            spdlog::error("Failed to patch shell32.dll for win11 menu fix");
         }
     }).detach();
 }
