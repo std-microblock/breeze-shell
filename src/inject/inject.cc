@@ -5,6 +5,9 @@
 #include <vector>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/msvc_sink.h>
 
 #include "breeze_ui/animator.h"
 #include "breeze_ui/ui.h"
@@ -23,10 +26,27 @@ static unsigned char g_icon_png[] = {
 #include <shellapi.h>
 #include <taskschd.h>
 
-
 #include "Shlobj.h"
 
 namespace fs = std::filesystem;
+
+void init_inject_logger() {
+    try {
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+            (data_directory() / "inject.log").string(), true);
+        auto msvc_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+
+        std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink, msvc_sink};
+        auto logger = std::make_shared<spdlog::logger>("inject", sinks.begin(), sinks.end());
+        spdlog::set_default_logger(logger);
+        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
+        spdlog::set_level(spdlog::level::debug);
+        spdlog::flush_on(spdlog::level::info);
+    } catch (const spdlog::spdlog_ex &ex) {
+        printf("Log initialization failed: %s\n", ex.what());
+    }
+}
 
 std::wstring GetModuleDirectory() {
     wchar_t path[MAX_PATH];
@@ -1197,6 +1217,8 @@ void UpdateDllPath() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nShowCmd) {
+    init_inject_logger();
+
     int argc = 0;
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 

@@ -50,6 +50,8 @@
 
 #include "qjs_sanitizer.h"
 
+#include "logger.h"
+
 namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
 void main() {
@@ -60,6 +62,7 @@ void main() {
     freopen("CONIN$", "r", stdin);
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 
+    init_logger();
     install_error_handlers();
     config::run_config_loader();
 
