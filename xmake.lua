@@ -13,9 +13,9 @@ set_warnings("all")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 add_rules("mode.releasedbg")
 
-includes("dependencies/blook.lua")
-includes("dependencies/breeze-ui.lua")
-includes("dependencies/sentry-native.lua")
+includes("deps/blook.lua")
+includes("deps/breeze-ui.lua")
+includes("deps/sentry-native.lua")
 
 add_requires("sentry-native", {
     configs = {
