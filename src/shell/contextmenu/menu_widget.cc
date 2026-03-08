@@ -11,10 +11,10 @@
 #include "shell/config.h"
 #include "shell/utils.h"
 #include <algorithm>
-#include <iostream>
-#include <spdlog/spdlog.h>
 #include <fmt/format.h>
+#include <iostream>
 #include <ranges>
+#include <spdlog/spdlog.h>
 #include <vector>
 
 #include "shell/logger.h"
@@ -380,33 +380,37 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
         };
         if (ctx.key_pressed(GLFW_KEY_UP)) {
             move_key(false, children);
+            ctx.need_repaint = true;
         } else if (ctx.key_pressed(GLFW_KEY_DOWN)) {
             move_key(true, children);
+            ctx.need_repaint = true;
         } else if (ctx.key_pressed(GLFW_KEY_LEFT)) {
-            // close submenu on left key
-            if (parent_menu) {
-                parent_menu->current_submenu = nullptr;
-                close();
-            }
-
             ctx.stop_key_propagation(GLFW_KEY_LEFT);
 
             if (parent_item_widget) {
                 parent_item_widget->lock()->set_focus();
-            } else {
+            } else if (parent_menu) {
                 parent_menu->set_focus();
+                parent_menu->current_submenu = nullptr;
+                close();
+            } else {
+                close();
             }
+
+            ctx.need_repaint = true;
         } else if (ctx.key_pressed(GLFW_KEY_RIGHT)) {
             auto focused_item = std::ranges::find_if(
                 children, [](const auto &item) { return item->focused(); });
             if (focused_item != children.end()) {
                 if (auto wid =
                         (*focused_item)->downcast<menu_item_normal_widget>())
-                    if (wid->item.submenu && !wid->submenu_wid) {
-                        wid->show_submenu(ctx);
+                    if (wid->item.submenu) {
+                        if (!wid->submenu_wid)
+                            wid->show_submenu(ctx);
                         current_submenu->set_focus();
                     }
             }
+            ctx.need_repaint = true;
         } else if (ctx.key_pressed(GLFW_KEY_ENTER) ||
                    ctx.key_pressed(GLFW_KEY_SPACE)) { // Enter or Space key
             auto focused_item = std::ranges::find_if(
@@ -426,6 +430,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                     }
                 }
             }
+            ctx.need_repaint = true;
         } else {
             auto menus_matching_key =
                 children | std::views::filter([&](const auto &item) {
@@ -508,6 +513,9 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                     return false;
                 }) |
                 std::ranges::to<std::vector>();
+
+            if (menus_matching_key.size() > 0)
+                ctx.need_repaint = true;
 
             if (menus_matching_key.size() == 1) {
                 auto wid = menus_matching_key.front()
@@ -774,8 +782,8 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     auto [x, y] =
         calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
 
-    spdlog::info("Calibrated position: {} {} in screen {} {}", x, y, ctx.screen.width,
-           ctx.screen.height);
+    spdlog::info("Calibrated position: {} {} in screen {} {}", x, y,
+                 ctx.screen.width, ctx.screen.height);
 
     if (animated) {
         this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
@@ -795,11 +803,11 @@ void mb_shell::mouse_menu_widget_main::calibrate_direction(
                               direction == popup_direction::top_right);
 
     spdlog::info("Calibrated direction: {}",
-           direction == popup_direction::top_left       ? "top_left"
-           : direction == popup_direction::top_right    ? "top_right"
-           : direction == popup_direction::bottom_left  ? "bottom_left"
-           : direction == popup_direction::bottom_right ? "bottom_right"
-                                                        : "unknown");
+                 direction == popup_direction::top_left       ? "top_left"
+                 : direction == popup_direction::top_right    ? "top_right"
+                 : direction == popup_direction::bottom_left  ? "bottom_left"
+                 : direction == popup_direction::bottom_right ? "bottom_right"
+                                                              : "unknown");
 }
 
 bool mb_shell::menu_item_normal_widget::check_hit(
