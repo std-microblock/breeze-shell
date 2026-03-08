@@ -47,9 +47,12 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     if (focused()) {
         ctx.strokeColor(
             nvgRGBAf(c, c, c, *opacity / 255.f * 0.5)); // Half opacity
-        ctx.strokeWidth(1.0f);
-        ctx.strokeRoundedRect(*x + margin, *y, *width - margin * 2, *height,
-                              roundcorner);
+        constexpr auto border_width = 1.0f;
+        ctx.strokeWidth(border_width);
+        ctx.strokeRoundedRect(*x + margin + border_width / 2,
+                              *y + border_width / 2,
+                              *width - margin * 2 - border_width,
+                              *height - border_width, roundcorner);
     }
 
     // Draw left icon
@@ -407,7 +410,14 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                     if (wid->item.submenu) {
                         if (!wid->submenu_wid)
                             wid->show_submenu(ctx);
-                        current_submenu->set_focus();
+                        if (!current_submenu->focus_within()) {
+                            if (auto child = current_submenu->get_child<
+                                             menu_item_normal_widget>()) {
+                                child->set_focus();
+                            } else {
+                                current_submenu->set_focus();
+                            }
+                        }
                     }
             }
             ctx.need_repaint = true;
