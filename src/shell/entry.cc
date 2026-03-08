@@ -54,17 +54,35 @@
 
 namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
+
+static bool console_allocated = false;
+
+void init_console(bool show) {
+    if (show && !console_allocated) {
+        AllocConsole();
+        console_allocated = true;
+        add_console_sink();
+        ShowWindow(GetConsoleWindow(), SW_SHOW);
+    } else if (show && console_allocated) {
+        ShowWindow(GetConsoleWindow(), SW_SHOW);
+        SetForegroundWindow(GetConsoleWindow());
+    } else if (!show && console_allocated) {
+        remove_console_sink();
+        FreeConsole();
+        console_allocated = false;
+    }
+}
+
 void main() {
     set_thread_locale_utf8();
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stderr);
-    freopen("CONIN$", "r", stdin);
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
 
     init_logger();
     install_error_handlers();
     config::run_config_loader();
+
+    if (config::current->debug_console) {
+        init_console(true);
+    }
 
     static script_context script_ctx;
     std::thread([]() {
@@ -82,15 +100,15 @@ void main() {
     std::set_terminate([]() {
         auto eptr = std::current_exception();
         if (eptr) {
+            init_console(true);
             try {
                 std::rethrow_exception(eptr);
             } catch (const std::exception &e) {
-                std::cerr << "Uncaught exception: " << e.what() << std::endl;
+                spdlog::critical("Uncaught exception: {}", e.what());
             } catch (...) {
-                std::cerr << "Uncaught exception of unknown type" << std::endl;
+                spdlog::critical("Uncaught exception of unknown type");
             }
 
-            ShowWindow(GetConsoleWindow(), SW_SHOW);
             std::getchar();
         }
         std::abort();
@@ -169,8 +187,7 @@ void main() {
                     taskbar.rt.start_loop();
                 }
                 catch(const std::exception &e) {
-                    std::cerr << "Error in taskbar thread: " << e.what()
-                              << std::endl;
+                    spdlog::error("Error in taskbar thread: {}", e.what());
                 }
             }).detach();
         }
@@ -179,7 +196,7 @@ void main() {
     if (filename == "asan_test.exe") {
         // ASAN environment
         init_render_global();
-        ShowWindow(GetConsoleWindow(), SW_SHOW);
+        init_console(true);
         std::thread([]() {
             script_ctx.is_js_ready.wait(false);
             spdlog::info( "Is js ready: %d", script_ctx.is_js_ready.load());

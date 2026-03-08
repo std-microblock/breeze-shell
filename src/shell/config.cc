@@ -5,6 +5,7 @@
 #include <mutex>
 #include <thread>
 
+#include "entry.h"
 #include "logger.h"
 #include "rfl.hpp"
 #include "rfl/DefaultIfMissing.hpp"
@@ -96,9 +97,9 @@ void config::read_config() {
 #endif
 
     if (config::current->debug_console) {
-        ShowWindow(GetConsoleWindow(), SW_SHOW);
+        init_console(true);
     } else {
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
+        init_console(false);
     }
 }
 
