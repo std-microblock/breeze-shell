@@ -62,6 +62,35 @@ void script_context::bind() {
 }
 script_context::script_context() : rt{}, js{} {}
 
+void script_context::run_event_loop() {
+    while (!should_stop.load()) {
+        while (js->pending_job_count.load() > 0) {
+            std::unique_lock lock(js->js_mutex);
+            auto ctx = js->ctx;
+            if (auto res = JS_ExecutePendingJob(rt->rt, &ctx); res < 0) {
+                std::cerr << "Error executing pending JS job: ";
+                auto val = qjs::Value{js->ctx, JS_GetException(js->ctx)};
+                std::cerr << (std::string)val << (std::string)val["stack"]
+                          << std::endl;
+            }
+            lock.unlock();
+            js->pending_job_count.fetch_sub(1);
+            std::this_thread::yield();
+        }
+        js->pending_job_count.wait(0);
+        if (js->pending_job_count.load() == -1)
+            break;
+    }
+}
+
+void script_context::stop() {
+    should_stop.store(true);
+    if (js) {
+        js->pending_job_count.exchange(-1);
+        js->pending_job_count.notify_all();
+    }
+}
+
 class WindowsThreadWrapper {
 private:
     HANDLE hThread_;
@@ -109,10 +138,10 @@ void script_context::watch_folder(const std::filesystem::path &path,
         spdlog::info("Reloading all scripts");
 
         if (js) {
-            js->pending_job_count.exchange(-1);
-            js->pending_job_count.notify_all();
+            stop();
             if (js_thread)
                 js_thread->join();
+            should_stop.store(false);
             js->pending_job_count.exchange(0);
         }
 
@@ -250,27 +279,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
                     is_js_ready.exchange(true);
                     is_js_ready.notify_all();
 
-                    while (true) {
-                        while (js->pending_job_count.load() > 0) {
-                            std::unique_lock lock(js->js_mutex);
-                            auto ctx = js->ctx;
-                            if (auto res = JS_ExecutePendingJob(rt->rt, &ctx);
-                                res < 0) {
-                                std::cerr << "Error executing pending JS job: ";
-                                auto val = qjs::Value{js->ctx,
-                                                      JS_GetException(js->ctx)};
-                                std::cerr << (std::string)val
-                                          << (std::string)val["stack"]
-                                          << std::endl;
-                            }
-                            lock.unlock();
-                            js->pending_job_count.fetch_sub(1);
-                            std::this_thread::yield();
-                        }
-                        js->pending_job_count.wait(0);
-                        if (js->pending_job_count.load() == -1)
-                            break;
-                    }
+                    run_event_loop();
                     is_thread_js_main = false;
                 } catch (std::exception &e) {
                     std::cerr << "Fatal error in JS thread: " << e.what()
@@ -293,7 +302,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
             has_update = true;
         });
 
-    while (true) {
+    while (!should_stop.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         if (has_update && on_reload()) {
             has_update = false;

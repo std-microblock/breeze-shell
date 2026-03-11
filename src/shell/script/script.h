@@ -19,9 +19,12 @@ struct script_context {
 
 public:
     std::atomic<bool> is_js_ready{false};
+    std::atomic<bool> should_stop{false};
 
     script_context();
     void bind();
+    void run_event_loop();
+    void stop();
 
     void watch_folder(
         const std::filesystem::path &path,
