@@ -25,6 +25,7 @@ public:
     void bind();
     void run_event_loop();
     void stop();
+    void init_js_thread();
 
     void watch_folder(
         const std::filesystem::path &path,

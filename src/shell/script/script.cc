@@ -18,7 +18,6 @@
 #include <thread>
 #include <unordered_set>
 
-
 #include "FileWatch.hpp"
 #include "quickjs.h"
 #include "quickjspp.hpp"
@@ -152,12 +151,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
         js_thread.emplace(
             [&, this]() {
                 try {
-                    is_thread_js_main = true;
-                    set_thread_locale_utf8();
-                    rt = std::make_shared<qjs::Runtime>();
-                    JS_UpdateStackTop(rt->rt);
-                    js = std::make_shared<qjs::Context>(*rt);
-
+                    init_js_thread();
                     bind();
                     try {
                         JS_UpdateStackTop(rt->rt);
@@ -311,6 +305,13 @@ void script_context::watch_folder(const std::filesystem::path &path,
     }
 }
 
+void script_context::init_js_thread() {
+    is_thread_js_main = true;
+    set_thread_locale_utf8();
+    rt = std::make_shared<qjs::Runtime>();
+    JS_UpdateStackTop(rt->rt);
+    js = std::make_shared<qjs::Context>(*rt);
+}
 } // namespace mb_shell
 
 extern "C" void qjs_notify_job_enqueued(JSContext *jsctx) {
