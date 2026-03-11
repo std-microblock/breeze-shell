@@ -110,6 +110,19 @@ void mb_shell::install_error_handlers() {
     g_previous_sigabrt_handler = signal(SIGABRT, handle_sigabrt);
 }
 
+void mb_shell::report_warning(const char* message) {
+    sentry_value_t event = sentry_value_new_event();
+    sentry_value_set_by_key(event, "level", sentry_value_new_string("warning"));
+
+    sentry_value_t exc = sentry_value_new_exception("Warning", message);
+    sentry_value_t stacktrace = sentry_value_new_stacktrace(nullptr, 0);
+    sentry_value_set_by_key(exc, "stacktrace", stacktrace);
+    sentry_value_set_by_key(event, "exception", sentry_value_new_list());
+    sentry_value_append(sentry_value_get_by_key(event, "exception"), exc);
+
+    sentry_capture_event(event);
+}
+
 void mb_shell::cleanup_error_handlers() {
     if (g_previous_sigabrt_handler) {
         signal(SIGABRT, g_previous_sigabrt_handler);

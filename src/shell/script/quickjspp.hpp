@@ -1,6 +1,7 @@
 #pragma once
 
 #include "quickjs.h"
+#include "../error_handler.h"
 
 #include <algorithm>
 #include <atomic>
@@ -1961,8 +1962,14 @@ struct js_traits<std::function<R(Args...)>, int> {
         return
             [jsfun_obj = Value{weakFromContext(ctx), JS_DupValue(ctx, fun_obj)},
              weak](Args... args) -> R {
-                if (weak.expired())
-                    throw qjs_context_destroyed_exception{};
+                if (weak.expired()) {
+                    mb_shell::report_warning("JS context destroyed when calling function");
+                    if constexpr (!std::is_void_v<R>) {
+                        return R{};
+                    } else {
+                        return;
+                    }
+                }
                 auto &ctx = Context::get(jsfun_obj.ctx);
                 std::promise<std::expected<JSValue, exception>> promise;
                 auto future = promise.get_future();
