@@ -77,7 +77,7 @@ void main() {
     set_thread_locale_utf8();
 
     init_logger();
-    install_error_handlers();
+    // install_error_handlers();
     config::run_config_loader();
 
     if (config::current->debug_console) {

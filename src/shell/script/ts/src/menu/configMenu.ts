@@ -543,7 +543,6 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                     createBoolToggle(sub, "垂直同步", "context_menu.vsync", true);
                     createBoolToggle(sub, "忽略自绘菜单", "context_menu.ignore_owner_draw", true);
                     createBoolToggle(sub, "向上展开时反向排列", "context_menu.reverse_if_open_to_up", true);
-                    createBoolToggle(sub, "尝试使用 Windows 11 圆角", "context_menu.theme.use_dwm_if_available", true);
                     createBoolToggle(sub, "亚克力背景效果", "context_menu.theme.acrylic", true);
                 }
             })

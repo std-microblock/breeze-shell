@@ -163,11 +163,6 @@ export const ThemeCustomEditor = memo(({
 
                 <OptionGroup label={t("customEditor.theme.effects")}>
                     <Toggle
-                        label={t("customEditor.theme.useDwm")}
-                        value={theme?.use_dwm_if_available ?? true}
-                        onChange={(v) => updateValue('use_dwm_if_available', v)}
-                    />
-                    <Toggle
                         label={t("customEditor.theme.acrylic")}
                         value={theme?.acrylic ?? true}
                         onChange={(v) => updateValue('acrylic', v)}

@@ -3,8 +3,8 @@ package("breeze-glfw")
     set_urls("https://github.com/breeze-shell/glfw.git")
     add_versions("2026.03.07+1", "a79c32a7d9ef4cd8a15b5f8ccbcdf9510c48da03")
 
-local BREEZE_UI_VER = "2026.03.07+15"
-local BREEZE_UI_HASH = "584d9d313ec12ac4725f6696773415aba477ce87"
+local BREEZE_UI_VER = "2026.03.22+1"
+local BREEZE_UI_HASH = "0c3989af0bee217cda691877431a80ae46dd3067"
 
 package("breeze-nanosvg")
     add_urls("https://github.com/std-microblock/breeze-ui.git")
@@ -39,7 +39,7 @@ package("breeze-ui")
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
 
     if is_plat("windows") then
-        add_syslinks("dwmapi", "shcore")
+        add_syslinks("dwmapi", "shcore", "windowsapp", "CoreMessaging")
     end
 
     on_install("windows", function (package)

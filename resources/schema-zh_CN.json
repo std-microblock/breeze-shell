@@ -69,12 +69,6 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "use_dwm_if_available": {
-              "title": "尝试使用 Windows 11 圆角",
-              "description": "在 Windows 11 下使用 DWM 圆角而不是 SetWindowRgn 圆角",
-              "type": "boolean",
-              "default": true
-            },
             "background_opacity": {
               "title": "背景透明度",
               "description": "0.0 表示完全透明，1.0 表示完全不透明",

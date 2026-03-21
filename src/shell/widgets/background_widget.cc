@@ -17,12 +17,8 @@ background_widget::background_widget(bool is_main) {
                 : parse_color(
                       config::current->context_menu.theme.acrylic_color_dark);
 
-        auto acrylic = std::make_shared<ui::acrylic_background_widget>(
-            config::current->context_menu.theme.use_dwm_if_available
-                ? is_win11_or_later()
-                : false);
+        auto acrylic = std::make_shared<ui::acrylic_background_widget>();
         acrylic->acrylic_bg_color = acrylic_color;
-        acrylic->update_color();
         bg_impl = acrylic;
 
         if (light_color)
@@ -83,8 +79,7 @@ void background_widget::render(ui::nanovg_context ctx) {
         auto &theme = config::current->context_menu.theme;
         bool light = is_light_mode();
 
-        bool use_dwm = theme.use_dwm_if_available ? is_win11_or_later() : false;
-        bool use_self_drawn_border = theme.use_self_drawn_border && !use_dwm;
+        bool use_self_drawn_border = theme.use_self_drawn_border;
 
         float boarder_width = use_self_drawn_border ? theme.border_width : 0.0f;
         if (use_self_drawn_border) {

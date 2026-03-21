@@ -199,11 +199,6 @@ const ContextMenuConfig = memo(() => {
                     setNestedValue(newConfig, "reverse_if_open_to_up", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.tryWin11RoundCorner")} value={getNestedValue(config, "theme.use_dwm_if_available") ?? true} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "theme.use_dwm_if_available", v);
-                    update(newConfig);
-                }} />
                 <Toggle label={t("settings.acrylicBackground")} value={getNestedValue(config, "theme.acrylic") ?? true} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "theme.acrylic", v);

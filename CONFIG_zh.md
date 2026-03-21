@@ -30,8 +30,6 @@ Breeze Shell 配置文件的 JSON Schema 位于
 {
   "context_menu": {
     "theme": {
-      // 在 Windows 11 下使用 DWM 圆角而不是 SetWindowRgn 圆角
-      "use_dwm_if_available": true,
       // 启用亚克力背景效果
       "acrylic": true,
       // 圆角大小，仅在不使用 DWM 圆角时生效

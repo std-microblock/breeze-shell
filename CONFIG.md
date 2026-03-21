@@ -36,8 +36,6 @@ The following is a fully annotated default JSON configuration. Note that this **
 {
   "context_menu": {
     "theme": {
-      // Use DWM-rounded corners instead of SetWindowRgn rounded corners on Windows 11
-      "use_dwm_if_available": true,
       // Enable acrylic background effect
       "acrylic": true,
       // Corner radius (only effective when DWM-rounded corners are not used)

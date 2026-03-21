@@ -69,12 +69,6 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "use_dwm_if_available": {
-              "title": "Try Using Windows 11 Rounded Corners",
-              "description": "Use DWM rounded corners instead of SetWindowRgn rounded corners on Windows 11",
-              "type": "boolean",
-              "default": true
-            },
             "background_opacity": {
               "title": "Background Opacity",
               "description": "0.0 means fully transparent, 1.0 means fully opaque",

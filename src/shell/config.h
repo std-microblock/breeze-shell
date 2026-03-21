@@ -31,7 +31,6 @@ struct config {
     static animated_float_conf _default_animation;
     struct context_menu {
         struct theme {
-            bool use_dwm_if_available = true;
             float background_opacity = 1;
             bool acrylic = true;
             float radius = 6;
@@ -72,6 +71,7 @@ struct config {
 
             // unused, only for backward compatibility
             float acrylic_opacity = 0.1;
+            bool use_dwm_if_available = true;
 
             struct animation {
                 struct main {
