@@ -21,7 +21,10 @@ const ContextMenuConfig = memo(() => {
     ];
 
     const currentTheme = config?.theme;
-    const currentAnimation = config?.theme?.animation;
+    const currentAnimation =
+        config?.theme?.animation && typeof config.theme.animation === "object"
+            ? config.theme.animation
+            : {};
 
     const getAllSubkeys = (presets: any) => {
         if (!presets) return [];
@@ -55,7 +58,7 @@ const ContextMenuConfig = memo(() => {
     };
 
     const getCurrentPreset = (current: any, presets: any, excludeKeys: string[] = []) => {
-        if (!current) return "default";
+        if (!current || Object.keys(current).length === 0) return "default";
         for (const [name, preset] of Object.entries(presets)) {
             if (preset && checkPresetMatch(current, preset, excludeKeys)) {
                 return name;
@@ -84,7 +87,7 @@ const ContextMenuConfig = memo(() => {
             <AnimationCustomEditor
                 animation={currentAnimation}
                 onUpdate={(newAnimation) => {
-                    update({ ...config, theme: { ...config.theme, animation: newAnimation } });
+                    update({ ...config, theme: { ...(config?.theme || {}), animation: newAnimation } });
                 }}
                 onClose={() => setShowAnimationEditor(false)}
             />
@@ -106,7 +109,6 @@ const ContextMenuConfig = memo(() => {
                                 try {
                                     let newTheme;
                                     if (!theme_presets[name]) {
-                                        // 保留animation配置
                                         const currentAnim = config?.theme?.animation;
                                         newTheme = currentAnim ? { animation: currentAnim } : undefined;
                                     } else {
@@ -145,7 +147,7 @@ const ContextMenuConfig = memo(() => {
                                     } else {
                                         newAnimation = animation_presets[name];
                                     }
-                                    update({ ...config, theme: { ...config.theme, animation: newAnimation } });
+                                    update({ ...config, theme: { ...(config?.theme || {}), animation: newAnimation } });
                                 } catch (e) {
                                     shell.println(e);
                                 }

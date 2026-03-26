@@ -17,6 +17,7 @@ interface AnimationConfig {
         x?: AnimatedFloatConf;
         y?: AnimatedFloatConf;
         width?: AnimatedFloatConf;
+        blur?: AnimatedFloatConf;
     };
     main_bg?: {
         opacity?: AnimatedFloatConf;
@@ -146,12 +147,19 @@ export const AnimationCustomEditor = memo(({
     onClose: () => void;
 }) => {
     const { t } = useTranslation();
+    const safeAnimation = useMemo<AnimationConfig>(() => {
+        return animation && typeof animation === "object" ? animation : {};
+    }, [animation]);
 
     const handleUpdate = useCallback((groupKey: string, propKey: string, value: AnimatedFloatConf) => {
-        const newAnim = { ...animation };
-        newAnim[groupKey] = { ...(animation[groupKey] || {}), [propKey]: value };
-        onUpdate(newAnim);
-    }, [animation, onUpdate]);
+        try {
+            const newAnim = { ...safeAnimation } as AnimationConfig & Record<string, any>;
+            newAnim[groupKey] = { ...((safeAnimation as Record<string, any>)?.[groupKey] || {}), [propKey]: value };
+            onUpdate(newAnim);
+        } catch (e) {
+            shell.println("[Config] Failed to update animation config:", e);
+        }
+    }, [safeAnimation, onUpdate]);
 
     const easingOptions = useMemo(() => [
         { value: "mutation", label: t("preset.none") },
@@ -169,7 +177,8 @@ export const AnimationCustomEditor = memo(({
                 { key: "opacity", label: t("customEditor.animation.opacity") },
                 { key: "x", label: t("customEditor.animation.x") },
                 { key: "y", label: t("customEditor.animation.y") },
-                { key: "width", label: t("customEditor.animation.width") }
+                { key: "width", label: t("customEditor.animation.width") },
+                { key: "blur", label: t("customEditor.animation.blur") }
             ]
         },
         {
@@ -222,7 +231,7 @@ export const AnimationCustomEditor = memo(({
                         title={group.title}
                         groupKey={group.groupKey}
                         properties={group.properties}
-                        groupData={animation?.[group.groupKey]}
+                        groupData={(safeAnimation as Record<string, any>)?.[group.groupKey]}
                         onUpdate={handleUpdate}
                         easingOptions={easingOptions}
                     />

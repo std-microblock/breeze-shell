@@ -22,6 +22,7 @@ public:
     NVGcolor bg_color;
 
 private:
+    bool is_main = false;
     std::shared_ptr<ui::rect_widget> bg_impl;
 };
 

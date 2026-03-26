@@ -8,6 +8,7 @@
 namespace mb_shell {
 
 background_widget::background_widget(bool is_main) {
+    this->is_main = is_main;
     auto light_color = is_light_mode();
     if (is_acrylic_available() && config::current->context_menu.theme.acrylic) {
         auto acrylic_color =
@@ -34,10 +35,16 @@ background_widget::background_widget(bool is_main) {
     bg_impl->radius->reset_to(config::current->context_menu.theme.radius);
     bg_impl->opacity->reset_to(0);
 
-    if (is_main)
+    if (is_main) {
         config::current->context_menu.theme.animation.main_bg.opacity(
             bg_impl->opacity, 0);
-    else {
+        config::current->context_menu.theme.animation.main_bg.x(bg_impl->x, 0);
+        config::current->context_menu.theme.animation.main_bg.y(bg_impl->y, 0);
+        config::current->context_menu.theme.animation.main_bg.w(bg_impl->width,
+                                                                0);
+        config::current->context_menu.theme.animation.main_bg.h(bg_impl->height,
+                                                                0);
+    } else {
         config::current->context_menu.theme.animation.submenu_bg.opacity(
             bg_impl->opacity, 0);
         config::current->context_menu.theme.animation.submenu_bg.x(bg_impl->x,

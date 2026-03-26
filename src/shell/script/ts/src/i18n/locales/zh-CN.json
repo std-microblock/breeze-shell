@@ -109,6 +109,7 @@
       "y": "Y 轴位移",
       "width": "宽度",
       "height": "高度",
+      "blur": "模糊",
       "duration": "持续时长",
       "easing": "动画曲线",
       "delayScale": "延迟缩放",

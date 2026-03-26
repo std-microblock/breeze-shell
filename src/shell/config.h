@@ -80,10 +80,14 @@ struct config {
                     animated_float_conf opacity;
                     animated_float_conf x, y;
                     animated_float_conf width;
+                    animated_float_conf blur;
+                    float appear_blur = 2.5f;
                 } item;
                 struct bg {
                     animated_float_conf opacity;
                     animated_float_conf x, y, w, h;
+                    float appear_w_scale = 0.6f;
+                    float appear_h_scale = 0.6f;
                 } main_bg, submenu_bg;
             } animation;
         } theme;

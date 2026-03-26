@@ -62,6 +62,7 @@ struct menu_item_normal_widget : public menu_item_widget {
     float show_submenu_timer = 0.f;
 
     ui::sp_anim_float bg_opacity = anim_float(0, 200);
+    ui::sp_anim_float text_blur = anim_float(0, 200);
     void render(ui::nanovg_context ctx) override;
     void update(ui::update_context &ctx) override;
     float measure_width(ui::update_context &ctx) override;
@@ -91,13 +92,19 @@ enum class popup_direction {
     bottom_right,
 };
 struct menu_item_widget;
+struct menu_animation_rect {
+    float x = 0;
+    float y = 0;
+    float width = 0;
+    float height = 0;
+};
+
 struct menu_widget : public ui::flex_widget {
     using super = ui::flex_widget;
     float bg_padding_vertical = 6;
 
     std::shared_ptr<background_widget> bg;
 
-    std::shared_ptr<background_widget> bg_submenu;
     std::shared_ptr<menu_widget> current_submenu;
     std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
     std::vector<std::shared_ptr<widget>> rendering_submenus;
@@ -105,9 +112,15 @@ struct menu_widget : public ui::flex_widget {
     menu_widget *parent_menu = nullptr;
 
     menu menu_data;
-    menu_widget();
+    explicit menu_widget(bool is_main = false);
     popup_direction direction = popup_direction::bottom_right;
+    bool is_top_level_menu = false;
+    bool bg_animation_armed = false;
+    bool bg_appear_initialized = false;
+    std::optional<menu_animation_rect> bg_start_rect;
     void init_from_data(menu menu_data);
+    void arm_background_animation(
+        std::optional<menu_animation_rect> initial_rect = std::nullopt);
     bool animate_appear_started = false;
     void reset_animation(bool reverse = false);
     void update(ui::update_context &ctx) override;

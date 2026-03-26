@@ -27,7 +27,15 @@
                     "opacity": { "$ref": "#/definitions/animated_float_conf" },
                     "x": { "$ref": "#/definitions/animated_float_conf" },
                     "y": { "$ref": "#/definitions/animated_float_conf" },
-                    "width": { "$ref": "#/definitions/animated_float_conf" }
+                    "width": { "$ref": "#/definitions/animated_float_conf" },
+                    "blur": { "$ref": "#/definitions/animated_float_conf" },
+                    "appear_blur": {
+                      "title": "Initial Text Blur",
+                      "description": "Starting blur radius for menu item text appear animation",
+                      "type": "number",
+                      "minimum": 0,
+                      "default": 2.5
+                    }
                   }
                 },
                 "bg": {
@@ -40,7 +48,23 @@
                     "x": { "$ref": "#/definitions/animated_float_conf" },
                     "y": { "$ref": "#/definitions/animated_float_conf" },
                     "w": { "$ref": "#/definitions/animated_float_conf" },
-                    "h": { "$ref": "#/definitions/animated_float_conf" }
+                    "h": { "$ref": "#/definitions/animated_float_conf" },
+                    "appear_w_scale": {
+                      "title": "Initial Width Scale",
+                      "description": "Starting width scale for the background expand animation",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "default": 0.6
+                    },
+                    "appear_h_scale": {
+                      "title": "Initial Height Scale",
+                      "description": "Starting height scale for the background expand animation",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "default": 0.6
+                    }
                   }
                 }
               },

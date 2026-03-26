@@ -72,6 +72,7 @@ export const animation_presets = {
             },
             "width": anim_none,
             "x": anim_none,
+            "blur": anim_none,
         },
         "submenu_bg": {
             "opacity": {
@@ -88,7 +89,8 @@ export const animation_presets = {
             "opacity": anim_none,
             "width": anim_none,
             "x": anim_none,
-            "y": anim_none
+            "y": anim_none,
+            "blur": anim_none
         },
         "submenu_bg": {
             "opacity": anim_none,

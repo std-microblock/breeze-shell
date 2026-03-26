@@ -109,6 +109,7 @@
       "y": "Y Position",
       "width": "Width",
       "height": "Height",
+      "blur": "Blur",
       "duration": "Duration",
       "easing": "Easing",
       "delayScale": "Delay Scale",
