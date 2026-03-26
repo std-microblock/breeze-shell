@@ -79,10 +79,9 @@ void background_widget::render(ui::nanovg_context ctx) {
         auto &theme = config::current->context_menu.theme;
         bool light = is_light_mode();
 
-        bool use_self_drawn_border = theme.use_self_drawn_border;
-
-        float boarder_width = use_self_drawn_border ? theme.border_width : 0.0f;
-        if (use_self_drawn_border) {
+        float border_width = theme.border_width;
+        // Draw shadow and border
+        {
             float shadow_size = theme.shadow_size,
                   shadow_offset_x = theme.shadow_offset_x,
                   shadow_offset_y = theme.shadow_offset_y;
@@ -107,13 +106,13 @@ void background_widget::render(ui::nanovg_context ctx) {
 
             ctx.beginPath();
             if (theme.inset_border) {
-                ctx.roundedRect(*x + boarder_width / 2, *y + boarder_width / 2,
-                                *width - boarder_width, *height - boarder_width,
+                ctx.roundedRect(*x + border_width / 2, *y + border_width / 2,
+                                *width - border_width, *height - border_width,
                                 corner_radius);
             } else {
                 ctx.roundedRect(*x, *y, *width, *height, corner_radius);
             }
-            ctx.strokeWidth(boarder_width);
+            ctx.strokeWidth(border_width);
             auto border_color =
                 light ? theme.border_color_light : theme.border_color_dark;
             border_color.apply_to_ctx(ctx, *x, *y, *width, *height);
@@ -125,9 +124,9 @@ void background_widget::render(ui::nanovg_context ctx) {
         auto cl = nvgRGBAf(0, 0, 0, 1 - *opacity / 255.f);
         ctx.fillColor(cl);
         if (theme.inset_border)
-            ctx.fillRoundedRect(*x + boarder_width, *y + boarder_width,
-                                *width - boarder_width * 2,
-                                *height - boarder_width * 2, *radius);
+            ctx.fillRoundedRect(*x + border_width, *y + border_width,
+                                *width - border_width * 2,
+                                *height - border_width * 2, *radius);
         else
             ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
     }

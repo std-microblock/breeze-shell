@@ -48,10 +48,9 @@ struct config {
             float scrollbar_radius = 3;
             float hotkey_padding = 4;
 
-            std::string acrylic_color_light = "#fefefe00";
-            std::string acrylic_color_dark = "#28282800";
+            std::string acrylic_color_light = "#fefefebb";
+            std::string acrylic_color_dark = "#282828bb";
 
-            bool use_self_drawn_border = true;
             // These values are used when use_self_drawn_border is true
             paint_color border_color_light =
                 paint_color::from_string("#00000022");
@@ -72,7 +71,7 @@ struct config {
             // unused, only for backward compatibility
             float acrylic_opacity = 0.1;
             bool use_dwm_if_available = true;
-
+            bool use_self_drawn_border = true;
             struct animation {
                 struct main {
                     animated_float_conf y;
