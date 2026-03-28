@@ -13,6 +13,8 @@
 #include <thread>
 #include <variant>
 
+#include "spdlog/spdlog.h"
+
 // Resid
 #include "shell/res_string_loader.h"
 // Context menu
@@ -76,7 +78,7 @@ std::function<void()> menu_controller::add_menu_listener(
         try {
             listener(info);
         } catch (std::exception &e) {
-            std::cerr << "Error in listener: " << e.what() << std::endl;
+            spdlog::error("Error in menu listener: {}", e.what());
         }
     };
     auto ptr =
@@ -85,6 +87,32 @@ std::function<void()> menu_controller::add_menu_listener(
     return [ptr]() { std::erase(menu_callbacks_js, ptr); };
 }
 menu_controller::~menu_controller() {}
+int menu_item_controller::get_position() const {
+    if (!const_cast<menu_item_controller *>(this)->valid())
+        return -1;
+
+    auto item = $item.lock();
+    if (!item)
+        return -1;
+
+    if (auto menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent)) {
+        if (auto m = menu->lock()) {
+            auto it = std::find(m->children.begin(), m->children.end(), item);
+            if (it != m->children.end())
+                return static_cast<int>(it - m->children.begin());
+        }
+    } else if (auto parent =
+                   std::get_if<std::weak_ptr<menu_item_parent_widget>>(
+                       &$parent);
+               auto m = parent->lock()) {
+        auto it = std::find(m->children.begin(), m->children.end(), item);
+        if (it != m->children.end())
+            return static_cast<int>(it - m->children.begin());
+    }
+
+    return -1;
+}
+
 void menu_item_controller::set_position(int new_index) {
     if (!valid())
         return;
@@ -153,7 +181,7 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
                     submenu(std::make_shared<menu_controller>(
                         mw->downcast<menu_widget>()));
                 } catch (std::exception &e) {
-                    std::cerr << "Error in submenu: " << e.what() << std::endl;
+                    spdlog::error("Error in submenu callback: {}", e.what());
                 }
             };
         } else {
@@ -198,6 +226,7 @@ void menu_item_controller::set_data(js_menu_data data) {
             m->update_icon_width();
         }
 }
+void menu_item_controller::update_data(js_menu_data data) { set_data(data); }
 void menu_item_controller::remove() {
     if (!valid())
         return;
@@ -323,7 +352,7 @@ void menu_controller::close() {
 
     menu->close();
 }
-std::string clipboard::get_text() {
+std::string clipboard::read_text() {
     if (!OpenClipboard(nullptr))
         return "";
 
@@ -341,7 +370,7 @@ std::string clipboard::get_text() {
     return text;
 }
 
-void clipboard::set_text(std::string text) {
+void clipboard::write_text(std::string text) {
     if (!OpenClipboard(nullptr))
         return;
 
@@ -475,8 +504,7 @@ void network::get_async(std::string url,
             auto res = get(url);
             ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
-            std::cerr << "Error in network::get_async: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in network::get_async: {}", e.what());
             error_callback(e.what());
         }
     }).detach();
@@ -491,8 +519,7 @@ void network::post_async(std::string url, std::string data,
             auto res = post(url, data);
             ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
-            std::cerr << "Error in network::post_async: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in network::post_async: {}", e.what());
             error_callback(e.what());
         }
     }).detach();
@@ -550,8 +577,7 @@ void subproc::run_async(std::string cmd,
             auto res = run(cmd);
             ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
-            std::cerr << "Error in subproc::run_async: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in subproc::run_async: {}", e.what());
         }
     }).detach();
 }
@@ -624,6 +650,21 @@ void fs::write_binary(std::string path, std::vector<uint8_t> data) {
 std::string breeze::version() { return BREEZE_VERSION; }
 std::string breeze::data_directory() {
     return config::data_directory().generic_string();
+}
+std::string breeze::default_config() {
+    auto previous_default_animation = config::_default_animation;
+    auto previous_config = std::move(config::current);
+
+    if (previous_config) {
+        config::_default_animation = previous_config->default_animation;
+    }
+
+    config::current = std::make_unique<mb_shell::config>();
+    auto result = config::dump_config();
+
+    config::current = std::move(previous_config);
+    config::_default_animation = previous_default_animation;
+    return result;
 }
 bool breeze::should_show_settings_button() {
     return mb_shell::config::current->context_menu.show_settings_button;
@@ -711,6 +752,25 @@ menu_item_parent_item_controller::children() {
 
     return items;
 }
+int menu_item_parent_item_controller::get_position() const {
+    if (!const_cast<menu_item_parent_item_controller *>(this)->valid())
+        return -1;
+
+    auto item = $item.lock();
+    if (!item || !item->parent)
+        return -1;
+
+    auto parent = item->parent->downcast<menu_widget>();
+    if (!parent)
+        return -1;
+
+    auto it = std::find(parent->children.begin(), parent->children.end(), item);
+    if (it == parent->children.end())
+        return -1;
+
+    return static_cast<int>(it - parent->children.begin());
+}
+
 void menu_item_parent_item_controller::set_position(int new_index) {
     if (!valid())
         return;
@@ -828,8 +888,7 @@ void subproc::open_async(std::string path, std::string args,
             open(path, args);
             ctx.enqueueJob([=]() { callback(); });
         } catch (std::exception &e) {
-            std::cerr << "Error in subproc::open_async: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in subproc::open_async: {}", e.what());
         }
     }).detach();
 }
@@ -877,10 +936,9 @@ void timer_thread_func() {
             try {
                 callback();
             } catch (std::exception &e) {
-                std::cerr << "Error in timer callback: " << e.what()
-                          << std::endl;
+                spdlog::error("Error in timer callback: {}", e.what());
             } catch (...) {
-                std::cerr << "Unknown in timer callback: " << std::endl;
+                spdlog::error("Unknown error in timer callback");
             }
         }
     }
@@ -1076,8 +1134,7 @@ fs::watch(std::string path, std::function<void(std::string, int)> callback) {
             } catch (qjs::qjs_context_destroyed_exception &e) {
                 *dispose = true;
             } catch (std::exception &e) {
-                std::cerr << "Error in file watch callback: " << e.what()
-                          << std::endl;
+                spdlog::error("Error in file watch callback: {}", e.what());
             }
         });
 
@@ -1623,7 +1680,7 @@ void menu_controller::show_at_cursor() {
         show_at(p.x, p.y);
     }
 }
-void breeze::set_can_reload_js(bool can) {
+void breeze::allow_js_reload(bool can) {
     mb_shell::context_menu_hooks::block_js_reload.fetch_add(can ? -1 : 1);
 }
 std::optional<std::shared_ptr<breeze_ui::js_widget>>
@@ -1668,6 +1725,9 @@ std::string breeze::current_process_path() {
     }();
 
     return process_path;
+}
+bool breeze::can_reload_js() {
+    return mb_shell::context_menu_hooks::block_js_reload.load() <= 0;
 }
 void breeze::crash_cpu_exception() {
     int *x = (int *)0xffff;

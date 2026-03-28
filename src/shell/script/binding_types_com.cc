@@ -606,8 +606,11 @@ void folder_view_controller::paste() {
 }
 
 void window_titlebar_controller::set_title(std::string new_title) {
+    title = new_title;
     SetWindowTextW((HWND)$hwnd, mb_shell::utf8_to_wstring(new_title).c_str());
 }
+
+std::string window_titlebar_controller::get_title() const { return title; }
 
 void window_titlebar_controller::set_icon(std::string icon_path) {
     HICON hIcon =
@@ -618,6 +621,8 @@ void window_titlebar_controller::set_icon(std::string icon_path) {
         SendMessageW((HWND)$hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
     }
 }
+
+std::string window_titlebar_controller::get_icon() const { return {}; }
 
 void window_titlebar_controller::set_position(int new_x, int new_y) {
     SetWindowPos((HWND)$hwnd, NULL, new_x, new_y, 0, 0,
@@ -652,12 +657,20 @@ void window_titlebar_controller::show() { ShowWindow((HWND)$hwnd, SW_SHOW); }
 void window_titlebar_controller::hide() { ShowWindow((HWND)$hwnd, SW_HIDE); }
 
 void input_box_controller::set_text(std::string new_text) {
+    text = new_text;
     SetWindowTextW((HWND)$hwnd, mb_shell::utf8_to_wstring(new_text).c_str());
 }
 
+std::string input_box_controller::get_text() const { return text; }
+
 void input_box_controller::set_placeholder(std::string new_placeholder) {
+    placeholder = new_placeholder;
     SendMessageW((HWND)$hwnd, EM_SETCUEBANNER, TRUE,
                  (LPARAM)mb_shell::utf8_to_wstring(new_placeholder).c_str());
+}
+
+std::string input_box_controller::get_placeholder() const {
+    return placeholder;
 }
 
 void input_box_controller::set_position(int new_x, int new_y) {
@@ -671,6 +684,7 @@ void input_box_controller::set_size(int new_width, int new_height) {
 }
 
 void input_box_controller::set_multiline(bool new_multiline) {
+    multiline = new_multiline;
     LONG style = GetWindowLongW((HWND)$hwnd, GWL_STYLE);
     if (new_multiline) {
         style |= ES_MULTILINE;
@@ -680,7 +694,10 @@ void input_box_controller::set_multiline(bool new_multiline) {
     SetWindowLongW((HWND)$hwnd, GWL_STYLE, style);
 }
 
+bool input_box_controller::get_multiline() const { return multiline; }
+
 void input_box_controller::set_password(bool new_password) {
+    password = new_password;
     LONG style = GetWindowLongW((HWND)$hwnd, GWL_STYLE);
     if (new_password) {
         style |= ES_PASSWORD;
@@ -690,13 +707,21 @@ void input_box_controller::set_password(bool new_password) {
     SetWindowLongW((HWND)$hwnd, GWL_STYLE, style);
 }
 
+bool input_box_controller::get_password() const { return password; }
+
 void input_box_controller::set_readonly(bool new_readonly) {
+    readonly = new_readonly;
     SendMessageW((HWND)$hwnd, EM_SETREADONLY, new_readonly ? TRUE : FALSE, 0);
 }
 
+bool input_box_controller::get_readonly() const { return readonly; }
+
 void input_box_controller::set_disabled(bool new_disabled) {
+    disabled = new_disabled;
     EnableWindow((HWND)$hwnd, !new_disabled);
 }
+
+bool input_box_controller::get_disabled() const { return disabled; }
 
 void input_box_controller::focus() { SetFocus((HWND)$hwnd); }
 

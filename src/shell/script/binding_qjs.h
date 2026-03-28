@@ -92,6 +92,108 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
     }
 };
 
+template<> struct js_bind<mb_shell::js::breeze_ui::js_textbox_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_textbox_widget>("breeze_ui::js_textbox_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_text, &mb_shell::js::breeze_ui::js_textbox_widget::set_text>("text")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_placeholder, &mb_shell::js::breeze_ui::js_textbox_widget::set_placeholder>("placeholder")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_font_size, &mb_shell::js::breeze_ui::js_textbox_widget::set_font_size>("font_size")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_padding_x, &mb_shell::js::breeze_ui::js_textbox_widget::set_padding_x>("padding_x")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_padding_y, &mb_shell::js::breeze_ui::js_textbox_widget::set_padding_y>("padding_y")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_border_radius, &mb_shell::js::breeze_ui::js_textbox_widget::set_border_radius>("border_radius")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_min_height, &mb_shell::js::breeze_ui::js_textbox_widget::set_min_height>("min_height")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_preferred_multiline_height, &mb_shell::js::breeze_ui::js_textbox_widget::set_preferred_multiline_height>("preferred_multiline_height")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_line_height_multiplier, &mb_shell::js::breeze_ui::js_textbox_widget::set_line_height_multiplier>("line_height_multiplier")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_multiline, &mb_shell::js::breeze_ui::js_textbox_widget::set_multiline>("multiline")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_readonly, &mb_shell::js::breeze_ui::js_textbox_widget::set_readonly>("readonly")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled, &mb_shell::js::breeze_ui::js_textbox_widget::set_disabled>("disabled")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_background_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_background_color>("background_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_readonly_background_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_readonly_background_color>("readonly_background_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled_background_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_disabled_background_color>("disabled_background_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_border_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_border_color>("border_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_focus_border_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_focus_border_color>("focus_border_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_text_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_text_color>("text_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled_text_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_disabled_text_color>("disabled_text_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_placeholder_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_placeholder_color>("placeholder_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_selection_color>("selection_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_caret_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_caret_color>("caret_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_composition_underline_color, &mb_shell::js::breeze_ui::js_textbox_widget::set_composition_underline_color>("composition_underline_color")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_change, &mb_shell::js::breeze_ui::js_textbox_widget::set_on_change>("on_change")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_focus, &mb_shell::js::breeze_ui::js_textbox_widget::set_on_focus>("on_focus")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_blur, &mb_shell::js::breeze_ui::js_textbox_widget::set_on_blur>("on_blur")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_start>("selection_start")
+                .property<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_end>("selection_end")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_text>("get_text")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_text>("set_text")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_placeholder>("get_placeholder")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_placeholder>("set_placeholder")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_font_size>("get_font_size")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_font_size>("set_font_size")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_padding_x>("get_padding_x")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_padding_x>("set_padding_x")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_padding_y>("get_padding_y")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_padding_y>("set_padding_y")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_border_radius>("get_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_border_radius>("set_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_min_height>("get_min_height")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_min_height>("set_min_height")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_preferred_multiline_height>("get_preferred_multiline_height")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_preferred_multiline_height>("set_preferred_multiline_height")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_line_height_multiplier>("get_line_height_multiplier")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_line_height_multiplier>("set_line_height_multiplier")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_multiline>("get_multiline")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_multiline>("set_multiline")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_readonly>("get_readonly")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_readonly>("set_readonly")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled>("get_disabled")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_disabled>("set_disabled")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_background_color>("get_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_background_color>("set_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_readonly_background_color>("get_readonly_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_readonly_background_color>("set_readonly_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled_background_color>("get_disabled_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_disabled_background_color>("set_disabled_background_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_border_color>("get_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_border_color>("set_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_focus_border_color>("get_focus_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_focus_border_color>("set_focus_border_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_text_color>("get_text_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_text_color>("set_text_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_disabled_text_color>("get_disabled_text_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_disabled_text_color>("set_disabled_text_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_placeholder_color>("get_placeholder_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_placeholder_color>("set_placeholder_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_color>("get_selection_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_selection_color>("set_selection_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_caret_color>("get_caret_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_caret_color>("set_caret_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_composition_underline_color>("get_composition_underline_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_composition_underline_color>("set_composition_underline_color")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_change>("get_on_change")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_on_change>("set_on_change")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_focus>("get_on_focus")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_on_focus>("set_on_focus")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_on_blur>("get_on_blur")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_on_blur>("set_on_blur")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::focus>("focus")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::blur>("blur")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::select_all>("select_all")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::select_range>("select_range")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_start>("get_selection_start")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::get_selection_end>("get_selection_end")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::set_selection>("set_selection")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::insert_text>("insert_text")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::delete_text>("delete_text")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::clear>("clear")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::copy>("copy")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::cut>("cut")
+                .fun<&mb_shell::js::breeze_ui::js_textbox_widget::paste>("paste")
+            ;
+    }
+};
+
 template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::breeze_ui::js_flex_layout_widget>("breeze_ui::js_flex_layout_widget")
@@ -227,6 +329,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
         mod.class_<mb_shell::js::breeze_ui::widgets_factory>("breeze_ui::widgets_factory")
             .constructor<>()
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_text_widget>("create_text_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_textbox_widget>("create_textbox_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_spacer_widget>("create_spacer_widget")
@@ -273,8 +376,10 @@ template<> struct js_bind<mb_shell::js::breeze_ui::window> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::breeze_ui::window>("breeze_ui::window")
             .constructor<>()
+                .property<&mb_shell::js::breeze_ui::window::get_root_widget, &mb_shell::js::breeze_ui::window::set_root_widget>("root_widget")
                 .static_fun<&mb_shell::js::breeze_ui::window::create>("create")
                 .static_fun<&mb_shell::js::breeze_ui::window::create_ex>("create_ex")
+                .fun<&mb_shell::js::breeze_ui::window::get_root_widget>("get_root_widget")
                 .fun<&mb_shell::js::breeze_ui::window::set_root_widget>("set_root_widget")
                 .fun<&mb_shell::js::breeze_ui::window::close>("close")
             ;
@@ -450,7 +555,11 @@ template<> struct js_bind<mb_shell::js::window_titlebar_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::window_titlebar_controller>("window_titlebar_controller")
             .constructor<>()
+                .property<&mb_shell::js::window_titlebar_controller::get_title, &mb_shell::js::window_titlebar_controller::set_title>("title")
+                .property<&mb_shell::js::window_titlebar_controller::get_icon, &mb_shell::js::window_titlebar_controller::set_icon>("icon")
+                .fun<&mb_shell::js::window_titlebar_controller::get_title>("get_title")
                 .fun<&mb_shell::js::window_titlebar_controller::set_title>("set_title")
+                .fun<&mb_shell::js::window_titlebar_controller::get_icon>("get_icon")
                 .fun<&mb_shell::js::window_titlebar_controller::set_icon>("set_icon")
                 .fun<&mb_shell::js::window_titlebar_controller::set_position>("set_position")
                 .fun<&mb_shell::js::window_titlebar_controller::set_size>("set_size")
@@ -534,13 +643,25 @@ template<> struct js_bind<mb_shell::js::input_box_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::input_box_controller>("input_box_controller")
             .constructor<>()
+                .property<&mb_shell::js::input_box_controller::get_text, &mb_shell::js::input_box_controller::set_text>("text")
+                .property<&mb_shell::js::input_box_controller::get_placeholder, &mb_shell::js::input_box_controller::set_placeholder>("placeholder")
+                .property<&mb_shell::js::input_box_controller::get_multiline, &mb_shell::js::input_box_controller::set_multiline>("multiline")
+                .property<&mb_shell::js::input_box_controller::get_password, &mb_shell::js::input_box_controller::set_password>("password")
+                .property<&mb_shell::js::input_box_controller::get_readonly, &mb_shell::js::input_box_controller::set_readonly>("readonly")
+                .property<&mb_shell::js::input_box_controller::get_disabled, &mb_shell::js::input_box_controller::set_disabled>("disabled")
+                .fun<&mb_shell::js::input_box_controller::get_text>("get_text")
                 .fun<&mb_shell::js::input_box_controller::set_text>("set_text")
+                .fun<&mb_shell::js::input_box_controller::get_placeholder>("get_placeholder")
                 .fun<&mb_shell::js::input_box_controller::set_placeholder>("set_placeholder")
                 .fun<&mb_shell::js::input_box_controller::set_position>("set_position")
                 .fun<&mb_shell::js::input_box_controller::set_size>("set_size")
+                .fun<&mb_shell::js::input_box_controller::get_multiline>("get_multiline")
                 .fun<&mb_shell::js::input_box_controller::set_multiline>("set_multiline")
+                .fun<&mb_shell::js::input_box_controller::get_password>("get_password")
                 .fun<&mb_shell::js::input_box_controller::set_password>("set_password")
+                .fun<&mb_shell::js::input_box_controller::get_readonly>("get_readonly")
                 .fun<&mb_shell::js::input_box_controller::set_readonly>("set_readonly")
+                .fun<&mb_shell::js::input_box_controller::get_disabled>("get_disabled")
                 .fun<&mb_shell::js::input_box_controller::set_disabled>("set_disabled")
                 .fun<&mb_shell::js::input_box_controller::focus>("focus")
                 .fun<&mb_shell::js::input_box_controller::blur>("blur")
@@ -673,8 +794,11 @@ template<> struct js_bind<mb_shell::js::menu_item_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::menu_item_controller>("menu_item_controller")
             .constructor<>()
+                .property<&mb_shell::js::menu_item_controller::get_position, &mb_shell::js::menu_item_controller::set_position>("position")
+                .fun<&mb_shell::js::menu_item_controller::get_position>("get_position")
                 .fun<&mb_shell::js::menu_item_controller::set_position>("set_position")
                 .fun<&mb_shell::js::menu_item_controller::set_data>("set_data")
+                .fun<&mb_shell::js::menu_item_controller::update_data>("update_data")
                 .fun<&mb_shell::js::menu_item_controller::data>("data")
                 .fun<&mb_shell::js::menu_item_controller::remove>("remove")
                 .fun<&mb_shell::js::menu_item_controller::valid>("valid")
@@ -699,7 +823,9 @@ template<> struct js_bind<mb_shell::js::menu_item_parent_item_controller> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::menu_item_parent_item_controller>("menu_item_parent_item_controller")
             .constructor<>()
+                .property<&mb_shell::js::menu_item_parent_item_controller::get_position, &mb_shell::js::menu_item_parent_item_controller::set_position>("position")
                 .fun<&mb_shell::js::menu_item_parent_item_controller::children>("children")
+                .fun<&mb_shell::js::menu_item_parent_item_controller::get_position>("get_position")
                 .fun<&mb_shell::js::menu_item_parent_item_controller::set_position>("set_position")
                 .fun<&mb_shell::js::menu_item_parent_item_controller::remove>("remove")
                 .fun<&mb_shell::js::menu_item_parent_item_controller::valid>("valid")
@@ -983,8 +1109,8 @@ template<> struct js_bind<mb_shell::js::clipboard> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::clipboard>("clipboard")
             .constructor<>()
-                .static_fun<&mb_shell::js::clipboard::get_text>("get_text")
-                .static_fun<&mb_shell::js::clipboard::set_text>("set_text")
+                .static_fun<&mb_shell::js::clipboard::read_text>("read_text")
+                .static_fun<&mb_shell::js::clipboard::write_text>("write_text")
             ;
     }
 };
@@ -1136,9 +1262,11 @@ template<> struct js_bind<mb_shell::js::breeze> {
                 .static_fun<&mb_shell::js::breeze::hash>("hash")
                 .static_fun<&mb_shell::js::breeze::branch>("branch")
                 .static_fun<&mb_shell::js::breeze::data_directory>("data_directory")
+                .static_fun<&mb_shell::js::breeze::default_config>("default_config")
                 .static_fun<&mb_shell::js::breeze::is_light_theme>("is_light_theme")
                 .static_fun<&mb_shell::js::breeze::user_language>("user_language")
-                .static_fun<&mb_shell::js::breeze::set_can_reload_js>("set_can_reload_js")
+                .static_fun<&mb_shell::js::breeze::can_reload_js>("can_reload_js")
+                .static_fun<&mb_shell::js::breeze::allow_js_reload>("allow_js_reload")
                 .static_fun<&mb_shell::js::breeze::should_show_settings_button>("should_show_settings_button")
                 .static_fun<&mb_shell::js::breeze::current_process_name>("current_process_name")
                 .static_fun<&mb_shell::js::breeze::current_process_path>("current_process_path")
@@ -1243,13 +1371,15 @@ template<> struct js_bind<mb_shell::js::infra> {
     }
 };
 
-inline void bindAll(qjs::Context::Module &mod) {
+inline void mshell_bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::breeze_ui>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_text_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::js_textbox_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
 

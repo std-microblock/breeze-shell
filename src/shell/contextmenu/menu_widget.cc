@@ -258,7 +258,7 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
             try {
                 item.action.value()();
             } catch (std::exception &e) {
-                std::cerr << "Error in action: " << e.what() << std::endl;
+                spdlog::error("Error in menu item action: {}", e.what());
             }
         }
     }
@@ -475,8 +475,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                         try {
                             wid->item.action.value()();
                         } catch (std::exception &e) {
-                            std::cerr << "Error in action: " << e.what()
-                                      << std::endl;
+                            spdlog::error("Error in menu item action: {}", e.what());
                         }
                     } else if (wid->item.submenu) {
                         wid->show_submenu(ctx);
@@ -577,8 +576,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                     try {
                         wid->item.action.value()();
                     } catch (std::exception &e) {
-                        std::cerr << "Error in action: " << e.what()
-                                  << std::endl;
+                        spdlog::error("Error in menu item action: {}", e.what());
                     }
                 } else if (wid && wid->item.submenu && !wid->submenu_wid) {
                     wid->show_submenu(ctx);

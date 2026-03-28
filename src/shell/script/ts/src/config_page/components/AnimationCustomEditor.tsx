@@ -3,7 +3,7 @@ import { Button, Text, NumberBox, Select, iconElement } from "../components";
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { breeze } from "mshell";
 import { useTranslation } from "../hooks";
-import { ICON_EXPAND_LESS, ICON_EXPAND_MORE } from "../constants";
+import { ICON_EXPAND_MORE } from "../constants";
 
 interface AnimatedFloatConf {
     duration?: number;
@@ -35,19 +35,41 @@ interface AnimationConfig {
     };
 }
 
+const stripDefaultFields = (value: AnimatedFloatConf, defaultValue: AnimatedFloatConf): AnimatedFloatConf => {
+    const result: AnimatedFloatConf = {};
+
+    if (value.duration !== defaultValue.duration) {
+        result.duration = value.duration;
+    }
+    if (value.easing !== defaultValue.easing) {
+        result.easing = value.easing;
+    }
+    if (value.delay_scale !== defaultValue.delay_scale) {
+        result.delay_scale = value.delay_scale;
+    }
+
+    return result;
+};
+
 const AnimatedPropertyEditor = memo(({
     label,
     value,
+    defaultValue,
     onChange,
     easingOptions
 }: {
     label: string;
     value: AnimatedFloatConf;
+    defaultValue: AnimatedFloatConf;
     onChange: (value: AnimatedFloatConf) => void;
     easingOptions: Array<{ value: string; label: string }>;
 }) => {
     const { t } = useTranslation();
     const isLightTheme = breeze.is_light_theme();
+    const resolvedValue = { ...defaultValue, ...value };
+    const onResolvedValueChange = (nextValue: AnimatedFloatConf) => {
+        onChange(stripDefaultFields(nextValue, defaultValue));
+    };
 
     return (
         <flex
@@ -60,16 +82,16 @@ const AnimatedPropertyEditor = memo(({
             <flex horizontal gap={10}>
                 <NumberBox
                     label={t("customEditor.animation.duration")}
-                    value={value.duration ?? 200}
-                    onChange={(v) => onChange({ ...value, duration: Math.round(v) })}
+                    value={resolvedValue.duration}
+                    onChange={(v) => onResolvedValueChange({ ...resolvedValue, duration: Math.round(v) })}
                     min={0}
                     max={2000}
                     step={50}
                 />
                 <NumberBox
                     label={t("customEditor.animation.delayScale")}
-                    value={value.delay_scale ?? 1.0}
-                    onChange={(v) => onChange({ ...value, delay_scale: Math.round(v * 10) / 10 })}
+                    value={resolvedValue.delay_scale}
+                    onChange={(v) => onResolvedValueChange({ ...resolvedValue, delay_scale: Math.round(v * 10) / 10 })}
                     min={0}
                     max={5}
                     step={0.1}
@@ -78,9 +100,9 @@ const AnimatedPropertyEditor = memo(({
 
             <Select
                 label={t("customEditor.animation.easing")}
-                value={value.easing ?? 'ease_in_out'}
+                value={resolvedValue.easing}
                 options={easingOptions}
-                onChange={(v) => onChange({ ...value, easing: v })}
+                onChange={(v) => onResolvedValueChange({ ...resolvedValue, easing: v })}
             />
         </flex>
     );
@@ -91,6 +113,7 @@ const PropertyGroupEditor = memo(({
     groupKey,
     properties,
     groupData,
+    defaultGroupData,
     onUpdate,
     easingOptions
 }: {
@@ -98,6 +121,7 @@ const PropertyGroupEditor = memo(({
     groupKey: string;
     properties: Array<{ key: string; label: string }>;
     groupData: any;
+    defaultGroupData: any;
     onUpdate: (groupKey: string, propKey: string, value: AnimatedFloatConf) => void;
     easingOptions: Array<{ value: string; label: string }>;
 }) => {
@@ -105,6 +129,9 @@ const PropertyGroupEditor = memo(({
     const [folded, setFolded] = useState(true);
     const getPropertyValue = (propKey: string): AnimatedFloatConf => {
         return groupData?.[propKey] ?? {};
+    };
+    const getDefaultPropertyValue = (propKey: string): AnimatedFloatConf => {
+        return defaultGroupData?.[propKey] ?? {};
     };
 
     return (
@@ -127,6 +154,7 @@ const PropertyGroupEditor = memo(({
                             key={key}
                             label={label}
                             value={getPropertyValue(key)}
+                            defaultValue={getDefaultPropertyValue(key)}
                             onChange={(value) => onUpdate(groupKey, key, value)}
                             easingOptions={easingOptions}
                         />
@@ -139,10 +167,12 @@ const PropertyGroupEditor = memo(({
 
 export const AnimationCustomEditor = memo(({
     animation,
+    defaultAnimation,
     onUpdate,
     onClose
 }: {
     animation: AnimationConfig;
+    defaultAnimation: AnimationConfig;
     onUpdate: (animation: AnimationConfig) => void;
     onClose: () => void;
 }) => {
@@ -150,11 +180,27 @@ export const AnimationCustomEditor = memo(({
     const safeAnimation = useMemo<AnimationConfig>(() => {
         return animation && typeof animation === "object" ? animation : {};
     }, [animation]);
+    const safeDefaultAnimation = useMemo<AnimationConfig>(() => {
+        return defaultAnimation && typeof defaultAnimation === "object" ? defaultAnimation : {};
+    }, [defaultAnimation]);
 
     const handleUpdate = useCallback((groupKey: string, propKey: string, value: AnimatedFloatConf) => {
         try {
             const newAnim = { ...safeAnimation } as AnimationConfig & Record<string, any>;
-            newAnim[groupKey] = { ...((safeAnimation as Record<string, any>)?.[groupKey] || {}), [propKey]: value };
+            const nextGroup = { ...((safeAnimation as Record<string, any>)?.[groupKey] || {}) };
+
+            if (Object.keys(value).length === 0) {
+                delete nextGroup[propKey];
+            } else {
+                nextGroup[propKey] = value;
+            }
+
+            if (Object.keys(nextGroup).length === 0) {
+                delete newAnim[groupKey];
+            } else {
+                newAnim[groupKey] = nextGroup;
+            }
+
             onUpdate(newAnim);
         } catch (e) {
             shell.println("[Config] Failed to update animation config:", e);
@@ -232,6 +278,7 @@ export const AnimationCustomEditor = memo(({
                         groupKey={group.groupKey}
                         properties={group.properties}
                         groupData={(safeAnimation as Record<string, any>)?.[group.groupKey]}
+                        defaultGroupData={(safeDefaultAnimation as Record<string, any>)?.[group.groupKey]}
                         onUpdate={handleUpdate}
                         easingOptions={easingOptions}
                     />

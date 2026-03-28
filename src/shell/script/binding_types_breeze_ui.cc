@@ -9,6 +9,7 @@
 #include <print>
 
 #include "../utils.h"
+#include "spdlog/spdlog.h"
 
 namespace mb_shell::js {
 
@@ -118,6 +119,55 @@ IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, text, std::string);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_size, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, max_width, float);
 IMPL_COLOR_PROP(breeze_ui::js_text_widget, ui::text_widget, color);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, text,
+                 std::string);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, placeholder,
+                 std::string);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, font_size,
+                 int);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, padding_x,
+                 float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, padding_y,
+                 float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, border_radius,
+                 float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, min_height,
+                 float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                 preferred_multiline_height, float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                 line_height_multiplier, float);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, multiline,
+                 bool);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, readonly,
+                 bool);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, disabled,
+                 bool);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                background_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                readonly_background_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                disabled_background_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, border_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                focus_border_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, text_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                disabled_text_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                placeholder_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                selection_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, caret_color);
+IMPL_COLOR_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                composition_underline_color);
+IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, on_change,
+                   std::function<void(std::string)>)
+IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, on_focus,
+                   std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, on_blur,
+                   std::function<void()>)
 
 void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
                                               int after_index) {
@@ -173,6 +223,106 @@ breeze_ui::widgets_factory::create_text_widget() {
     auto res = std::make_shared<js_text_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(text_widget);
     return res;
+}
+
+std::shared_ptr<breeze_ui::js_textbox_widget>
+breeze_ui::widgets_factory::create_textbox_widget() {
+    auto textbox_widget = std::make_shared<ui::textbox_widget>();
+
+    auto res = std::make_shared<js_textbox_widget>();
+    res->$widget = std::dynamic_pointer_cast<ui::widget>(textbox_widget);
+    return res;
+}
+
+void breeze_ui::js_textbox_widget::focus() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->focus();
+}
+
+void breeze_ui::js_textbox_widget::blur() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->blur();
+}
+
+void breeze_ui::js_textbox_widget::select_all() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->select_all();
+}
+
+void breeze_ui::js_textbox_widget::select_range(int start, int end) {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->select_range(start, end);
+}
+
+int breeze_ui::js_textbox_widget::get_selection_start() const {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return 0;
+    return widget->selection_start();
+}
+
+int breeze_ui::js_textbox_widget::get_selection_end() const {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return 0;
+    return widget->selection_end();
+}
+
+void breeze_ui::js_textbox_widget::set_selection(int start, int end) {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->set_selection(start, end);
+}
+
+void breeze_ui::js_textbox_widget::insert_text(std::string new_text) {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->insert_text(new_text);
+}
+
+void breeze_ui::js_textbox_widget::delete_text(int start, int end) {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->delete_text(start, end);
+}
+
+void breeze_ui::js_textbox_widget::clear() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->clear();
+}
+
+void breeze_ui::js_textbox_widget::copy() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->copy();
+}
+
+void breeze_ui::js_textbox_widget::cut() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->cut();
+}
+
+void breeze_ui::js_textbox_widget::paste() {
+    auto widget = std::dynamic_pointer_cast<ui::textbox_widget>($widget);
+    if (!widget)
+        return;
+    widget->paste();
 }
 
 struct image_widget : public ui::widget {
@@ -327,8 +477,7 @@ struct widget_js_base : public ui::flex_widget {
                     });
             }
         } catch (const std::exception &e) {
-            std::cerr << "Exception in widget update: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in widget callback: {}", e.what());
         }
     }
 
@@ -411,6 +560,7 @@ void breeze_ui::js_flex_layout_widget::set_padding(float left, float right,
 
 std::variant<std::shared_ptr<breeze_ui::js_widget>,
              std::shared_ptr<breeze_ui::js_text_widget>,
+             std::shared_ptr<breeze_ui::js_textbox_widget>,
              std::shared_ptr<breeze_ui::js_flex_layout_widget>,
              std::shared_ptr<breeze_ui::js_image_widget>,
              std::shared_ptr<breeze_ui::js_spacer_widget>>
@@ -421,6 +571,7 @@ breeze_ui::js_widget::downcast() {
         return casted;                                                         \
     }
     TRY_DOWNCAST(js_text_widget);
+    TRY_DOWNCAST(js_textbox_widget);
     TRY_DOWNCAST(js_flex_layout_widget);
     TRY_DOWNCAST(js_image_widget);
     TRY_DOWNCAST(js_spacer_widget);
@@ -519,6 +670,17 @@ void breeze_ui::window::set_root_widget(
     std::lock_guard l($render_target->rt_lock);
     $render_target->root = widget->$widget;
     $render_target->root->needs_repaint = true;
+}
+
+std::shared_ptr<mb_shell::js::breeze_ui::js_widget>
+breeze_ui::window::get_root_widget() const {
+    if (!$render_target)
+        return nullptr;
+    std::lock_guard l($render_target->rt_lock);
+    if (!$render_target->root)
+        return nullptr;
+    return std::make_shared<mb_shell::js::breeze_ui::js_widget>(
+        $render_target->root);
 }
 
 void breeze_ui::window::close() {

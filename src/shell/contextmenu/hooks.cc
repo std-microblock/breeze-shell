@@ -69,8 +69,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
 
             return menu_render.selected_menu;
         } catch (std::exception &e) {
-            std::cerr << "Exception in track_popup_menu: " << e.what()
-                      << std::endl;
+            spdlog::error("Error in track_popup_menu: {}", e.what());
             return std::optional<int>{};
         }
     });
@@ -159,8 +158,8 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
     auto user32 = proc->module("user32.dll");
     auto CreateWindowExWFunc = user32.value()->exports("CreateWindowExW");
     if (!CreateWindowExWFunc) {
-        std::cerr << "Failed to find CreateWindowExW in user32.dll"
-                  << std::endl;
+        spdlog::error("Failed to find CreateWindowExW export");
+        return;
     }
     static auto CreateWindowExWHook = CreateWindowExWFunc->inline_hook();
     CreateWindowExWHook->install(
@@ -288,7 +287,7 @@ void mb_shell::context_menu_hooks::install_GetUIObjectOf_hook() {
     IShellFolder *psfDesktop = NULL;
     IShellFolder2 *psf2Desktop = NULL;
     if (NOERROR != SHGetDesktopFolder(&psfDesktop)) {
-        std::cerr << "Failed to get desktop shell folder" << std::endl;
+        spdlog::error("Failed to get desktop shell folder");
         return;
     }
     psfDesktop->QueryInterface(IID_IShellFolder2, (void **)&psf2Desktop);

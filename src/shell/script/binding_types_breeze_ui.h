@@ -17,7 +17,9 @@ struct render_target;
 
 namespace mb_shell::js {
 struct breeze_ui {
+    using rgba_prop = std::optional<std::tuple<float, float, float, float>>;
     struct js_text_widget;
+    struct js_textbox_widget;
     struct js_flex_layout_widget;
     struct breeze_paint;
     struct js_image_widget;
@@ -51,6 +53,7 @@ struct breeze_ui {
 
         std::variant<
             std::shared_ptr<js_widget>, std::shared_ptr<js_text_widget>,
+            std::shared_ptr<js_textbox_widget>,
             std::shared_ptr<js_flex_layout_widget>,
             std::shared_ptr<js_image_widget>, std::shared_ptr<js_spacer_widget>>
         downcast();
@@ -69,6 +72,55 @@ struct breeze_ui {
         std::optional<std::tuple<float, float, float, float>> get_color() const;
         void
         set_color(std::optional<std::tuple<float, float, float, float>> color);
+    };
+
+    struct js_textbox_widget : public js_widget {
+#define DEFINE_PROP(type, name)                                                \
+    type get_##name() const;                                                   \
+    void set_##name(type);
+
+        DEFINE_PROP(std::string, text)
+        DEFINE_PROP(std::string, placeholder)
+        DEFINE_PROP(int, font_size)
+        DEFINE_PROP(float, padding_x)
+        DEFINE_PROP(float, padding_y)
+        DEFINE_PROP(float, border_radius)
+        DEFINE_PROP(float, min_height)
+        DEFINE_PROP(float, preferred_multiline_height)
+        DEFINE_PROP(float, line_height_multiplier)
+        DEFINE_PROP(bool, multiline)
+        DEFINE_PROP(bool, readonly)
+        DEFINE_PROP(bool, disabled)
+        DEFINE_PROP(rgba_prop, background_color)
+        DEFINE_PROP(rgba_prop, readonly_background_color)
+        DEFINE_PROP(rgba_prop, disabled_background_color)
+        DEFINE_PROP(rgba_prop, border_color)
+        DEFINE_PROP(rgba_prop, focus_border_color)
+        DEFINE_PROP(rgba_prop, text_color)
+        DEFINE_PROP(rgba_prop, disabled_text_color)
+        DEFINE_PROP(rgba_prop, placeholder_color)
+        DEFINE_PROP(rgba_prop, selection_color)
+        DEFINE_PROP(rgba_prop, caret_color)
+        DEFINE_PROP(rgba_prop, composition_underline_color)
+        DEFINE_PROP(std::function<void(std::string)>, on_change)
+        DEFINE_PROP(std::function<void()>, on_focus)
+        DEFINE_PROP(std::function<void()>, on_blur)
+
+        void focus();
+        void blur();
+        void select_all();
+        void select_range(int start, int end);
+        int get_selection_start() const;
+        int get_selection_end() const;
+        void set_selection(int start, int end);
+        void insert_text(std::string new_text);
+        void delete_text(int start, int end);
+        void clear();
+        void copy();
+        void cut();
+        void paste();
+
+#undef DEFINE_PROP
     };
 
     struct js_flex_layout_widget : public js_widget {
@@ -134,6 +186,7 @@ struct breeze_ui {
 
     struct widgets_factory {
         static std::shared_ptr<js_text_widget> create_text_widget();
+        static std::shared_ptr<js_textbox_widget> create_textbox_widget();
         static std::shared_ptr<js_flex_layout_widget>
         create_flex_layout_widget();
         static std::shared_ptr<js_image_widget> create_image_widget();
@@ -156,6 +209,8 @@ struct breeze_ui {
                   std::function<void()> on_close);
 
         std::shared_ptr<ui::render_target> $render_target;
+        std::shared_ptr<mb_shell::js::breeze_ui::js_widget> get_root_widget()
+            const;
         void set_root_widget(
             std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget);
         void close();

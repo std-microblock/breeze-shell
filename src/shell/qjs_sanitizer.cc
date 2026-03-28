@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <thread>
+#include "spdlog/spdlog.h"
 
 #define FN(name) {#name, (void *)&name}
 static const std::unordered_map<std::string, void *> func_to_hook = {
@@ -188,7 +189,7 @@ void mb_shell::qjs_sanitizer_enable() {
                     auto existing_thread_id = thread_context_map[js_ctx];
                     if (existing_thread_id != std::this_thread::get_id()) {
                         // Detected cross-thread JS context access
-                        std::cerr << "Detected cross-thread access to JSContext in function " << name << std::endl;
+                        spdlog::error("Detected cross-thread access to JSContext in function {}", name);
                     }
                 }
             }

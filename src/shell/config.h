@@ -77,10 +77,14 @@ struct config {
                     animated_float_conf y;
                 } main;
                 struct item {
-                    animated_float_conf opacity;
-                    animated_float_conf x, y;
+                    animated_float_conf opacity{.delay_scale = 0.6f};
+                    animated_float_conf x{.easing = ui::easing_type::mutation},
+                        y;
                     animated_float_conf width;
-                    animated_float_conf blur;
+                    animated_float_conf blur{
+                        .easing = ui::easing_type::ease_in_out,
+                        .delay_scale = 0.7f,
+                    };
                     float appear_blur = 2.5f;
                 } item;
                 struct bg {

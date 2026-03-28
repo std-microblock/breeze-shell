@@ -46,7 +46,7 @@ void script_context::bind() {
 
     module.function("println", println);
 
-    bindAll(module);
+    mshell_bindAll(module);
 
     auto g = js->global();
     g["console"] = js->newObject();
@@ -67,10 +67,12 @@ void script_context::run_event_loop() {
             std::unique_lock lock(js->js_mutex);
             auto ctx = js->ctx;
             if (auto res = JS_ExecutePendingJob(rt->rt, &ctx); res < 0) {
-                std::cerr << "Error executing pending JS job: ";
-                auto val = qjs::Value{js->ctx, JS_GetException(js->ctx)};
-                std::cerr << (std::string)val << (std::string)val["stack"]
-                          << std::endl;
+                spdlog::error(
+                    "Error executing pending JS job: {}",
+                    (std::string)qjs::Value{js->ctx, JS_GetException(js->ctx)});
+                spdlog::error("Stack trace: {}",
+                              (std::string)qjs::Value{
+                                  js->ctx, JS_GetException(js->ctx)}["stack"]);
             }
             lock.unlock();
             js->pending_job_count.fetch_sub(1);
@@ -158,8 +160,9 @@ void script_context::watch_folder(const std::filesystem::path &path,
                         js->eval(breeze_script_js, "breeze-script.js",
                                  JS_EVAL_TYPE_MODULE);
                     } catch (std::exception &e) {
-                        std::cerr << "Error in breeze-script.js: " << e.what()
-                                  << std::endl;
+                        spdlog::error("Error in breeze_script_js: {}",
+                                      e.what());
+                        return;
                     }
 
                     std::vector<std::filesystem::path> files;
@@ -226,13 +229,12 @@ void script_context::watch_folder(const std::filesystem::path &path,
                                             JS_EVAL_FLAG_COMPILE_ONLY);
 
                             if (JS_IsException(func)) {
-                                std::cerr << "Syntax Error in file: " << path
-                                          << std::endl;
+                                spdlog::error("Syntax Error in file: {}", path.string());
                                 auto val = qjs::Value{js->ctx,
                                                       JS_GetException(js->ctx)};
-                                std::cerr << (std::string)val
-                                          << (std::string)val["stack"]
-                                          << std::endl;
+                                spdlog::error("Error: {}", (std::string)val);
+                                spdlog::error("Stack trace: {}",
+                                              (std::string)val["stack"]);
                                 JS_FreeValue(js->ctx, func);
                                 continue;
                             }
@@ -259,14 +261,14 @@ void script_context::watch_folder(const std::filesystem::path &path,
                             auto val = qjs::Value{
                                 js->ctx, JS_EvalFunction(js->ctx, func)};
                             if (val.isError()) {
-                                std::cerr << "Error in file: " << path
-                                          << (std::string)val
-                                          << (std::string)val["stack"]
-                                          << std::endl;
+                                spdlog::error("Error executing file: {}", path.string());
+                                spdlog::error("Error: {}", (std::string)val);
+                                spdlog::error("Stack trace: {}",
+                                              (std::string)val["stack"]);
                             }
                         } catch (std::exception &e) {
-                            std::cerr << "Error in file: " << path << " "
-                                      << e.what() << std::endl;
+                            spdlog::error("Error in file: {} {}", path.string(),
+                                          e.what());
                         }
                     }
 
@@ -276,8 +278,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
                     run_event_loop();
                     is_thread_js_main = false;
                 } catch (std::exception &e) {
-                    std::cerr << "Fatal error in JS thread: " << e.what()
-                              << std::endl;
+                    spdlog::error("Error in JS thread: {}", e.what());
                 }
             },
             10485760); // 10 MB stack

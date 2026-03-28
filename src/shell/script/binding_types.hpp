@@ -129,9 +129,11 @@ struct window_titlebar_controller {
 
     // 设置窗口标题
     // Set window title
+    std::string get_title() const;
     void set_title(std::string new_title);
     // 设置窗口图标
     // Set window icon
+    std::string get_icon() const;
     void set_icon(std::string icon_path);
     // 设置窗口位置
     // Set window position
@@ -194,9 +196,11 @@ struct input_box_controller {
 
     // 设置文本
     // Set text
+    std::string get_text() const;
     void set_text(std::string new_text);
     // 设置占位符
     // Set placeholder
+    std::string get_placeholder() const;
     void set_placeholder(std::string new_placeholder);
     // 设置位置
     // Set position
@@ -206,15 +210,19 @@ struct input_box_controller {
     void set_size(int new_width, int new_height);
     // 设置是否多行
     // Set multiline state
+    bool get_multiline() const;
     void set_multiline(bool new_multiline);
     // 设置是否为密码框
     // Set password field state
+    bool get_password() const;
     void set_password(bool new_password);
     // 设置是否只读
     // Set readonly state
+    bool get_readonly() const;
     void set_readonly(bool new_readonly);
     // 设置是否禁用
     // Set disabled state
+    bool get_disabled() const;
     void set_disabled(bool new_disabled);
     // 获取焦点
     // Get focus
@@ -286,8 +294,10 @@ struct menu_item_controller {
     std::variant<std::weak_ptr<mb_shell::menu_widget>,
                  std::weak_ptr<mb_shell::menu_item_parent_widget>>
         $parent;
+    int get_position() const;
     void set_position(int new_index);
     void set_data(js_menu_data data);
+    void update_data(js_menu_data data);
     js_menu_data data();
     void remove();
     bool valid();
@@ -297,6 +307,7 @@ struct menu_item_parent_item_controller {
     std::weak_ptr<mb_shell::menu_item_parent_widget> $item;
     std::weak_ptr<mb_shell::menu_widget> $menu;
     std::vector<std::shared_ptr<menu_item_controller>> children();
+    int get_position() const;
     void set_position(int new_index);
     void remove();
     bool valid();
@@ -462,11 +473,11 @@ struct menu_controller {
 struct clipboard {
     // 从剪贴板获取文本
     // Get text from clipboard
-    static std::string get_text();
+    static std::string read_text();
 
     // 设置文本到剪贴板
     // Set text to clipboard
-    static void set_text(std::string text);
+    static void write_text(std::string text);
 };
 
 // 网络操作
@@ -628,9 +639,11 @@ struct breeze {
     static std::string hash();
     static std::string branch();
     static std::string data_directory();
+    static std::string default_config();
     static bool is_light_theme();
     static std::string user_language();
-    static void set_can_reload_js(bool can);
+    static bool can_reload_js();
+    static void allow_js_reload(bool can);
     static bool should_show_settings_button();
     static std::string current_process_name();
     static std::string current_process_path();

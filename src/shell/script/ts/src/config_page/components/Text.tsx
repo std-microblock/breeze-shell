@@ -8,7 +8,7 @@ export const Text = memo((({
     color,
     opacity
 }: {
-    children: string;
+    children: string | number | Array<string | number>;
     fontSize?: number;
     maxWidth?: number;
     color?: string | number[];
@@ -22,10 +22,11 @@ export const Text = memo((({
         const newAlpha = Math.round(origAlpha * opacity);
         color = color.slice(0, 7) + newAlpha.toString(16).padStart(2, '0');
     }
+    const text = Array.isArray(children) ? children.join('') : String(children);
     
     return (
         <text
-            text={children}
+            text={text}
             fontSize={fontSize}
             maxWidth={maxWidth}
             color={color}

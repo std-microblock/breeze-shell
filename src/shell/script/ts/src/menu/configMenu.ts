@@ -70,7 +70,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                 const shellOldPath = shell.breeze.data_directory() + '/shell_old.dll'
                                 const url = PLUGIN_SOURCES[current_source] + data.shell.path
 
-                                upd.set_data({
+                                upd.update_data({
                                     name: t('更新中...'),
                                     icon_svg: ICON_REPAIR_COLORED,
                                     disabled: true
@@ -78,13 +78,13 @@ export const makeBreezeConfigMenu = (mainMenu) => {
 
                                 const downloadNewShell = () => {
                                     shell.network.download_async(url, shellPath, () => {
-                                        upd.set_data({
+                                        upd.update_data({
                                             name: t('新版本已下载，将于下次重启资源管理器生效'),
                                             icon_svg: ICON_CHECKED_COLORED,
                                             disabled: true
                                         })
                                     }, e => {
-                                        upd.set_data({
+                                        upd.update_data({
                                             name: t('更新失败: ') + e,
                                             icon_svg: ICON_REPAIR_COLORED,
                                             disabled: false
@@ -100,7 +100,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                                 shell.fs.rename(shellPath, shellOldPath)
                                                 downloadNewShell()
                                             } catch (e) {
-                                                upd.set_data({
+                                                upd.update_data({
                                                     name: t('更新失败: ') + '无法移动当前文件',
                                                     icon_svg: ICON_REPAIR_COLORED,
                                                     disabled: false
@@ -114,7 +114,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                         downloadNewShell()
                                     }
                                 } catch (e) {
-                                    upd.set_data({
+                                    upd.update_data({
                                         name: t('更新失败: ') + e,
                                         icon_svg: ICON_REPAIR_COLORED,
                                         disabled: false
@@ -160,7 +160,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                     if (preview_sub) {
                                         preview_sub.close()
                                     }
-                                    m.set_data({
+                                    m.update_data({
                                         name: plugin.name,
                                         icon_svg: ICON_CHANGE_COLORED,
                                         disabled: true
@@ -169,7 +169,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                     const url = PLUGIN_SOURCES[current_source] + plugin.path
                                     get_async(url).then(data => {
                                         shell.fs.write(path, data as string)
-                                        m.set_data({
+                                        m.update_data({
                                             name: plugin.name,
                                             icon_svg: ICON_CHECKED_COLORED,
                                             action() { },
@@ -180,7 +180,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
 
                                         reload_local()
                                     }).catch(e => {
-                                        m.set_data({
+                                        m.update_data({
                                             name: plugin.name,
                                             icon_svg: ICON_REPAIR_COLORED,
                                             submenu(sub) {
@@ -190,7 +190,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                                 sub.append_menu({
                                                     name: url,
                                                     action() {
-                                                        shell.clipboard.set_text(url)
+                                                        shell.clipboard.write_text(url)
                                                         mainMenu.close()
                                                     }
                                                 })
@@ -232,7 +232,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                     action() {
                                         current_source = key
                                         cached_plugin_index = null
-                                        source.set_data({
+                                        source.update_data({
                                             name: t('当前源: ') + key
                                         })
                                         updatePlugins(1)
@@ -283,13 +283,13 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                         if (isPrioritized) {
                                             config.plugin_load_order = config.plugin_load_order.filter(name => name !== plugin);
                                             isInLoadOrder[plugin] = false;
-                                            btn.set_data({
+                                            btn.update_data({
                                                 icon_svg: ICON_EMPTY
                                             });
                                         } else {
                                             config.plugin_load_order.unshift(plugin);
                                             isInLoadOrder[plugin] = true;
-                                            btn.set_data({
+                                            btn.update_data({
                                                 icon_svg: ICON_CHECKED_COLORED
                                             });
                                         }
@@ -312,7 +312,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                                 currentValue = !currentValue;
                                 setNestedValue(config, configPath, currentValue);
                                 write_config();
-                                toggle.set_data({
+                                toggle.update_data({
                                     icon_svg: currentValue ? ICON_CHECKED_COLORED : ICON_EMPTY,
                                     disabled: false
                                 });
@@ -453,12 +453,12 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                             for (const _item of sub.get_items()) {
                                 const item = _item.data();
                                 if (item.name === currentPreset) {
-                                    _item.set_data({
+                                    _item.update_data({
                                         icon_svg: ICON_CHECKED_COLORED,
                                         disabled: true
                                     });
                                 } else {
-                                    _item.set_data({
+                                    _item.update_data({
                                         icon_svg: ICON_EMPTY,
                                         disabled: false
                                     });
@@ -567,13 +567,13 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                         action() {
                             if (disabled) {
                                 shell.fs.rename(shell.breeze.data_directory() + '/scripts/' + name + '.js.disabled', shell.breeze.data_directory() + '/scripts/' + name + '.js')
-                                m.set_data({
+                                m.update_data({
                                     name,
                                     icon_svg: ICON_CHECKED_COLORED
                                 })
                             } else {
                                 shell.fs.rename(shell.breeze.data_directory() + '/scripts/' + name + '.js', shell.breeze.data_directory() + '/scripts/' + name + '.js.disabled')
-                                m.set_data({
+                                m.update_data({
                                     name,
                                     icon_svg: ICON_EMPTY
                                 })

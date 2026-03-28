@@ -76,9 +76,9 @@ import ConfigApp from './ConfigApp';
 
 let existingConfigWindow: shell.breeze_ui.window | null = null;
 export const showConfigPage = () => {
-    shell.breeze.set_can_reload_js(false);
+    shell.breeze.allow_js_reload(false);
     const win = shell.breeze_ui.window.create_ex("Breeze Config", 800, 600, () => {
-        shell.breeze.set_can_reload_js(true)
+        shell.breeze.allow_js_reload(true)
         if (existingConfigWindow === win)
             existingConfigWindow = null;
     });
@@ -89,5 +89,5 @@ export const showConfigPage = () => {
     const widget = shell.breeze_ui.widgets_factory.create_flex_layout_widget();
     const renderer = createRenderer(widget);
     renderer.render(React.createElement(ConfigApp, null));
-    win.set_root_widget(widget)
+    win.root_widget = widget
 }

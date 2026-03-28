@@ -1,4 +1,5 @@
 import * as shell from "mshell";
+
 export const doOneCommanderCompat = () => {
     shell.menu_controller.add_menu_listener(m => {
         const do_action = (keys: string[]) => () => {
@@ -16,7 +17,7 @@ export const doOneCommanderCompat = () => {
 
         for (const i of m.menu.items) {
             if (i.data().name === "重命名" || i.data().name === "Rename") {
-                i.set_data({
+                i.update_data({
                     action: do_action(['f2'])
                 })
             }
@@ -44,5 +45,3 @@ export const doOneCommanderCompat = () => {
         }, -2)
     })
 }
-
-

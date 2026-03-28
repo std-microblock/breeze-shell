@@ -2,14 +2,47 @@ import Reconciler, { HostConfig } from 'react-reconciler'
 import * as shell from "mshell"
 import React from 'react';
 
+const getBindingTarget = (instance: any) => {
+    if (instance && typeof instance.downcast === 'function') {
+        return instance.downcast();
+    }
+    return instance;
+}
+
+const setBindingValue = (instance: any, fieldname: string, values: any[]) => {
+    const target = getBindingTarget(instance);
+    const setter = target?.['set_' + fieldname];
+    if (typeof setter === 'function') {
+        setter.apply(target, values);
+        return;
+    }
+    if (target && fieldname in target) {
+        target[fieldname] = values.length <= 1 ? values[0] : values;
+        return;
+    }
+    throw new Error(`Unknown binding setter: ${fieldname}`);
+}
+
+const getBindingValue = (instance: any, fieldname: string) => {
+    const target = getBindingTarget(instance);
+    const getter = target?.['get_' + fieldname];
+    if (typeof getter === 'function') {
+        return getter.call(target);
+    }
+    if (target && fieldname in target) {
+        return target[fieldname];
+    }
+    throw new Error(`Unknown binding getter: ${fieldname}`);
+}
+
 const getSetFactory = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_widget, value: any) => {
             const v = Array.isArray(value) ? value : [value];
-            instance.downcast()['set_' + fieldname](...v);
+            setBindingValue(instance, fieldname, v);
         },
         get: (instance: shell.breeze_ui.js_widget) => {
-            return instance.downcast()['get_' + fieldname]();
+            return getBindingValue(instance, fieldname);
         }
     }
 }
@@ -21,10 +54,10 @@ const getSetFactoryAutoRepeat = (fieldname: string, repeatTime: number = 4) => {
             while (v.length < repeatTime) {
                 v.push(v[v.length - 1]);
             }
-            instance.downcast()['set_' + fieldname](...v);
+            setBindingValue(instance, fieldname, v);
         },
         get: (instance: shell.breeze_ui.js_widget) => {
-            return instance.downcast()['get_' + fieldname]();
+            return getBindingValue(instance, fieldname);
         }
     }
 }
@@ -32,10 +65,10 @@ const getSetFactoryAutoRepeat = (fieldname: string, repeatTime: number = 4) => {
 const getSetFactoryColor = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_text_widget, value: string) => {
-            instance['set_' + fieldname](hex_to_rgba(value));
+            setBindingValue(instance, fieldname, [hex_to_rgba(value)]);
         },
         get: (instance: shell.breeze_ui.js_text_widget) => {
-            return rgba_to_hex(instance['get_' + fieldname]());
+            return rgba_to_hex(getBindingValue(instance, fieldname));
         }
     }
 }
@@ -92,6 +125,8 @@ const commonProps = {
     y: getSetFactory('y'),
     width: getSetFactory('width'),
     height: getSetFactory('height'),
+    flexGrow: getSetFactory('flex_grow'),
+    flexShrink: getSetFactory('flex_shrink'),
 }
 
 const componentMap = {
@@ -109,6 +144,46 @@ const componentMap = {
             fontSize: getSetFactory('font_size'),
             color: getSetFactoryColor('color'),
             maxWidth: getSetFactory('max_width'),
+            ...commonProps
+        }
+    },
+    textbox: {
+        creator: shell.breeze_ui.widgets_factory.create_textbox_widget,
+        props: {
+            text: getSetFactory('text'),
+            value: {
+                set: (instance: shell.breeze_ui.js_textbox_widget, value: string) => {
+                    instance.text = value;
+                },
+                get: (instance: shell.breeze_ui.js_textbox_widget) => {
+                    return instance.text;
+                }
+            },
+            placeholder: getSetFactory('placeholder'),
+            fontSize: getSetFactory('font_size'),
+            paddingX: getSetFactory('padding_x'),
+            paddingY: getSetFactory('padding_y'),
+            borderRadius: getSetFactory('border_radius'),
+            minHeight: getSetFactory('min_height'),
+            preferredMultilineHeight: getSetFactory('preferred_multiline_height'),
+            lineHeightMultiplier: getSetFactory('line_height_multiplier'),
+            multiline: getSetFactory('multiline'),
+            readonly: getSetFactory('readonly'),
+            disabled: getSetFactory('disabled'),
+            backgroundColor: getSetFactoryColor('background_color'),
+            readonlyBackgroundColor: getSetFactoryColor('readonly_background_color'),
+            disabledBackgroundColor: getSetFactoryColor('disabled_background_color'),
+            borderColor: getSetFactoryColor('border_color'),
+            focusBorderColor: getSetFactoryColor('focus_border_color'),
+            textColor: getSetFactoryColor('text_color'),
+            disabledTextColor: getSetFactoryColor('disabled_text_color'),
+            placeholderColor: getSetFactoryColor('placeholder_color'),
+            selectionColor: getSetFactoryColor('selection_color'),
+            caretColor: getSetFactoryColor('caret_color'),
+            compositionUnderlineColor: getSetFactoryColor('composition_underline_color'),
+            onChange: getSetFactory('on_change'),
+            onFocus: getSetFactory('on_focus'),
+            onBlur: getSetFactory('on_blur'),
             ...commonProps
         }
     },
@@ -402,9 +477,8 @@ const HostConfig: Reconciler.HostConfig<
 
     resetTextContent(instance: Instance): void {
         const text_w = instance.downcast();
-        if ('set_text' in text_w) {
-            // @ts-ignore
-            text_w.set_text('');
+        if ('text' in text_w || 'set_text' in text_w) {
+            setBindingValue(text_w, 'text', ['']);
         }
     }
 };

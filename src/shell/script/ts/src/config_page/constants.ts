@@ -1,9 +1,16 @@
 import * as shell from "mshell";
+import zhCN from "../i18n/locales/zh-CN.json";
+import enUS from "../i18n/locales/en-US.json";
 
 export const PLUGIN_SOURCES = {
     'Github Raw': 'https://raw.githubusercontent.com/breeze-shell/plugins-packed/refs/heads/main/',
     'Enlysure': 'https://breeze.enlysure.com/',
     'Enlysure Shanghai': 'https://breeze-c.enlysure.com/'
+};
+
+export const languages = {
+    'zh-CN': zhCN,
+    'en-US': enUS
 };
 
 export const ICON_CONTEXT_MENU = `<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>`;

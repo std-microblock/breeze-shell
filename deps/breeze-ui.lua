@@ -5,10 +5,16 @@ package("breeze-glfw")
 
 local BREEZE_UI_VER = "2026.03.27"
 local BREEZE_UI_HASH = "d09a08ea0d212b5793ae1d7ce4b174b2a303010e"
+local USE_LOCAL_BREEZE_UI = os.getenv("CI") ~= "true"
+local BREEZE_UI_LOCAL_PATH = "../breeze-ui"
 
 package("breeze-nanosvg")
-    add_urls("https://github.com/std-microblock/breeze-ui.git")
-    add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
+    if USE_LOCAL_BREEZE_UI then
+        set_sourcedir(BREEZE_UI_LOCAL_PATH)
+    else
+        add_urls("https://github.com/std-microblock/breeze-ui.git")
+        add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
+    end
 
     set_kind("library", {headeronly = true})
     set_description("The breeze-nanosvg package")
@@ -18,8 +24,12 @@ package("breeze-nanosvg")
     end)
 
 package("breeze-nanovg")
-    add_urls("https://github.com/std-microblock/breeze-ui.git")
-    add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
+    if USE_LOCAL_BREEZE_UI then
+        set_sourcedir(BREEZE_UI_LOCAL_PATH)
+    else
+        add_urls("https://github.com/std-microblock/breeze-ui.git")
+        add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
+    end
 
     set_description("The breeze-nanovg package")
 
@@ -31,15 +41,19 @@ package("breeze-nanovg")
 
 
 package("breeze-ui")
-    add_urls("https://github.com/std-microblock/breeze-ui.git")
-    add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
-    add_deps("breeze-glfw", "glad", "nanovg", "breeze-nanosvg", {
+    if USE_LOCAL_BREEZE_UI then
+        set_sourcedir(BREEZE_UI_LOCAL_PATH)
+    else
+        add_urls("https://github.com/std-microblock/breeze-ui.git")
+        add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
+    end
+    add_deps("breeze-glfw", "glad", "nanovg", "breeze-nanosvg", "simdutf", {
         public = true
     })
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
 
     if is_plat("windows") then
-        add_syslinks("dwmapi", "shcore", "windowsapp", "CoreMessaging")
+        add_syslinks("dwmapi", "imm32", "shcore", "windowsapp", "CoreMessaging")
     end
 
     on_install("windows", function (package)

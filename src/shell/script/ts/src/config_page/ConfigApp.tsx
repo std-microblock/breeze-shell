@@ -22,6 +22,7 @@ import { changeLanguage, getCurrentLanguage } from "../i18n";
 export const ConfigApp = () => {
     const [activePage, setActivePage] = useState('context-menu');
     const [contextMenuConfig, setContextMenuConfig] = useState<any>({});
+    const [defaultContextMenuConfig, setDefaultContextMenuConfig] = useState<any>({});
     const [debugConsole, setDebugConsole] = useState<boolean>(false);
     const [pluginLoadOrder, setPluginLoadOrder] = useState<any[]>([]);
     const [updateData, setUpdateData] = useState<any>(null);
@@ -33,9 +34,11 @@ export const ConfigApp = () => {
     const [language, setLanguageState] = useState<string>(getCurrentLanguage());
 
     useEffect(() => {
+        const default_config = JSON.parse(shell.breeze.default_config());
         const current_config_path = shell.breeze.data_directory() + '/config.json';
         const current_config = shell.fs.read(current_config_path);
         const parsed = JSON.parse(current_config);
+        setDefaultContextMenuConfig(default_config.context_menu || {});
         setConfig(parsed);
         setContextMenuConfig(parsed.context_menu || {});
         setDebugConsole(parsed.debug_console || false);
@@ -78,7 +81,11 @@ export const ConfigApp = () => {
 
     return (
         <LanguageContext.Provider value={{ language, setLanguage }}>
-            <ContextMenuContext.Provider value={{ config: contextMenuConfig, update: updateContextMenu }}>
+            <ContextMenuContext.Provider value={{
+                config: contextMenuConfig,
+                defaultConfig: defaultContextMenuConfig,
+                update: updateContextMenu
+            }}>
             <DebugConsoleContext.Provider value={{ value: debugConsole, update: updateDebugConsole }}>
                 <PluginLoadOrderContext.Provider value={{ order: pluginLoadOrder, update: updatePluginLoadOrder }}>
                     <UpdateDataContext.Provider value={{ updateData, setUpdateData }}>

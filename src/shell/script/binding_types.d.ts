@@ -48,7 +48,7 @@ export class js_widget {
      * @returns void
      */
     set_animation(variable_name: string, enabled: boolean): void
-	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_spacer_widget
+	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_textbox_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_spacer_widget
 }
 }
 namespace breeze_ui {
@@ -61,6 +61,98 @@ export class js_text_widget extends js_widget {
     set max_width(value: number);
 	get color(): [number, number, number, number] | undefined;
     set color(value: [number, number, number, number] | undefined);
+}
+}
+namespace breeze_ui {
+export class js_textbox_widget extends js_widget {
+	get text(): string;
+    set text(value: string);
+	get placeholder(): string;
+    set placeholder(value: string);
+	get font_size(): number;
+    set font_size(value: number);
+	get padding_x(): number;
+    set padding_x(value: number);
+	get padding_y(): number;
+    set padding_y(value: number);
+	get border_radius(): number;
+    set border_radius(value: number);
+	get min_height(): number;
+    set min_height(value: number);
+	get preferred_multiline_height(): number;
+    set preferred_multiline_height(value: number);
+	get line_height_multiplier(): number;
+    set line_height_multiplier(value: number);
+	get multiline(): boolean;
+    set multiline(value: boolean);
+	get readonly(): boolean;
+    set readonly(value: boolean);
+	get disabled(): boolean;
+    set disabled(value: boolean);
+	get background_color(): rgba_prop;
+    set background_color(value: rgba_prop);
+	get readonly_background_color(): rgba_prop;
+    set readonly_background_color(value: rgba_prop);
+	get disabled_background_color(): rgba_prop;
+    set disabled_background_color(value: rgba_prop);
+	get border_color(): rgba_prop;
+    set border_color(value: rgba_prop);
+	get focus_border_color(): rgba_prop;
+    set focus_border_color(value: rgba_prop);
+	get text_color(): rgba_prop;
+    set text_color(value: rgba_prop);
+	get disabled_text_color(): rgba_prop;
+    set disabled_text_color(value: rgba_prop);
+	get placeholder_color(): rgba_prop;
+    set placeholder_color(value: rgba_prop);
+	get selection_color(): rgba_prop;
+    set selection_color(value: rgba_prop);
+	get caret_color(): rgba_prop;
+    set caret_color(value: rgba_prop);
+	get composition_underline_color(): rgba_prop;
+    set composition_underline_color(value: rgba_prop);
+	get on_change(): ((arg1: string) => void);
+    set on_change(value: ((arg1: string) => void));
+	get on_focus(): (() => void);
+    set on_focus(value: (() => void));
+	get on_blur(): (() => void);
+    set on_blur(value: (() => void));
+	get selection_start(): number;
+	get selection_end(): number;
+	focus(): void
+	blur(): void
+	select_all(): void
+	/**
+     * 
+     * @param start: number
+     * @param end: number
+     * @returns void
+     */
+    select_range(start: number, end: number): void
+	/**
+     * 
+     * @param start: number
+     * @param end: number
+     * @returns void
+     */
+    set_selection(start: number, end: number): void
+	/**
+     * 
+     * @param new_text: string
+     * @returns void
+     */
+    insert_text(new_text: string): void
+	/**
+     * 
+     * @param start: number
+     * @param end: number
+     * @returns void
+     */
+    delete_text(start: number, end: number): void
+	clear(): void
+	copy(): void
+	cut(): void
+	paste(): void
 }
 }
 namespace breeze_ui {
@@ -146,6 +238,7 @@ export class js_spacer_widget extends js_widget {
 namespace breeze_ui {
 export class widgets_factory {
 	static create_text_widget(): breeze_ui.js_text_widget
+	static create_textbox_widget(): breeze_ui.js_textbox_widget
 	static create_flex_layout_widget(): breeze_ui.js_flex_layout_widget
 	static create_image_widget(): breeze_ui.js_image_widget
 	static create_spacer_widget(): breeze_ui.js_spacer_widget
@@ -163,6 +256,8 @@ export class breeze_paint {
 }
 namespace breeze_ui {
 export class window {
+	get root_widget(): breeze_ui.js_widget;
+    set root_widget(value: breeze_ui.js_widget);
 	/**
      * 
      * @param title: string
@@ -180,12 +275,6 @@ export class window {
      * @returns breeze_ui.window
      */
     static create_ex(title: string, width: number, height: number, on_close: (() => void)): breeze_ui.window
-	/**
-     * 
-     * @param widget: breeze_ui.js_widget
-     * @returns void
-     */
-    set_root_widget(widget: breeze_ui.js_widget): void
 	close(): void
 }
 }
@@ -322,17 +411,15 @@ export class window_titlebar_controller {
 	/**
      *  设置窗口标题
      *  Set window title
-     * @param new_title: string
-     * @returns void
      */
-    set_title(new_title: string): void
+    get title(): string;
+    set title(value: string);
 	/**
      *  设置窗口图标
      *  Set window icon
-     * @param icon_path: string
-     * @returns void
      */
-    set_icon(icon_path: string): void
+    get icon(): string;
+    set icon(value: string);
 	/**
      *  设置窗口位置
      *  Set window position
@@ -434,17 +521,39 @@ export class input_box_controller {
 	/**
      *  设置文本
      *  Set text
-     * @param new_text: string
-     * @returns void
      */
-    set_text(new_text: string): void
+    get text(): string;
+    set text(value: string);
 	/**
      *  设置占位符
      *  Set placeholder
-     * @param new_placeholder: string
-     * @returns void
      */
-    set_placeholder(new_placeholder: string): void
+    get placeholder(): string;
+    set placeholder(value: string);
+	/**
+     *  设置是否多行
+     *  Set multiline state
+     */
+    get multiline(): boolean;
+    set multiline(value: boolean);
+	/**
+     *  设置是否为密码框
+     *  Set password field state
+     */
+    get password(): boolean;
+    set password(value: boolean);
+	/**
+     *  设置是否只读
+     *  Set readonly state
+     */
+    get readonly(): boolean;
+    set readonly(value: boolean);
+	/**
+     *  设置是否禁用
+     *  Set disabled state
+     */
+    get disabled(): boolean;
+    set disabled(value: boolean);
 	/**
      *  设置位置
      *  Set position
@@ -461,34 +570,6 @@ export class input_box_controller {
      * @returns void
      */
     set_size(new_width: number, new_height: number): void
-	/**
-     *  设置是否多行
-     *  Set multiline state
-     * @param new_multiline: boolean
-     * @returns void
-     */
-    set_multiline(new_multiline: boolean): void
-	/**
-     *  设置是否为密码框
-     *  Set password field state
-     * @param new_password: boolean
-     * @returns void
-     */
-    set_password(new_password: boolean): void
-	/**
-     *  设置是否只读
-     *  Set readonly state
-     * @param new_readonly: boolean
-     * @returns void
-     */
-    set_readonly(new_readonly: boolean): void
-	/**
-     *  设置是否禁用
-     *  Set disabled state
-     * @param new_disabled: boolean
-     * @returns void
-     */
-    set_disabled(new_disabled: boolean): void
 	/**
      *  获取焦点
      *  Get focus
@@ -592,30 +673,22 @@ export class js_menu_data {
 	origin_name?: string | undefined
 }
 export class menu_item_controller {
-	/**
-     * 
-     * @param new_index: number
-     * @returns void
-     */
-    set_position(new_index: number): void
+	get position(): number;
+    set position(value: number);
 	/**
      * 
      * @param data: js_menu_data
      * @returns void
      */
-    set_data(data: js_menu_data): void
+    update_data(data: js_menu_data): void
 	data(): js_menu_data
 	remove(): void
 	valid(): boolean
 }
 export class menu_item_parent_item_controller {
+	get position(): number;
+    set position(value: number);
 	children(): Array<menu_item_controller>
-	/**
-     * 
-     * @param new_index: number
-     * @returns void
-     */
-    set_position(new_index: number): void
 	remove(): void
 	valid(): boolean
 	/**
@@ -811,14 +884,14 @@ export class clipboard {
      *  Get text from clipboard
       @returns string
      */
-    static get_text(): string
+    static read_text(): string
 	/**
      *  设置文本到剪贴板
      *  Set text to clipboard
      * @param text: string
      * @returns void
      */
-    static set_text(text: string): void
+    static write_text(text: string): void
 }
 export class network {
 	/**
@@ -1009,17 +1082,17 @@ export class fs {
      *  以二进制模式读取文件
      *  Read file in binary mode
      * @param path: string
-     * @returns Array<uint8_t>
+     * @returns ArrayBuffer
      */
-    static read_binary(path: string): Array<uint8_t>
+    static read_binary(path: string): ArrayBuffer
 	/**
      *  以二进制模式写入文件
      *  Write file in binary mode
      * @param path: string
-     * @param data: Array<uint8_t>
+     * @param data: ArrayBuffer
      * @returns void
      */
-    static write_binary(path: string, data: Array<uint8_t>): void
+    static write_binary(path: string, data: ArrayBuffer): void
 	/**
      *  读取目录
      *  Read directory
@@ -1066,14 +1139,16 @@ export class breeze {
 	static hash(): string
 	static branch(): string
 	static data_directory(): string
+	static default_config(): string
 	static is_light_theme(): boolean
 	static user_language(): string
+	static can_reload_js(): boolean
 	/**
      * 
      * @param can: boolean
      * @returns void
      */
-    static set_can_reload_js(can: boolean): void
+    static allow_js_reload(can: boolean): void
 	static should_show_settings_button(): boolean
 	static current_process_name(): string
 	static current_process_path(): string

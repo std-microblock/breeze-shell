@@ -16,6 +16,8 @@
 #include "cinatra/coro_http_client.hpp"
 #include "shell/entry.h"
 
+#include "spdlog/spdlog.h"
+
 namespace mb_shell::taskbar {
 
 // https://stackoverflow.com/questions/2397578/how-to-get-the-executable-name-of-a-window
@@ -417,8 +419,8 @@ struct windows_button_widget : public background_widget {
                                           CLSCTX_INPROC_SERVER,
                                           IID_PPV_ARGS(&appVisibility));
             if (FAILED(hr)) {
-                std::cerr << "Failed to create AppVisibility instance: "
-                          << std::hex << hr << std::endl;
+                spdlog::error("Failed to create IAppVisibility instance: {:#x}",
+                              hr);
                 return;
             }
         }

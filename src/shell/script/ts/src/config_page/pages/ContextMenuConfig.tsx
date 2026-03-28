@@ -7,7 +7,7 @@ import { theme_presets, animation_presets } from "../constants";
 import { memo, useContext, useState } from "react";
 
 const ContextMenuConfig = memo(() => {
-    const { config, update } = useContext(ContextMenuContext)!;
+    const { config, defaultConfig, update } = useContext(ContextMenuContext)!;
     const { value: debugConsole, update: updateDebugConsole } = useContext(DebugConsoleContext)!;
     const { language, setLanguage } = useContext(LanguageContext)!;
     const { t } = useTranslation();
@@ -24,6 +24,10 @@ const ContextMenuConfig = memo(() => {
     const currentAnimation =
         config?.theme?.animation && typeof config.theme.animation === "object"
             ? config.theme.animation
+            : {};
+    const defaultAnimation =
+        defaultConfig?.theme?.animation && typeof defaultConfig.theme.animation === "object"
+            ? defaultConfig.theme.animation
             : {};
 
     const getAllSubkeys = (presets: any) => {
@@ -86,6 +90,7 @@ const ContextMenuConfig = memo(() => {
         return (
             <AnimationCustomEditor
                 animation={currentAnimation}
+                defaultAnimation={defaultAnimation}
                 onUpdate={(newAnimation) => {
                     update({ ...config, theme: { ...(config?.theme || {}), animation: newAnimation } });
                 }}
@@ -186,32 +191,32 @@ const ContextMenuConfig = memo(() => {
             <flex gap={10} alignItems="stretch" justifyContent="center">
                 <Text fontSize={18}>{t("settings.misc")}</Text>
                 <Toggle label={t("settings.debugConsole")} value={debugConsole} onChange={updateDebugConsole} />
-                <Toggle label={t("settings.vsync")} value={getNestedValue(config, "vsync") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.vsync")} value={getNestedValue(config, "vsync") ?? getNestedValue(defaultConfig, "vsync")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "vsync", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.ignoreOwnerDraw")} value={getNestedValue(config, "ignore_owner_draw") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.ignoreOwnerDraw")} value={getNestedValue(config, "ignore_owner_draw") ?? getNestedValue(defaultConfig, "ignore_owner_draw")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "ignore_owner_draw", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.reverseIfOpenToUp")} value={getNestedValue(config, "reverse_if_open_to_up") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.reverseIfOpenToUp")} value={getNestedValue(config, "reverse_if_open_to_up") ?? getNestedValue(defaultConfig, "reverse_if_open_to_up")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "reverse_if_open_to_up", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.acrylicBackground")} value={getNestedValue(config, "theme.acrylic") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.acrylicBackground")} value={getNestedValue(config, "theme.acrylic") ?? getNestedValue(defaultConfig, "theme.acrylic")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "theme.acrylic", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.hotkeys")} value={getNestedValue(config, "hotkeys") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.hotkeys")} value={getNestedValue(config, "hotkeys") ?? getNestedValue(defaultConfig, "hotkeys")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "hotkeys", v);
                     update(newConfig);
                 }} />
-                <Toggle label={t("settings.showSettingsButton")} value={getNestedValue(config, "show_settings_button") ?? true} onChange={(v) => {
+                <Toggle label={t("settings.showSettingsButton")} value={getNestedValue(config, "show_settings_button") ?? getNestedValue(defaultConfig, "show_settings_button")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "show_settings_button", v);
                     update(newConfig);

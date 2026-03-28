@@ -50,7 +50,46 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        flexGrow?: number;
+        flexShrink?: number;
         maxWidth?: number;
+      },
+      textbox: {
+        text?: string;
+        value?: string;
+        placeholder?: string;
+        fontSize?: number;
+        paddingX?: number;
+        paddingY?: number;
+        borderRadius?: number;
+        minHeight?: number;
+        preferredMultilineHeight?: number;
+        lineHeightMultiplier?: number;
+        multiline?: boolean;
+        readonly?: boolean;
+        disabled?: boolean;
+        backgroundColor?: string;
+        readonlyBackgroundColor?: string;
+        disabledBackgroundColor?: string;
+        borderColor?: string;
+        focusBorderColor?: string;
+        textColor?: string;
+        disabledTextColor?: string;
+        placeholderColor?: string;
+        selectionColor?: string;
+        caretColor?: string;
+        compositionUnderlineColor?: string;
+        onChange?: (value: string) => void;
+        onFocus?: () => void;
+        onBlur?: () => void;
+        key?: string | number;
+        animatedVars?: string[];
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        flexGrow?: number;
+        flexShrink?: number;
       },
       img: {
         svg?: string;
@@ -60,6 +99,8 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        flexGrow?: number;
+        flexShrink?: number;
       },
       spacer: {
         size?: number;
