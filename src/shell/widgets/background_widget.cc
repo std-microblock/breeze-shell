@@ -69,10 +69,6 @@ background_widget::background_widget(bool is_main) {
 }
 
 void background_widget::update(ui::update_context &ctx) {
-    bg_impl->x->reset_to(x->dest());
-    bg_impl->y->reset_to(y->dest());
-    bg_impl->width->animate_to(width->dest());
-    bg_impl->height->animate_to(height->dest());
     bg_impl->bg_color = bg_color;
     bg_impl->update(ctx);
 

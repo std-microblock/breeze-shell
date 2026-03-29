@@ -30,7 +30,9 @@ get_menu_bg_animation(const mb_shell::menu_widget *menu) {
 
 mb_shell::menu_animation_rect make_collapsed_rect(
     float target_x, float target_y, float target_width, float target_height,
-    const mb_shell::config::context_menu::theme::animation::bg &anim) {
+    const mb_shell::config::context_menu::theme::animation::bg &anim,
+    mb_shell::popup_direction direction =
+        mb_shell::popup_direction::bottom_right) {
     if (target_width <= 0 || target_height <= 0) {
         return {.x = target_x,
                 .y = target_y,
@@ -42,9 +44,19 @@ mb_shell::menu_animation_rect make_collapsed_rect(
     auto height_scale = std::clamp(anim.appear_h_scale, 0.f, 1.f);
     auto start_width = std::max(1.f, target_width * width_scale);
     auto start_height = std::max(1.f, target_height * height_scale);
+    const auto start_x =
+        direction == mb_shell::popup_direction::top_left ||
+                direction == mb_shell::popup_direction::bottom_left
+            ? target_x + (target_width - start_width)
+            : target_x;
+    const auto start_y =
+        direction == mb_shell::popup_direction::top_left ||
+                direction == mb_shell::popup_direction::top_right
+            ? target_y + (target_height - start_height)
+            : target_y;
 
-    return {.x = target_x + (target_width - start_width) / 2.f,
-            .y = target_y + (target_height - start_height) / 2.f,
+    return {.x = start_x,
+            .y = start_y,
             .width = start_width,
             .height = start_height};
 }
@@ -56,6 +68,24 @@ make_bg_target_rect(const mb_shell::menu_widget *menu, float target_x,
             .y = target_y - menu->bg_padding_vertical,
             .width = target_width,
             .height = target_height + menu->bg_padding_vertical * 2};
+}
+
+mb_shell::popup_direction get_parent_menu_direction(
+    const mb_shell::menu_item_widget *item) {
+    if (auto menu =
+            const_cast<mb_shell::menu_item_widget *>(item)
+                ->search_parent<mb_shell::menu_widget>()) {
+        return menu->direction;
+    }
+    return mb_shell::popup_direction::bottom_right;
+}
+
+float get_item_appear_offset_x(const mb_shell::menu_item_widget *item) {
+    const auto direction = get_parent_menu_direction(item);
+    return direction == mb_shell::popup_direction::top_left ||
+                   direction == mb_shell::popup_direction::bottom_left
+               ? 20.0f
+               : -20.0f;
 }
 
 } // namespace
@@ -352,7 +382,7 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                 is_top_level_menu
                     ? make_collapsed_rect(target_rect.x, target_rect.y,
                                           target_rect.width, target_rect.height,
-                                          get_menu_bg_animation(this))
+                                          get_menu_bg_animation(this), direction)
                     : target_rect);
             bg->x->reset_to(start_rect.x);
             bg->y->reset_to(start_rect.y);
@@ -648,7 +678,7 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
         this->opacity->set_delay(0);
     };
     opacity->reset_to(0);
-    this->x->reset_to(-20);
+    this->x->reset_to(get_item_appear_offset_x(this));
     text_blur->reset_to(
         config::current->context_menu.theme.animation.item.appear_blur);
 
@@ -737,9 +767,6 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
 
     // the show duration for the menu should be within 200ms
     float delay = std::min(200.f / children.size(), 30.f);
-
-    if (config::current->context_menu.reverse_if_open_to_up && reverse)
-        reverse = !reverse;
 
     for (size_t i = 0; i < children.size(); i++) {
         auto child = children[i];
@@ -1015,7 +1042,7 @@ void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
 }
 void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
     y->set_easing(ui::easing_type::mutation);
-    x->reset_to(-20);
+    x->reset_to(get_item_appear_offset_x(this));
     x->animate_to(0);
     opacity->reset_to(0);
     opacity->animate_to(255);
@@ -1088,7 +1115,7 @@ void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
                                          submenu_wid->height->dest());
     auto start_bg = make_collapsed_rect(
         target_bg.x, target_bg.y, target_bg.width, target_bg.height,
-        config::current->context_menu.theme.animation.submenu_bg);
+        config::current->context_menu.theme.animation.submenu_bg, direction);
     submenu_wid->x->reset_to(target_x);
     submenu_wid->y->reset_to(target_y);
 
