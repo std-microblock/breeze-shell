@@ -117,6 +117,7 @@ breeze_ui::js_widget::children() const {
 
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, text, std::string);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_size, int);
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_weight, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, max_width, float);
 IMPL_COLOR_PROP(breeze_ui::js_text_widget, ui::text_widget, color);
 IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, text,
@@ -124,6 +125,8 @@ IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, text,
 IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, placeholder,
                  std::string);
 IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, font_size,
+                 int);
+IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, font_weight,
                  int);
 IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, padding_x,
                  float);

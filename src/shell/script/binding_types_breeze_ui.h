@@ -67,6 +67,8 @@ struct breeze_ui {
         void set_text(std::string text);
         int get_font_size() const;
         void set_font_size(int size);
+        int get_font_weight() const;
+        void set_font_weight(int weight);
         float get_max_width() const;
         void set_max_width(float w);
         std::optional<std::tuple<float, float, float, float>> get_color() const;
@@ -82,6 +84,7 @@ struct breeze_ui {
         DEFINE_PROP(std::string, text)
         DEFINE_PROP(std::string, placeholder)
         DEFINE_PROP(int, font_size)
+        DEFINE_PROP(int, font_weight)
         DEFINE_PROP(float, padding_x)
         DEFINE_PROP(float, padding_y)
         DEFINE_PROP(float, border_radius)

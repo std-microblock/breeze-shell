@@ -142,6 +142,7 @@ const componentMap = {
                 }
             },
             fontSize: getSetFactory('font_size'),
+            fontWeight: getSetFactory('font_weight'),
             color: getSetFactoryColor('color'),
             maxWidth: getSetFactory('max_width'),
             ...commonProps
@@ -161,6 +162,7 @@ const componentMap = {
             },
             placeholder: getSetFactory('placeholder'),
             fontSize: getSetFactory('font_size'),
+            fontWeight: getSetFactory('font_weight'),
             paddingX: getSetFactory('padding_x'),
             paddingY: getSetFactory('padding_y'),
             borderRadius: getSetFactory('border_radius'),

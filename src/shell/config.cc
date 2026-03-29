@@ -11,6 +11,7 @@
 #include "rfl/DefaultIfMissing.hpp"
 #include "rfl/json.hpp"
 
+#include "breeze_ui/font.h"
 #include "utils.h"
 #include "windows.h"
 #include "wtr/watcher.hpp"
@@ -155,11 +156,10 @@ std::filesystem::path config::default_mono_font() {
            "consola.ttf";
 }
 void config::apply_fonts_to_nvg(NVGcontext *nvg) {
-    nvgCreateFont(nvg, "main", font_path_main.string().c_str());
-    nvgCreateFont(nvg, "fallback", font_path_fallback.string().c_str());
-    nvgCreateFont(nvg, "monospace", font_path_monospace.string().c_str());
-    nvgAddFallbackFont(nvg, "main", "fallback");
-    nvgAddFallbackFont(nvg, "monospace", "main");
+    ui::register_default_windows_font_suite(
+        nvg, {.main_regular = {.path = font_path_main},
+              .fallback_regular = {.path = font_path_fallback},
+              .monospace_regular = {.path = font_path_monospace}});
 }
 void config::animated_float_conf::apply_to(ui::animated_color &anim,
                                            float delay) {

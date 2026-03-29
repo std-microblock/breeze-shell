@@ -43,6 +43,7 @@ declare module 'react' {
       text: {
         text?: string[] | string;
         fontSize?: number;
+        fontWeight?: number;
         color?: string;
         key?: string | number;
         animatedVars?: string[];
@@ -59,6 +60,7 @@ declare module 'react' {
         value?: string;
         placeholder?: string;
         fontSize?: number;
+        fontWeight?: number;
         paddingX?: number;
         paddingY?: number;
         borderRadius?: number;

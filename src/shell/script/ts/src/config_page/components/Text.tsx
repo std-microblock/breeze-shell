@@ -6,13 +6,15 @@ export const Text = memo((({
     fontSize = 14,
     maxWidth = -1,
     color,
-    opacity
+    opacity,
+    fontWeight = 400
 }: {
     children: string | number | Array<string | number>;
     fontSize?: number;
     maxWidth?: number;
     color?: string | number[];
     opacity?: number;
+    fontWeight?: number;
 }) => {
     if (!color) color = breeze.is_light_theme() ? '#000000ff' : '#ffffffff'
     if (color instanceof Array)
@@ -30,6 +32,7 @@ export const Text = memo((({
             fontSize={fontSize}
             maxWidth={maxWidth}
             color={color}
+            fontWeight={fontWeight}
         />
     );
 }));

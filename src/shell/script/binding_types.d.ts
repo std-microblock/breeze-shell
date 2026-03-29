@@ -57,6 +57,8 @@ export class js_text_widget extends js_widget {
     set text(value: string);
 	get font_size(): number;
     set font_size(value: number);
+	get font_weight(): number;
+    set font_weight(value: number);
 	get max_width(): number;
     set max_width(value: number);
 	get color(): [number, number, number, number] | undefined;
@@ -71,6 +73,8 @@ export class js_textbox_widget extends js_widget {
     set placeholder(value: string);
 	get font_size(): number;
     set font_size(value: number);
+	get font_weight(): number;
+    set font_weight(value: number);
 	get padding_x(): number;
     set padding_x(value: number);
 	get padding_y(): number;
