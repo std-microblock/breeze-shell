@@ -186,6 +186,7 @@ const componentMap = {
             onChange: getSetFactory('on_change'),
             onFocus: getSetFactory('on_focus'),
             onBlur: getSetFactory('on_blur'),
+            onKeyDown: getSetFactory('on_key_down'),
             ...commonProps
         }
     },

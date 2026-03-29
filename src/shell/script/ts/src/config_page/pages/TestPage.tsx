@@ -3,6 +3,8 @@ import { Button, Text } from "../components";
 import { useTranslation } from "../hooks";
 import { memo, useState } from "react";
 
+const GLFW_KEY_ENTER = 257;
+
 const TestPage = memo(() => {
     const { t } = useTranslation();
     const [singleLineValue, setSingleLineValue] = useState("你尴尬Say个Hi 没位坐下来");
@@ -10,6 +12,28 @@ const TestPage = memo(() => {
         "你的影子被日落拉长\n思念在很远的地方\n喔喔喔喔 轻轻的唱年少的轻狂\nAabcd1234567890!@#$%^&*()_+"
     );
     const [focusState, setFocusState] = useState("none");
+    const [singleLineSubmitValue, setSingleLineSubmitValue] = useState("");
+    const [multiLineSubmitValue, setMultiLineSubmitValue] = useState("");
+
+    const handleSingleLineKeyDown = (key: number) => {
+        if (key !== GLFW_KEY_ENTER) {
+            return false;
+        }
+        setSingleLineSubmitValue(singleLineValue);
+        return true;
+    };
+
+    const handleMultiLineKeyDown = (
+        key: number,
+        _shiftKey: boolean,
+        ctrlKey: boolean,
+    ) => {
+        if (key !== GLFW_KEY_ENTER || !ctrlKey) {
+            return false;
+        }
+        setMultiLineSubmitValue(multiLineValue);
+        return true;
+    };
 
     return (
         <flex maxHeight={500} enableScrolling>
@@ -40,6 +64,7 @@ const TestPage = memo(() => {
                         height={34}
                         fontSize={14}
                         onChange={setSingleLineValue}
+                        onKeyDown={handleSingleLineKeyDown}
                         onFocus={() => setFocusState("single")}
                         onBlur={() => setFocusState("none")}
                     />
@@ -54,11 +79,14 @@ const TestPage = memo(() => {
                         caretColor="#ff00ff"
                         multiline
                         onChange={setMultiLineValue}
+                        onKeyDown={handleMultiLineKeyDown}
                         onFocus={() => setFocusState("multi")}
                         onBlur={() => setFocusState("none")}
                     />
                     <Text fontSize={13} fontWeight={900}>Focused: {focusState}</Text>
                     <Text fontSize={13}>Single line value: {singleLineValue}</Text>
+                    <Text fontSize={13}>Single enter submit: {singleLineSubmitValue || "(empty)"}</Text>
+                    <Text fontSize={13}>Multi Ctrl+Enter submit: {multiLineSubmitValue || "(empty)"}</Text>
                 </flex>
 
                 <flex>

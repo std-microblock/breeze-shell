@@ -121,6 +121,8 @@ export class js_textbox_widget extends js_widget {
     set on_focus(value: (() => void));
 	get on_blur(): (() => void);
     set on_blur(value: (() => void));
+	get on_key_down(): ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean);
+    set on_key_down(value: ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean));
 	get selection_start(): number;
 	get selection_end(): number;
 	focus(): void

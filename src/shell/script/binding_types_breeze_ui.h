@@ -108,6 +108,8 @@ struct breeze_ui {
         DEFINE_PROP(std::function<void(std::string)>, on_change)
         DEFINE_PROP(std::function<void()>, on_focus)
         DEFINE_PROP(std::function<void()>, on_blur)
+        DEFINE_PROP(std::function<bool(int, bool, bool, bool, bool)>,
+                    on_key_down)
 
         void focus();
         void blur();

@@ -171,6 +171,9 @@ IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, on_focus,
                    std::function<void()>)
 IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, on_blur,
                    std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget,
+                   on_key_down,
+                   std::function<bool(int, bool, bool, bool, bool)>)
 
 void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
                                               int after_index) {

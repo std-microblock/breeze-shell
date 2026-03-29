@@ -84,6 +84,7 @@ declare module 'react' {
         onChange?: (value: string) => void;
         onFocus?: () => void;
         onBlur?: () => void;
+        onKeyDown?: (key: number, shiftKey: boolean, ctrlKey: boolean, altKey: boolean, metaKey: boolean) => boolean;
         key?: string | number;
         animatedVars?: string[];
         x?: number;
