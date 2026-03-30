@@ -768,10 +768,12 @@ void mb_shell::menu_widget::reset_animation(bool reverse) {
     // the show duration for the menu should be within 200ms
     float delay = std::min(200.f / children.size(), 30.f);
 
+    auto should_reverse = config::current->context_menu.reverse_if_open_to_up ? false : reverse;
+
     for (size_t i = 0; i < children.size(); i++) {
         auto child = children[i];
         child->reset_appear_animation(delay *
-                                      (reverse ? children.size() - i : i));
+                                      (should_reverse ? children.size() - i : i));
     }
 }
 std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
