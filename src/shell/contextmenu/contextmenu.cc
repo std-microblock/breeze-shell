@@ -177,11 +177,12 @@ menu menu::construct_with_hmenu(
 
         if (info.hSubMenu) {
             auto main_thread_id = GetCurrentThreadId();
+            int submenu_pos = i;
             item.submenu = [=](std::shared_ptr<menu_widget> mw) {
                 auto task = [&]() {
                     HandleMenuMsg(WM_INITMENUPOPUP,
                                   reinterpret_cast<WPARAM>(info.hSubMenu),
-                                  0xFFFFFFFF);
+                                  static_cast<LPARAM>(submenu_pos));
                     mw->init_from_data(menu::construct_with_hmenu(
                         info.hSubMenu, hWnd, false, HandleMenuMsg));
                 };
