@@ -20,11 +20,9 @@ struct menu {
 
     static menu
     construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true,
-                         // This is for handling submenus; messages are required
-                         // to be forwarded to IContextMenu2::HandleMenuMsg for
-                         // submenus and owner-draw menus to work properly
                          std::function<void(int, WPARAM, LPARAM)>
-                             HandleMenuMsg = {});
+                             HandleMenuMsg = {},
+                         LPARAM init_popup_lparam = 0xFFFFFFFF);
 };
 
 std::optional<int>

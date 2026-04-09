@@ -135,7 +135,8 @@ std::vector<std::string> extract_hotkeys(const std::string &name) {
 
 menu menu::construct_with_hmenu(
     HMENU hMenu, HWND hWnd, bool is_top,
-    std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg) {
+    std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg,
+    LPARAM init_popup_lparam) {
     menu m;
 
     if (!HandleMenuMsg)
@@ -144,7 +145,7 @@ menu menu::construct_with_hmenu(
         };
 
     HandleMenuMsg(WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
-                  0xFFFFFFFF);
+                  init_popup_lparam);
     for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
         menu_item item;
         wchar_t buffer[256];
@@ -180,11 +181,9 @@ menu menu::construct_with_hmenu(
             int submenu_pos = i;
             item.submenu = [=](std::shared_ptr<menu_widget> mw) {
                 auto task = [&]() {
-                    HandleMenuMsg(WM_INITMENUPOPUP,
-                                  reinterpret_cast<WPARAM>(info.hSubMenu),
-                                  static_cast<LPARAM>(submenu_pos));
                     mw->init_from_data(menu::construct_with_hmenu(
-                        info.hSubMenu, hWnd, false, HandleMenuMsg));
+                        info.hSubMenu, hWnd, false, HandleMenuMsg,
+                        MAKELPARAM(static_cast<WORD>(submenu_pos), 0)));
                 };
                 if (main_thread_id == GetCurrentThreadId())
                     task();
