@@ -180,6 +180,100 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
     return res;
 }
 
+namespace {
+using namespace mb_shell::js;
+using namespace mb_shell;
+void populate_folder_view_context_impl(HWND hWnd,
+                                       js_menu_context &event_data,
+                                       perf_counter &perf) {
+    char className[256];
+    if (!GetClassNameA(hWnd, className, sizeof(className))) {
+        return;
+    }
+
+    std::string class_name = className;
+    if (class_name != "SysListView32" && class_name != "DirectUIHWND" &&
+        class_name != "SHELLDLL_DefView" && class_name != "CabinetWClass") {
+        return;
+    }
+
+    spdlog::info("Target window is a folder view (hwnd: {})\n", (void *)hWnd);
+
+    if (CComPtr<IShellBrowser> psb = GetIShellBrowserRecursive(hWnd)) {
+        perf.end("IShellBrowser - GetIShellBrowserRecursive");
+        spdlog::info("shell browser: {}\n", (void *)psb.p);
+
+        CComPtr<IShellView> psv;
+        if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
+            CComPtr<IFolderView> pfv;
+            if (SUCCEEDED(psv->QueryInterface(IID_IFolderView, (void **)&pfv))) {
+                event_data.folder_view =
+                    std::make_shared<folder_view_controller>();
+                auto fv = *event_data.folder_view;
+                fv->$hwnd = hWnd;
+                fv->$controller = psb.p;
+                fv->$render_target = menu_render::current.value()->rt.get();
+
+                int focusIndex = -1;
+                if (SUCCEEDED(pfv->GetFocusedItem(&focusIndex)) &&
+                    focusIndex >= 0) {
+                    PIDLIST_ABSOLUTE pidl = nullptr;
+                    if (SUCCEEDED(pfv->Item(focusIndex, &pidl)) && pidl) {
+                        fv->focused_file_path = folder_id_to_path(pidl);
+                        CoTaskMemFree(pidl);
+                    }
+                }
+
+                CComPtr<IShellItem> psi;
+                if (SUCCEEDED(pfv->GetFolder(IID_IShellItem, (void **)&psi))) {
+                    PWSTR pszPath = nullptr;
+                    if (SUCCEEDED(
+                            psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath)) &&
+                        pszPath) {
+                        fv->current_path = mb_shell::wstring_to_utf8(pszPath);
+                        CoTaskMemFree(pszPath);
+                    }
+                }
+
+                CComPtr<IShellItemArray> psia;
+                if (SUCCEEDED(pfv->Items(SVGIO_SELECTION, IID_IShellItemArray,
+                                         (void **)&psia))) {
+                    DWORD count = 0;
+                    if (SUCCEEDED(psia->GetCount(&count))) {
+                        for (DWORD i = 0; i < count; i++) {
+                            CComPtr<IShellItem> item;
+                            if (SUCCEEDED(psia->GetItemAt(i, &item))) {
+                                PWSTR pszPath = nullptr;
+                                if (SUCCEEDED(item->GetDisplayName(
+                                        SIGDN_FILESYSPATH, &pszPath)) &&
+                                    pszPath) {
+                                    fv->selected_files.push_back(
+                                        mb_shell::wstring_to_utf8(pszPath));
+                                    CoTaskMemFree(pszPath);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        spdlog::info("Failed to get IShellBrowser");
+    }
+}
+
+__declspec(noinline) void populate_folder_view_context_seh(
+    HWND hWnd, mb_shell::js::js_menu_context &event_data,
+    mb_shell::perf_counter &perf) {
+    __try {
+        populate_folder_view_context_impl(hWnd, event_data, perf);
+    } __except (EXCEPTION_CONTINUE_EXECUTION) {
+        spdlog::info("Get IShellBrowser crashed!");
+    }
+}
+
+} // namespace
+
 namespace mb_shell::js {
 
 js_menu_context js_menu_context::$from_window(void *_hwnd) {
@@ -210,106 +304,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
 
     perf.end("Edit");
 
-    [&]() {
-        __try {
-            [&] {
-                if (GetClassNameA(hWnd, className, sizeof(className))) {
-                    std::string class_name = className;
-                    if (class_name == "SysListView32" ||
-                        class_name == "DirectUIHWND" ||
-                        class_name == "SHELLDLL_DefView" ||
-                        class_name == "CabinetWClass") {
-                        spdlog::info("Target window is a folder view (hwnd: {})\n",
-                               (void *)hWnd);
-                        // Check if the foreground window is an Explorer window
-
-                        if (CComPtr<IShellBrowser> psb =
-                                GetIShellBrowserRecursive(hWnd)) {
-                            perf.end(
-                                "IShellBrowser - GetIShellBrowserRecursive");
-                            spdlog::info("shell browser: {}\n", (void *)psb.p);
-
-                            CComPtr<IShellView> psv;
-                            if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
-                                CComPtr<IFolderView> pfv;
-                                if (SUCCEEDED(psv->QueryInterface(
-                                        IID_IFolderView, (void **)&pfv))) {
-                                    // It's an Explorer window
-                                    event_data.folder_view = std::make_shared<
-                                        folder_view_controller>();
-                                    auto fv = *event_data.folder_view;
-                                    fv->$hwnd = hWnd;
-                                    fv->$controller = psb.p;
-                                    fv->$render_target =
-                                        menu_render::current.value()->rt.get();
-
-                                    int focusIndex = -1;
-                                    if (SUCCEEDED(
-                                            pfv->GetFocusedItem(&focusIndex)) &&
-                                        focusIndex >= 0) {
-                                        PIDLIST_ABSOLUTE pidl = nullptr;
-                                        if (SUCCEEDED(
-                                                pfv->Item(focusIndex, &pidl)) &&
-                                            pidl) {
-                                            fv->focused_file_path =
-                                                folder_id_to_path(pidl);
-                                            CoTaskMemFree(pidl);
-                                        }
-                                    }
-
-                                    CComPtr<IShellItem> psi;
-                                    if (SUCCEEDED(pfv->GetFolder(
-                                            IID_IShellItem, (void **)&psi))) {
-                                        PWSTR pszPath = nullptr;
-                                        if (SUCCEEDED(psi->GetDisplayName(
-                                                SIGDN_FILESYSPATH, &pszPath)) &&
-                                            pszPath) {
-                                            fv->current_path =
-                                                mb_shell::wstring_to_utf8(
-                                                    pszPath);
-                                            CoTaskMemFree(pszPath);
-                                        }
-                                    }
-
-                                    CComPtr<IShellItemArray> psia;
-                                    if (SUCCEEDED(
-                                            pfv->Items(SVGIO_SELECTION,
-                                                       IID_IShellItemArray,
-                                                       (void **)&psia))) {
-                                        DWORD count = 0;
-                                        if (SUCCEEDED(psia->GetCount(&count))) {
-                                            for (DWORD i = 0; i < count; i++) {
-                                                CComPtr<IShellItem> item;
-                                                if (SUCCEEDED(psia->GetItemAt(
-                                                        i, &item))) {
-                                                    PWSTR pszPath = nullptr;
-                                                    if (SUCCEEDED(
-                                                            item->GetDisplayName(
-                                                                SIGDN_FILESYSPATH,
-                                                                &pszPath)) &&
-                                                        pszPath) {
-                                                        fv->selected_files.push_back(
-                                                            mb_shell::
-                                                                wstring_to_utf8(
-                                                                    pszPath));
-                                                        CoTaskMemFree(pszPath);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            spdlog::info("Failed to get IShellBrowser");
-                        }
-                    }
-                }
-            }();
-        } __except (EXCEPTION_CONTINUE_EXECUTION) {
-            spdlog::info("Get IShellBrowser crashed!");
-        }
-    }();
+    populate_folder_view_context_seh(hWnd, event_data, perf);
     perf.end("IShellBrowser");
 
     if (hWnd) {
