@@ -16,6 +16,8 @@ add_rules("mode.releasedbg")
 includes("deps/blook.lua")
 includes("deps/breeze-ui.lua")
 includes("deps/sentry-native.lua")
+includes("deps/yalantinglibs.lua")
+includes("deps/breeze-js.lua")
 
 add_requires("sentry-native", {
     configs = {
@@ -24,26 +26,16 @@ add_requires("sentry-native", {
 })
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook 9c24a0b6e7c7055adcd8f440a558f84f831e4f0f", "glad",
-    "reflect-cpp", "wintoast v1.3.1", "breeze-ui", "watcher", "fmt", "spdlog")
+    "reflect-cpp", "wintoast v1.3.1", "breeze-ui", "watcher", "fmt", "spdlog", "breeze-js-runtime")
 
 if has_config("asan") then
     add_defines("_DISABLE_VECTOR_ANNOTATION", "_DISABLE_STRING_ANNOTATION", "_ASAN_")
 end
 
-add_requires("yalantinglibs b82a21925958b6c50deba3aa26a2737cdb814e27", {
+add_requires("yalantinglibs", {
     configs = {
         ssl = true
     }
-})
-
-add_requireconfs("**.cinatra", {
-    override = true,
-    version = "e329293f6705649a6f1e8847ec845a7631179bb8"
-})
-
-add_requireconfs("**.async_simple", {
-    override = true,
-    version = "18f3882be354d407af0f0674121dcddaeff36e26"
 })
 
 target("ui_test")
@@ -64,7 +56,7 @@ target("shell")
     add_includedirs("src/shell/script/quickjs")
 
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
-    add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt")
+    add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt", "breeze-js-runtime")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
     add_rules("utils.bin2obj", {
         extensions = {".js"}
