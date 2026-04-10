@@ -102,6 +102,7 @@ struct config {
         bool experimental_ownerdraw_support = false;
         bool hotkeys = true;
         bool show_settings_button = true;
+        bool patch_explorerframe_dll = true;
 
         // debug purpose only
         bool search_large_dwItemData_range = false;

@@ -221,6 +221,11 @@ const ContextMenuConfig = memo(() => {
                     setNestedValue(newConfig, "show_settings_button", v);
                     update(newConfig);
                 }} />
+                <Toggle label={t("settings.patchExplorerFrameDll")} value={getNestedValue(config, "patch_explorerframe_dll") ?? getNestedValue(defaultConfig, "patch_explorerframe_dll")} onChange={(v) => {
+                    const newConfig = { ...config };
+                    setNestedValue(newConfig, "patch_explorerframe_dll", v);
+                    update(newConfig);
+                }} />
             </flex>
         </flex>
     );

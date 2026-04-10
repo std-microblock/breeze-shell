@@ -9,6 +9,7 @@
 
 #include "blook/blook.h"
 #include "blook/memo.h"
+#include "config.h"
 #include "utils.h"
 #include "zasm/base/immediate.hpp"
 #include "zasm/x86/mnemonic.hpp"
@@ -184,29 +185,31 @@ void mb_shell::fix_win11_menu::install() {
                 }
             }
 
-            if (auto explorerframe = proc->module("ExplorerFrame.dll")) {
-                auto disasm =
-                    explorerframe.value()->section(".text")->disassembly();
+            if (config::current->context_menu.patch_explorerframe_dll) {
+                if (auto explorerframe = proc->module("ExplorerFrame.dll")) {
+                    auto disasm =
+                        explorerframe.value()->section(".text")->disassembly();
 
-                for (auto &ins : disasm) {
-                    if (!is_key_state_call(ins))
-                        continue;
+                    for (auto &ins : disasm) {
+                        if (!is_key_state_call(ins))
+                            continue;
 
-                    auto function =
-                        ins.ptr()
-                            .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                            ->range_size(0x200)
-                            .disassembly();
-                    if (!has_key_state_check(function, 0x10) ||
-                        !has_key_state_check(function, 0x79)) {
-                        continue;
-                    }
+                        auto function =
+                            ins.ptr()
+                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                                ->range_size(0x200)
+                                .disassembly();
+                        if (!has_key_state_check(function, 0x10) ||
+                            !has_key_state_check(function, 0x79)) {
+                            continue;
+                        }
 
-                    if (patch_key_state_check(function, 0x10)) {
-                        spdlog::info(
-                            "Patched explorerframe.dll for win11 menu fix: {}",
-                            ins.ptr().data());
-                        break;
+                        if (patch_key_state_check(function, 0x10)) {
+                            spdlog::info("Patched explorerframe.dll for win11 "
+                                         "menu fix: {}",
+                                         ins.ptr().data());
+                            break;
+                        }
                     }
                 }
             }

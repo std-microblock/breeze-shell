@@ -23,7 +23,8 @@
     "tryWin11RoundCorner": "Try Windows 11 Round Corners",
     "acrylicBackground": "Acrylic Background",
     "hotkeys": "Hotkeys",
-    "showSettingsButton": "Show Settings Button in Top Left"
+    "showSettingsButton": "Show Settings Button in Top Left",
+    "patchExplorerFrameDll": "ExplorerFrame Patch (left pane Breeze menu)"
   },
   "plugin": {
     "title": "Plugins",

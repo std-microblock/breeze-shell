@@ -322,6 +322,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
                     };
 
                     sub.append_spacer()
+                    createBoolToggle(sub, "ExplorerFrame Patch（左侧栏 Breeze 右键菜单）", "context_menu.patch_explorerframe_dll", true);
 
                     const theme_presets = {
                         "默认": null,

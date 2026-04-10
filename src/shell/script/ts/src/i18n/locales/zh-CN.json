@@ -23,7 +23,8 @@
     "tryWin11RoundCorner": "尝试使用 Windows 11 圆角",
     "acrylicBackground": "亚克力背景效果",
     "hotkeys": "键盘热键",
-    "showSettingsButton": "在左上角显示设置按钮"
+    "showSettingsButton": "在左上角显示设置按钮",
+    "patchExplorerFrameDll": "启用 ExplorerFrame Patch（左侧栏 Breeze 右键菜单）"
   },
   "plugin": {
     "title": "插件",

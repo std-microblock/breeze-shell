@@ -378,6 +378,12 @@
           "type": "boolean",
           "default": true
         },
+        "patch_explorerframe_dll": {
+          "title": "Patch ExplorerFrame.dll",
+          "description": "Controls whether Breeze patches ExplorerFrame.dll so the Explorer left pane can use the Breeze context menu",
+          "type": "boolean",
+          "default": true
+        },
         "search_large_dwItemData_range": {
           "title": "Search Larger Range of DWItemData",
           "description": "Search for a larger range of DWItemData",
