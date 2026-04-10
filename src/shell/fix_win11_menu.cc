@@ -81,70 +81,81 @@ TryAgain:
 void mb_shell::fix_win11_menu::install() {
     auto proc = blook::Process::self();
 
-    // approch 1: simulated reg edit
-    auto advapi32 = proc->module("kernelbase.dll");
-
-    auto RegGetValueW = advapi32.value()->exports("RegGetValueW");
-    static auto RegGetValueHook = RegGetValueW->inline_hook();
-
-    // RegGetValueHook->install(
-    //     (void *)+[](HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpValue, DWORD
-    //     dwFlags,
-    //                 LPDWORD pdwType, PVOID pvData, LPDWORD pcbData) {
-    //       // simulate
-    //       // reg.exe add
-    //       //
-    //       //
-    //       //
-    //       "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
-    //       // /f /ve
-    //       auto path = wstring_to_utf8(RegQueryKeyPath(hkey));
-    //       if
-    //       (path.ends_with("\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
-    //                          "\\InprocServer32")) {
-    //         if (pvData != nullptr && pcbData != nullptr) {
-    //           *pcbData = 0;
-    //         }
-    //         if (pdwType != nullptr) {
-    //           *pdwType = REG_SZ;
-    //         }
-    //         return ERROR_SUCCESS;
-    //       } else
-    //         return RegGetValueHook->call_trampoline<long>(
-    //             hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
-    //     });
-
-    // approch 2: patch the shell32.dll to predent the shift key is pressed
+    // patch the shell32.dll to predent the shift key is pressed
     std::thread([=]() {
         try {
+            auto user32 = LoadLibraryA("user32.dll");
+            auto extraInfo = user32
+                                 ? GetProcAddress(user32, "SetMessageExtraInfo")
+                                 : nullptr;
+            auto getKeyState =
+                user32 ? GetProcAddress(user32, "GetKeyState") : nullptr;
+            auto getAsyncKeyState =
+                user32 ? GetProcAddress(user32, "GetAsyncKeyState") : nullptr;
+            if (!extraInfo || !getKeyState) {
+                spdlog::error(
+                    "Failed to resolve user32 exports for win11 menu fix");
+                return;
+            }
 
-            auto patch_area = [&](auto mem) {
+            auto imported_call_target = [](auto &insn) -> void * {
+                if (insn->getMnemonic() != zasm::x86::Mnemonic::Call)
+                    return nullptr;
+
+                auto xrefs = insn.xrefs();
+                if (xrefs.empty())
+                    return nullptr;
+
+                if (auto ptr = xrefs[0].try_read_pointer())
+                    return ptr->data();
+
+                return nullptr;
+            };
+
+            auto is_mov_ecx_imm = [](auto &insn, int value) {
+                return insn->getMnemonic() == zasm::x86::Mnemonic::Mov &&
+                       insn->getOperand(0) == zasm::x86::ecx &&
+                       insn->getOperand(1).template holds<zasm::Imm>() &&
+                       insn->getOperand(1)
+                               .template get<zasm::Imm>()
+                               .template value<int>() == value;
+            };
+
+            auto is_key_state_call = [&](auto &insn) {
+                auto target = imported_call_target(insn);
+                return target == getKeyState || target == getAsyncKeyState;
+            };
+
+            auto find_key_state_check = [&](auto mem, int value) -> void * {
                 for (auto it = mem.begin(); it != mem.end(); ++it) {
-                    auto &insn = *it;
-                    if (insn->getMnemonic() == zasm::x86::Mnemonic::Mov) {
-                        if (insn->getOperand(0) == zasm::x86::ecx &&
-                            insn->getOperand(1).template holds<zasm::Imm>() &&
-                            insn->getOperand(1)
-                                    .template get<zasm::Imm>()
-                                    .template value<int>() == 0x10) {
-                            auto &next = *std::next(it);
-                            if (next->getMnemonic() ==
-                                    zasm::x86::Mnemonic::Call &&
-                                next->getOperand(0)
-                                    .template holds<zasm::Mem>()) {
-                                insn.ptr()
-                                    .reassembly([](auto a) {
-                                        a.mov(zasm::x86::ecx, 0x10);
-                                        a.mov(zasm::x86::eax, 0xffff);
-                                        a.nop();
-                                        a.nop();
-                                    })
-                                    .patch();
+                    auto next = std::next(it);
+                    if (next == mem.end())
+                        break;
 
-                                return true;
-                            }
-                        }
+                    auto &insn = *it;
+                    if (is_mov_ecx_imm(insn, value) &&
+                        is_key_state_call(*next)) {
+                        return insn.ptr().data();
                     }
+                }
+
+                return nullptr;
+            };
+
+            auto has_key_state_check = [&](auto mem, int value) {
+                return find_key_state_check(mem, value) != nullptr;
+            };
+
+            auto patch_key_state_check = [&](auto mem, int value) {
+                if (auto addr = find_key_state_check(mem, value)) {
+                    spdlog::info("Patching key state check at: {}",
+                                 (void *)addr);
+                    blook::Pointer(addr)
+                        .range_next_instr(2)
+                        .reassembly_with_padding(
+                            [](auto a) { a.mov(zasm::x86::rax, 0xffff); })
+                        .patch();
+                    return true;
                 }
 
                 return false;
@@ -157,48 +168,50 @@ void mb_shell::fix_win11_menu::install() {
 
                 // the function to determine if show win10 menu or win11 menu
                 // calls SetMessageExtraInfo, so we use it as a hint
-                auto extraInfo = GetProcAddress(LoadLibraryA("user32.dll"),
-                                                "SetMessageExtraInfo");
                 for (auto &ins : disasm) {
-                    if (ins->getMnemonic() == zasm::x86::Mnemonic::Call) {
-                        auto xrefs = ins.xrefs();
-                        if (xrefs.empty())
-                            continue;
-                        if (auto ptr = xrefs[0].try_read_pointer();
-                            ptr && ptr->data() == extraInfo) {
-                            if (patch_area(ins.ptr()
-                                               .find_upwards({0xCC, 0xCC, 0xCC,
-                                                              0xCC, 0xCC})
-                                               ->range_size(0xB50)
-                                               .disassembly())) {
-                                spdlog::info(
-                                    "Patched shell32.dll for win11 menu fix");
-                                break;
-                            }
-                        }
+                    if (imported_call_target(ins) != extraInfo)
+                        continue;
+
+                    if (patch_key_state_check(
+                            ins.ptr()
+                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                                ->range_size(0xB50)
+                                .disassembly(),
+                            0x10)) {
+                        spdlog::info("Patched shell32.dll for win11 menu fix");
+                        break;
                     }
                 }
             }
 
             if (auto explorerframe = proc->module("ExplorerFrame.dll")) {
-                /*
-                CNscTree::ShouldShowMiniMenu
+                auto disasm =
+                    explorerframe.value()->section(".text")->disassembly();
 
-                1801ca353  b910000000         mov     ecx, 0x10
-                1801ca358  48ff1521cb0700     call    qword [rel GetKeyState]
-                */
+                for (auto &ins : disasm) {
+                    if (!is_key_state_call(ins))
+                        continue;
 
-                if (auto res =
-                        explorerframe.value()->section(".text")->find_one(
-                            {0xb9, 0x10, 0x00, 0x00, 0x00, 0x48, 0xff, 0x15,
-                             0x21, 0xcb, 0x07, 0x00})) {
-                    if (patch_area(res->range_size(0x20).disassembly()))
+                    auto function =
+                        ins.ptr()
+                            .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                            ->range_size(0x200)
+                            .disassembly();
+                    if (!has_key_state_check(function, 0x10) ||
+                        !has_key_state_check(function, 0x79)) {
+                        continue;
+                    }
+
+                    if (patch_key_state_check(function, 0x10)) {
                         spdlog::info(
-                            "Patched explorerframe.dll for win11 menu fix");
+                            "Patched explorerframe.dll for win11 menu fix: {}",
+                            ins.ptr().data());
+                        break;
+                    }
                 }
             }
         } catch (...) {
-            spdlog::error("Failed to patch shell32.dll for win11 menu fix");
+            spdlog::error("Failed to patch win11 menu fix");
         }
     }).detach();
 }
