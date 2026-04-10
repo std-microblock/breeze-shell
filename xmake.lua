@@ -23,7 +23,7 @@ add_requires("sentry-native", {
     }
 })
 add_requires("breeze-glfw", {alias = "glfw"})
-add_requires("blook 57184918425c1d3a9cc6e9ff56edf641a3e0cb2a", "glad",
+add_requires("blook 9c24a0b6e7c7055adcd8f440a558f84f831e4f0f", "glad",
     "reflect-cpp", "wintoast v1.3.1", "breeze-ui", "watcher", "fmt", "spdlog")
 
 if has_config("asan") then
