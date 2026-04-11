@@ -32,6 +32,10 @@ std::atomic<void *> current_live_menu_handle = nullptr;
 std::mutex active_root_menu_mutex;
 std::weak_ptr<mb_shell::menu_widget> active_root_menu;
 
+static std::atomic<bool> is_menu_showing{false};
+static std::mutex menu_close_mutex;
+static std::condition_variable menu_close_cv;
+
 void *current_live_menu() {
     return current_live_menu_handle.load(std::memory_order_relaxed);
 }
@@ -372,6 +376,24 @@ std::optional<int>
 mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                            std::function<void(menu_render &)> on_before_show,
                            bool run_js) {
+    {
+        if (is_menu_showing.load(std::memory_order_relaxed)) {
+            spdlog::info("Re-entrant track_popup_menu detected, closing current menu first");
+            auto current = menu_render::current;
+            if (current && *current && (*current)->rt) {
+                (*current)->rt->hide_as_close();
+            }
+            std::unique_lock lock(menu_close_mutex);
+            menu_close_cv.wait_for(lock, std::chrono::milliseconds(2000), [] {
+                return !is_menu_showing.load(std::memory_order_relaxed);
+            });
+            if (is_menu_showing.load(std::memory_order_relaxed)) {
+                spdlog::warn("Previous menu did not close in time, aborting new menu");
+                return std::nullopt;
+            }
+        }
+    }
+
     auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer_thread.add_task([&]() {
         set_thread_name("breeze::renderer_thread");
@@ -381,11 +403,14 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                     current_live_menu_handle.store(hMenu,
                                                    std::memory_order_relaxed);
                     mb_shell::context_menu_hooks::clear_active_root_menu_widget();
+                    is_menu_showing.store(true, std::memory_order_relaxed);
                 }
                 ~live_menu_guard() {
                     mb_shell::context_menu_hooks::clear_active_root_menu_widget();
                     current_live_menu_handle.store(nullptr,
                                                    std::memory_order_relaxed);
+                    is_menu_showing.store(false, std::memory_order_relaxed);
+                    menu_close_cv.notify_all();
                 }
             } guard((HMENU)menu.native_handle);
 

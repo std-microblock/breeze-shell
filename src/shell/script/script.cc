@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <shared_mutex>
 #include <thread>
 
 #include "FileWatch.hpp"
@@ -45,11 +46,16 @@ script_context::script_context() {
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
     bool has_update = false;
+    std::chrono::steady_clock::time_point last_change_time{};
+    static constexpr auto debounce_delay = std::chrono::milliseconds(500);
 
     auto reload_all = [&]() {
         spdlog::info("Reloading all scripts");
 
-        menu_callbacks_js.clear();
+        {
+            std::unique_lock lock(menu_callbacks_js_mutex);
+            menu_callbacks_js.clear();
+        }
         is_js_ready.store(false);
         module_base = path;
         stop_event_loop_in_time(std::chrono::milliseconds(500));
@@ -108,13 +114,17 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
             spdlog::info("File change detected: {}", changed_path);
             has_update = true;
+            last_change_time = std::chrono::steady_clock::now();
         });
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         if (has_update && on_reload()) {
-            has_update = false;
-            reload_all();
+            auto now = std::chrono::steady_clock::now();
+            if (now - last_change_time >= debounce_delay) {
+                has_update = false;
+                reload_all();
+            }
         }
     }
 }

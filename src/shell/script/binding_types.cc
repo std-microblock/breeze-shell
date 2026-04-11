@@ -45,6 +45,7 @@ using namespace WinToastLib;
 std::vector<
     std::shared_ptr<std::function<void(mb_shell::js::menu_info_basic_js)>>>
     mb_shell::menu_callbacks_js;
+std::shared_mutex mb_shell::menu_callbacks_js_mutex;
 namespace mb_shell::js {
 bool menu_controller::valid() { return !$menu.expired(); }
 std::shared_ptr<mb_shell::js::menu_item_controller>
@@ -89,8 +90,14 @@ std::function<void()> menu_controller::add_menu_listener(
     };
     auto ptr =
         std::make_shared<std::function<void(menu_info_basic_js)>>(listener_cvt);
-    menu_callbacks_js.push_back(ptr);
-    return [ptr]() { std::erase(menu_callbacks_js, ptr); };
+    {
+        std::unique_lock lock(mb_shell::menu_callbacks_js_mutex);
+        menu_callbacks_js.push_back(ptr);
+    }
+    return [ptr]() {
+        std::unique_lock lock(mb_shell::menu_callbacks_js_mutex);
+        std::erase(menu_callbacks_js, ptr);
+    };
 }
 menu_controller::~menu_controller() {}
 int menu_item_controller::get_position() const {
