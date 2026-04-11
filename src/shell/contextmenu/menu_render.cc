@@ -1,4 +1,5 @@
 #include "menu_render.h"
+#include "hooks.h"
 #include "shell/utils.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
@@ -91,6 +92,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         menu,
         // convert the x and y to the window coordinates
         x - monitor_info.rcMonitor.left, y - monitor_info.rcMonitor.top);
+    context_menu_hooks::set_active_root_menu_widget(menu_wid->menu_wid);
     rt->root->children.push_back(menu_wid);
     auto current_js_context =
         entry::main_window_loop_hook

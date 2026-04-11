@@ -16,6 +16,7 @@ struct menu_render;
 struct menu {
     std::vector<menu_item> items;
     void *parent_window = nullptr;
+    void *native_handle = nullptr;
     bool is_top_level = false;
 
     static menu

@@ -291,6 +291,7 @@ menu menu::construct_with_hmenu(
     }
 
     m.parent_window = hWnd;
+    m.native_handle = hMenu;
     m.is_top_level = is_top;
     return m;
 }

@@ -141,11 +141,13 @@ void main() {
         init_render_global();
         res_string_loader::init();
         context_menu_hooks::install_NtUserTrackPopupMenuEx_hook();
+        context_menu_hooks::install_menu_mutation_hooks();
         fix_win11_menu::install();
     }
 
     if (filename == "onecommander.exe") {
         init_render_global();
+        context_menu_hooks::install_menu_mutation_hooks();
         context_menu_hooks::install_SHCreateDefaultContextMenu_hook();
         res_string_loader::init();
     }
