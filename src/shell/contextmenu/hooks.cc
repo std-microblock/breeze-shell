@@ -374,6 +374,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                            bool run_js) {
     auto thread_id_orig = GetCurrentThreadId();
     auto selected_menu_future = renderer_thread.add_task([&]() {
+        set_thread_name("breeze::renderer_thread");
         try {
             struct live_menu_guard {
                 explicit live_menu_guard(HMENU hMenu) {

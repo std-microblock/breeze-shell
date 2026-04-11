@@ -658,19 +658,7 @@ std::string breeze::data_directory() {
     return config::data_directory().generic_string();
 }
 std::string breeze::default_config() {
-    auto previous_default_animation = config::_default_animation;
-    auto previous_config = std::move(config::current);
-
-    if (previous_config) {
-        config::_default_animation = previous_config->default_animation;
-    }
-
-    config::current = std::make_unique<mb_shell::config>();
-    auto result = config::dump_config();
-
-    config::current = std::move(previous_config);
-    config::_default_animation = previous_default_animation;
-    return result;
+    return config::dump_default_config();
 }
 bool breeze::should_show_settings_button() {
     return mb_shell::config::current->context_menu.show_settings_button;

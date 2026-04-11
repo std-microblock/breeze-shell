@@ -139,6 +139,7 @@ struct config {
     static void write_config();
     static void run_config_loader();
     static std::string dump_config();
+    static std::string dump_default_config();
 
     static std::filesystem::path data_directory();
     void apply_fonts_to_nvg(NVGcontext *nvg);

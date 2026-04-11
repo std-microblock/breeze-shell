@@ -203,7 +203,7 @@ void main() {
             script_ctx.is_js_ready.wait(false);
             spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
             try {
-                auto res = syncAwait(script_ctx.eval_string("throw new Error('Hello from ASAN environment!');",
+                auto res = syncAwait(script_ctx.eval_string("setInterval(globalThis.showConfigPage, 1300);",
                                            "asan.js")->await());
                 spdlog::info("ASAN eval result: {}", res.as<std::string>());
             } catch (const std::exception &e) {

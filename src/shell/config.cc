@@ -168,4 +168,5 @@ void config::animated_float_conf::apply_to(ui::animated_color &anim,
     apply_to(anim.b, delay);
     apply_to(anim.a, delay);
 }
+std::string config::dump_default_config() { return rfl::json::write(config{}); }
 } // namespace mb_shell
