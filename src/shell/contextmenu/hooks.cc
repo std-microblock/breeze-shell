@@ -15,6 +15,7 @@
 #include "blook/blook.h"
 #include <atlcomcli.h>
 #include <atomic>
+#include <condition_variable>
 #include <mutex>
 #include <memory>
 #include <shobjidl_core.h>
@@ -376,21 +377,34 @@ std::optional<int>
 mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                            std::function<void(menu_render &)> on_before_show,
                            bool run_js) {
-    {
-        if (is_menu_showing.load(std::memory_order_relaxed)) {
-            spdlog::info("Re-entrant track_popup_menu detected, closing current menu first");
-            auto current = menu_render::current;
-            if (current && *current && (*current)->rt) {
-                (*current)->rt->hide_as_close();
+    struct menu_showing_guard {
+        bool owns = false;
+        ~menu_showing_guard() {
+            if (owns) {
+                is_menu_showing.store(false, std::memory_order_relaxed);
+                menu_close_cv.notify_all();
             }
-            std::unique_lock lock(menu_close_mutex);
-            menu_close_cv.wait_for(lock, std::chrono::milliseconds(2000), [] {
-                return !is_menu_showing.load(std::memory_order_relaxed);
-            });
-            if (is_menu_showing.load(std::memory_order_relaxed)) {
-                spdlog::warn("Previous menu did not close in time, aborting new menu");
-                return std::nullopt;
-            }
+        }
+    } showing_guard;
+
+    showing_guard.owns =
+        !is_menu_showing.exchange(true, std::memory_order_relaxed);
+    if (!showing_guard.owns) {
+        spdlog::info("Re-entrant track_popup_menu detected, closing current menu first");
+        auto current = menu_render::current;
+        if (current && *current && (*current)->rt) {
+            (*current)->rt->hide_as_close();
+        }
+        std::unique_lock lock(menu_close_mutex);
+        menu_close_cv.wait_for(lock, std::chrono::milliseconds(2000), [] {
+            return !is_menu_showing.load(std::memory_order_relaxed);
+        });
+        bool expected = false;
+        showing_guard.owns = is_menu_showing.compare_exchange_strong(
+            expected, true, std::memory_order_relaxed);
+        if (!showing_guard.owns) {
+            spdlog::warn("Previous menu did not close in time, aborting new menu");
+            return std::nullopt;
         }
     }
 
@@ -403,14 +417,11 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                     current_live_menu_handle.store(hMenu,
                                                    std::memory_order_relaxed);
                     mb_shell::context_menu_hooks::clear_active_root_menu_widget();
-                    is_menu_showing.store(true, std::memory_order_relaxed);
                 }
                 ~live_menu_guard() {
                     mb_shell::context_menu_hooks::clear_active_root_menu_widget();
                     current_live_menu_handle.store(nullptr,
                                                    std::memory_order_relaxed);
-                    is_menu_showing.store(false, std::memory_order_relaxed);
-                    menu_close_cv.notify_all();
                 }
             } guard((HMENU)menu.native_handle);
 
