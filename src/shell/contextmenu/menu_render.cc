@@ -39,7 +39,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         if (auto res = rt->init(); !res) {
             MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                         MB_ICONERROR);
-            return nullptr;
+            return std::shared_ptr<ui::render_target>{nullptr};
         }
 
         glfw_proc_hook.install(rt->hwnd());
