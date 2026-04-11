@@ -490,19 +490,23 @@ const HostConfig: Reconciler.HostConfig<
 const reconciler = Reconciler(HostConfig);
 
 export const createRenderer = (host: shell.breeze_ui.js_flex_layout_widget) => {
+    const container = reconciler.createContainer(
+        host,
+        0,
+        null, // hydrationCallbacks
+        false, // isStrictMode
+        null, // concurrentUpdatesByDefaultOverride
+        '',   // identifierPrefix
+        (error) => console.error(error), // onRecoverableError
+        null  // transitionCallbacks
+    );
+
     return {
         render: (element: React.ReactElement) => {
-            const container = reconciler.createContainer(
-                host,
-                0,
-                null, // hydrationCallbacks
-                false, // isStrictMode
-                null, // concurrentUpdatesByDefaultOverride
-                '',   // identifierPrefix
-                (error) => console.error(error), // onRecoverableError
-                null  // transitionCallbacks
-            );
             reconciler.updateContainer(element, container, null, null);
+        },
+        unmount: () => {
+            reconciler.updateContainer(null, container, null, null);
         }
     };
 };

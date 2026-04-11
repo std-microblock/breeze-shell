@@ -6,12 +6,28 @@
 #include "shell/config.h"
 #include "shell/contextmenu/menu_widget.h"
 #include <memory>
+#include <filesystem>
 #include <print>
+#include <thread>
+#include <Windows.h>
 
 #include "../utils.h"
 #include "spdlog/spdlog.h"
 
 namespace mb_shell::js {
+
+namespace {
+void set_owner_rt_recursive(const std::shared_ptr<ui::widget> &widget,
+                            ui::render_target *owner_rt) {
+    if (!widget) {
+        return;
+    }
+    widget->owner_rt = owner_rt;
+    for (auto &child : widget->children) {
+        set_owner_rt_recursive(child, owner_rt);
+    }
+}
+} // namespace
 
 // Macro for getter/setter pairs with animation support
 #define IMPL_ANIMATED_PROP(class_name, widget_type, prop_name, prop_type)      \
@@ -181,7 +197,7 @@ void breeze_ui::js_widget::append_child_after(std::shared_ptr<js_widget> child,
         return;
     auto lock = $rt_lock();
     if (child && child->$widget) {
-        child->$widget->owner_rt = $widget->owner_rt;
+        set_owner_rt_recursive(child->$widget, $widget->owner_rt);
         $widget->children_dirty = true;
         $widget->needs_repaint = true;
         if (after_index < 0) {
@@ -206,7 +222,7 @@ void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
         return;
     auto lock = $rt_lock();
     if (child && child->$widget) {
-        child->$widget->owner_rt = nullptr;
+        set_owner_rt_recursive(child->$widget, nullptr);
         auto it = std::find($widget->children.begin(), $widget->children.end(),
                             child->$widget);
         if (it != $widget->children.end()) {
@@ -674,8 +690,14 @@ void breeze_ui::window::set_root_widget(
     if (!$render_target)
         return;
     std::lock_guard l($render_target->rt_lock);
-    $render_target->root = widget->$widget;
-    $render_target->root->needs_repaint = true;
+    if ($render_target->root && (!widget || $render_target->root != widget->$widget)) {
+        set_owner_rt_recursive($render_target->root, nullptr);
+    }
+    $render_target->root = widget ? widget->$widget : nullptr;
+    if ($render_target->root) {
+        set_owner_rt_recursive($render_target->root, $render_target.get());
+        $render_target->root->needs_repaint = true;
+    }
 }
 
 std::shared_ptr<mb_shell::js::breeze_ui::js_widget>
@@ -692,6 +714,12 @@ breeze_ui::window::get_root_widget() const {
 void breeze_ui::window::close() {
     if (!$render_target)
         return;
+    {
+        std::lock_guard l($render_target->rt_lock);
+        if ($render_target->root) {
+            set_owner_rt_recursive($render_target->root, nullptr);
+        }
+    }
     $render_target->close();
 }
 

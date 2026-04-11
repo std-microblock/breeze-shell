@@ -75,19 +75,39 @@ import * as shell from "mshell";
 import ConfigApp from './ConfigApp';
 
 let existingConfigWindow: shell.breeze_ui.window | null = null;
+let existingConfigRenderer: { unmount: () => void } | null = null;
+let configWindowGeneration = 0;
+
+const disposeExistingConfigWindow = () => {
+    existingConfigRenderer?.unmount();
+    existingConfigRenderer = null;
+
+    if (existingConfigWindow) {
+        const win = existingConfigWindow;
+        existingConfigWindow = null;
+        win.close();
+    }
+};
+
 export const showConfigPage = () => {
+    disposeExistingConfigWindow();
     shell.breeze.allow_js_reload(false);
+    const generation = ++configWindowGeneration;
+    let renderer: { unmount: () => void } | null = null;
     const win = shell.breeze_ui.window.create_ex("Breeze Config", 800, 600, () => {
-        shell.breeze.allow_js_reload(true)
+        renderer?.unmount();
         if (existingConfigWindow === win)
             existingConfigWindow = null;
+        if (existingConfigRenderer === renderer)
+            existingConfigRenderer = null;
+        if (configWindowGeneration === generation)
+            shell.breeze.allow_js_reload(true);
     });
-    if (existingConfigWindow)
-        existingConfigWindow.close();
     existingConfigWindow = win;
 
     const widget = shell.breeze_ui.widgets_factory.create_flex_layout_widget();
-    const renderer = createRenderer(widget);
+    renderer = createRenderer(widget);
+    existingConfigRenderer = renderer;
     renderer.render(React.createElement(ConfigApp, null));
     win.root_widget = widget
 }
