@@ -41,6 +41,7 @@ script_context::script_context() {
     });
 }
 
+
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
     bool has_update = false;

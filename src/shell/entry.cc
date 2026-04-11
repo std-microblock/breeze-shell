@@ -138,18 +138,8 @@ void main() {
     if (filename == "explorer.exe" || filename == "360filebrowser64.exe" || filename == "desktopmgr64.exe") {
         init_render_global();
         res_string_loader::init();
-        // context_menu_hooks::install_NtUserTrackPopupMenuEx_hook();
-        // fix_win11_menu::install();
-        std::thread([]() {
-            script_ctx.is_js_ready.wait(false);
-            spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
-            if (auto res =
-                    script_ctx.eval_string("globalThis.showConfigPage()",
-                                           "asan.js");
-                !res) {
-                spdlog::error("Failed to show config page: {}", res.error());
-            }
-        }).detach();
+        context_menu_hooks::install_NtUserTrackPopupMenuEx_hook();
+        fix_win11_menu::install();
     }
 
     if (filename == "onecommander.exe") {
