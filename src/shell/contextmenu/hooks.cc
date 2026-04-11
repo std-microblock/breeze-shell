@@ -5,7 +5,7 @@
 #include "nanovg.h"
 #include "shell/config.h"
 #include "shell/entry.h"
-#include "shell/script/quickjspp.hpp"
+#include "breeze-js/quickjspp.hpp"
 
 #include "blook/blook.h"
 #include <atlcomcli.h>

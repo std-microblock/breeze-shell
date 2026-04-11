@@ -1,32 +1,12 @@
 #pragma once
-#include "quickjspp.hpp"
-#include <chrono>
-#include <condition_variable>
-#include <expected>
+#include "breeze-js/script.h"
+#include <atomic>
 #include <filesystem>
-#include <fstream>
-#include <memory>
-#include <print>
-#include <thread>
-#include <threads.h>
-
-extern thread_local bool is_thread_js_main;
 namespace mb_shell {
-struct script_context {
-    std::shared_ptr<qjs::Runtime> rt;
-    std::shared_ptr<qjs::Context> js;
-
-
-public:
+struct script_context : breeze::script_context {
     std::atomic<bool> is_js_ready{false};
-    std::atomic<bool> should_stop{false};
 
     script_context();
-    void bind();
-    void run_event_loop();
-    void stop();
-    void init_js_thread();
-
     void watch_folder(
         const std::filesystem::path &path,
         std::function<bool()> on_reload = []() { return true; });

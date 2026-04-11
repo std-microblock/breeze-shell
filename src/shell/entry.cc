@@ -9,7 +9,7 @@
 #include "error_handler.h"
 #include "res_string_loader.h"
 #include "script/binding_types.hpp"
-#include "script/quickjspp.hpp"
+#include "breeze-js/quickjspp.hpp"
 #include "script/script.h"
 #include "utils.h"
 
@@ -47,8 +47,6 @@
 #include <winuser.h>
 
 #include <Windows.h>
-
-#include "qjs_sanitizer.h"
 
 #include "logger.h"
 
@@ -140,8 +138,18 @@ void main() {
     if (filename == "explorer.exe" || filename == "360filebrowser64.exe" || filename == "desktopmgr64.exe") {
         init_render_global();
         res_string_loader::init();
-        context_menu_hooks::install_NtUserTrackPopupMenuEx_hook();
-        fix_win11_menu::install();
+        // context_menu_hooks::install_NtUserTrackPopupMenuEx_hook();
+        // fix_win11_menu::install();
+        std::thread([]() {
+            script_ctx.is_js_ready.wait(false);
+            spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
+            if (auto res =
+                    script_ctx.eval_string("globalThis.showConfigPage()",
+                                           "asan.js");
+                !res) {
+                spdlog::error("Failed to show config page: {}", res.error());
+            }
+        }).detach();
     }
 
     if (filename == "onecommander.exe") {
@@ -199,10 +207,13 @@ void main() {
         init_console(true);
         std::thread([]() {
             script_ctx.is_js_ready.wait(false);
-            spdlog::info( "Is js ready: %d", script_ctx.is_js_ready.load());
-            script_ctx.js->enqueueJob([]() {
-                script_ctx.js->eval("globalThis.showConfigPage()", "asan.js");
-            });
+            spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
+            if (auto res =
+                    script_ctx.eval_string("globalThis.showConfigPage()",
+                                           "asan.js");
+                !res) {
+                spdlog::error("Failed to show config page: {}", res.error());
+            }
         }).detach();
     }
 }

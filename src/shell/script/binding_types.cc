@@ -1,7 +1,13 @@
+#include <Windows.h>
+#include <WinUser.h>
+#include <roapi.h>
+#include <roerrorapi.h>
+#include <winstring.h>
+
 #include "binding_types.hpp"
 #include "async_simple/Promise.h"
 #include "binding_types_breeze_ui.h"
-#include "quickjspp.hpp"
+#include "breeze-js/quickjspp.hpp"
 #include <filesystem>
 #include <iostream>
 #include <memory>

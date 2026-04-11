@@ -53,8 +53,6 @@ target("shell")
         public = true
     })
 
-    add_includedirs("src/shell/script/quickjs")
-
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt", "breeze-js-runtime")
     add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
@@ -79,7 +77,7 @@ target("shell")
         end
     end)
     add_files("src/shell/script/script.js")
-    add_files("src/shell/**.cc", "src/shell/**.c")
+    add_files("src/shell/**.cc")
     set_encodings("utf-8")
 
     if has_config("asan") then

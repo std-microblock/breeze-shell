@@ -1,33 +1,19 @@
 #include "script.h"
+
 #include "binding_qjs.h"
-#include "shell/contextmenu/contextmenu.h"
-
 #include "shell/config.h"
-#include "shell/utils.h"
-
-#include <algorithm>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <mutex>
-#include <numeric>
-#include <print>
-#include <ranges>
-#include <sstream>
-#include <string_view>
-#include <thread>
-#include <unordered_set>
-
-#include "FileWatch.hpp"
-#include "quickjs.h"
-#include "quickjspp.hpp"
-
+#include "shell/contextmenu/contextmenu.h"
 #include "shell/logger.h"
 
-thread_local bool is_thread_js_main = false;
+#include <algorithm>
+#include <ranges>
+#include <thread>
+
+#include "FileWatch.hpp"
 
 extern "C" const uint8_t _binary_script_js_start[];
 extern "C" const uint8_t _binary_script_js_end[];
+
 std::string breeze_script_js =
     std::string(reinterpret_cast<const char *>(_binary_script_js_start),
                 reinterpret_cast<const char *>(_binary_script_js_end));
@@ -41,263 +27,88 @@ void println(qjs::rest<std::string> args) {
         }));
 }
 
-void script_context::bind() {
-    auto &module = js->addModule("mshell");
+script_context::script_context() {
+    on_bind.push_back([this]() {
+        auto &module = js->addModule("mshell");
+        module.function("println", println);
+        mshell_bindAll(module);
 
-    module.function("println", println);
-
-    mshell_bindAll(module);
-
-    auto g = js->global();
-    g["console"] = js->newObject();
-    qjs::Value println_fn =
-        qjs::js_traits<std::function<void(qjs::rest<std::string>)>>::wrap(
-            js->ctx, println);
-    g["console"]["log"] = println_fn;
-    g["console"]["info"] = println_fn;
-    g["console"]["warn"] = println_fn;
-    g["console"]["error"] = println_fn;
-    g["console"]["debug"] = println_fn;
-}
-script_context::script_context() : rt{}, js{} {}
-
-void script_context::run_event_loop() {
-    while (!should_stop.load()) {
-        while (js->pending_job_count.load() > 0) {
-            std::unique_lock lock(js->js_mutex);
-            auto ctx = js->ctx;
-            if (auto res = JS_ExecutePendingJob(rt->rt, &ctx); res < 0) {
-                spdlog::error(
-                    "Error executing pending JS job: {}",
-                    (std::string)qjs::Value{js->ctx, JS_GetException(js->ctx)});
-                spdlog::error("Stack trace: {}",
-                              (std::string)qjs::Value{
-                                  js->ctx, JS_GetException(js->ctx)}["stack"]);
-            }
-            lock.unlock();
-            js->pending_job_count.fetch_sub(1);
-            std::this_thread::yield();
-        }
-        js->pending_job_count.wait(0);
-        if (js->pending_job_count.load() == -1)
-            break;
-    }
-}
-
-void script_context::stop() {
-    should_stop.store(true);
-    if (js) {
-        js->pending_job_count.exchange(-1);
-        js->pending_job_count.notify_all();
-    }
-}
-
-class WindowsThreadWrapper {
-private:
-    HANDLE hThread_;
-    DWORD threadId_;
-    std::move_only_function<void()> func_;
-
-    static DWORD WINAPI ThreadProc(LPVOID lpParam) {
-        auto wrapper = static_cast<WindowsThreadWrapper *>(lpParam);
-
-        wrapper->func_();
-        return 0;
-    }
-
-public:
-    WindowsThreadWrapper(std::move_only_function<void()> func,
-                         size_t stackSize = 0)
-        : hThread_(nullptr), threadId_(0), func_(std::move(func)) {
-        if (!func_)
+        if (auto res = eval_string(breeze_script_js, "breeze-script.js");
+            !res) {
+            spdlog::error("Error in breeze_script_js: {}", res.error());
             return;
-        hThread_ =
-            CreateThread(nullptr, stackSize, ThreadProc, this, 0, &threadId_);
-    }
-
-    ~WindowsThreadWrapper() {
-        if (hThread_) {
-            CloseHandle(hThread_);
         }
-    }
-
-    void join() {
-        if (hThread_) {
-            WaitForSingleObject(hThread_, INFINITE);
-        }
-    }
-
-    bool joinable() const { return hThread_ != nullptr; }
-};
+    });
+}
 
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
     bool has_update = false;
 
-    std::optional<WindowsThreadWrapper> js_thread;
     auto reload_all = [&]() {
         spdlog::info("Reloading all scripts");
 
-        if (js) {
-            stop();
-            if (js_thread)
-                js_thread->join();
-            should_stop.store(false);
-            js->pending_job_count.exchange(0);
+        menu_callbacks_js.clear();
+        is_js_ready.store(false);
+        module_base = path;
+        reset_runtime();
+
+        std::vector<std::filesystem::path> files;
+        std::ranges::copy(std::filesystem::directory_iterator(path) |
+                              std::ranges::views::filter([](auto &entry) {
+                                  return entry.path().extension() == ".js";
+                              }),
+                          std::back_inserter(files));
+
+        auto plugin_load_order = config::current->plugin_load_order;
+        std::ranges::sort(files, [&](const auto &a, const auto &b) {
+            auto a_name = a.filename().stem().string();
+            auto b_name = b.filename().stem().string();
+
+            auto a_pos = std::ranges::find(plugin_load_order, a_name);
+            auto b_pos = std::ranges::find(plugin_load_order, b_name);
+
+            if (a_pos == plugin_load_order.end() &&
+                b_pos == plugin_load_order.end()) {
+                return a_name < b_name;
+            }
+
+            if (a_pos == plugin_load_order.end()) {
+                return false;
+            }
+
+            if (b_pos == plugin_load_order.end()) {
+                return true;
+            }
+
+            return a_pos < b_pos;
+        });
+
+        for (const auto &script_path : files) {
+            if (auto res = eval_file(script_path); !res) {
+                spdlog::error("Error evaluating file {}: {}",
+                              script_path.string(), res.error());
+            }
         }
 
-        spdlog::info("Creating JS thread");
-        menu_callbacks_js.clear();
-
-        is_js_ready.exchange(false);
-        js_thread.emplace(
-            [&, this]() {
-                try {
-                    init_js_thread();
-                    bind();
-                    try {
-                        JS_UpdateStackTop(rt->rt);
-                        js->eval(breeze_script_js, "breeze-script.js",
-                                 JS_EVAL_TYPE_MODULE);
-                    } catch (std::exception &e) {
-                        spdlog::error("Error in breeze_script_js: {}",
-                                      e.what());
-                        return;
-                    }
-
-                    std::vector<std::filesystem::path> files;
-                    std::ranges::copy(
-                        std::filesystem::directory_iterator(path) |
-                            std::ranges::views::filter([](auto &entry) {
-                                return entry.path().extension() == ".js";
-                            }),
-                        std::back_inserter(files));
-
-                    // resort files by config
-                    auto plugin_load_order = config::current->plugin_load_order;
-                    // if not found, load after all
-                    std::ranges::sort(files, [&](auto &a, auto &b) {
-                        auto a_name = a.filename().stem().string();
-                        auto b_name = b.filename().stem().string();
-
-                        auto a_pos =
-                            std::ranges::find(plugin_load_order, a_name);
-                        auto b_pos =
-                            std::ranges::find(plugin_load_order, b_name);
-
-                        if (a_pos == plugin_load_order.end() &&
-                            b_pos == plugin_load_order.end()) {
-                            return a_name < b_name;
-                        }
-
-                        if (a_pos == plugin_load_order.end()) {
-                            return false;
-                        }
-
-                        if (b_pos == plugin_load_order.end()) {
-                            return true;
-                        }
-
-                        return a_pos < b_pos;
-                    });
-
-                    for (auto &path : files) {
-                        try {
-                            std::ifstream file(path);
-                            std::string script(
-                                (std::istreambuf_iterator<char>(file)),
-                                std::istreambuf_iterator<char>());
-
-                            js->moduleLoader =
-                                [&](std::string_view module_name) {
-                                    auto module_path =
-                                        path.parent_path() /
-                                        (std::string(module_name) + ".js");
-                                    if (!std::filesystem::exists(module_path)) {
-                                        return qjs::Context::ModuleData{};
-                                    }
-                                    std::ifstream file(module_path);
-                                    std::string script(
-                                        (std::istreambuf_iterator<char>(file)),
-                                        std::istreambuf_iterator<char>());
-                                    return qjs::Context::ModuleData{script};
-                                };
-                            auto func =
-                                JS_Eval(js->ctx, script.c_str(), script.size(),
-                                        path.generic_string().c_str(),
-                                        JS_EVAL_TYPE_MODULE |
-                                            JS_EVAL_FLAG_COMPILE_ONLY);
-
-                            if (JS_IsException(func)) {
-                                spdlog::error("Syntax Error in file: {}", path.string());
-                                auto val = qjs::Value{js->ctx,
-                                                      JS_GetException(js->ctx)};
-                                spdlog::error("Error: {}", (std::string)val);
-                                spdlog::error("Stack trace: {}",
-                                              (std::string)val["stack"]);
-                                JS_FreeValue(js->ctx, func);
-                                continue;
-                            }
-
-                            JSModuleDef *m =
-                                (JSModuleDef *)JS_VALUE_GET_PTR(func);
-                            auto meta_obj = JS_GetImportMeta(js->ctx, m);
-
-                            JS_DefinePropertyValueStr(
-                                js->ctx, meta_obj, "url",
-                                JS_NewString(js->ctx,
-                                             path.generic_string().c_str()),
-                                JS_PROP_C_W_E);
-
-                            JS_DefinePropertyValueStr(
-                                js->ctx, meta_obj, "name",
-                                JS_NewString(
-                                    js->ctx,
-                                    path.filename().generic_string().c_str()),
-                                JS_PROP_C_W_E);
-
-                            JS_FreeValue(js->ctx, meta_obj);
-
-                            auto val = qjs::Value{
-                                js->ctx, JS_EvalFunction(js->ctx, func)};
-                            if (val.isError()) {
-                                spdlog::error("Error executing file: {}", path.string());
-                                spdlog::error("Error: {}", (std::string)val);
-                                spdlog::error("Stack trace: {}",
-                                              (std::string)val["stack"]);
-                            }
-                        } catch (std::exception &e) {
-                            spdlog::error("Error in file: {} {}", path.string(),
-                                          e.what());
-                        }
-                    }
-
-                    is_js_ready.exchange(true);
-                    is_js_ready.notify_all();
-
-                    run_event_loop();
-                    is_thread_js_main = false;
-                } catch (std::exception &e) {
-                    spdlog::error("Error in JS thread: {}", e.what());
-                }
-            },
-            10485760); // 10 MB stack
+        is_js_ready.store(true);
+        is_js_ready.notify_all();
     };
 
     reload_all();
 
     filewatch::FileWatch<std::string> watch(
         path.generic_string(),
-        [&](const std::string &path, const filewatch::Event change_type) {
-            if (!path.ends_with(".js")) {
+        [&](const std::string &changed_path, const filewatch::Event) {
+            if (!changed_path.ends_with(".js")) {
                 return;
             }
 
-            spdlog::info("File change detected: {}", path);
+            spdlog::info("File change detected: {}", changed_path);
             has_update = true;
         });
 
-    while (!should_stop.load()) {
+    while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         if (has_update && on_reload()) {
             has_update = false;
@@ -306,17 +117,4 @@ void script_context::watch_folder(const std::filesystem::path &path,
     }
 }
 
-void script_context::init_js_thread() {
-    is_thread_js_main = true;
-    set_thread_locale_utf8();
-    rt = std::make_shared<qjs::Runtime>();
-    JS_UpdateStackTop(rt->rt);
-    js = std::make_shared<qjs::Context>(*rt);
-}
 } // namespace mb_shell
-
-extern "C" void qjs_notify_job_enqueued(JSContext *jsctx) {
-    auto &ctx = qjs::Context::get(jsctx);
-    ctx.pending_job_count.fetch_add(1);
-    ctx.pending_job_count.notify_all();
-}
