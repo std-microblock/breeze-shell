@@ -4,11 +4,6 @@ export const doExplorerCompat = () => {
     menu_controller.add_menu_listener(ctx => {
         for (const items of ctx.menu.items) {
             const data = items.data()
-            if (data.name_resid === '10580@SHELL32.dll' /* 清空回收站 */ || data.name === '清空回收站') {
-                items.update_data({
-                    disabled: false
-                })
-            }
 
             if (data.name?.startsWith('NVIDIA ')) {
                 items.update_data({
