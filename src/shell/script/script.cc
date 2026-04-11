@@ -52,6 +52,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
         menu_callbacks_js.clear();
         is_js_ready.store(false);
         module_base = path;
+        stop_event_loop_in_time(std::chrono::milliseconds(500));
         reset_runtime();
 
         std::vector<std::filesystem::path> files;

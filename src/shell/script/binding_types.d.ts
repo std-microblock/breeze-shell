@@ -885,6 +885,8 @@ export class menu_controller {
     show_at_cursor(): void
 }
 export class clipboard {
+	static get text(): string;
+    static set text(value: string);
 	/**
      *  从剪贴板获取文本
      *  Get text from clipboard

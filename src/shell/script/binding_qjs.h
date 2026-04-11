@@ -1118,8 +1118,11 @@ template<> struct js_bind<mb_shell::js::clipboard> {
     static void bind(qjs::Context::Module &mod) {
         mod.class_<mb_shell::js::clipboard>("clipboard")
             .constructor<>()
+                    .static_property<&mb_shell::js::clipboard::get_text, &mb_shell::js::clipboard::set_text>("text")
                 .static_fun<&mb_shell::js::clipboard::read_text>("read_text")
+                .static_fun<&mb_shell::js::clipboard::get_text>("get_text")
                 .static_fun<&mb_shell::js::clipboard::write_text>("write_text")
+                .static_fun<&mb_shell::js::clipboard::set_text>("set_text")
             ;
     }
 };

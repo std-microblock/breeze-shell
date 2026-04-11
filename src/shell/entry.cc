@@ -50,6 +50,8 @@
 
 #include "logger.h"
 
+#include "async_simple/coro/SyncAwait.h"
+
 namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
 
@@ -198,11 +200,12 @@ void main() {
         std::thread([]() {
             script_ctx.is_js_ready.wait(false);
             spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
-            if (auto res =
-                    script_ctx.eval_string("globalThis.showConfigPage()",
-                                           "asan.js");
-                !res) {
-                spdlog::error("Failed to show config page: {}", res.error());
+            try {
+                auto res = syncAwait(script_ctx.eval_string("throw new Error('Hello from ASAN environment!');",
+                                           "asan.js")->await());
+                spdlog::info("ASAN eval result: {}", res.as<std::string>());
+            } catch (const std::exception &e) {
+                spdlog::error("Error in ASAN test thread: {}", e.what());
             }
         }).detach();
     }

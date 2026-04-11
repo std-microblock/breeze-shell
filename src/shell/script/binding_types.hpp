@@ -474,10 +474,12 @@ struct clipboard {
     // 从剪贴板获取文本
     // Get text from clipboard
     static std::string read_text();
+    static std::string get_text() { return read_text(); }
 
     // 设置文本到剪贴板
     // Set text to clipboard
     static void write_text(std::string text);
+    static void set_text(std::string text) { write_text(text); }
 };
 
 // 网络操作
