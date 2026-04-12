@@ -30,6 +30,7 @@ background_widget::background_widget(bool is_main) {
         bg_impl = std::make_shared<ui::rect_widget>();
         auto c = light_color ? 1 : 25 / 255.f;
         bg_impl->bg_color = nvgRGBAf(c, c, c, 1);
+        render_bg_impl = false;
     }
 
     bg_impl->radius->reset_to(config::current->context_menu.theme.radius);
@@ -76,13 +77,24 @@ void background_widget::update(ui::update_context &ctx) {
 }
 
 void background_widget::render(ui::nanovg_context ctx) {
+    auto &theme = config::current->context_menu.theme;
+    float border_width = theme.border_width;
+    float background_inset = theme.inset_border ? border_width
+                                                : border_width / 2;
+    const auto draw_inner_background = [&] {
+        auto t = ctx.transaction();
+        ctx.globalAlpha(*opacity / 255.f);
+        ctx.fillColor(bg_color);
+        ctx.fillRoundedRect(*x + background_inset, *y + background_inset,
+                            std::max(0.f, *width - background_inset * 2),
+                            std::max(0.f, *height - background_inset * 2),
+                            *radius);
+    };
+
     {
         auto t = ctx.transaction();
         ctx.globalAlpha(*opacity / 255.f);
-        auto &theme = config::current->context_menu.theme;
         bool light = is_light_mode();
-
-        float border_width = theme.border_width;
         // Draw shadow and border
         {
             float shadow_size = theme.shadow_size,
@@ -126,14 +138,15 @@ void background_widget::render(ui::nanovg_context ctx) {
         ctx.globalAlpha(1);
         auto cl = nvgRGBAf(0, 0, 0, 1 - *opacity / 255.f);
         ctx.fillColor(cl);
-        if (theme.inset_border)
-            ctx.fillRoundedRect(*x + border_width, *y + border_width,
-                                *width - border_width * 2,
-                                *height - border_width * 2, *radius);
-        else
-            ctx.fillRoundedRect(*x, *y, *width, *height, *radius);
+        ctx.fillRoundedRect(*x + background_inset, *y + background_inset,
+                            std::max(0.f, *width - background_inset * 2),
+                            std::max(0.f, *height - background_inset * 2),
+                            *radius);
     }
-    bg_impl->render(ctx);
+    if (render_bg_impl)
+        bg_impl->render(ctx);
+    else
+        draw_inner_background();
     super::render(ctx);
 }
 

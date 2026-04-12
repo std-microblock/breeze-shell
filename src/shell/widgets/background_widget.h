@@ -23,6 +23,7 @@ public:
 
 private:
     bool is_main = false;
+    bool render_bg_impl = true;
     std::shared_ptr<ui::rect_widget> bg_impl;
 };
 
