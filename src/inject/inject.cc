@@ -1,13 +1,16 @@
+#include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <thread>
 #include <vector>
 
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+
 
 #include "breeze_ui/animator.h"
 #include "breeze_ui/ui.h"
@@ -32,13 +35,15 @@ namespace fs = std::filesystem;
 
 void init_inject_logger() {
     try {
-        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        auto console_sink =
+            std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
             (data_directory() / "inject.log").string(), true);
         auto msvc_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
 
         std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink, msvc_sink};
-        auto logger = std::make_shared<spdlog::logger>("inject", sinks.begin(), sinks.end());
+        auto logger = std::make_shared<spdlog::logger>("inject", sinks.begin(),
+                                                       sinks.end());
         spdlog::set_default_logger(logger);
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] %v");
         spdlog::set_level(spdlog::level::debug);
@@ -83,12 +88,12 @@ void GetDebugPrivilege() {
 
     if (!OpenProcessToken(GetCurrentProcess(),
                           TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        spdlog::error( "OpenProcessToken failed: %d", GetLastError());
+        spdlog::error("OpenProcessToken failed: %d", GetLastError());
         return;
     }
 
     if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
-        spdlog::error( "LookupPrivilegeValue failed: %d", GetLastError());
+        spdlog::error("LookupPrivilegeValue failed: %d", GetLastError());
         CloseHandle(hToken);
         return;
     }
@@ -99,7 +104,7 @@ void GetDebugPrivilege() {
 
     if (!AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(TOKEN_PRIVILEGES),
                                NULL, NULL)) {
-        spdlog::error( "AdjustTokenPrivileges failed: %d", GetLastError());
+        spdlog::error("AdjustTokenPrivileges failed: %d", GetLastError());
         CloseHandle(hToken);
         return;
     }
@@ -110,16 +115,55 @@ void GetDebugPrivilege() {
 void ShowCrashDialog();
 
 constexpr int MAX_CRASH_COUNT = 3;
-int InjectToPID(int targetPID, std::wstring_view dllPath) {
-    static int crash_count = 0;
+static std::atomic<int> crash_count = 0;
 
-    if (crash_count >= MAX_CRASH_COUNT) {
+fs::path GetKeepInjectingAfterCrashFlagPath() {
+    return data_directory() / "keep_injecting_after_crash.flag";
+}
+
+bool ShouldKeepInjectingAfterCrash() {
+    return fs::exists(GetKeepInjectingAfterCrashFlagPath());
+}
+
+void SetKeepInjectingAfterCrash(bool keep_injecting_after_crash) {
+    auto path = GetKeepInjectingAfterCrashFlagPath();
+    if (keep_injecting_after_crash) {
+        HANDLE file =
+            CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (file == INVALID_HANDLE_VALUE) {
+            spdlog::error("Failed to persist keep-injecting setting: %d",
+                          GetLastError());
+            return;
+        }
+        CloseHandle(file);
+        return;
+    }
+
+    std::error_code ec;
+    fs::remove(path, ec);
+    if (ec) {
+        spdlog::error("Failed to clear keep-injecting setting: %s",
+                      ec.message().c_str());
+    }
+}
+
+void SignalInjectConsistentExit() {
+    HANDLE event =
+        CreateEventW(NULL, TRUE, FALSE, L"breeze-shell-inject-consistent-exit");
+    SetEvent(event);
+    CloseHandle(event);
+}
+
+int InjectToPID(int targetPID, std::wstring_view dllPath) {
+    if (!ShouldKeepInjectingAfterCrash() &&
+        crash_count.load() >= MAX_CRASH_COUNT) {
         return 1;
     }
 
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetPID);
     if (hProcess == NULL) {
-        spdlog::error( "OpenProcess failed: %d", GetLastError());
+        spdlog::error("OpenProcess failed: %d", GetLastError());
         return 1;
     }
 
@@ -127,14 +171,14 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         VirtualAllocEx(hProcess, NULL, (dllPath.size() + 1) * sizeof(wchar_t),
                        MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     if (remoteString == NULL) {
-        spdlog::error( "VirtualAllocEx failed: %d", GetLastError());
+        spdlog::error("VirtualAllocEx failed: %d", GetLastError());
         CloseHandle(hProcess);
         return 1;
     }
 
     if (!WriteProcessMemory(hProcess, remoteString, dllPath.data(),
                             (dllPath.size() + 1) * sizeof(wchar_t), NULL)) {
-        spdlog::error( "WriteProcessMemory failed: %d", GetLastError());
+        spdlog::error("WriteProcessMemory failed: %d", GetLastError());
         VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return 1;
@@ -147,7 +191,7 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
     HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, loadLibraryW,
                                         remoteString, 0, NULL);
     if (hThread == NULL) {
-        spdlog::error( "CreateRemoteThread failed: %d", GetLastError());
+        spdlog::error("CreateRemoteThread failed: %d", GetLastError());
         VirtualFreeEx(hProcess, remoteString, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return 1;
@@ -160,20 +204,24 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         WaitForSingleObject(hProcess, INFINITE);
         auto exitCode = 0;
         if (!GetExitCodeProcess(hProcess, (LPDWORD)&exitCode)) {
-            spdlog::error( "GetExitCodeProcess failed: %d", GetLastError());
+            spdlog::error("GetExitCodeProcess failed: %d", GetLastError());
         }
         if (exitCode != 0) {
-            spdlog::error( "Process exited with code: %d", exitCode);
-            if (++crash_count >= MAX_CRASH_COUNT) {
+            spdlog::error("Process exited with code: %d", exitCode);
+            auto current_crash_count = ++crash_count;
+            if (current_crash_count >= MAX_CRASH_COUNT) {
                 ShowCrashDialog();
+                if (ShouldKeepInjectingAfterCrash()) {
+                    crash_count.store(0);
+                }
             }
         } else {
-            crash_count = 0;
+            crash_count.store(0);
         }
         CloseHandle(hProcess);
     }).detach();
 
-    spdlog::info( "DLL injected successfully.");
+    spdlog::info("DLL injected successfully.");
     return 0;
 }
 
@@ -181,7 +229,7 @@ bool IsInjected(DWORD targetPID, std::wstring &dllPath) {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                                   FALSE, targetPID);
     if (hProcess == NULL) {
-        spdlog::error( "OpenProcess failed: {}", GetLastError());
+        spdlog::error("OpenProcess failed: {}", GetLastError());
         return false;
     }
 
@@ -229,7 +277,7 @@ int NewExplorerProcessAndInject() {
     }
 
     if (targetPID == 0) {
-        spdlog::error( "Could not find new explorer.exe process.");
+        spdlog::error("Could not find new explorer.exe process.");
         return 1;
     }
 
@@ -861,6 +909,33 @@ struct switch_lang_btn : public ui::button_widget {
     }
 };
 
+struct keep_injecting_after_crash_switch : public ui::button_widget {
+    bool keep_injecting_after_crash = false;
+
+    keep_injecting_after_crash_switch()
+        : button_widget(english ? "Stay enabled after crash"
+                                : "崩溃后不自动禁用") {
+        keep_injecting_after_crash = ShouldKeepInjectingAfterCrash();
+    }
+
+    void on_click() override {
+        SetKeepInjectingAfterCrash(!keep_injecting_after_crash);
+        keep_injecting_after_crash = ShouldKeepInjectingAfterCrash();
+    }
+
+    void update_colors(bool is_active, bool is_hovered) override {
+        if (keep_injecting_after_crash) {
+            if (is_hovered) {
+                bg_color.animate_to({0.3, 0.8, 0.3, 0.7});
+            } else {
+                bg_color.animate_to({0.2, 0.7, 0.2, 0.6});
+            }
+        } else {
+            button_widget::update_colors(is_active, is_hovered);
+        }
+    }
+};
+
 void InjectAllConsistent() {
     GetDebugPrivilege();
     std::vector<DWORD> injected;
@@ -914,10 +989,7 @@ struct inject_all_switch : public ui::button_widget {
             sei.nShow = SW_HIDE;
             ShellExecuteExW(&sei);
         } else {
-            HANDLE event = CreateEventW(NULL, TRUE, FALSE,
-                                        L"breeze-shell-inject-consistent-exit");
-            SetEvent(event);
-            CloseHandle(event);
+            SignalInjectConsistentExit();
         }
     }
 
@@ -1008,6 +1080,11 @@ struct injector_ui_main : public ui::flex_widget {
         switches->horizontal = true;
         switches->emplace_child<restart_explorer_btn>();
         switches->emplace_child<switch_lang_btn>();
+
+        auto crash_options = switches_box->emplace_child<ui::flex_widget>();
+        crash_options->gap = 7;
+        crash_options->horizontal = true;
+        crash_options->emplace_child<keep_injecting_after_crash_switch>();
     }
     void render(ui::nanovg_context ctx) override {
         auto t = ctx.transaction();
@@ -1048,17 +1125,17 @@ std::string getFontPath() {
 
 void StartInjectUI() {
     if (auto r = ui::render_target::init_global(); !r) {
-        spdlog::error( "Failed to initialize global render target.");
+        spdlog::error("Failed to initialize global render target.");
         return;
     }
     ui::render_target rt;
     rt.acrylic = 0.1;
     rt.transparent = true;
     rt.width = 400;
-    rt.height = 270;
+    rt.height = 320;
     rt.title = "";
     if (auto r = rt.init(); !r) {
-        spdlog::error( "Failed to initialize render target.");
+        spdlog::error("Failed to initialize render target.");
         return;
     }
     nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
@@ -1067,18 +1144,28 @@ void StartInjectUI() {
 }
 
 void ShowCrashDialog() {
-    auto show_by_messagebox = []() {
-        MessageBoxW(NULL,
-                    english ? L"Explorer has crashed too many times after "
-                              L"injection.\nBreeze "
-                              L"Shell will now exit to prevent further crashes."
-                            : L"注入后资源管理器多次崩溃。\nBreeze Shell "
-                              L"将退出以防止进一步崩溃。",
-                    english ? L"Breeze Shell Error" : L"Breeze Shell 错误",
-                    MB_ICONERROR | MB_OK);
+    auto auto_disable_after_crash = !ShouldKeepInjectingAfterCrash();
+    std::function<void()> show_by_messagebox = [auto_disable_after_crash]() {
+        MessageBoxW(
+            NULL,
+            auto_disable_after_crash
+                ? (english ? L"Explorer has crashed too many times after "
+                             L"injection.\nBreeze "
+                             L"Shell will now exit to prevent further crashes."
+                           : L"注入后资源管理器多次崩溃。\nBreeze Shell "
+                             L"将退出以防止进一步崩溃。")
+                : (english ? L"Explorer has crashed multiple times after "
+                             L"injection.\nInject All is configured to stay "
+                             L"enabled."
+                           : L"注入后资源管理器多次崩溃。\n当前已设置为崩溃后不"
+                             L"自动禁用全局注入。"),
+            auto_disable_after_crash
+                ? (english ? L"Breeze Shell Error" : L"Breeze Shell 错误")
+                : (english ? L"Breeze Shell Warning" : L"Breeze Shell 警告"),
+            (auto_disable_after_crash ? MB_ICONERROR : MB_ICONWARNING) | MB_OK);
     };
     if (auto r = ui::render_target::init_global(); !r) {
-        spdlog::error( "Failed to initialize global render target.");
+        spdlog::error("Failed to initialize global render target.");
         show_by_messagebox();
         return;
     }
@@ -1091,7 +1178,7 @@ void ShowCrashDialog() {
     rt.title = "";
 
     if (auto r = rt.init(); !r) {
-        spdlog::error( "Failed to initialize render target.");
+        spdlog::error("Failed to initialize render target.");
         show_by_messagebox();
         return;
     }
@@ -1109,7 +1196,8 @@ void ShowCrashDialog() {
     msg_box->gap = 10;
 
     auto title = msg_box->emplace_child<ui::text_widget>();
-    title->text = "Breeze Shell Error";
+    title->text = auto_disable_after_crash ? "Breeze Shell Error"
+                                           : "Breeze Shell Warning";
     title->font_size = 20;
     title->color.reset_to({1, 0.4, 0.4, 1});
 
@@ -1121,17 +1209,26 @@ void ShowCrashDialog() {
     message->color.reset_to({1, 1, 1, 0.9});
 
     auto suggestion = msg_box->emplace_child<ui::text_widget>();
-    suggestion->text = english ? "Breeze Shell will be temporarily disabled to "
-                                 "prevent further crashes."
-                               : "Breeze 将暂时被禁用，以防止持续崩溃。";
+    suggestion->text =
+        auto_disable_after_crash
+            ? (english ? "Breeze Shell will be temporarily disabled to "
+                         "prevent further crashes."
+                       : "Breeze 将暂时被禁用，以防止持续崩溃。")
+            : (english ? "Inject All is configured to stay enabled after "
+                         "crashes."
+                       : "当前已设置为崩溃后不自动禁用全局注入。");
     suggestion->font_size = 14;
     suggestion->color.reset_to({1, 1, 1, 0.9});
 
     auto suggestion2 = msg_box->emplace_child<ui::text_widget>();
-    suggestion2->text = english
-                            ? "If you want to continue using Breeze Shell, "
-                              "please re-enable it in the injector UI."
-                            : "如果您想继续使用 Breeze，请在注入器中重新启用。";
+    suggestion2->text =
+        auto_disable_after_crash
+            ? (english ? "If you want to continue using Breeze Shell, "
+                         "please re-enable it in the injector UI."
+                       : "如果您想继续使用 Breeze，请在注入器中重新启用。")
+            : (english ? "If crashes continue, disable Inject All manually in "
+                         "the injector UI."
+                       : "如果崩溃持续，请在注入器里手动关闭全局注入。");
     suggestion2->font_size = 14;
     suggestion2->color.reset_to({1, 1, 1, 0.9});
 
@@ -1141,8 +1238,11 @@ void ShowCrashDialog() {
 
     class close_button : public ui::button_widget {
     public:
-        close_button() : button_widget(english ? "Close" : "关闭") {}
-        void on_click() override { exit(1); }
+        close_button(bool auto_disable_after_crash)
+            : button_widget(auto_disable_after_crash
+                                ? (english ? "Close" : "关闭")
+                                : (english ? "Continue" : "继续")) {}
+        void on_click() override { ctx->rt.hide_as_close(); }
     };
 
     class github_button : public ui::button_widget {
@@ -1157,13 +1257,12 @@ void ShowCrashDialog() {
         }
     };
 
-    btn_container->emplace_child<close_button>();
+    btn_container->emplace_child<close_button>(auto_disable_after_crash);
     btn_container->emplace_child<github_button>();
     rt.start_loop();
-    HANDLE event =
-        CreateEventW(NULL, TRUE, FALSE, L"breeze-shell-inject-consistent-exit");
-    SetEvent(event);
-    CloseHandle(event);
+    if (auto_disable_after_crash) {
+        SignalInjectConsistentExit();
+    }
 }
 
 void UpdateDllPath() {
@@ -1238,7 +1337,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
 
         try {
-            spdlog::info( "breeze-shell injector started.");
+            spdlog::info("breeze-shell injector started.");
         } catch (std::exception &) {
             freopen("NUL", "w", stdout);
             freopen("NUL", "w", stderr);
@@ -1255,7 +1354,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             HANDLE mutex =
                 CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
             if (GetLastError() == ERROR_ALREADY_EXISTS) {
-                spdlog::error( "Another instance is running.");
+                spdlog::error("Another instance is running.");
                 return 1;
             }
 
@@ -1269,7 +1368,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
             InjectAllConsistent();
         } else {
-            spdlog::error( "Invalid argument.");
+            spdlog::error("Invalid argument.");
         }
     }
 
