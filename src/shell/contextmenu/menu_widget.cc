@@ -705,7 +705,8 @@ BOOL IsCursorVisible() {
 
 mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
                                                          float x, float y)
-    : widget(), anchor_x(x), anchor_y(y) {
+    : widget(), anchor_x(x), anchor_y(y),
+      ignore_outside_click_until_mouse_release(true) {
     menu_wid = std::make_shared<menu_widget>(true);
     menu_wid->init_from_data(menu_data);
 
@@ -731,14 +732,20 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     menu_wid->update(ctx);
 
     auto using_touchscreen = !IsCursorVisible();
+    auto has_pressed_mouse_button = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ||
+                                    (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+
+    if (ignore_outside_click_until_mouse_release && !has_pressed_mouse_button) {
+        ignore_outside_click_until_mouse_release = false;
+    }
 
     if (ctx.hovered_widgets->empty()) {
         glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH,
                             using_touchscreen ? GLFW_FALSE : GLFW_TRUE);
 
-        if ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
-            GetAsyncKeyState(VK_LBUTTON) & 0x8000 ||
-            GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
+        if (!ignore_outside_click_until_mouse_release &&
+            ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
+             has_pressed_mouse_button)) {
             ctx.rt.hide_as_close();
         }
     } else {
