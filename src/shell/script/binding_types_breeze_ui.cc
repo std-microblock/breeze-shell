@@ -360,7 +360,9 @@ struct image_widget : public ui::widget {
                 const auto &data = std::get<data_svg>(image_data);
                 auto svg = data.svg;
 
-                image = ctx.imageFromSVG(nsvgParse(svg.data(), "px", 96));
+                ui::nanovg_context::NSVGimageRAII parsed_svg(
+                    nsvgParse(svg.data(), "px", 96));
+                image = ctx.imageFromSVG(parsed_svg.image);
             }
         }
 

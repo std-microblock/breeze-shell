@@ -168,9 +168,10 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
             auto icon_unfold = fmt::format(
                 R"#(<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 12 12"><path opacity="0.7" fill="{}" d="M4.646 2.146a.5.5 0 0 0 0 .708L7.793 6L4.646 9.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/></svg>)#",
                 c ? "white" : "black");
-            auto icon_unfold_img_svg = nsvgParse(icon_unfold.data(), "px", 96);
+            ui::nanovg_context::NSVGimageRAII icon_unfold_img_svg(
+                nsvgParse(icon_unfold.data(), "px", 96));
             this->icon_unfold_img =
-                ctx.imageFromSVG(icon_unfold_img_svg, ctx.rt->dpi_scale);
+                ctx.imageFromSVG(icon_unfold_img_svg.image, ctx.rt->dpi_scale);
         }
 
         auto paintY = floor(*y + (*height - icon_width) / 2);
@@ -997,8 +998,9 @@ void mb_shell::menu_item_normal_widget::reload_icon_img(
         icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
     else if (item.icon_svg) {
         std::string copy = item.icon_svg.value();
-        auto svg = nsvgParse(copy.data(), "px", 96);
-        icon_img = ctx.imageFromSVG(svg, ctx.rt->dpi_scale);
+        ui::nanovg_context::NSVGimageRAII svg(
+            nsvgParse(copy.data(), "px", 96));
+        icon_img = ctx.imageFromSVG(svg.image, ctx.rt->dpi_scale);
     } else {
         icon_img = std::nullopt;
     }
@@ -1232,7 +1234,9 @@ void mb_shell::screenside_button_group_widget::button_widget::render(
 
     float icon_size = std::min(*width, *height) - 8.f;
     if (!icon) {
-        icon = ctx.imageFromSVG(nsvgParse(icon_svg.data(), "px", 96));
+        ui::nanovg_context::NSVGimageRAII svg(
+            nsvgParse(icon_svg.data(), "px", 96));
+        icon = ctx.imageFromSVG(svg.image);
     }
 
     if (icon) {
