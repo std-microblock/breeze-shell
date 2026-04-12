@@ -1,5 +1,6 @@
 #include "utils.h"
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+#include <atomic>
 #include <codecvt>
 #include <iostream>
 #include <sstream>
@@ -61,13 +62,38 @@ bool get_personalize_dword_value(const wchar_t *value_name) {
     return res == ERROR_SUCCESS && data == 1;
 }
 
+namespace {
+struct personalize_bool_cache {
+    std::atomic<ULONGLONG> last_refresh_ms = 0;
+    std::atomic<bool> value = false;
+};
+
+bool get_cached_personalize_dword_value(const wchar_t *value_name,
+                                        personalize_bool_cache &cache) {
+    constexpr ULONGLONG refresh_interval_ms = 5000;
+
+    auto now = GetTickCount64();
+    auto last_refresh = cache.last_refresh_ms.load(std::memory_order_relaxed);
+
+    if (last_refresh == 0 || now - last_refresh >= refresh_interval_ms) {
+        auto value = get_personalize_dword_value(value_name);
+        cache.value.store(value, std::memory_order_relaxed);
+        cache.last_refresh_ms.store(now, std::memory_order_relaxed);
+        return value;
+    }
+
+    return cache.value.load(std::memory_order_relaxed);
+}
+} // namespace
+
 bool mb_shell::is_light_mode() {
-    static bool light_mode = get_personalize_dword_value(L"AppsUseLightTheme");
-    return light_mode;
+    static personalize_bool_cache cache;
+    return get_cached_personalize_dword_value(L"AppsUseLightTheme", cache);
 }
 
 bool mb_shell::is_acrylic_available() {
-    return get_personalize_dword_value(L"EnableTransparency");
+    static personalize_bool_cache cache;
+    return get_cached_personalize_dword_value(L"EnableTransparency", cache);
 }
 std::optional<std::string> mb_shell::env(const std::string &name) {
     wchar_t buffer[32767];
