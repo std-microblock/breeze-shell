@@ -11,6 +11,7 @@
 #include "shell/logger.h"
 #include "shell/script/binding_types.hpp"
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 namespace mb_shell {
@@ -112,7 +113,12 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
     if (run_js) {
         spdlog::info("[perf] JS plugins start");
         auto before_js = rt->clock.now();
-        for (auto &listener : menu_callbacks_js) {
+        decltype(menu_callbacks_js) menu_callbacks_js_snapshot;
+        {
+            std::shared_lock lock(menu_callbacks_js_mutex);
+            menu_callbacks_js_snapshot = menu_callbacks_js;
+        }
+        for (auto &listener : menu_callbacks_js_snapshot) {
             listener->operator()(menu_info);
         }
         spdlog::info("[perf] JS plugins costed {}ms",

@@ -3,6 +3,7 @@
 #include <future>
 #include <memory>
 #include <optional>
+#include <shared_mutex>
 #include <stdlib.h>
 #include <string>
 #include <tuple>
@@ -725,4 +726,5 @@ namespace mb_shell {
 extern std::vector<
     std::shared_ptr<std::function<void(js::menu_info_basic_js)>>>
     menu_callbacks_js;
+extern std::shared_mutex menu_callbacks_js_mutex;
 } // namespace mb_shell
