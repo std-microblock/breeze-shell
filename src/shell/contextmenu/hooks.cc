@@ -1,10 +1,10 @@
 #include "Windows.h"
 #include "shlobj_core.h"
 
-#include "hooks.h"
 #include "blook/memo.h"
 #include "breeze-js/quickjspp.hpp"
 #include "contextmenu.h"
+#include "hooks.h"
 #include "menu_render.h"
 #include "menu_widget.h"
 #include "nanovg.h"
@@ -15,13 +15,13 @@
 #include "blook/blook.h"
 #include <atlcomcli.h>
 #include <atomic>
-#include <mutex>
 #include <memory>
+#include <mutex>
 #include <shobjidl_core.h>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
-
+#include <unordered_map>
 
 std::atomic_int mb_shell::context_menu_hooks::block_js_reload = 0;
 
@@ -90,9 +90,8 @@ query_native_menu_item_identity(HMENU hMenu, UINT item, BOOL fByPosition) {
     auto text_length = GetMenuStringW(hMenu, item, nullptr, 0, flags);
     if (text_length > 0) {
         std::wstring buffer(text_length + 1, L'\0');
-        auto copied =
-            GetMenuStringW(hMenu, item, buffer.data(),
-                           static_cast<int>(buffer.size()), flags);
+        auto copied = GetMenuStringW(hMenu, item, buffer.data(),
+                                     static_cast<int>(buffer.size()), flags);
         buffer.resize(std::max(0, copied));
         if (!buffer.empty()) {
             result.origin_name = mb_shell::wstring_to_utf8(buffer);
@@ -126,8 +125,7 @@ collect_matching_menu_items(
     return matches;
 }
 
-std::shared_ptr<mb_shell::menu_item_widget>
-find_menu_item_widget_by_identity(
+std::shared_ptr<mb_shell::menu_item_widget> find_menu_item_widget_by_identity(
     const std::shared_ptr<mb_shell::menu_widget> &menu,
     const native_menu_item_identity &identity) {
     if (identity.wid) {
@@ -141,10 +139,11 @@ find_menu_item_widget_by_identity(
         }
     }
 
-    const auto matches_name = [&](const mb_shell::menu_item_widget &item_widget)
-        -> bool {
+    const auto matches_name =
+        [&](const mb_shell::menu_item_widget &item_widget) -> bool {
         if (identity.origin_name && item_widget.item.origin_name &&
-            item_widget.item.origin_name.value() == identity.origin_name.value()) {
+            item_widget.item.origin_name.value() ==
+                identity.origin_name.value()) {
             return true;
         }
 
@@ -154,10 +153,9 @@ find_menu_item_widget_by_identity(
         }
 
         if (identity.name && item_widget.item.origin_name) {
-            auto stripped =
-                mb_shell::wstring_to_utf8(strip_menu_item_text(
-                    mb_shell::utf8_to_wstring(
-                        item_widget.item.origin_name.value())));
+            auto stripped = mb_shell::wstring_to_utf8(
+                strip_menu_item_text(mb_shell::utf8_to_wstring(
+                    item_widget.item.origin_name.value())));
             return stripped == identity.name.value();
         }
 
@@ -380,10 +378,12 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                 explicit live_menu_guard(HMENU hMenu) {
                     current_live_menu_handle.store(hMenu,
                                                    std::memory_order_relaxed);
-                    mb_shell::context_menu_hooks::clear_active_root_menu_widget();
+                    mb_shell::context_menu_hooks::
+                        clear_active_root_menu_widget();
                 }
                 ~live_menu_guard() {
-                    mb_shell::context_menu_hooks::clear_active_root_menu_widget();
+                    mb_shell::context_menu_hooks::
+                        clear_active_root_menu_widget();
                     current_live_menu_handle.store(nullptr,
                                                    std::memory_order_relaxed);
                 }
@@ -458,6 +458,42 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
                                                              y, hWnd, lptpm);
         }
 
+        static std::unordered_map<int, std::string_view> FLAGS_MAP{
+            {TPM_CENTERALIGN, "TPM_CENTERALIGN"},
+            {TPM_LEFTALIGN, "TPM_LEFTALIGN"},
+            {TPM_RIGHTALIGN, "TPM_RIGHTALIGN"},
+            {TPM_BOTTOMALIGN, "TPM_BOTTOMALIGN"},
+            {TPM_TOPALIGN, "TPM_TOPALIGN"},
+            {TPM_VCENTERALIGN, "TPM_VCENTERALIGN"},
+            {TPM_NONOTIFY, "TPM_NONOTIFY"},
+            {TPM_RETURNCMD, "TPM_RETURNCMD"},
+            {TPM_LEFTBUTTON, "TPM_LEFTBUTTON"},
+            {TPM_RIGHTBUTTON, "TPM_RIGHTBUTTON"},
+            {TPM_HORNEGANIMATION, "TPM_HORNEGANIMATION"},
+            {TPM_HORPOSANIMATION, "TPM_HORPOSANIMATION"},
+            {TPM_NOANIMATION, "TPM_NOANIMATION"},
+            {TPM_VERNEGANIMATION, "TPM_VERNEGANIMATION"},
+            {TPM_VERPOSANIMATION, "TPM_VERPOSANIMATION"},
+        };
+
+        spdlog::info(
+            "TrackPopupMenuEx called (hMenu={}, flags=0x{:x}({}), x={}, y={}, "
+            "hWnd={}, lptpm={})",
+            (void *)hMenu, uFlags,
+            [](int64_t flags) {
+                std::string result;
+                for (const auto &[flag, name] : FLAGS_MAP) {
+                    if (flags & flag) {
+                        if (!result.empty()) {
+                            result += " | ";
+                        }
+                        result += name;
+                    }
+                }
+                return result;
+            }(uFlags),
+            x, y, (void *)hWnd, lptpm);
+
         entry::main_window_loop_hook.install(hWnd);
         block_js_reload.fetch_add(1);
 
@@ -466,7 +502,8 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
         perf.end("construct_with_hmenu");
 
         auto selected_menu = track_popup_menu(menu, x, y);
-        if (selected_menu && !(uFlags & TPM_NONOTIFY)) {
+        if (selected_menu && !(uFlags & TPM_NONOTIFY) &&
+            !(uFlags & TPM_RETURNCMD) && hWnd) {
             PostMessageW(hWnd, WM_COMMAND, *selected_menu, 0);
             PostMessageW(hWnd, WM_NULL, 0, 0);
         }
