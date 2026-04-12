@@ -1,11 +1,7 @@
-import * as shell from "mshell";
+import { loadAppConfig, saveAppConfig } from "../../utils/appConfig";
 
-export const loadConfig = () => {
-    const current_config_path = shell.breeze.data_directory() + '/config.json';
-    const current_config = shell.fs.read(current_config_path);
-    return JSON.parse(current_config);
-};
+export const loadConfig = () => loadAppConfig();
 
 export const saveConfig = (config: any) => {
-    shell.fs.write(shell.breeze.data_directory() + '/config.json', JSON.stringify(config, null, 4));
+    saveAppConfig(config);
 };

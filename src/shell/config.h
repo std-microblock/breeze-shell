@@ -132,6 +132,7 @@ struct config {
     std::vector<std::string> plugin_load_order = {};
 
     std::string language;
+    bool auto_update = true;
 
     std::string $schema;
     static std::unique_ptr<config> current;

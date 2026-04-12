@@ -93,7 +93,7 @@ export const showConfigPage = () => {
     disposeExistingConfigWindow();
     shell.breeze.allow_js_reload(false);
     const generation = ++configWindowGeneration;
-    let renderer: { unmount: () => void } | null = null;
+    let renderer: ReturnType<typeof createRenderer> | null = null;
     const win = shell.breeze_ui.window.create_ex("Breeze Config", 800, 600, () => {
         renderer?.unmount();
         if (existingConfigWindow === win)

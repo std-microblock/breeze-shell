@@ -511,7 +511,8 @@ void network::get_async(std::string url,
             ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
             spdlog::error("Error in network::get_async: {}", e.what());
-            error_callback(e.what());
+            auto error = std::string(e.what());
+            ctx.enqueueJob([=]() { error_callback(error); });
         }
     }).detach();
 }
@@ -526,7 +527,8 @@ void network::post_async(std::string url, std::string data,
             ctx.enqueueJob([=]() { callback(res); });
         } catch (std::exception &e) {
             spdlog::error("Error in network::post_async: {}", e.what());
-            error_callback(e.what());
+            auto error = std::string(e.what());
+            ctx.enqueueJob([=]() { error_callback(error); });
         }
     }).detach();
 }
@@ -676,7 +678,6 @@ bool breeze::is_light_theme() { return is_light_mode(); }
 void network::download_async(std::string url, std::string path,
                              std::function<void()> callback,
                              std::function<void(std::string)> error_callback) {
-
     std::thread([url, path, callback, error_callback,
                  &ctx = *qjs::Context::current]() {
         try {
@@ -684,9 +685,158 @@ void network::download_async(std::string url, std::string path,
             fs::write_binary(path,
                              std::vector<uint8_t>(data.begin(), data.end()));
             ctx.enqueueJob([=]() { callback(); });
-            callback();
         } catch (std::exception &e) {
-            error_callback(e.what());
+            auto error = std::string(e.what());
+            spdlog::error("Error in network::download_async: {}", error);
+            ctx.enqueueJob([=]() { error_callback(error); });
+        }
+    }).detach();
+}
+
+void network::download_with_progress_async(
+    std::string url, std::string path, std::function<void()> callback,
+    std::function<void(std::string)> error_callback,
+    std::function<void(size_t, size_t)> progress_callback) {
+    std::thread([url, path, callback, error_callback,
+                 progress_callback, &ctx = *qjs::Context::current]() {
+        HINTERNET hSession = nullptr;
+        HINTERNET hConnect = nullptr;
+        HINTERNET hRequest = nullptr;
+        auto close_handles = [&]() {
+            if (hRequest) {
+                WinHttpCloseHandle(hRequest);
+                hRequest = nullptr;
+            }
+            if (hConnect) {
+                WinHttpCloseHandle(hConnect);
+                hConnect = nullptr;
+            }
+            if (hSession) {
+                WinHttpCloseHandle(hSession);
+                hSession = nullptr;
+            }
+        };
+
+        try {
+            hSession =
+                WinHttpOpen(L"BreezeShell", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+            if (!hSession) {
+                throw std::runtime_error("Failed to initialize WinHTTP");
+            }
+
+            URL_COMPONENTS urlComp = {sizeof(URL_COMPONENTS)};
+            wchar_t hostName[256] = {0};
+            wchar_t urlPath[1024] = {0};
+            urlComp.lpszHostName = hostName;
+            urlComp.dwHostNameLength = sizeof(hostName) / sizeof(wchar_t);
+            urlComp.lpszUrlPath = urlPath;
+            urlComp.dwUrlPathLength = sizeof(urlPath) / sizeof(wchar_t);
+
+            std::wstring wideUrl = utf8_to_wstring(url);
+
+            if (!WinHttpCrackUrl(wideUrl.c_str(), wideUrl.length(), 0,
+                                 &urlComp)) {
+                throw std::runtime_error("Invalid URL format");
+            }
+
+            hConnect =
+                WinHttpConnect(hSession, hostName,
+                               urlComp.nScheme == INTERNET_SCHEME_HTTPS
+                                   ? INTERNET_DEFAULT_HTTPS_PORT
+                                   : INTERNET_DEFAULT_HTTP_PORT,
+                               0);
+            if (!hConnect) {
+                throw std::runtime_error("Failed to connect to server");
+            }
+
+            DWORD flags = WINHTTP_FLAG_REFRESH;
+            if (urlComp.nScheme == INTERNET_SCHEME_HTTPS) {
+                flags |= WINHTTP_FLAG_SECURE;
+            }
+
+            hRequest = WinHttpOpenRequest(
+                hConnect, L"GET", urlPath, nullptr, WINHTTP_NO_REFERER,
+                WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
+            if (!hRequest) {
+                throw std::runtime_error("Failed to create request");
+            }
+
+            if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                    WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
+                !WinHttpReceiveResponse(hRequest, nullptr)) {
+                throw std::runtime_error("Failed to send/receive request");
+            }
+
+            DWORD statusCode = 0;
+            DWORD statusCodeSize = sizeof(statusCode);
+            WinHttpQueryHeaders(
+                hRequest,
+                WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize,
+                WINHTTP_NO_HEADER_INDEX);
+
+            if (statusCode >= 400) {
+                throw std::runtime_error("Server returned error: " +
+                                         std::to_string(statusCode));
+            }
+
+            DWORD contentLength = 0;
+            DWORD contentLengthSize = sizeof(contentLength);
+            size_t totalBytes = 0;
+            if (WinHttpQueryHeaders(
+                    hRequest,
+                    WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                    WINHTTP_HEADER_NAME_BY_INDEX, &contentLength,
+                    &contentLengthSize, WINHTTP_NO_HEADER_INDEX)) {
+                totalBytes = contentLength;
+            }
+
+            std::ofstream file(path, std::ios::binary | std::ios::trunc);
+            if (!file.is_open()) {
+                throw std::runtime_error("Failed to open file for writing");
+            }
+
+            size_t downloadedBytes = 0;
+            DWORD bytesAvailable = 0;
+            do {
+                bytesAvailable = 0;
+                if (!WinHttpQueryDataAvailable(hRequest, &bytesAvailable)) {
+                    throw std::runtime_error("Failed to query download data");
+                }
+                if (!bytesAvailable)
+                    break;
+
+                std::vector<char> buffer(bytesAvailable);
+                DWORD bytesRead = 0;
+                if (!WinHttpReadData(hRequest, buffer.data(), bytesAvailable,
+                                     &bytesRead)) {
+                    throw std::runtime_error("Failed to read download data");
+                }
+                if (!bytesRead)
+                    continue;
+
+                file.write(buffer.data(), bytesRead);
+                if (!file.good()) {
+                    throw std::runtime_error("Failed to write download file");
+                }
+
+                downloadedBytes += bytesRead;
+                ctx.enqueueJob([=]() {
+                    progress_callback(downloadedBytes, totalBytes);
+                });
+            } while (bytesAvailable > 0);
+
+            file.close();
+            close_handles();
+            ctx.enqueueJob([=]() { callback(); });
+        } catch (std::exception &e) {
+            close_handles();
+            std::filesystem::remove(path);
+            auto error = std::string(e.what());
+            spdlog::error("Error in network::download_with_progress_async: {}",
+                          error);
+            ctx.enqueueJob([=]() { error_callback(error); });
         }
     }).detach();
 }

@@ -942,10 +942,21 @@ export class network {
      * @param url: string
      * @param path: string
      * @param callback: (() => void)
-     * @param error_callback: ((arg1: string) => void)
+    * @param error_callback: ((arg1: string) => void)
      * @returns void
      */
     static download_async(url: string, path: string, callback: (() => void), error_callback: ((arg1: string) => void)): void
+	/**
+     *  带进度回调的异步下载文件
+     *  Download file asynchronously with progress callback
+     * @param url: string
+     * @param path: string
+     * @param callback: (() => void)
+     * @param error_callback: ((arg1: string) => void)
+     * @param progress_callback: ((arg1: number, arg2: number) => void)
+     * @returns void
+     */
+    static download_with_progress_async(url: string, path: string, callback: (() => void), error_callback: ((arg1: string) => void), progress_callback: ((arg1: number, arg2: number) => void)): void
 }
 export class subproc_result_data {
 	/**

@@ -510,6 +510,13 @@ struct network {
     static void download_async(std::string url, std::string path,
                                std::function<void()> callback,
                                std::function<void(std::string)> error_callback);
+
+    // 带进度回调的异步下载文件
+    // Download file asynchronously with progress callback
+    static void download_with_progress_async(
+        std::string url, std::string path, std::function<void()> callback,
+        std::function<void(std::string)> error_callback,
+        std::function<void(size_t, size_t)> progress_callback);
 };
 
 // 子进程执行结果

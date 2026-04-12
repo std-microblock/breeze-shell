@@ -49,8 +49,11 @@
     "title": "Update",
     "currentVersion": "Current Version",
     "latestVersion": "Latest Version",
+    "autoUpdate": "Auto Update on Startup",
     "changelog": "Changelog",
     "updating": "Updating...",
+    "downloading": "Downloading",
+    "applying": "Replacing files...",
     "updateSuccess": "New version downloaded, will take effect next time the file manager is restarted",
     "updateFailed": "Update failed: ",
     "cannotMoveFile": "Cannot move current file"

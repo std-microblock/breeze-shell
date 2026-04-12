@@ -1,11 +1,12 @@
 import * as shell from "mshell";
-import { Button, Text, SimpleMarkdownRender } from "../components";
-import { UpdateDataContext, NotificationContext, PluginSourceContext } from "../contexts";
+import { Button, Text, SimpleMarkdownRender, Toggle } from "../components";
+import { AppConfigContext, UpdateDataContext, NotificationContext, PluginSourceContext } from "../contexts";
 import { useTranslation } from "../hooks";
-import { PLUGIN_SOURCES } from "../constants";
 import { memo, useContext, useEffect, useState, useMemo } from "react";
+import { formatBytes, installShellUpdate, UpdateProgress } from "../../utils/update";
 
 const UpdatePage = memo(() => {
+    const { config, updateConfig } = useContext(AppConfigContext)!;
     const { updateData } = useContext(UpdateDataContext)!;
     const { setErrorMessage } = useContext(NotificationContext)!;
     const { currentPluginSource } = useContext(PluginSourceContext)!;
@@ -14,6 +15,7 @@ const UpdatePage = memo(() => {
 
     const [exist_old_file, set_exist_old_file] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [progress, setProgress] = useState<UpdateProgress | null>(null);
 
     useEffect(() => {
         set_exist_old_file(shell.fs.exists(shell.breeze.data_directory() + '/shell_old.dll'));
@@ -24,64 +26,79 @@ const UpdatePage = memo(() => {
     }
 
     const remote_version = updateData.shell.version;
+    const autoUpdateEnabled = config?.auto_update !== false;
+    const progressPercent = progress?.percent != null ? Math.round(progress.percent * 100) : null;
+    const progressLabel = progress?.phase === "applying"
+        ? t("update.applying")
+        : progress
+            ? progress.totalBytes != null
+                ? `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)} / ${formatBytes(progress.totalBytes)} (${progressPercent}%)`
+                : `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)}`
+            : null;
 
-    const updateShell = () => {
+    const updateShell = async () => {
         if (isUpdating) return;
 
         setIsUpdating(true);
-        const shellPath = shell.breeze.data_directory() + '/shell.dll';
-        const shellOldPath = shell.breeze.data_directory() + '/shell_old.dll';
-        const url = PLUGIN_SOURCES[currentPluginSource] + updateData.shell.path;
-
-        const downloadNewShell = () => {
-            shell.network.download_async(url, shellPath, () => {
-                shell.println(t('update.updateSuccess'));
-                setIsUpdating(false);
-                set_exist_old_file(true);
-            }, e => {
-                shell.println(t('update.updateFailed') + e);
-                setIsUpdating(false);
-                setErrorMessage(t('update.updateFailed') + e);
-            });
-        };
+        setProgress({
+            phase: "downloading",
+            downloadedBytes: 0,
+            totalBytes: null,
+            percent: null
+        });
 
         try {
-            if (shell.fs.exists(shellPath)) {
-                if (shell.fs.exists(shellOldPath)) {
-                    try {
-                        shell.fs.remove(shellOldPath);
-                        shell.fs.rename(shellPath, shellOldPath);
-                        downloadNewShell();
-                    } catch (e) {
-                        shell.println(t('update.updateFailed') + t('update.cannotMoveFile'));
-                        setIsUpdating(false);
-                        setErrorMessage(t('update.updateFailed') + t('update.cannotMoveFile'));
-                    }
-                } else {
-                    shell.fs.rename(shellPath, shellOldPath);
-                    downloadNewShell();
-                }
-            } else {
-                downloadNewShell();
-            }
+            await installShellUpdate({
+                updateData,
+                sourceName: currentPluginSource,
+                onProgress: setProgress
+            });
+            shell.println(t('update.updateSuccess'));
+            set_exist_old_file(true);
         } catch (e) {
-            shell.println(t('update.updateFailed') + e);
+            const message = String(e);
+            shell.println(t('update.updateFailed') + message);
+            setErrorMessage(t('update.updateFailed') + message);
+        } finally {
+            setProgress(null);
             setIsUpdating(false);
-            setErrorMessage(t('update.updateFailed') + e);
         }
     };
 
     return (
         <flex gap={20}>
-            <Text fontSize={24}>{t("plugin.store")}</Text>
+            <Text fontSize={24}>{t("update.title")}</Text>
+            <Toggle label={t("update.autoUpdate")} value={autoUpdateEnabled} onChange={(value) => {
+                updateConfig(current => ({ ...current, auto_update: value }));
+            }} />
             <flex gap={10}>
                 <Text>{`${t("update.currentVersion")}: ${current_version}`}</Text>
                 <Text>{`${t("update.latestVersion")}: ${remote_version}`}</Text>
-                <Button onClick={current_version === remote_version || isUpdating ? () => { } : updateShell}>
+                <Button onClick={current_version === remote_version || isUpdating ? () => { } : () => { void updateShell(); }}>
                     <Text>{
-                        isUpdating ? t("update.updating") :
+                        isUpdating ? (progressPercent != null ? `${t("update.updating")} ${progressPercent}%` : t("update.updating")) :
                             exist_old_file ? t("update.updateSuccess") : (current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`)}</Text>
                 </Button>
+                {progressLabel && (
+                    <flex gap={6}>
+                        <Text>{progressLabel}</Text>
+                        <flex
+                            width={320}
+                            height={10}
+                            autoSize={false}
+                            borderRadius={5}
+                            backgroundColor={shell.breeze.is_light_theme() ? "#d8d8d8" : "#3d3d3d"}
+                        >
+                            <flex
+                                width={progressPercent != null ? Math.max(10, Math.round(320 * progress.percent!)) : 24}
+                                height={10}
+                                autoSize={false}
+                                borderRadius={5}
+                                backgroundColor="#2979FF"
+                            />
+                        </flex>
+                    </flex>
+                )}
             </flex>
             <flex gap={10}>
                 <Text>{t("update.changelog")}</Text>

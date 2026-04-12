@@ -2,6 +2,7 @@ import * as shell from "mshell";
 import { WINDOW_WIDTH, WINDOW_HEIGHT, SIDEBAR_WIDTH } from "./constants";
 import { loadConfig, saveConfig } from "./utils";
 import {
+    AppConfigContext,
     ContextMenuContext,
     DebugConsoleContext,
     PluginLoadOrderContext,
@@ -18,6 +19,7 @@ import PluginConfig from "./pages/PluginConfig";
 import TestPage from "./pages/TestPage";
 import { useState, useEffect } from "react";
 import { changeLanguage, getCurrentLanguage } from "../i18n";
+import { getUpdateSource } from "../utils/appConfig";
 
 export const ConfigApp = () => {
     const [activePage, setActivePage] = useState('context-menu');
@@ -29,20 +31,27 @@ export const ConfigApp = () => {
     const [config, setConfig] = useState<any>({});
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
-    const [currentPluginSource, setCurrentPluginSource] = useState<string>('Enlysure');
+    const [currentPluginSource, setCurrentPluginSourceState] = useState<string>('Enlysure');
     const [cachedPluginIndex, setCachedPluginIndex] = useState<any>(null);
     const [language, setLanguageState] = useState<string>(getCurrentLanguage());
 
+    const updateConfig = (updater: (current: any) => any) => {
+        setConfig(current => {
+            const next = updater(current || {});
+            saveConfig(next);
+            return next;
+        });
+    };
+
     useEffect(() => {
         const default_config = JSON.parse(shell.breeze.default_config());
-        const current_config_path = shell.breeze.data_directory() + '/config.json';
-        const current_config = shell.fs.read(current_config_path);
-        const parsed = JSON.parse(current_config);
+        const parsed = loadConfig();
         setDefaultContextMenuConfig(default_config.context_menu || {});
         setConfig(parsed);
         setContextMenuConfig(parsed.context_menu || {});
         setDebugConsole(parsed.debug_console || false);
         setPluginLoadOrder(parsed.plugin_load_order || []);
+        setCurrentPluginSourceState(getUpdateSource(parsed));
 
         if (parsed.language) {
             setLanguageState(parsed.language);
@@ -52,34 +61,32 @@ export const ConfigApp = () => {
 
     const updateContextMenu = (newConfig: any) => {
         setContextMenuConfig(newConfig);
-        const newGlobal = { ...config, context_menu: newConfig };
-        setConfig(newGlobal);
-        saveConfig(newGlobal);
+        updateConfig(current => ({ ...current, context_menu: newConfig }));
     };
 
     const updateDebugConsole = (value: boolean) => {
         setDebugConsole(value);
-        const newGlobal = { ...config, debug_console: value };
-        setConfig(newGlobal);
-        saveConfig(newGlobal);
+        updateConfig(current => ({ ...current, debug_console: value }));
     };
 
     const updatePluginLoadOrder = (order: any[]) => {
         setPluginLoadOrder(order);
-        const newGlobal = { ...config, plugin_load_order: order };
-        setConfig(newGlobal);
-        saveConfig(newGlobal);
+        updateConfig(current => ({ ...current, plugin_load_order: order }));
     };
 
     const setLanguage = (lang: string) => {
         setLanguageState(lang);
         changeLanguage(lang);
-        const newGlobal = { ...config, language: lang };
-        setConfig(newGlobal);
-        saveConfig(newGlobal);
+        updateConfig(current => ({ ...current, language: lang }));
+    };
+
+    const setCurrentPluginSource = (source: string) => {
+        setCurrentPluginSourceState(source);
+        updateConfig(current => ({ ...current, update_source: source }));
     };
 
     return (
+        <AppConfigContext.Provider value={{ config, updateConfig }}>
         <LanguageContext.Provider value={{ language, setLanguage }}>
             <ContextMenuContext.Provider value={{
                 config: contextMenuConfig,
@@ -123,6 +130,7 @@ export const ConfigApp = () => {
             </DebugConsoleContext.Provider>
         </ContextMenuContext.Provider>
         </LanguageContext.Provider>
+        </AppConfigContext.Provider>
     );
 };
 

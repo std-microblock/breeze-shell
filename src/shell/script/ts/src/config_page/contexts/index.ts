@@ -1,3 +1,4 @@
+export { AppConfigContext } from "./AppConfigContext";
 export { ContextMenuContext } from "./ContextMenuContext";
 export { DebugConsoleContext } from "./DebugConsoleContext";
 export { PluginLoadOrderContext } from "./PluginLoadOrderContext";

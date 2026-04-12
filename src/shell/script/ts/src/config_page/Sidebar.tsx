@@ -26,9 +26,9 @@ const Sidebar = memo(({
     windowHeight: number;
 }) => {
     const { t } = useTranslation();
-    const { updateData, setUpdateData } = useContext(UpdateDataContext)!;
+    const { setUpdateData } = useContext(UpdateDataContext)!;
     const { errorMessage, setErrorMessage, loadingMessage, setLoadingMessage } = useContext(NotificationContext)!;
-    const { currentPluginSource, setCurrentPluginSource, cachedPluginIndex, setCachedPluginIndex } = useContext(PluginSourceContext)!;
+    const { currentPluginSource, setCurrentPluginSource, setCachedPluginIndex } = useContext(PluginSourceContext)!;
 
     useEffect(() => {
         if (errorMessage) {
@@ -39,9 +39,7 @@ const Sidebar = memo(({
         }
     }, [errorMessage, setErrorMessage]);
 
-    const handleSourceChange = (sourceName: string) => {
-        setCurrentPluginSource(sourceName);
-        setCachedPluginIndex(null);
+    const loadSourceData = (sourceName: string) => {
         setLoadingMessage(t("common.switching"));
 
         shell.network.get_async(PLUGIN_SOURCES[sourceName] + 'plugins-index.json', (data: string) => {
@@ -56,7 +54,7 @@ const Sidebar = memo(({
     };
 
     useEffect(() => {
-        handleSourceChange(currentPluginSource);
+        loadSourceData(currentPluginSource);
     }, [currentPluginSource]);
 
     return (
@@ -118,7 +116,7 @@ const Sidebar = memo(({
                         menu.append_menu({
                             name: sourceName,
                             action() {
-                                handleSourceChange(sourceName);
+                                setCurrentPluginSource(sourceName);
                                 menu.close();
                             },
                             icon_svg: sourceName === currentPluginSource ? `<svg viewBox="0 0 24 24"><path fill="${shell.breeze.is_light_theme() ? '#000000ff' : '#ffffffff'}" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>` : undefined
