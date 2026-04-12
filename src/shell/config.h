@@ -133,6 +133,7 @@ struct config {
 
     std::string language;
     bool auto_update = true;
+    std::string update_source;
 
     std::string $schema;
     static std::unique_ptr<config> current;
