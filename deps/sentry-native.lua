@@ -95,6 +95,10 @@ package("sentry-native")
     end)
 
     on_install("windows|x86", "windows|x64", "linux", "macosx|x86_64", function (package) -- TODO: to enable android you will need to figure out the order of libs
+        -- Patch out -Werror to fix build with newer clang versions (22+)
+        local sourcedir = path.join(package:cachedir(), "source")
+        io.replace(path.join(sourcedir, "CMakeLists.txt"), "-Werror", "", {plain = true})
+
         local opt = {}
         local configs = {}
         table.insert(configs, "-DSENTRY_BUILD_EXAMPLES=OFF")
