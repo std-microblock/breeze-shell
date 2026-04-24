@@ -730,6 +730,19 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
         calibrate_position(ctx);
         position_calibrated = true;
     }
+
+    // Override mouse state with GetAsyncKeyState for reliable detection
+    // in WS_EX_NOACTIVATE windows where GLFW may miss mouse messages
+    bool lmb_down = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+    bool rmb_down = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+    ctx.mouse_down = lmb_down;
+    ctx.right_mouse_down = rmb_down;
+    ctx.mouse_clicked = lmb_down && !prev_lmb_down;
+    ctx.right_mouse_clicked = rmb_down && !prev_rmb_down;
+    ctx.mouse_up = !lmb_down && prev_lmb_down;
+    prev_lmb_down = lmb_down;
+    prev_rmb_down = rmb_down;
+
     menu_wid->update(ctx);
 
     auto using_touchscreen = !IsCursorVisible();

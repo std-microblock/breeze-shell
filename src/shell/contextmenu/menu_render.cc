@@ -87,7 +87,9 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
     glfwMakeContextCurrent(rt->window);
     glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
 
+    glfwSetWindowAttrib(rt->window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
     rt->show();
+    SetCapture((HWND)rt->hwnd());
     auto menu_wid = std::make_shared<mouse_menu_widget_main>(
         menu,
         // convert the x and y to the window coordinates

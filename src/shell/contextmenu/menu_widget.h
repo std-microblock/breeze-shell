@@ -157,6 +157,8 @@ struct mouse_menu_widget_main : public ui::widget {
     mouse_menu_widget_main(menu menu_data, float x, float y);
     bool position_calibrated = false, direction_calibrated = false;
     bool ignore_outside_click_until_mouse_release = false;
+    bool prev_lmb_down = false;
+    bool prev_rmb_down = false;
     popup_direction direction;
     std::shared_ptr<menu_widget> menu_wid;
 
