@@ -10,6 +10,7 @@
 #include "nanovg.h"
 #include "shell/config.h"
 #include "shell/entry.h"
+#include "shell/hook_registry.h"
 #include "shell/utils.h"
 
 #include "blook/blook.h"
@@ -343,6 +344,8 @@ void sync_native_menu_item_update(HMENU hMenu, UINT item, BOOL fByPosition,
             BODY;                                                              \
             return result;                                                     \
         });                                                                    \
+        hook_registry::register_uninstaller(                                   \
+            []() { HOOK_NAME##Hook->uninstall(); });                           \
     } while (false)
 
 void mb_shell::context_menu_hooks::set_active_root_menu_widget(
@@ -510,6 +513,8 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
         mb_shell::context_menu_hooks::block_js_reload.fetch_sub(1);
         return (int32_t)selected_menu.value_or(0);
     });
+    hook_registry::register_uninstaller(
+        []() { NtUserTrackHook->uninstall(); });
 }
 
 void mb_shell::context_menu_hooks::install_menu_mutation_hooks() {
@@ -773,6 +778,8 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
             }
             return res;
         });
+    hook_registry::register_uninstaller(
+        []() { CreateWindowExWHook->uninstall(); });
 
     /**
      prototype: SHSTDAPI SHCreateDefaultContextMenu(
@@ -839,6 +846,8 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
 
             return res;
         });
+    hook_registry::register_uninstaller(
+        []() { SHCreateDefaultContextMenuHook->uninstall(); });
 }
 
 #pragma optimize("", off)
@@ -962,5 +971,7 @@ HRESULT GetUIObjectOf(
 
         return res;
     });
+    hook_registry::register_uninstaller(
+        []() { GetUIObjectOfHook->uninstall(); });
     spdlog::info("GetUIObjectOf hook installed");
 }
