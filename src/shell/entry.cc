@@ -7,6 +7,7 @@
 #include "contextmenu/hooks.h"
 #include "entry.h"
 #include "error_handler.h"
+#include "hook_registry.h"
 #include "res_string_loader.h"
 #include "script/binding_types.hpp"
 #include "breeze-js/quickjspp.hpp"
@@ -218,6 +219,13 @@ int APIENTRY DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved) {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH: {
         mb_shell::main();
+        break;
+    }
+    case DLL_PROCESS_DETACH: {
+        // Restore all inline-hooked call-sites before the DLL image is
+        // unmapped, otherwise the patched code jumps into freed memory and
+        // crashes (observed as 0xC0000005 in OneCommander on shutdown).
+        mb_shell::hook_registry::uninstall_all();
         break;
     }
     }

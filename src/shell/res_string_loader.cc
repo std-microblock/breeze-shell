@@ -8,6 +8,7 @@
 #include <unordered_set>
 
 #include "config.h"
+#include "hook_registry.h"
 #include "utils.h"
 
 #include "blook/blook.h"
@@ -75,6 +76,8 @@ void res_string_loader::init_hook() {
         }
         return res;
     });
+    hook_registry::register_uninstaller(
+        []() { LoadStringWHook->uninstall(); });
 
     static auto LoadStringAHook =
         kernelbase->exports("LoadStringA")->inline_hook();
@@ -95,6 +98,8 @@ void res_string_loader::init_hook() {
 
         return res;
     });
+    hook_registry::register_uninstaller(
+        []() { LoadStringAHook->uninstall(); });
 }
 std::string res_string_loader::string_to_id_string(std::wstring str) {
     auto id = string_to_id(str);
