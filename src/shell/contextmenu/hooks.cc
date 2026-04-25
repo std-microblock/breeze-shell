@@ -398,6 +398,37 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             menu_render.rt->last_time = menu_render.rt->clock.now();
             perf.end("menu_render::create");
 
+            // Re-sync native menu item states to catch async updates
+            // that arrived between construct_with_hmenu and now (e.g.,
+            // recycle bin "Empty Recycle Bin" enabled state).
+            if (auto root_menu = current_root_menu_widget()) {
+                HMENU hMenu = (HMENU)menu.native_handle;
+                int count = GetMenuItemCount(hMenu);
+                for (int i = 0; i < count; i++) {
+                    MENUITEMINFOW info{sizeof(MENUITEMINFOW)};
+                    info.fMask = MIIM_STATE;
+                    if (!GetMenuItemInfoW(hMenu, i, TRUE, &info))
+                        continue;
+                    auto identity =
+                        query_native_menu_item_identity(hMenu, i, TRUE);
+                    if (!identity)
+                        continue;
+                    auto target = find_menu_item_widget_by_identity(
+                        root_menu, *identity);
+                    if (!target)
+                        continue;
+                    bool disabled =
+                        (info.fState & (MFS_DISABLED | MFS_GRAYED)) != 0;
+                    if (target->item.disabled != disabled) {
+                        spdlog::info("Re-synced native menu item state: "
+                                     "item={}, disabled={} -> {}",
+                                     identity->name.value_or("?"),
+                                     target->item.disabled, disabled);
+                        target->item.disabled = disabled;
+                    }
+                }
+            }
+
             if (shift_pressed && menu_render.rt->nvg) {
                 spdlog::info("Resetting font atlas due to shift key pressed");
                 nvgFonsResetAtlas(menu_render.rt->nvg);
