@@ -1,3 +1,4 @@
+#include <dwmapi.h>
 #include "Windows.h"
 #include "shlobj_core.h"
 
@@ -461,6 +462,16 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
                                                              y, hWnd, lptpm);
         }
 
+        // After system resume from sleep/hibernate, DWM may not be fully
+        // initialized yet (observed as ACCESS_VIOLATION in
+        // RegisterProcTableCallback). Skip Breeze menu and use system default.
+        BOOL dwm_enabled = FALSE;
+        if (FAILED(DwmIsCompositionEnabled(&dwm_enabled)) || !dwm_enabled) {
+            spdlog::warn("DWM not ready after resume, falling back to system menu");
+            return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x,
+                                                             y, hWnd, lptpm);
+        }
+
         static std::unordered_map<int, std::string_view> FLAGS_MAP{
             {TPM_CENTERALIGN, "TPM_CENTERALIGN"},
             {TPM_LEFTALIGN, "TPM_LEFTALIGN"},
@@ -806,6 +817,14 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
             if (SUCCEEDED(res) && pdcm) {
                 CComPtr<IContextMenu> pCM(pdcm);
 
+                // After system resume from sleep/hibernate, DWM may not be
+                // fully initialized. Skip Breeze menu and use system default.
+                BOOL dwm_enabled = FALSE;
+                if (FAILED(DwmIsCompositionEnabled(&dwm_enabled)) || !dwm_enabled) {
+                    spdlog::warn("DWM not ready, skipping Breeze menu");
+                    return res;
+                }
+
                 HMENU hmenu = CreatePopupMenu();
                 auto cmf_flags = CMF_EXPLORE | CMF_CANRENAME;
                 if (GetKeyState(VK_SHIFT) & 0x8000)
@@ -933,6 +952,14 @@ HRESULT GetUIObjectOf(
         IContextMenu *pdcm = (IContextMenu *)(*ppv);
         if (SUCCEEDED(res) && pdcm) {
             CComPtr<IContextMenu> pCM(pdcm);
+
+            // After system resume from sleep/hibernate, DWM may not be fully
+            // initialized yet. Skip Breeze menu and use system default.
+            BOOL dwm_enabled = FALSE;
+            if (FAILED(DwmIsCompositionEnabled(&dwm_enabled)) || !dwm_enabled) {
+                spdlog::warn("DWM not ready after resume, skipping Breeze menu");
+                return res;
+            }
 
             HMENU hmenu = CreatePopupMenu();
             auto cmf_flags = CMF_EXPLORE | CMF_CANRENAME;
