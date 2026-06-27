@@ -472,6 +472,15 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
                                                              y, hWnd, lptpm);
         }
 
+        // Prevent reentrant invocation when a Breeze menu is already active.
+        // Multiple right-clicks during the nested message loop in
+        // track_popup_menu would crash Explorer via corrupted static state.
+        if (current_live_menu()) {
+            spdlog::warn("Menu already active, falling back to system menu");
+            return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x,
+                                                             y, hWnd, lptpm);
+        }
+
         static std::unordered_map<int, std::string_view> FLAGS_MAP{
             {TPM_CENTERALIGN, "TPM_CENTERALIGN"},
             {TPM_LEFTALIGN, "TPM_LEFTALIGN"},
@@ -825,6 +834,12 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                     return res;
                 }
 
+                // Prevent reentrant invocation when a Breeze menu is active
+                if (current_live_menu()) {
+                    spdlog::warn("Menu already active, skipping Breeze menu");
+                    return res;
+                }
+
                 HMENU hmenu = CreatePopupMenu();
                 auto cmf_flags = CMF_EXPLORE | CMF_CANRENAME;
                 if (GetKeyState(VK_SHIFT) & 0x8000)
@@ -958,6 +973,12 @@ HRESULT GetUIObjectOf(
             BOOL dwm_enabled = FALSE;
             if (FAILED(DwmIsCompositionEnabled(&dwm_enabled)) || !dwm_enabled) {
                 spdlog::warn("DWM not ready after resume, skipping Breeze menu");
+                return res;
+            }
+
+            // Prevent reentrant invocation when a Breeze menu is active
+            if (current_live_menu()) {
+                spdlog::warn("Menu already active, skipping Breeze menu");
                 return res;
             }
 
