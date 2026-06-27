@@ -69,7 +69,6 @@ std::vector<DWORD> GetExplorerPIDs() {
             do {
                 std::string exeFile(pe32.szExeFile);
                 if (exeFile == "explorer.exe" ||
-                    exeFile == "OneCommander.exe" ||
                     exeFile == "360FileBrowser64.exe" ||
                     exeFile == "DesktopMgr64.exe") {
                     pids.push_back(pe32.th32ProcessID);
