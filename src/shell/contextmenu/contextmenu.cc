@@ -21,6 +21,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
+#include <GLFW/glfw3.h>
 #include <ranges>
 #include <string>
 #include <thread>
@@ -135,6 +136,71 @@ std::vector<std::string> extract_hotkeys(const std::string &name) {
     return keys;
 }
 
+static std::vector<int> pre_parse_hotkeys(const std::string &hotkey_str) {
+    static const auto translate_map =
+        std::unordered_map<std::string, int>{
+            {"ctrl", GLFW_KEY_LEFT_CONTROL},
+            {"shift", GLFW_KEY_LEFT_SHIFT},
+            {"alt", GLFW_KEY_LEFT_ALT},
+            {"win", GLFW_KEY_LEFT_SUPER},
+            {"a", GLFW_KEY_A},
+            {"b", GLFW_KEY_B},
+            {"c", GLFW_KEY_C},
+            {"d", GLFW_KEY_D},
+            {"e", GLFW_KEY_E},
+            {"f", GLFW_KEY_F},
+            {"g", GLFW_KEY_G},
+            {"h", GLFW_KEY_H},
+            {"i", GLFW_KEY_I},
+            {"j", GLFW_KEY_J},
+            {"k", GLFW_KEY_K},
+            {"l", GLFW_KEY_L},
+            {"m", GLFW_KEY_M},
+            {"n", GLFW_KEY_N},
+            {"o", GLFW_KEY_O},
+            {"p", GLFW_KEY_P},
+            {"q", GLFW_KEY_Q},
+            {"r", GLFW_KEY_R},
+            {"s", GLFW_KEY_S},
+            {"t", GLFW_KEY_T},
+            {"u", GLFW_KEY_U},
+            {"v", GLFW_KEY_V},
+            {"w", GLFW_KEY_W},
+            {"x", GLFW_KEY_X},
+            {"y", GLFW_KEY_Y},
+            {"z", GLFW_KEY_Z},
+            {"0", GLFW_KEY_0},
+            {"1", GLFW_KEY_1},
+            {"2", GLFW_KEY_2},
+            {"3", GLFW_KEY_3},
+            {"4", GLFW_KEY_4},
+            {"5", GLFW_KEY_5},
+            {"6", GLFW_KEY_6},
+            {"7", GLFW_KEY_7},
+            {"8", GLFW_KEY_8},
+            {"9", GLFW_KEY_9},
+        };
+
+    std::vector<int> result;
+    size_t start = 0;
+    while (start < hotkey_str.size()) {
+        auto end = hotkey_str.find('+', start);
+        if (end == std::string::npos)
+            end = hotkey_str.size();
+        auto key_str = hotkey_str.substr(start, end - start);
+        key_str.erase(key_str.find_last_not_of(" \t\n\r") + 1);
+        key_str.erase(0, key_str.find_first_not_of(" \t\n\r"));
+        for (auto &c : key_str)
+            c = std::tolower(static_cast<unsigned char>(c));
+        if (auto it = translate_map.find(key_str); it != translate_map.end())
+            result.push_back(it->second);
+        else
+            return {};
+        start = end + 1;
+    }
+    return result;
+}
+
 menu menu::construct_with_hmenu(
     HMENU hMenu, HWND hWnd, bool is_top,
     std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg,
@@ -239,9 +305,11 @@ menu menu::construct_with_hmenu(
             if (config::current->context_menu.hotkeys) {
                 auto hotkeys = extract_hotkeys(item.origin_name.value());
                 if (!hotkeys.empty()) {
-                    item.hotkey =
+                    auto hotkey_str =
                         std::ranges::views::join_with(hotkeys, " + ") |
                         std::ranges::to<std::string>();
+                    item.hotkey = hotkey_str;
+                    item.parsed_hotkeys = pre_parse_hotkeys(hotkey_str);
                 }
             }
 

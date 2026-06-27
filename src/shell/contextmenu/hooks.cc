@@ -517,23 +517,18 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
             {TPM_VERPOSANIMATION, "TPM_VERPOSANIMATION"},
         };
 
-        spdlog::info(
-            "TrackPopupMenuEx called (hMenu={}, flags=0x{:x}({}), x={}, y={}, "
-            "hWnd={}, lptpm={})",
-            (void *)hMenu, uFlags,
-            [](int64_t flags) {
-                std::string result;
-                for (const auto &[flag, name] : FLAGS_MAP) {
-                    if (flags & flag) {
-                        if (!result.empty()) {
-                            result += " | ";
-                        }
-                        result += name;
-                    }
+        if (spdlog::should_log(spdlog::level::info)) {
+            std::string flag_str;
+            for (const auto &[flag, name] : FLAGS_MAP)
+                if (uFlags & flag) {
+                    if (!flag_str.empty()) flag_str += " | ";
+                    flag_str += name;
                 }
-                return result;
-            }(uFlags),
-            x, y, (void *)hWnd, lptpm);
+            spdlog::info(
+                "TrackPopupMenuEx called (hMenu={}, flags=0x{:x}({}), x={}, "
+                "y={}, hWnd={}, lptpm={})",
+                (void *)hMenu, uFlags, flag_str, x, y, (void *)hWnd, lptpm);
+        }
 
         entry::main_window_loop_hook.install(hWnd);
         block_js_reload.fetch_add(1);

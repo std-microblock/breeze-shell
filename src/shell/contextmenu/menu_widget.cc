@@ -1,4 +1,5 @@
 #include "menu_widget.h"
+#include <dwmapi.h>
 #include "GLFW/glfw3.h"
 #include "breeze_ui/animator.h"
 #include "breeze_ui/hbitmap_utils.h"
@@ -529,78 +530,10 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
                 children | std::views::filter([&](const auto &item) {
                     if (auto wid = item->template downcast<
                                    menu_item_normal_widget>()) {
-                        if (!wid->item.hotkey)
+                        if (!wid->item.hotkey || wid->item.parsed_hotkeys.empty())
                             return false;
-                        auto hotkey =
-                            *wid->item.hotkey | std::views::split('+') |
-                            std::views::transform([](const auto &c) {
-                                auto s = std::string(c.begin(), c.end());
-                                // trim whitespace
-                                s.erase(s.find_last_not_of(" \t\n\r") + 1);
-                                s.erase(0, s.find_first_not_of(" \t\n\r"));
-                                return s;
-                            });
-
-                        static auto translate_map =
-                            std::unordered_map<std::string, int>{
-                                {"ctrl", GLFW_KEY_LEFT_CONTROL},
-                                {"shift", GLFW_KEY_LEFT_SHIFT},
-                                {"alt", GLFW_KEY_LEFT_ALT},
-                                {"win", GLFW_KEY_LEFT_SUPER},
-                                {"a", GLFW_KEY_A},
-                                {"b", GLFW_KEY_B},
-                                {"c", GLFW_KEY_C},
-                                {"d", GLFW_KEY_D},
-                                {"e", GLFW_KEY_E},
-                                {"f", GLFW_KEY_F},
-                                {"g", GLFW_KEY_G},
-                                {"h", GLFW_KEY_H},
-                                {"i", GLFW_KEY_I},
-                                {"j", GLFW_KEY_J},
-                                {"k", GLFW_KEY_K},
-                                {"l", GLFW_KEY_L},
-                                {"m", GLFW_KEY_M},
-                                {"n", GLFW_KEY_N},
-                                {"o", GLFW_KEY_O},
-                                {"p", GLFW_KEY_P},
-                                {"q", GLFW_KEY_Q},
-                                {"r", GLFW_KEY_R},
-                                {"s", GLFW_KEY_S},
-                                {"t", GLFW_KEY_T},
-                                {"u", GLFW_KEY_U},
-                                {"v", GLFW_KEY_V},
-                                {"w", GLFW_KEY_W},
-                                {"x", GLFW_KEY_X},
-                                {"y", GLFW_KEY_Y},
-                                {"z", GLFW_KEY_Z},
-                                {"0", GLFW_KEY_0},
-                                {"1", GLFW_KEY_1},
-                                {"2", GLFW_KEY_2},
-                                {"3", GLFW_KEY_3},
-                                {"4", GLFW_KEY_4},
-                                {"5", GLFW_KEY_5},
-                                {"6", GLFW_KEY_6},
-                                {"7", GLFW_KEY_7},
-                                {"8", GLFW_KEY_8},
-                                {"9", GLFW_KEY_9},
-                            };
-
-                        auto key_combination = std::vector<int>();
-                        for (const auto &key : hotkey) {
-                            if (auto it = translate_map.find(
-                                    std::string(key) |
-                                    std::views::transform(::tolower) |
-                                    std::ranges::to<std::string>());
-                                it != translate_map.end()) {
-                                key_combination.push_back(it->second);
-                            } else {
-                                // If the key is not found, we can ignore it
-                                return false;
-                            }
-                        }
-
                         return std::ranges::all_of(
-                            key_combination,
+                            wid->item.parsed_hotkeys,
                             [&](int key) { return ctx.key_pressed(key); });
                     }
                     return false;
@@ -726,20 +659,51 @@ mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
 void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
     ui::widget::update(ctx);
 
-    // process events of parents
-    PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
+    if (GetQueueStatus(QS_ALLINPUT) != 0)
+        PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
 
-    if (!direction_calibrated) {
-        calibrate_direction(ctx);
-        direction_calibrated = true;
-        calibrate_position(ctx, false);
-        position_calibrated = true;
+    if (!calibrated) {
+        menu_wid->update(ctx);
+
+        direction = calculate_direction(menu_wid.get(), ctx, anchor_x, anchor_y);
+        menu_wid->direction = direction;
+        menu_wid->reset_animation(direction == popup_direction::top_left ||
+                                  direction == popup_direction::top_right);
+
+        auto [x, y] = calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
+
+        auto menu_w = menu_wid->width->dest() * ctx.rt.dpi_scale;
+        auto menu_h = menu_wid->height->dest() * ctx.rt.dpi_scale;
+        bool is_top_dir = direction == popup_direction::top_left ||
+                          direction == popup_direction::top_right;
+        bool is_left_dir = direction == popup_direction::top_left ||
+                           direction == popup_direction::bottom_left;
+        bool flipped_top = is_top_dir && y >= anchor_y;
+        bool flipped_bottom = !is_top_dir && y + menu_h <= anchor_y;
+        bool flipped_left = is_left_dir && x >= anchor_x;
+        bool flipped_right = !is_left_dir && x + menu_w <= anchor_x;
+        if (flipped_top || flipped_bottom || flipped_left || flipped_right) {
+            auto new_is_top = is_top_dir != (flipped_top || flipped_bottom);
+            auto new_is_left = is_left_dir != (flipped_left || flipped_right);
+            if (new_is_top && new_is_left)
+                direction = popup_direction::top_left;
+            else if (new_is_top && !new_is_left)
+                direction = popup_direction::top_right;
+            else if (!new_is_top && new_is_left)
+                direction = popup_direction::bottom_left;
+            else
+                direction = popup_direction::bottom_right;
+            menu_wid->direction = direction;
+            menu_wid->reset_animation(direction == popup_direction::top_left ||
+                                      direction == popup_direction::top_right);
+        }
+
+        this->menu_wid->x->reset_to(x / ctx.rt.dpi_scale);
+        this->menu_wid->y->reset_to(y / ctx.rt.dpi_scale);
+        this->menu_wid->arm_background_animation();
+        calibrated = true;
     }
 
-    if (!position_calibrated) {
-        calibrate_position(ctx);
-        position_calibrated = true;
-    }
     menu_wid->update(ctx);
 
     auto using_touchscreen = !IsCursorVisible();
@@ -769,6 +733,10 @@ void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
         (GetAsyncKeyState(VK_LMENU) & 0x8000)) {
         ctx.rt.hide_as_close();
     }
+
+    // Frame pacing: replace Sleep(5) idle-wait with precise vsync alignment
+    if (!ctx.need_repaint)
+        DwmFlush();
 }
 void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
     ui::widget::render(ctx);
@@ -1196,8 +1164,11 @@ void mb_shell::menu_item_ownerdraw_widget::update(ui::update_context &ctx) {
     height->reset_to(owner_draw.height);
 }
 void mb_shell::menu_item_ownerdraw_widget::render(ui::nanovg_context ctx) {
-    if (!img)
+    if (!img) {
         img = ui::LoadBitmapImage(ctx, owner_draw.bitmap);
+        DeleteObject(owner_draw.bitmap);
+        owner_draw.bitmap = nullptr;
+    }
 
     auto paint = ctx.imagePattern(*x, y->dest(), owner_draw.width,
                                   owner_draw.height, 0, img->id, 1);
