@@ -291,6 +291,8 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
             } catch (std::exception &e) {
                 spdlog::error("Error in menu item action: {}", e.what());
             }
+        } else if (item.submenu) {
+            show_submenu(ctx);
         }
     }
 
