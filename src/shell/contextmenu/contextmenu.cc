@@ -176,20 +176,44 @@ menu menu::construct_with_hmenu(
             }
         }
 
+        bool item_handled = false;
         if (info.hSubMenu) {
-            auto main_thread_id = GetCurrentThreadId();
-            int submenu_pos = i;
-            item.submenu = [=](std::shared_ptr<menu_widget> mw) {
-                auto task = [&]() {
-                    mw->init_from_data(menu::construct_with_hmenu(
-                        info.hSubMenu, hWnd, false, HandleMenuMsg,
-                        MAKELPARAM(static_cast<WORD>(submenu_pos), 0)));
+            bool flatten = false;
+            if (config::current->context_menu.flatten_open_with_submenu) {
+                std::wstring lower(buffer);
+                for (auto &c : lower)
+                    c = towlower(c);
+                if (lower.find(L"open with") != std::wstring::npos ||
+                    lower.find(L"打开方式") != std::wstring::npos) {
+                    flatten = true;
+                }
+            }
+
+            if (flatten) {
+                auto sub = menu::construct_with_hmenu(
+                    info.hSubMenu, hWnd, false, HandleMenuMsg,
+                    MAKELPARAM(static_cast<WORD>(i), 0));
+                for (auto &sub_item : sub.items)
+                    m.items.push_back(std::move(sub_item));
+                menu_item sep;
+                sep.type = menu_item::type::spacer;
+                m.items.push_back(std::move(sep));
+                item_handled = true;
+            } else {
+                auto main_thread_id = GetCurrentThreadId();
+                int submenu_pos = i;
+                item.submenu = [=](std::shared_ptr<menu_widget> mw) {
+                    auto task = [&]() {
+                        mw->init_from_data(menu::construct_with_hmenu(
+                            info.hSubMenu, hWnd, false, HandleMenuMsg,
+                            MAKELPARAM(static_cast<WORD>(submenu_pos), 0)));
+                    };
+                    if (main_thread_id == GetCurrentThreadId())
+                        task();
+                    else
+                        entry::main_window_loop_hook.add_task(task).wait();
                 };
-                if (main_thread_id == GetCurrentThreadId())
-                    task();
-                else
-                    entry::main_window_loop_hook.add_task(task).wait();
-            };
+            }
         } else {
             item.action = [=]() mutable {
                 menu_render::current.value()->selected_menu = info.wID;
@@ -287,7 +311,8 @@ menu menu::construct_with_hmenu(
             item.disabled = true;
         }
 
-        m.items.push_back(item);
+        if (!item_handled)
+            m.items.push_back(item);
     }
 
     m.parent_window = hWnd;

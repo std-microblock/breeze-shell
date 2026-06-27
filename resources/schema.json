@@ -384,6 +384,12 @@
           "type": "boolean",
           "default": true
         },
+        "flatten_open_with_submenu": {
+          "title": "Flatten Open With Submenu",
+          "description": "When enabled, flattens the 'Open With' submenu items directly into the main context menu",
+          "type": "boolean",
+          "default": false
+        },
         "search_large_dwItemData_range": {
           "title": "Search Larger Range of DWItemData",
           "description": "Search for a larger range of DWItemData",

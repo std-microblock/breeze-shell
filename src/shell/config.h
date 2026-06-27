@@ -104,6 +104,7 @@ struct config {
         bool hotkeys = true;
         bool show_settings_button = true;
         bool patch_explorerframe_dll = true;
+        bool flatten_open_with_submenu = false;
 
         // debug purpose only
         bool search_large_dwItemData_range = false;
