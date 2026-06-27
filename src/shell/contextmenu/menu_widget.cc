@@ -375,6 +375,14 @@ void mb_shell::menu_widget::update(ui::update_context &ctx) {
         item->width->reset_to(*width);
     }
 
+    if (enable_scrolling && ctx.scroll_y != 0) {
+        auto max_scroll = std::max(0.f, actual_height - *height);
+        float scroll_delta = -ctx.scroll_y * 50.f;
+        scroll_top->reset_to(std::clamp(*scroll_top + scroll_delta, 0.f, max_scroll));
+        ctx.scroll_y = 0;
+        ctx.need_repaint = true;
+    }
+
     if (bg) {
         auto target_rect = make_bg_target_rect(this, x->dest(), y->dest(),
                                                width->dest(), height->dest());
@@ -907,6 +915,35 @@ void mb_shell::mouse_menu_widget_main::calibrate_position(
     menu_wid->update(ctx);
     auto [x, y] =
         calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
+
+    // If the clamped position ended up on the opposite side of the anchor
+    // from the chosen direction, update direction for correct submenu arrows
+    // and animation.
+    auto menu_w = menu_wid->width->dest() * ctx.rt.dpi_scale;
+    auto menu_h = menu_wid->height->dest() * ctx.rt.dpi_scale;
+    bool is_top_dir = direction == popup_direction::top_left ||
+                      direction == popup_direction::top_right;
+    bool is_left_dir = direction == popup_direction::top_left ||
+                       direction == popup_direction::bottom_left;
+    bool flipped_top = is_top_dir && y >= anchor_y;
+    bool flipped_bottom = !is_top_dir && y + menu_h <= anchor_y;
+    bool flipped_left = is_left_dir && x >= anchor_x;
+    bool flipped_right = !is_left_dir && x + menu_w <= anchor_x;
+    if (flipped_top || flipped_bottom || flipped_left || flipped_right) {
+        auto new_is_top = is_top_dir != (flipped_top || flipped_bottom);
+        auto new_is_left = is_left_dir != (flipped_left || flipped_right);
+        if (new_is_top && new_is_left)
+            direction = popup_direction::top_left;
+        else if (new_is_top && !new_is_left)
+            direction = popup_direction::top_right;
+        else if (!new_is_top && new_is_left)
+            direction = popup_direction::bottom_left;
+        else
+            direction = popup_direction::bottom_right;
+        menu_wid->direction = direction;
+        menu_wid->reset_animation(direction == popup_direction::top_left ||
+                                  direction == popup_direction::top_right);
+    }
 
     spdlog::info("Calibrated position: {} {} in screen {} {}", x, y,
                  ctx.screen.width, ctx.screen.height);

@@ -81,6 +81,8 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
         ReleaseDC(hwnd, hdc);
         return result;
     }
+    DeleteDC(memDC);
+    ReleaseDC(hwnd, hdc);
     return result;
 }
 
@@ -215,9 +217,14 @@ menu menu::construct_with_hmenu(
                 };
             }
         } else {
-            item.action = [=]() mutable {
-                menu_render::current.value()->selected_menu = info.wID;
-                menu_render::current.value()->rt->hide_as_close();
+            item.action = [wID = info.wID]() mutable {
+                auto current_render = menu_render::current;
+                if (!current_render || !*current_render) {
+                    spdlog::warn("menu_render::current is null when action fires");
+                    return;
+                }
+                (*current_render)->selected_menu = wID;
+                (*current_render)->rt->hide_as_close();
             };
 
             item.wID = info.wID;
@@ -268,7 +275,7 @@ menu menu::construct_with_hmenu(
                               }
                               return offsets;
                           }())
-                        : std::vector<int>{0x018, 0x220, 0x020, 0x000};
+                        : std::vector<int>{0x018, 0x220, 0x020, 0x000, 0x010, 0x030, 0x040};
                 for (int offset : offsets) {
                     auto pHBitmap =
                         reinterpret_cast<HBITMAP *>(info.dwItemData + offset);

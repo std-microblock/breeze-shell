@@ -31,6 +31,7 @@ static auto renderer_thread = mb_shell::task_queue{};
 
 namespace {
 std::atomic<void *> current_live_menu_handle = nullptr;
+std::atomic_bool g_close_next_create_window_exw_window = false;
 std::mutex active_root_menu_mutex;
 std::weak_ptr<mb_shell::menu_widget> active_root_menu;
 
@@ -256,7 +257,24 @@ find_menu_item_widget(const std::shared_ptr<mb_shell::menu_widget> &menu,
             return nullptr;
         }
 
-        return find_menu_item_widget_by_identity(target_menu, *identity);
+        auto result = find_menu_item_widget_by_identity(target_menu, *identity);
+        if (result) {
+            return result;
+        }
+
+        // Identity match failed (e.g., name changed after menu construction).
+        // Fall back to matching by position index, skipping spacers.
+        int pos = 0;
+        for (auto &child : target_menu->children) {
+            auto item_widget = child->downcast<menu_item_widget>();
+            if (item_widget && item_widget->item.type != menu_item::type::spacer) {
+                if (pos == item) {
+                    return item_widget;
+                }
+                pos++;
+            }
+        }
+        return nullptr;
     }
 
     for (auto &child : target_menu->children) {
@@ -521,6 +539,7 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
         block_js_reload.fetch_add(1);
 
         perf_counter perf("TrackPopupMenuEx");
+        current_live_menu_handle.store(hMenu, std::memory_order_relaxed);
         menu menu = menu::construct_with_hmenu(hMenu, hWnd);
         perf.end("construct_with_hmenu");
 
@@ -747,8 +766,6 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
     auto SHELL32_SHCreateDefaultContextMenu =
         shell32.value()->exports("SHELL32_SHCreateDefaultContextMenu");
 
-    static std::atomic_bool close_next_create_window_exw_window = false;
-
     auto user32 = proc->module("user32.dll");
     auto CreateWindowExWFunc = user32.value()->exports("CreateWindowExW");
     if (!CreateWindowExWFunc) {
@@ -781,8 +798,9 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
             }();
 
             bool should_close =
-                close_next_create_window_exw_window &&
+                g_close_next_create_window_exw_window &&
                 class_name.starts_with(L"HwndWrapper[OneCommander.exe");
+            g_close_next_create_window_exw_window = false;
 
             if (should_close) {
                 dwStyle &= ~WS_VISIBLE;
@@ -792,7 +810,6 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                 dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth,
                 nHeight, hWndParent, hMenu, hInstance, lpParam);
             if (res && should_close) {
-                close_next_create_window_exw_window = false;
                 PostMessageW(res, WM_CLOSE, 0, 0);
                 CloseWindow(res);
             }
@@ -847,17 +864,29 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                 pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF, cmf_flags);
 
                 CComPtr<IContextMenu2> pCM2 = NULL;
-                if (SUCCEEDED(pCM->QueryInterface(&pCM2))) {
+                CComPtr<IContextMenu3> pCM3 = NULL;
+                int cmType = 0;
+                if (SUCCEEDED(pCM->QueryInterface(IID_IContextMenu3, (void**)&pCM3))) {
+                    cmType = 3;
+                } else if (SUCCEEDED(pCM->QueryInterface(IID_IContextMenu2, (void**)&pCM2))) {
+                    cmType = 2;
+                }
+
+                if (cmType > 0) {
                     POINT pt;
                     GetCursorPos(&pt);
                     auto hwndOwner = def->hwnd;
                     entry::main_window_loop_hook.install(hwndOwner);
                     block_js_reload.fetch_add(1);
                     perf_counter perf("TrackPopupMenuEx");
+                    current_live_menu_handle.store(hmenu, std::memory_order_relaxed);
                     menu menu = menu::construct_with_hmenu(
                         hmenu, hwndOwner, true,
-                        [=](int message, WPARAM wParam, LPARAM lParam) {
-                            pCM2->HandleMenuMsg(message, wParam, lParam);
+                        [pCM2, pCM3, cmType](int message, WPARAM wParam, LPARAM lParam) {
+                            if (cmType == 3)
+                                pCM3->HandleMenuMsg2(message, wParam, lParam, NULL);
+                            else
+                                pCM2->HandleMenuMsg(message, wParam, lParam);
                         });
                     perf.end("construct_with_hmenu");
 
@@ -876,7 +905,7 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                         pCM->InvokeCommand((LPCMINVOKECOMMANDINFO)&ici);
                     }
 
-                    close_next_create_window_exw_window = true;
+                    g_close_next_create_window_exw_window = true;
                 }
             }
 
@@ -897,8 +926,6 @@ void mb_shell::context_menu_hooks::install_GetUIObjectOf_hook() {
     // For OneCommander
 
     auto proc = blook::Process::self();
-
-    static std::atomic_bool close_next_create_window_exw_window = false;
 
     IShellFolder *psfDesktop = NULL;
     IShellFolder2 *psf2Desktop = NULL;
@@ -989,16 +1016,28 @@ HRESULT GetUIObjectOf(
             pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF, cmf_flags);
 
             CComPtr<IContextMenu2> pCM2 = NULL;
-            if (SUCCEEDED(pCM->QueryInterface(&pCM2))) {
+            CComPtr<IContextMenu3> pCM3 = NULL;
+            int cmType = 0;
+            if (SUCCEEDED(pCM->QueryInterface(IID_IContextMenu3, (void**)&pCM3))) {
+                cmType = 3;
+            } else if (SUCCEEDED(pCM->QueryInterface(IID_IContextMenu2, (void**)&pCM2))) {
+                cmType = 2;
+            }
+
+            if (cmType > 0) {
                 POINT pt;
                 GetCursorPos(&pt);
                 entry::main_window_loop_hook.install(hwndOwner);
                 block_js_reload.fetch_add(1);
                 perf_counter perf("TrackPopupMenuEx");
+                current_live_menu_handle.store(hmenu, std::memory_order_relaxed);
                 menu menu = menu::construct_with_hmenu(
                     hmenu, hwndOwner, true,
-                    [=](int message, WPARAM wParam, LPARAM lParam) {
-                        pCM2->HandleMenuMsg(message, wParam, lParam);
+                    [pCM2, pCM3, cmType](int message, WPARAM wParam, LPARAM lParam) {
+                        if (cmType == 3)
+                            pCM3->HandleMenuMsg2(message, wParam, lParam, NULL);
+                        else
+                            pCM2->HandleMenuMsg(message, wParam, lParam);
                     });
                 perf.end("construct_with_hmenu");
 
@@ -1017,7 +1056,7 @@ HRESULT GetUIObjectOf(
                     pCM->InvokeCommand((LPCMINVOKECOMMANDINFO)&ici);
                 }
 
-                close_next_create_window_exw_window = true;
+                g_close_next_create_window_exw_window = true;
             }
         }
 
