@@ -1,4 +1,5 @@
 #include "config.h"
+#include <cctype>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -156,10 +157,111 @@ std::filesystem::path config::default_mono_font() {
            "consola.ttf";
 }
 void config::apply_fonts_to_nvg(NVGcontext *nvg) {
-    ui::register_default_windows_font_suite(
-        nvg, {.main_regular = {.path = font_path_main},
-              .fallback_regular = {.path = font_path_fallback},
-              .monospace_regular = {.path = font_path_monospace}});
+    auto font_dir = ui::windows_font_directory();
+
+    auto to_lower = [](std::string s) {
+        for (auto &c : s)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return s;
+    };
+
+    auto add_with_system_variants =
+        [&](std::vector<ui::weighted_font_face> &faces,
+            const std::filesystem::path &user_path, const char *expected_name,
+            int collection_index = 0) {
+            if (user_path.empty())
+                return;
+            faces.push_back(
+                {.weight = 400,
+                 .source = {.path = user_path,
+                            .collection_index = collection_index}});
+
+            if (to_lower(user_path.filename().string()) !=
+                to_lower(expected_name))
+                return;
+
+            struct variant_entry {
+                int weight;
+                const char *file;
+            };
+            const variant_entry *variants = nullptr;
+            int variant_count = 0;
+
+            // clang-format off
+            if (to_lower(expected_name) == "segoeui.ttf") {
+                static constexpr variant_entry v[] = {
+                    {200, "segoeuisl.ttf"}, {300, "segoeuil.ttf"},
+                    {600, "seguisb.ttf"},   {700, "segoeuib.ttf"},
+                };
+                variants = v; variant_count = 4;
+            } else if (to_lower(expected_name) == "msyh.ttc") {
+                static constexpr variant_entry v[] = {
+                    {300, "msyhl.ttc"}, {700, "msyhbd.ttc"},
+                };
+                variants = v; variant_count = 2;
+            } else if (to_lower(expected_name) == "consola.ttf") {
+                static constexpr variant_entry v[] = {
+                    {700, "consolab.ttf"},
+                };
+                variants = v; variant_count = 1;
+            }
+            // clang-format on
+
+            for (int i = 0; i < variant_count; ++i) {
+                auto p = font_dir / variants[i].file;
+                if (std::filesystem::exists(p))
+                    faces.push_back(
+                        {.weight = variants[i].weight,
+                         .source = {.path = std::move(p),
+                                    .collection_index = collection_index}});
+            }
+        };
+
+    // 1. System Segoe UI – always available as ultimate fallback
+    {
+        std::vector<ui::weighted_font_face> faces;
+        add_with_system_variants(faces, font_dir / "segoeui.ttf",
+                                 "segoeui.ttf");
+        ui::register_font_family(nvg, {.family_name = "segoeui",
+                                       .faces = faces});
+    }
+
+    // 2. Fallback font (user-configured) – falls back to segoeui
+    //    For msyh.ttc use collection_index=1 → "Microsoft YaHei UI"
+    {
+        int fb_idx = 0;
+        if (to_lower(font_path_fallback.filename().string()) == "msyh.ttc")
+            fb_idx = 1;
+
+        std::vector<ui::weighted_font_face> faces;
+        add_with_system_variants(faces, font_path_fallback, "msyh.ttc",
+                                 fb_idx);
+        ui::register_font_family(
+            nvg, {.family_name = "fallback",
+                  .faces = faces,
+                  .fallback_families = {"segoeui"}});
+    }
+
+    // 3. Main font (user-configured) – falls back to segoeui + fallback
+    {
+        std::vector<ui::weighted_font_face> faces;
+        add_with_system_variants(faces, font_path_main, "segoeui.ttf");
+        ui::register_font_family(
+            nvg, {.family_name = "main",
+                  .faces = faces,
+                  .fallback_families = {"segoeui", "fallback"}});
+    }
+
+    // 4. Monospace font (user-configured) – falls back to main + segoeui +
+    // fallback
+    {
+        std::vector<ui::weighted_font_face> faces;
+        add_with_system_variants(faces, font_path_monospace, "consola.ttf");
+        ui::register_font_family(
+            nvg, {.family_name = "monospace",
+                  .faces = faces,
+                  .fallback_families = {"main", "segoeui", "fallback"}});
+    }
 }
 void config::animated_float_conf::apply_to(ui::animated_color &anim,
                                            float delay) {
