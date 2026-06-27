@@ -173,11 +173,14 @@ void mb_shell::fix_win11_menu::install() {
                     if (imported_call_target(ins) != extraInfo)
                         continue;
 
+                    auto func_boundary =
+                        ins.ptr().find_upwards(
+                            {0xCC, 0xCC, 0xCC, 0xCC, 0xCC});
+                    if (!func_boundary)
+                        continue;
+
                     if (patch_key_state_check(
-                            ins.ptr()
-                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                                ->range_size(0xB50)
-                                .disassembly(),
+                            func_boundary->range_size(0xB50).disassembly(),
                             0x10)) {
                         spdlog::info("Patched shell32.dll for win11 menu fix");
                         break;
@@ -194,11 +197,14 @@ void mb_shell::fix_win11_menu::install() {
                         if (!is_key_state_call(ins))
                             continue;
 
+                        auto func_boundary =
+                            ins.ptr().find_upwards(
+                                {0xCC, 0xCC, 0xCC, 0xCC, 0xCC});
+                        if (!func_boundary)
+                            continue;
+
                         auto function =
-                            ins.ptr()
-                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                                ->range_size(0x200)
-                                .disassembly();
+                            func_boundary->range_size(0x200).disassembly();
                         if (!has_key_state_check(function, 0x10) ||
                             !has_key_state_check(function, 0x79)) {
                             continue;
