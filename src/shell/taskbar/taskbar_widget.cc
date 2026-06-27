@@ -53,7 +53,7 @@ static bool KeepWindowHandleInAltTabList(HWND window) {
             className == L"DV2ControlHost" ||             // Windows startmenu
             className == L"MsgrIMEWindowClass" ||         // Live messenger
             className == L"SysShadow" ||                  // Shadow windows
-            className.find(L"WMP9MediaBarFlyout") == 0) { // WMP toolbar
+            className.starts_with(L"WMP9MediaBarFlyout")) { // WMP toolbar
             return false;
         }
 
@@ -666,7 +666,7 @@ std::vector<window_info> get_window_list() {
 
                 if (info.icon_handle == nullptr) {
                     // use the exe icon if nothing else is available
-                    int pid;
+                    int pid = 0;
 
                     GetWindowThreadProcessId(hwnd, (LPDWORD)&pid);
                     HANDLE hProcess =
@@ -705,7 +705,7 @@ std::vector<window_stack_info> get_window_stacks() {
 
     std::unordered_map<std::string, window_stack_info> stack_map;
     for (const auto &win : windows) {
-        int pid;
+        int pid = 0;
         if (GetWindowThreadProcessId(win.hwnd, (LPDWORD)&pid)) {
 
             HANDLE hProcess = OpenProcess(

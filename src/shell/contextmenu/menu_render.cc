@@ -171,11 +171,13 @@ menu_render::menu_render(menu_render &&t) {
 
     rt = std::move(t.rt);
     selected_menu = std::move(t.selected_menu);
+    light_color = t.light_color;
 }
 menu_render &menu_render::operator=(menu_render &&t) {
     current = this;
     rt = std::move(t.rt);
     selected_menu = std::move(t.selected_menu);
+    light_color = t.light_color;
     return *this;
 }
 }; // namespace mb_shell

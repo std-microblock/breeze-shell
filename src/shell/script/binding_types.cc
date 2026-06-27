@@ -258,7 +258,7 @@ void menu_item_controller::remove() {
 bool menu_item_controller::valid() {
     if (auto a = std::get_if<0>(&$parent); a && a->expired())
         return false;
-    else if (auto a = std::get_if<1>(&$parent); a && a->expired())
+    else if (auto b = std::get_if<1>(&$parent); b && b->expired())
         return false;
 
     return !$item.expired();
@@ -533,7 +533,7 @@ void network::post_async(std::string url, std::string data,
     }).detach();
 }
 subproc_result_data subproc::run(std::string cmd) {
-    subproc_result_data result;
+    subproc_result_data result = {};
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.bInheritHandle = TRUE;

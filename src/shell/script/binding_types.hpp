@@ -701,7 +701,7 @@ struct win32 {
 
 struct notification {
     static void send_basic(std::string message);
-    static void send_with_image(std::string message, std::string path);
+    static void send_with_image(std::string message, std::string icon_path);
     static void send_title_text(std::string title, std::string message,
                                 std::string image_path);
     static void send_with_buttons(

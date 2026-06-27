@@ -123,7 +123,7 @@ void mb_shell::fix_win11_menu::install() {
             };
 
             auto is_key_state_call = [&](auto &insn) {
-                auto target = imported_call_target(insn);
+                const auto target = imported_call_target(insn);
                 return target == getKeyState || target == getAsyncKeyState;
             };
 

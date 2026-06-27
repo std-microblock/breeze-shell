@@ -97,7 +97,7 @@ std::wstring strip_extra_infos(std::wstring_view str) {
 
     for (int i = 0; i < str.size(); i++) {
         if (str[i] == '(' && i + 1 < str.size() && str[i + 1] == '&') {
-            while (str[i] != ')' && i < str.size()) {
+            while (i < str.size() && str[i] != ')') {
                 i++;
             }
 
@@ -216,7 +216,7 @@ menu menu::construct_with_hmenu(
                   init_popup_lparam);
     for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
         menu_item item;
-        wchar_t buffer[256];
+        wchar_t buffer[256] = {};
         MENUITEMINFOW info = {sizeof(MENUITEMINFO)};
         info.fMask = MIIM_STRING | MIIM_SUBMENU | MIIM_ID | MIIM_FTYPE |
                      MIIM_STATE | MIIM_BITMAP | MIIM_CHECKMARKS | MIIM_DATA;

@@ -173,8 +173,8 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
 
         // if still no result and the window is shell window, we assume it's the
         // desktop
-        if (auto res = GetDesktopIShellBrowser())
-            return res->second;
+        if (auto desktop_res = GetDesktopIShellBrowser())
+            return desktop_res->second;
     }
 
     return res;
@@ -277,7 +277,7 @@ __declspec(noinline) void populate_folder_view_context_seh(
 namespace mb_shell::js {
 
 js_menu_context js_menu_context::$from_window(void *_hwnd) {
-    js_menu_context event_data;
+    js_menu_context event_data = {};
     perf_counter perf("js_menu_context::$from_window");
     HWND hWnd = reinterpret_cast<HWND>(_hwnd);
 
@@ -311,7 +311,7 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
         // get window position
         RECT rect;
         GetWindowRect(hWnd, &rect);
-        caller_window_data window_info;
+        caller_window_data window_info = {};
         window_info.x = rect.left;
         window_info.y = rect.top;
         window_info.width = rect.right - rect.left;
@@ -322,8 +322,9 @@ js_menu_context js_menu_context::$from_window(void *_hwnd) {
         window_info.title = mb_shell::wstring_to_utf8(title);
 
         // get window class name
-        char className[256];
-        if (GetClassNameA(hWnd, className, sizeof(className))) {
+        char className2[256];
+        if (GetClassNameA(hWnd, className2, sizeof(className2))) {
+            window_info.class_name = std::string(className2);
             window_info.class_name = std::string(className);
         }
 
@@ -474,11 +475,11 @@ std::string folder_view_folder_item::name() {
     CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR name = nullptr;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &name)) &&
-            name) {
-            std::wstring wname(name);
-            CoTaskMemFree(name);
+        LPWSTR display_name = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &display_name)) &&
+            display_name) {
+            std::wstring wname(display_name);
+            CoTaskMemFree(display_name);
             return mb_shell::wstring_to_utf8(wname);
         }
     }
@@ -518,13 +519,13 @@ std::string folder_view_folder_item::path() {
     CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR path = nullptr;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &path)) &&
-            path) {
-            std::wstring name(path);
-            CoTaskMemFree(path);
+        LPWSTR display_path = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_NORMALDISPLAY, &display_path)) &&
+            display_path) {
+            std::wstring folder_name(display_path);
+            CoTaskMemFree(display_path);
             std::filesystem::path p(parent_path);
-            p /= name;
+            p /= folder_name;
             return p.string();
         }
     }
@@ -542,9 +543,9 @@ size_t folder_view_folder_item::size() {
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
         CComPtr<IShellItem2> item2;
         if (SUCCEEDED(item->QueryInterface(IID_IShellItem2, (void **)&item2))) {
-            ULONGLONG size;
-            if (SUCCEEDED(item2->GetUInt64(PKEY_Size, &size))) {
-                return static_cast<size_t>(size);
+            ULONGLONG file_size;
+            if (SUCCEEDED(item2->GetUInt64(PKEY_Size, &file_size))) {
+                return static_cast<size_t>(file_size);
             }
         }
     }
@@ -560,14 +561,14 @@ std::string folder_view_folder_item::type() {
     CComPtr<IShellItem> item;
     if (SUCCEEDED(
             SHCreateItemFromIDList(pidl, IID_IShellItem, (void **)&item))) {
-        LPWSTR type = nullptr;
-        if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &type)) && type) {
+        LPWSTR display_type = nullptr;
+        if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &display_type)) && display_type) {
             SHFILEINFOW sfi = {0};
-            if (SHGetFileInfoW(type, 0, &sfi, sizeof(sfi), SHGFI_TYPENAME)) {
-                CoTaskMemFree(type);
+            if (SHGetFileInfoW(display_type, 0, &sfi, sizeof(sfi), SHGFI_TYPENAME)) {
+                CoTaskMemFree(display_type);
                 return mb_shell::wstring_to_utf8(sfi.szTypeName);
             }
-            CoTaskMemFree(type);
+            CoTaskMemFree(display_type);
         }
     }
     return "";

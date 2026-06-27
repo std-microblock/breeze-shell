@@ -1330,22 +1330,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (args.size() <= 1) {
         if (false) {
             AttachConsole(ATTACH_PARENT_PROCESS);
-            freopen("CONOUT$", "w", stdout);
-            freopen("CONOUT$", "w", stderr);
-            freopen("CONIN$", "r", stdin);
+            (void)freopen("CONOUT$", "w", stdout);
+            (void)freopen("CONOUT$", "w", stderr);
+            (void)freopen("CONIN$", "r", stdin);
         }
 
         try {
             spdlog::info("breeze-shell injector started.");
         } catch (std::exception &) {
-            freopen("NUL", "w", stdout);
-            freopen("NUL", "w", stderr);
+            (void)freopen("NUL", "w", stdout);
+            (void)freopen("NUL", "w", stderr);
         }
 
         StartInjectUI();
     } else {
-        freopen("NUL", "w", stdout);
-        freopen("NUL", "w", stderr);
+        (void)freopen("NUL", "w", stdout);
+        (void)freopen("NUL", "w", stderr);
 
         if (args[1] == L"new") {
             NewExplorerProcessAndInject();

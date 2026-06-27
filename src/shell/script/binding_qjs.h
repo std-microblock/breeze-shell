@@ -397,7 +397,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::window> {
 
 template <> struct qjs::js_traits<mb_shell::js::folder_view_folder_item> {
     static mb_shell::js::folder_view_folder_item unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::folder_view_folder_item obj;
+        mb_shell::js::folder_view_folder_item obj = {};
 
         obj.index = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "index"));
 
@@ -434,7 +434,7 @@ template<> struct js_bind<mb_shell::js::folder_view_folder_item> {
 
 template <> struct qjs::js_traits<mb_shell::js::folder_view_controller> {
     static mb_shell::js::folder_view_controller unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::folder_view_controller obj;
+        mb_shell::js::folder_view_controller obj = {};
 
         obj.current_path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "current_path"));
 
@@ -501,7 +501,7 @@ template<> struct js_bind<mb_shell::js::value_reset> {
 
 template <> struct qjs::js_traits<mb_shell::js::window_titlebar_controller> {
     static mb_shell::js::window_titlebar_controller unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::window_titlebar_controller obj;
+        mb_shell::js::window_titlebar_controller obj = {};
 
         obj.is_click_in_titlebar = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "is_click_in_titlebar"));
 
@@ -597,7 +597,7 @@ template<> struct js_bind<mb_shell::js::window_titlebar_controller> {
 
 template <> struct qjs::js_traits<mb_shell::js::input_box_controller> {
     static mb_shell::js::input_box_controller unwrap(JSContext *ctx, JSValueConst v) {
-        mb_shell::js::input_box_controller obj;
+        mb_shell::js::input_box_controller obj = {};
 
         obj.text = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "text"));
 
