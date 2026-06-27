@@ -18,14 +18,22 @@ background_widget::background_widget(bool is_main) {
                 : parse_color(
                       config::current->context_menu.theme.acrylic_color_dark);
 
-        auto acrylic = std::make_shared<ui::acrylic_background_widget>();
-        acrylic->acrylic_bg_color = acrylic_color;
-        bg_impl = acrylic;
+        if (is_win11_or_later()) {
+            // Win11: use WinUI Composition HostBackdropBrush for per-region acrylic
+            auto acrylic = std::make_shared<ui::acrylic_background_widget>();
+            acrylic->acrylic_bg_color = acrylic_color;
+            bg_impl = acrylic;
 
-        if (light_color)
-            bg_impl->bg_color = nvgRGBAf(1, 1, 1, 0);
-        else
-            bg_impl->bg_color = nvgRGBAf(0, 0, 0, 0);
+            if (light_color)
+                bg_impl->bg_color = nvgRGBAf(1, 1, 1, 0);
+            else
+                bg_impl->bg_color = nvgRGBAf(0, 0, 0, 0);
+        } else {
+            // Win10: use rect_widget with tint color; DWM acrylic blur is applied at
+            // window level in menu_render.cc via SetWindowCompositionAttribute
+            bg_impl = std::make_shared<ui::rect_widget>();
+            bg_impl->bg_color = acrylic_color;
+        }
     } else {
         bg_impl = std::make_shared<ui::rect_widget>();
         auto c = light_color ? 1 : 25 / 255.f;

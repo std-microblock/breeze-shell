@@ -4,6 +4,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFW/glfw3native.h"
 #include "Windows.h"
+#include "dwmapi.h"
 #include "menu_widget.h"
 
 #include "breeze_ui/ui.h"
@@ -41,6 +42,34 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
             MessageBoxW(NULL, L"Failed to initialize render target", L"Error",
                         MB_ICONERROR);
             return std::shared_ptr<ui::render_target>{nullptr};
+        }
+
+        // Windows 10: apply window-level acrylic blur via SetWindowCompositionAttribute
+        // (DWMWA_USE_HOSTBACKDROPBRUSH used by acrylic_host is Win11-only)
+        if (!mb_shell::is_win11_or_later()) {
+            HWND hwnd = (HWND)rt->hwnd();
+            enum AccentState { ACCENT_ENABLE_ACRYLICBLURBEHIND = 4 };
+            struct ACCENT_POLICY {
+                AccentState AccentState_;
+                DWORD AccentFlags;
+                DWORD GradientColor;
+                DWORD AnimationId;
+            };
+            struct WINCOMPATTRDATA {
+                DWORD Attribute;
+                PVOID Data;
+                ULONG DataSize;
+            };
+            auto setWindowCompositionAttribute =
+                (BOOL(WINAPI *)(HWND, WINCOMPATTRDATA *))GetProcAddress(
+                    GetModuleHandleA("user32.dll"),
+                    "SetWindowCompositionAttribute");
+            if (setWindowCompositionAttribute) {
+                ACCENT_POLICY accent = {ACCENT_ENABLE_ACRYLICBLURBEHIND, 0, 0,
+                                        0};
+                WINCOMPATTRDATA data = {19, &accent, sizeof(accent)};
+                setWindowCompositionAttribute(hwnd, &data);
+            }
         }
 
         glfw_proc_hook.install(rt->hwnd());
