@@ -154,7 +154,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         auto text_x = *x + padding +
                       (has_icon ? (icon_width + icon_padding * 2) : 0) +
                       text_padding + margin;
-        auto text_y = *y + *height / 2;
+        auto text_y = *y + *height / 2 + config::current->context_menu.theme.text_vertical_offset;
         ctx.fontBlur(*text_blur);
         ctx.text(round(text_x), round(text_y), item.name->c_str(), nullptr);
     }
@@ -198,7 +198,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         ctx.textAlign(NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
         ctx.fontFace("monospace");
         auto hotkey_x = right_x - hotkey_padding;
-        auto hotkey_y = *y + *height / 2;
+        auto hotkey_y = *y + *height / 2 + config::current->context_menu.theme.text_vertical_offset;
         ctx.fontBlur(*text_blur);
         ctx.text(round(hotkey_x), round(hotkey_y), item.hotkey->c_str(),
                  nullptr);

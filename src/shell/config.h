@@ -41,6 +41,7 @@ struct config {
             float margin = 5;
             float padding = 6;
             float text_padding = 8;
+            float text_vertical_offset = 0;
             float icon_padding = 4;
             float right_icon_padding = 10;
             float multibutton_line_gap = -6;
