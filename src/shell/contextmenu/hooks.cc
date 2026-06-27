@@ -807,8 +807,10 @@ void mb_shell::context_menu_hooks::install_SHCreateDefaultContextMenu_hook() {
                 CComPtr<IContextMenu> pCM(pdcm);
 
                 HMENU hmenu = CreatePopupMenu();
-                pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF,
-                                      CMF_EXPLORE | CMF_CANRENAME);
+                auto cmf_flags = CMF_EXPLORE | CMF_CANRENAME;
+                if (GetKeyState(VK_SHIFT) & 0x8000)
+                    cmf_flags |= CMF_EXTENDED;
+                pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF, cmf_flags);
 
                 CComPtr<IContextMenu2> pCM2 = NULL;
                 if (SUCCEEDED(pCM->QueryInterface(&pCM2))) {
@@ -933,8 +935,10 @@ HRESULT GetUIObjectOf(
             CComPtr<IContextMenu> pCM(pdcm);
 
             HMENU hmenu = CreatePopupMenu();
-            pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF,
-                                  CMF_EXPLORE | CMF_CANRENAME);
+            auto cmf_flags = CMF_EXPLORE | CMF_CANRENAME;
+            if (GetKeyState(VK_SHIFT) & 0x8000)
+                cmf_flags |= CMF_EXTENDED;
+            pCM->QueryContextMenu(hmenu, 0, 1, 0x7FFF, cmf_flags);
 
             CComPtr<IContextMenu2> pCM2 = NULL;
             if (SUCCEEDED(pCM->QueryInterface(&pCM2))) {
