@@ -68,7 +68,6 @@ void config::read_config() {
     if (!ifs) {
         spdlog::warn("Config file could not be opened. Using default config instead.");
         config::current = std::make_unique<config>();
-        config::current->debug_console = true;
     } else {
         std::string json_str;
         std::copy(std::istreambuf_iterator<char>(ifs),
@@ -86,7 +85,6 @@ void config::read_config() {
         } else {
             spdlog::error("Failed to read config file: {}\nUsing default config instead.", json.error().what());
             config::current = std::make_unique<config>();
-            config::current->debug_console = true;
         }
     }
 #else
@@ -95,7 +93,6 @@ void config::read_config() {
     spdlog::info("We don't support loading config file when compiled with MSVC "
            "because of a bug in MSVC.");
     config::current = std::make_unique<config>();
-    config::current->debug_console = true;
 #endif
 
     if (config::current->debug_console) {
