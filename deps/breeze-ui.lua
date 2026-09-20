@@ -5,7 +5,7 @@ package("breeze-glfw")
 
 local BREEZE_UI_VER = "2026.04.12"
 local BREEZE_UI_HASH = "8dce69e41f3080e0ec610c93f56fa9a1606a7baf"
-local BREEZE_UI_LOCAL_PATH = "../breeze-ui"
+local BREEZE_UI_LOCAL_PATH = path.join(os.scriptdir(), "..", "..", "breeze-ui")
 local USE_LOCAL_BREEZE_UI = os.exists(BREEZE_UI_LOCAL_PATH)
 
 package("breeze-nanosvg")
@@ -47,7 +47,7 @@ package("breeze-ui")
         add_urls("https://github.com/std-microblock/breeze-ui.git")
         add_versions(BREEZE_UI_VER, BREEZE_UI_HASH)
     end
-    add_deps("breeze-glfw", "glad", "nanovg", "breeze-nanosvg", "simdutf", {
+    add_deps("breeze-glfw", "glad 0.1.36", "nanovg", "breeze-nanosvg", "simdutf", {
         public = true
     })
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
