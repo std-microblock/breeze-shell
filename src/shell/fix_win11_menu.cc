@@ -162,25 +162,36 @@ void mb_shell::fix_win11_menu::install() {
                 return false;
             };
 
-            if (auto shell32 = proc->module("shell32.dll")) {
-                // mov ecx, 10
-                // call GetKeyState/GetAsyncKeyState
-                auto disasm = shell32.value()->section(".text")->disassembly();
+            // Patching the shell32 SHIFT-key check forces
+            // CMF_EXTENDEDVERBS onto every menu, which makes the "Send To"
+            // submenu enumerate every folder under %USERPROFILE%
+            // (#212 / #240 / #323). The ExplorerFrame patch above is what
+            // actually selects the classic HMENU menu, so this stays off
+            // unless a setup really needs it.
+            if (config::current->context_menu.patch_shell32_dll) {
+                if (auto shell32 = proc->module("shell32.dll")) {
+                    // mov ecx, 10
+                    // call GetKeyState/GetAsyncKeyState
+                    auto disasm =
+                        shell32.value()->section(".text")->disassembly();
 
-                // the function to determine if show win10 menu or win11 menu
-                // calls SetMessageExtraInfo, so we use it as a hint
-                for (auto &ins : disasm) {
-                    if (imported_call_target(ins) != extraInfo)
-                        continue;
+                    // the function to determine if show win10 menu or win11
+                    // menu calls SetMessageExtraInfo, so we use it as a hint
+                    for (auto &ins : disasm) {
+                        if (imported_call_target(ins) != extraInfo)
+                            continue;
 
-                    if (patch_key_state_check(
-                            ins.ptr()
-                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                                ->range_size(0xB50)
-                                .disassembly(),
-                            0x10)) {
-                        spdlog::info("Patched shell32.dll for win11 menu fix");
-                        break;
+                        if (patch_key_state_check(
+                                ins.ptr()
+                                    .find_upwards(
+                                        {0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                                    ->range_size(0xB50)
+                                    .disassembly(),
+                                0x10)) {
+                            spdlog::info(
+                                "Patched shell32.dll for win11 menu fix");
+                            break;
+                        }
                     }
                 }
             }

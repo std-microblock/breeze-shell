@@ -119,6 +119,12 @@ struct config {
         bool hotkeys = true;
         bool show_settings_button = true;
         bool patch_explorerframe_dll = true;
+        // Patching this shell32 SHIFT-key check makes Explorer believe SHIFT
+        // is held down, which forces CMF_EXTENDEDVERBS onto every menu.
+        // That makes the "Send To" submenu enumerate every folder under
+        // %USERPROFILE% (#212 / #240 / #323) while contributing nothing
+        // else, so it stays off by default.
+        bool patch_shell32_dll = false;
 
         // debug purpose only
         bool search_large_dwItemData_range = false;

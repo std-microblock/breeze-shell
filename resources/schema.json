@@ -384,6 +384,12 @@
           "type": "boolean",
           "default": true
         },
+        "patch_shell32_dll": {
+          "title": "Patch shell32.dll SHIFT Key Check",
+          "description": "Forces CMF_EXTENDEDVERBS onto every context menu by making Explorer believe SHIFT is held down. This makes the Send To submenu enumerate every folder under the user profile, so it is disabled by default.",
+          "type": "boolean",
+          "default": false
+        },
         "search_large_dwItemData_range": {
           "title": "Search Larger Range of DWItemData",
           "description": "Search for a larger range of DWItemData",
