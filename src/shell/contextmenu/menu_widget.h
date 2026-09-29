@@ -120,6 +120,12 @@ struct menu_widget : public ui::flex_widget {
     bool bg_appear_initialized = false;
     std::optional<menu_animation_rect> bg_start_rect;
     void init_from_data(menu menu_data);
+
+    // Set when the native popup behind this submenu changed after we built it.
+    // Shell popups such as "Send To" are filled in lazily, so we have to
+    // re-read them once their owner has finished adding items.
+    bool native_content_dirty = false;
+    void resync_from_native();
     void arm_background_animation(
         std::optional<menu_animation_rect> initial_rect = std::nullopt);
     bool animate_appear_started = false;

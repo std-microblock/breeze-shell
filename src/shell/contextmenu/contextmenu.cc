@@ -136,7 +136,7 @@ std::vector<std::string> extract_hotkeys(const std::string &name) {
 menu menu::construct_with_hmenu(
     HMENU hMenu, HWND hWnd, bool is_top,
     std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg,
-    LPARAM init_popup_lparam) {
+    LPARAM init_popup_lparam, bool send_init_msg) {
     menu m;
 
     if (!HandleMenuMsg)
@@ -144,8 +144,10 @@ menu menu::construct_with_hmenu(
             SendMessageW(hWnd, message, wParam, lParam);
         };
 
-    HandleMenuMsg(WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
-                  init_popup_lparam);
+    if (send_init_msg) {
+        HandleMenuMsg(WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
+                      init_popup_lparam);
+    }
     for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
         menu_item item;
         wchar_t buffer[256];
@@ -179,7 +181,12 @@ menu menu::construct_with_hmenu(
         if (info.hSubMenu) {
             auto main_thread_id = GetCurrentThreadId();
             int submenu_pos = i;
+            // Only for the diagnostic below; `buffer` must not be captured.
+            auto owner_name = wstring_to_utf8(strip_extra_infos(buffer));
             item.submenu = [=](std::shared_ptr<menu_widget> mw) {
+                spdlog::info("Initialising native submenu '{}' (hMenu={}, "
+                             "parent_pos={})",
+                             owner_name, (void *)info.hSubMenu, submenu_pos);
                 auto task = [&]() {
                     mw->init_from_data(menu::construct_with_hmenu(
                         info.hSubMenu, hWnd, false, HandleMenuMsg,
@@ -293,6 +300,23 @@ menu menu::construct_with_hmenu(
     m.parent_window = hWnd;
     m.native_handle = hMenu;
     m.is_top_level = is_top;
+    m.handle_menu_msg = HandleMenuMsg;
+    m.init_popup_lparam = init_popup_lparam;
+
+    if (!is_top) {
+        std::string names;
+        for (size_t i = 0; i < m.items.size() && i < 6; i++) {
+            if (!names.empty())
+                names += " | ";
+            if (m.items[i].type == menu_item::type::spacer)
+                names += "<spacer>";
+            else
+                names += m.items[i].name.value_or("<unnamed>");
+        }
+        spdlog::info("Native submenu contents (hMenu={}, items={}): {}",
+                     (void *)hMenu, m.items.size(), names);
+    }
+
     return m;
 }
 } // namespace mb_shell

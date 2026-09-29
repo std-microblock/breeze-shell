@@ -323,6 +323,38 @@ void sync_native_menu_item_update(HMENU hMenu, UINT item, BOOL fByPosition,
         },
         true);
 }
+
+// Shell popups such as "Send To" are populated lazily: their owner keeps
+// inserting items into the HMENU after we already built the Breeze widget for
+// them. Mark the matching submenu so the render loop re-reads it (see
+// menu_widget::resync_from_native). The widget tree may only be touched from
+// the render loop thread, so hop over there first.
+void schedule_submenu_resync(HMENU hMenu) {
+    if (!current_live_menu()) {
+        return;
+    }
+
+    auto render = mb_shell::menu_render::current;
+    if (!render || !(*render) || !(*render)->rt) {
+        return;
+    }
+
+    (*render)->rt->post_loop_thread_task(
+        [hMenu]() {
+            auto root = current_root_menu_widget();
+            if (!root) {
+                return;
+            }
+
+            auto target = find_menu_widget_by_handle(root, hMenu);
+            if (!target || target->menu_data.is_top_level) {
+                return;
+            }
+
+            target->native_content_dirty = true;
+        },
+        true);
+}
 } // namespace
 
 #define WARN_LATE_MENU_MUTATION(API_NAME, HMENU_VALUE, FMT, ...)               \
@@ -332,6 +364,10 @@ void sync_native_menu_item_update(HMENU hMenu, UINT item, BOOL fByPosition,
                          " (current_menu={}, hMenu={}, " FMT ")",              \
                          current_live_menu(), (void *)(HMENU_VALUE),           \
                          __VA_ARGS__);                                         \
+            /* Any late change may also have added/removed items, so let the   \
+               submenu re-read its native popup. Coalesced by the per-frame    \
+               native_content_dirty flag. */                                   \
+            schedule_submenu_resync(HMENU_VALUE);                              \
         }                                                                      \
     } while (false)
 

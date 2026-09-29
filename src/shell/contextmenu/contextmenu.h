@@ -19,11 +19,19 @@ struct menu {
     void *native_handle = nullptr;
     bool is_top_level = false;
 
-    static menu
-    construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true,
-                         std::function<void(int, WPARAM, LPARAM)>
-                             HandleMenuMsg = {},
-                         LPARAM init_popup_lparam = 0xFFFFFFFF);
+    // Kept so a deferred submenu can be re-read later: shell popups such as
+    // "Send To" keep inserting items into their HMENU after we have already
+    // built the widget for it.
+    std::function<void(int, WPARAM, LPARAM)> handle_menu_msg;
+    LPARAM init_popup_lparam = 0xFFFFFFFF;
+
+    // send_init_msg = false re-reads the current contents of hMenu without
+    // sending WM_INITMENUPOPUP again, so the menu owner is not asked to
+    // populate (and therefore duplicate) the menu a second time.
+    static menu construct_with_hmenu(
+        HMENU hMenu, HWND hWnd, bool is_top = true,
+        std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg = {},
+        LPARAM init_popup_lparam = 0xFFFFFFFF, bool send_init_msg = true);
 };
 
 std::optional<int>

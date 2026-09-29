@@ -347,6 +347,13 @@ void mb_shell::menu_widget::arm_background_animation(
 }
 
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
+    // Do it before laying out the children so the new content is measured and
+    // painted in this same frame.
+    if (native_content_dirty) {
+        native_content_dirty = false;
+        resync_from_native();
+    }
+
     if (dying_time) {
         if (dying_time.changed() && is_top_level_menu) {
             y->animate_to(*y - 10);
@@ -963,6 +970,43 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 
     update_icon_width();
     this->menu_data = menu_data;
+}
+
+void mb_shell::menu_widget::resync_from_native() {
+    if (is_top_level_menu || !menu_data.native_handle)
+        return;
+
+    auto hMenu = (HMENU)menu_data.native_handle;
+    auto hWnd = (HWND)menu_data.parent_window;
+
+    // The owner has already populated the popup, so read it without sending
+    // WM_INITMENUPOPUP again (that would ask it to add everything twice).
+    auto fresh = menu::construct_with_hmenu(hMenu, hWnd, false,
+                                            menu_data.handle_menu_msg,
+                                            menu_data.init_popup_lparam,
+                                            /*send_init_msg=*/false);
+
+    if (fresh.items.empty())
+        return;
+
+    spdlog::info(
+        "Re-syncing deferred native submenu (hMenu={}, items {} -> {})",
+        (void *)hMenu, children.size(), fresh.items.size());
+
+    for (auto &child : children) {
+        if (auto item = child->downcast<menu_item_normal_widget>())
+            item->hide_submenu();
+    }
+
+    if (current_submenu) {
+        current_submenu->close();
+        current_submenu = nullptr;
+    }
+    rendering_submenus.clear();
+    children.clear();
+
+    init_from_data(fresh);
+    needs_repaint = true;
 }
 void mb_shell::menu_widget::update_icon_width() {
     bool has_icon = std::ranges::any_of(children, [](auto &item) {
