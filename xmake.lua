@@ -57,10 +57,14 @@ target("shell")
 
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt", "breeze-js-runtime")
-    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
+    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp", "dwmapi")
     add_rules("utils.bin2obj", {
         extensions = {".js"}
     })
+    add_rules("utils.bin2c", {
+        extensions = {".ico"}
+    })
+    add_files("resources/injector.ico")
     set_version(version)
     set_configdir("src/shell")
     add_configfiles("src/shell/build_info.h.in")

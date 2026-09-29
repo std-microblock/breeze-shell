@@ -10,9 +10,21 @@
 #include <print>
 #include <thread>
 #include <Windows.h>
+#include <dwmapi.h>
 
 #include "../utils.h"
 #include "spdlog/spdlog.h"
+
+// Windows 10 20H1 之前的系统用属性 19，SDK 头文件里可能还没有定义
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_PRE_20H1 19
+
+// resources/injector.ico 的原始内容，由 xmake 的 utils.bin2c 规则生成
+static unsigned char g_injector_ico[] = {
+#include "injector.ico.h"
+};
 
 namespace mb_shell::js {
 
@@ -25,6 +37,87 @@ void set_owner_rt_recursive(const std::shared_ptr<ui::widget> &widget,
     widget->owner_rt = owner_rt;
     for (auto &child : widget->children) {
         set_owner_rt_recursive(child, owner_rt);
+    }
+}
+
+// 从 ico 数据里挑一帧最接近 want 尺寸的，直接交给系统造 HICON。
+// ico 里每一帧本身就是一份 RT_ICON 资源（BITMAPINFOHEADER + 像素 + AND 掩码），
+// 所以 CreateIconFromResourceEx 可以直接吃，不需要自己解码。
+HICON load_icon_from_ico(const unsigned char *data, size_t size, int want) {
+    if (!data || size < 6) {
+        return nullptr;
+    }
+    auto rd16 = [](const unsigned char *p) {
+        return static_cast<unsigned>(p[0] | (p[1] << 8));
+    };
+    auto rd32 = [](const unsigned char *p) {
+        return static_cast<unsigned>(p[0] | (p[1] << 8) | (p[2] << 16) |
+                                     (static_cast<unsigned>(p[3]) << 24));
+    };
+    // ICONDIR: reserved=0, type=1(ICON), count
+    if (rd16(data) != 0 || rd16(data + 2) != 1) {
+        return nullptr;
+    }
+    const unsigned count = rd16(data + 4);
+    const unsigned char *frame = nullptr;
+    unsigned frame_size = 0, best_delta = ~0u;
+    for (unsigned i = 0; i < count; ++i) {
+        const unsigned char *entry = data + 6 + i * 16;
+        if (static_cast<size_t>(entry - data) + 16 > size) {
+            break;
+        }
+        const unsigned w = entry[0] ? entry[0] : 256;
+        const unsigned h = entry[1] ? entry[1] : 256;
+        const unsigned bytes = rd32(entry + 8);
+        const unsigned offset = rd32(entry + 12);
+        if (w != h || static_cast<size_t>(offset) + bytes > size) {
+            continue;
+        }
+        const unsigned delta = w > static_cast<unsigned>(want)
+                                   ? w - static_cast<unsigned>(want)
+                                   : static_cast<unsigned>(want) - w;
+        if (delta < best_delta) {
+            best_delta = delta;
+            frame = data + offset;
+            frame_size = bytes;
+        }
+    }
+    if (!frame) {
+        return nullptr;
+    }
+    return static_cast<HICON>(CreateIconFromResourceEx(
+        const_cast<unsigned char *>(frame), frame_size, TRUE, 0x00030000, 0, 0,
+        LR_DEFAULTCOLOR));
+}
+
+// 窗口建好后补上系统标题栏相关的设置。GLFW 注册窗口类时找不到 GLFW_ICON 资源就会退回
+// IDI_APPLICATION（也就是 Windows 程序的那个通用图标），另外它也不会开启沉浸式深色标题栏，
+// 于是深色主题下标题栏文字和最小化/最大化/关闭三个按钮会画成黑字黑底，跟背景糊在一起。
+void apply_native_window_style(HWND hwnd) {
+    if (!hwnd) {
+        return;
+    }
+
+    const BOOL use_dark = is_light_mode() ? FALSE : TRUE;
+    if (FAILED(DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &use_dark,
+                                     sizeof(use_dark)))) {
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_PRE_20H1, &use_dark,
+                              sizeof(use_dark));
+    }
+
+    // 图标做成进程内共享，省得每开一个窗口都多留两个句柄。
+    // 也刻意不 DestroyIcon：窗口整个生命周期都会引用它，等进程退出由系统回收。
+    static HICON small_icon =
+        load_icon_from_ico(g_injector_ico, sizeof(g_injector_ico), 16);
+    static HICON big_icon =
+        load_icon_from_ico(g_injector_ico, sizeof(g_injector_ico), 32);
+    if (small_icon) {
+        SendMessageW(hwnd, WM_SETICON, ICON_SMALL,
+                     reinterpret_cast<LPARAM>(small_icon));
+    }
+    if (big_icon) {
+        SendMessageW(hwnd, WM_SETICON, ICON_BIG,
+                     reinterpret_cast<LPARAM>(big_icon));
     }
 }
 } // namespace
@@ -741,6 +834,8 @@ breeze_ui::window::create_ex(std::string title, int width, int height,
     std::thread([win, on_close = std::move(on_close)]() {
         set_thread_name("breeze::js_window_renderer");
         if (auto res = win->$render_target->init(); res) {
+            apply_native_window_style(
+                static_cast<HWND>(win->$render_target->hwnd()));
             config::current->apply_fonts_to_nvg(win->$render_target->nvg);
             win->$render_target->show();
             win->$render_target->start_loop();
