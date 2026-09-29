@@ -31,6 +31,8 @@ static unsigned char g_icon_png[] = {
 
 #include "Shlobj.h"
 
+#include <dwmapi.h>
+
 namespace fs = std::filesystem;
 
 void init_inject_logger() {
@@ -1123,6 +1125,63 @@ std::string getFontPath() {
     throw std::runtime_error("no font found");
 }
 
+// ── 原生标题栏修正 ──────────────────────────────────────────────
+// GLFW 注册窗口类时按名字去 exe 资源里找 "GLFW_ICON"
+// （见 breeze-glfw/src/win32_window.c 的 createNativeWindow），找不到就退回
+// IDI_APPLICATION —— 也就是 Windows 那个通用程序图标。而 src/inject/inject.rc
+// 里图标组的名字实际是 "IDI_APP_ICON"，两边对不上，所以标题栏图标一直是错的。
+// 另外 GLFW 不会开沉浸式深色标题栏，深色主题下最小化/最大化/关闭这三个按钮
+// 会按浅色标题栏渲染成黑字黑底，跟内容糊在一起。
+//
+// Windows 10 20H1 之前的系统用属性 19，SDK 头文件里可能还没有定义
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_PRE_20H1 19
+
+static bool is_light_mode() {
+    DWORD data = 0;
+    DWORD size = sizeof(data);
+    auto res = RegGetValueW(
+        HKEY_CURRENT_USER,
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &data, &size);
+    return res == ERROR_SUCCESS && data == 1;
+}
+
+static void apply_native_window_style(HWND hwnd) {
+    if (!hwnd) {
+        return;
+    }
+
+    const BOOL use_dark = is_light_mode() ? FALSE : TRUE;
+    if (FAILED(DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                     &use_dark, sizeof(use_dark)))) {
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_PRE_20H1,
+                              &use_dark, sizeof(use_dark));
+    }
+
+    // 按资源组的真实名字取图标，系统会从图标组里挑最接近请求尺寸的那一帧。
+    // 做成 static 共享，也刻意不 DestroyIcon —— 窗口整个生命周期都在引用它，
+    // 等进程退出由系统回收。
+    static HICON small_icon = static_cast<HICON>(
+        LoadImageW(GetModuleHandleW(nullptr), L"IDI_APP_ICON", IMAGE_ICON,
+                   GetSystemMetrics(SM_CXSMICON),
+                   GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR));
+    static HICON big_icon = static_cast<HICON>(
+        LoadImageW(GetModuleHandleW(nullptr), L"IDI_APP_ICON", IMAGE_ICON,
+                   GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
+                   LR_DEFAULTCOLOR));
+    if (small_icon) {
+        SendMessageW(hwnd, WM_SETICON, ICON_SMALL,
+                     reinterpret_cast<LPARAM>(small_icon));
+    }
+    if (big_icon) {
+        SendMessageW(hwnd, WM_SETICON, ICON_BIG,
+                     reinterpret_cast<LPARAM>(big_icon));
+    }
+}
+
 void StartInjectUI() {
     if (auto r = ui::render_target::init_global(); !r) {
         spdlog::error("Failed to initialize global render target.");
@@ -1138,6 +1197,7 @@ void StartInjectUI() {
         spdlog::error("Failed to initialize render target.");
         return;
     }
+    apply_native_window_style(static_cast<HWND>(rt.hwnd()));
     nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
     rt.root->emplace_child<injector_ui_main>();
     rt.start_loop();
@@ -1183,6 +1243,7 @@ void ShowCrashDialog() {
         return;
     }
 
+    apply_native_window_style(static_cast<HWND>(rt.hwnd()));
     nvgCreateFont(rt.nvg, "main", getFontPath().c_str());
 
     auto error_ui = rt.root->emplace_child<ui::flex_widget>();
