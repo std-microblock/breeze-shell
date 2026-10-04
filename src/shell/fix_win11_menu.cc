@@ -107,6 +107,9 @@ void mb_shell::fix_win11_menu::install() {
                 if (xrefs.empty())
                     return nullptr;
 
+                if (!mb_shell::is_memory_readable(xrefs[0].data()))
+                    return nullptr;
+
                 if (auto ptr = xrefs[0].try_read_pointer())
                     return ptr->data();
 
@@ -246,10 +249,12 @@ void mb_shell::fix_win11_menu::install() {
                     if (imported_call_target(ins) != extraInfo)
                         continue;
 
-                    auto function =
-                        ins.ptr()
-                            .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                            ->range_size(0xB50);
+                    auto padding =
+                        ins.ptr().find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC});
+                    if (!padding)
+                        continue;
+
+                    auto function = padding->range_size(0xB50);
 
                     if (patch_classic_menu_decision(function.disassembly(),
                                                     shell32.value())) {
@@ -274,11 +279,13 @@ void mb_shell::fix_win11_menu::install() {
                         if (!is_key_state_call(ins))
                             continue;
 
+                        auto padding = ins.ptr().find_upwards(
+                            {0xCC, 0xCC, 0xCC, 0xCC, 0xCC});
+                        if (!padding)
+                            continue;
+
                         auto function =
-                            ins.ptr()
-                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                                ->range_size(0x200)
-                                .disassembly();
+                            padding->range_size(0x200).disassembly();
                         if (!has_key_state_check(function, 0x10) ||
                             !has_key_state_check(function, 0x79)) {
                             continue;
