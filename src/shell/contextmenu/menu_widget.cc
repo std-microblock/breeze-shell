@@ -302,12 +302,13 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
 
     if (item.submenu) {
         float show_submenu_timer_before = show_submenu_timer;
+        /* 单帧 delta 可能很大 (首帧/掉帧), 不夹住的话悬停计时器会一步越过 150ms,
+           子菜单在鼠标刚扫过时就弹出来, 甚至抢在用户点击父项之前 */
+        const float step = std::min(ctx.delta_time, 50.f);
         if (ctx.hovered(this)) {
-            show_submenu_timer =
-                std::min(show_submenu_timer + ctx.delta_time, 300.f);
+            show_submenu_timer = std::min(show_submenu_timer + step, 300.f);
         } else if (ctx.within(parent).hovered(parent)) {
-            show_submenu_timer =
-                std::max(show_submenu_timer - ctx.delta_time, 0.f);
+            show_submenu_timer = std::max(show_submenu_timer - step, 0.f);
         }
 
         // only act if changed
