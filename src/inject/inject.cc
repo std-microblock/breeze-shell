@@ -2,6 +2,7 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -117,7 +118,11 @@ void GetDebugPrivilege() {
 void ShowCrashDialog();
 
 constexpr int MAX_CRASH_COUNT = 3;
-static std::atomic<int> crash_count = 0;
+constexpr auto CRASH_WINDOW = std::chrono::minutes(10);
+static std::mutex crash_mutex;
+static mb_shell::crash_window crash_history(MAX_CRASH_COUNT, CRASH_WINDOW);
+static std::atomic<bool> injection_suspended = false;
+static std::atomic<bool> crash_dialog_open = false;
 
 fs::path GetKeepInjectingAfterCrashFlagPath() {
     return data_directory() / "keep_injecting_after_crash.flag";
@@ -157,9 +162,69 @@ void SignalInjectConsistentExit() {
     CloseHandle(event);
 }
 
+const char *BlameName(mb_shell::crash_blame blame) {
+    switch (blame) {
+    case mb_shell::crash_blame::breeze:
+        return "breeze";
+    case mb_shell::crash_blame::foreign:
+        return "foreign";
+    case mb_shell::crash_blame::unknown:
+        return "unknown";
+    default:
+        return "none";
+    }
+}
+
+void OnInjectedProcessExit(DWORD pid, DWORD exitCode) {
+    auto marker_path = data_directory() / "crashes" /
+                       (std::to_wstring(pid) + L".txt");
+    auto marker = mb_shell::read_crash_marker(marker_path);
+    auto blame = mb_shell::blame_crash(exitCode, marker);
+
+    if (blame == mb_shell::crash_blame::none)
+        return;
+
+    spdlog::error("Process {} exited with 0x{:08x}, blame={}, module={}, "
+                  "stack={}",
+                  pid, exitCode, BlameName(blame),
+                  marker ? marker->module : "-",
+                  marker ? marker->stack_modules : "-");
+
+    if (marker) {
+        std::error_code ec;
+        auto archived = marker_path;
+        archived.replace_extension(
+            std::to_string(std::chrono::system_clock::now()
+                               .time_since_epoch()
+                               .count()) +
+            ".log");
+        fs::rename(marker_path, archived, ec);
+    }
+
+    if (blame == mb_shell::crash_blame::foreign)
+        return;
+
+    bool limit_reached;
+    {
+        std::lock_guard lock(crash_mutex);
+        limit_reached =
+            crash_history.record(mb_shell::crash_window::clock::now());
+        if (limit_reached)
+            crash_history.reset();
+    }
+    if (!limit_reached)
+        return;
+
+    if (!ShouldKeepInjectingAfterCrash())
+        injection_suspended = true;
+    if (!crash_dialog_open.exchange(true)) {
+        ShowCrashDialog();
+        crash_dialog_open = false;
+    }
+}
+
 int InjectToPID(int targetPID, std::wstring_view dllPath) {
-    if (!ShouldKeepInjectingAfterCrash() &&
-        crash_count.load() >= MAX_CRASH_COUNT) {
+    if (injection_suspended.load()) {
         return 1;
     }
 
@@ -202,25 +267,14 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
     WaitForSingleObject(hThread, INFINITE);
     CloseHandle(hThread);
 
-    std::thread([hProcess]() {
+    std::thread([hProcess, targetPID]() {
         WaitForSingleObject(hProcess, INFINITE);
-        auto exitCode = 0;
-        if (!GetExitCodeProcess(hProcess, (LPDWORD)&exitCode)) {
-            spdlog::error("GetExitCodeProcess failed: %d", GetLastError());
-        }
-        if (mb_shell::is_crash_exit_code(exitCode)) {
-            spdlog::error("Process crashed with exit code: 0x{:08x}", exitCode);
-            auto current_crash_count = ++crash_count;
-            if (current_crash_count >= MAX_CRASH_COUNT) {
-                ShowCrashDialog();
-                if (ShouldKeepInjectingAfterCrash()) {
-                    crash_count.store(0);
-                }
-            }
-        } else {
-            crash_count.store(0);
+        DWORD exitCode = 0;
+        if (!GetExitCodeProcess(hProcess, &exitCode)) {
+            spdlog::error("GetExitCodeProcess failed: {}", GetLastError());
         }
         CloseHandle(hProcess);
+        OnInjectedProcessExit(targetPID, exitCode);
     }).detach();
 
     spdlog::info("DLL injected successfully.");
@@ -945,7 +999,8 @@ void InjectAllConsistent() {
         std::vector<DWORD> pids = GetExplorerPIDs();
 
         for (DWORD pid : pids) {
-            if (!std::ranges::contains(injected, pid) &&
+            if (!injection_suspended.load() &&
+                !std::ranges::contains(injected, pid) &&
                 !IsInjected(pid, dllPath)) {
                 InjectToPID(pid, dllPath);
                 injected.push_back(pid);

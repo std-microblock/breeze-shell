@@ -78,7 +78,7 @@ void main() {
     set_thread_locale_utf8();
 
     init_logger();
-    // install_error_handlers();
+    install_error_handlers();
     config::run_config_loader();
 
     if (config::current->debug_console) {
@@ -97,23 +97,6 @@ void main() {
             return !context_menu_hooks::block_js_reload.load();
         });
     }).detach();
-
-    std::set_terminate([]() {
-        auto eptr = std::current_exception();
-        if (eptr) {
-            init_console(true);
-            try {
-                std::rethrow_exception(eptr);
-            } catch (const std::exception &e) {
-                spdlog::critical("Uncaught exception: {}", e.what());
-            } catch (...) {
-                spdlog::critical("Uncaught exception of unknown type");
-            }
-
-            std::getchar();
-        }
-        std::abort();
-    });
 
     wchar_t executable_path[MAX_PATH];
     if (GetModuleFileNameW(NULL, executable_path, MAX_PATH) == 0) {
