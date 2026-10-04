@@ -79,7 +79,7 @@ target("shell")
         end
     end)
     add_files("src/shell/script/script.js")
-    add_files("src/shell/**.cc")
+    add_files("src/shell/**.cc", "src/shell/shell.rc")
     set_encodings("utf-8")
 
     if has_config("asan") then
