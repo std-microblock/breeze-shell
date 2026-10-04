@@ -26,7 +26,7 @@ add_requires("sentry-native", {
 })
 add_requires("breeze-glfw", {alias = "glfw"})
 add_requires("blook 9c24a0b6e7c7055adcd8f440a558f84f831e4f0f", "glad 0.1.36",
-    "reflect-cpp", "wintoast v1.3.1", "breeze-ui", "watcher", "breeze-js-runtime")
+    "reflect-cpp v0.22.0", "wintoast v1.3.1", "breeze-ui", "watcher", "breeze-js-runtime")
 add_requires("fmt", {configs = {header_only = true}})
 add_requires("spdlog", {configs = {fmt_external = true}})
 
