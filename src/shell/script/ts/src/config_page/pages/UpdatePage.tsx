@@ -3,7 +3,8 @@ import { Button, Text, SimpleMarkdownRender, Toggle } from "../components";
 import { AppConfigContext, UpdateDataContext, NotificationContext, PluginSourceContext } from "../contexts";
 import { useTranslation } from "../hooks";
 import { memo, useContext, useEffect, useState, useMemo } from "react";
-import { formatBytes, installShellUpdate, UpdateProgress } from "../../utils/update";
+import { formatBytes, UpdateProgress, runManualUpdate, readPendingUpdate, restartExplorer, getInjectorInfo } from "../../utils/update";
+import { compareVersions } from "../../utils/semver";
 
 const UpdatePage = memo(() => {
     const { config, updateConfig } = useContext(AppConfigContext)!;
@@ -13,12 +14,14 @@ const UpdatePage = memo(() => {
     const { t } = useTranslation();
     const current_version = useMemo(() => shell.breeze.version(), []);
 
-    const [exist_old_file, set_exist_old_file] = useState(false);
+    const [pending, setPending] = useState<{ version: string } | null>(null);
+    const [injector, setInjector] = useState(getInjectorInfo());
     const [isUpdating, setIsUpdating] = useState(false);
     const [progress, setProgress] = useState<UpdateProgress | null>(null);
 
     useEffect(() => {
-        set_exist_old_file(shell.fs.exists(shell.breeze.data_directory() + '/shell_old.dll'));
+        setPending(readPendingUpdate());
+        setInjector(getInjectorInfo());
     }, []);
 
     if (!updateData) {
@@ -27,14 +30,18 @@ const UpdatePage = memo(() => {
 
     const remote_version = updateData.shell.version;
     const autoUpdateEnabled = config?.auto_update !== false;
+    const pendingRestart = pending != null;
+    const canUpdate = compareVersions(remote_version, current_version) > 0 || !injector.installed;
     const progressPercent = progress?.percent != null ? Math.round(progress.percent * 100) : null;
-    const progressLabel = progress?.phase === "applying"
-        ? t("update.applying")
-        : progress
-            ? progress.totalBytes != null
-                ? `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)} / ${formatBytes(progress.totalBytes)} (${progressPercent}%)`
-                : `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)}`
-            : null;
+    const progressLabel = progress?.phase === "verifying"
+        ? t("update.verifying")
+        : progress?.phase === "applying"
+            ? t("update.applying")
+            : progress
+                ? progress.totalBytes != null
+                    ? `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)} / ${formatBytes(progress.totalBytes)} (${progressPercent}%)`
+                    : `${t("update.downloading")} ${formatBytes(progress.downloadedBytes)}`
+                : null;
 
     const updateShell = async () => {
         if (isUpdating) return;
@@ -48,13 +55,14 @@ const UpdatePage = memo(() => {
         });
 
         try {
-            await installShellUpdate({
+            await runManualUpdate({
                 updateData,
                 sourceName: currentPluginSource,
                 onProgress: setProgress
             });
             shell.println(t('update.updateSuccess'));
-            set_exist_old_file(true);
+            setPending(readPendingUpdate());
+            setInjector(getInjectorInfo());
         } catch (e) {
             const message = String(e);
             shell.println(t('update.updateFailed') + message);
@@ -74,11 +82,16 @@ const UpdatePage = memo(() => {
             <flex gap={10}>
                 <Text>{`${t("update.currentVersion")}: ${current_version}`}</Text>
                 <Text>{`${t("update.latestVersion")}: ${remote_version}`}</Text>
-                <Button onClick={current_version === remote_version || isUpdating ? () => { } : () => { void updateShell(); }}>
+                <Button onClick={canUpdate && !isUpdating ? () => { void updateShell(); } : () => { }}>
                     <Text>{
                         isUpdating ? (progressPercent != null ? `${t("update.updating")} ${progressPercent}%` : t("update.updating")) :
-                            exist_old_file ? t("update.updateSuccess") : (current_version === remote_version ? (current_version + ' (latest)') : `${current_version} -> ${remote_version}`)}</Text>
+                            pendingRestart ? t("update.pendingRestart") : (canUpdate ? `${current_version} -> ${remote_version}` : (current_version + ' (latest)'))}</Text>
                 </Button>
+                {pendingRestart && !isUpdating && (
+                    <Button onClick={() => restartExplorer()}>
+                        <Text>{t("update.restartNow")}</Text>
+                    </Button>
+                )}
                 {progressLabel && (
                     <flex gap={6}>
                         <Text>{progressLabel}</Text>
@@ -98,6 +111,12 @@ const UpdatePage = memo(() => {
                             />
                         </flex>
                     </flex>
+                )}
+            </flex>
+            <flex gap={10}>
+                <Text>{`${t("update.injectorVersion")}: ${injector.installed ? (injector.version || 'unknown') : t("update.injectorNotInstalled")}`}</Text>
+                {updateData.injector?.version && (
+                    <Text>{`${t("update.latestVersion")}: ${updateData.injector.version}`}</Text>
                 )}
             </flex>
             <flex gap={10}>

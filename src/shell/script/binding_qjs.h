@@ -1292,6 +1292,12 @@ template<> struct js_bind<mb_shell::js::breeze> {
                 .static_fun<&mb_shell::js::breeze::current_process_path>("current_process_path")
                 .static_fun<&mb_shell::js::breeze::crash_cpu_exception>("crash_cpu_exception")
                 .static_fun<&mb_shell::js::breeze::crash_cpp_exception>("crash_cpp_exception")
+                .static_fun<&mb_shell::js::breeze::try_named_mutex>("try_named_mutex")
+                .static_fun<&mb_shell::js::breeze::release_named_mutex>("release_named_mutex")
+                .static_fun<&mb_shell::js::breeze::file_sha256>("file_sha256")
+                .static_fun<&mb_shell::js::breeze::file_size>("file_size")
+                .static_fun<&mb_shell::js::breeze::file_is_x64_pe>("file_is_x64_pe")
+                .static_fun<&mb_shell::js::breeze::file_version>("file_version")
             ;
     }
 };

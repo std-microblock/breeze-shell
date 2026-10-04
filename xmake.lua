@@ -1,5 +1,5 @@
 set_project("shell")
-local version = "0.1.34"
+local version = "0.1.35"
 
 option("asan")
     set_default(false)
@@ -58,13 +58,14 @@ target("shell")
 
     add_defines("NOMINMAX", "WIN32_LEAN_AND_MEAN")
     add_packages("blook", "reflect-cpp", "wintoast", "yalantinglibs", "breeze-ui", "sentry-native", "watcher", "spdlog", "fmt", "breeze-js-runtime")
-    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp")
+    add_syslinks("oleacc", "ole32", "oleaut32", "uuid", "comctl32", "comdlg32", "gdi32", "user32", "shell32", "kernel32", "advapi32", "psapi", "Winhttp", "dbghelp", "version", "bcrypt")
     add_rules("utils.bin2obj", {
         extensions = {".js"}
     })
     set_version(version)
     set_configdir("src/shell")
     add_configfiles("src/shell/build_info.h.in")
+    add_configfiles("src/shell/version.rc.in", {filename_only = true})
     on_config(function (package)
         local git_commit_hash = os.iorun("git rev-parse --short HEAD"):trim()
         local git_branch_name = os.iorun("git describe --all"):trim()
@@ -80,7 +81,7 @@ target("shell")
         end
     end)
     add_files("src/shell/script/script.js")
-    add_files("src/shell/**.cc", "src/shell/shell.rc")
+    add_files("src/shell/**.cc", "src/shell/*.rc")
     set_encodings("utf-8")
 
     if has_config("asan") then
@@ -97,11 +98,14 @@ target("asan_test")
 
 target("inject")
     set_kind("binary")
-    add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32", "taskschd", "ole32", "oleaut32", "taskschd", "comsupp")
+    set_version(version)
+    add_syslinks("psapi", "user32", "shell32", "kernel32", "advapi32", "taskschd", "ole32", "oleaut32", "taskschd", "comsupp", "version")
     add_files("src/inject/*.cc", "src/inject/*.rc")
     add_packages("breeze-ui", "spdlog", "fmt")
     set_basename("breeze")
     set_encodings("utf-8")
+    set_configdir("src/inject")
+    add_configfiles("src/inject/version.rc.in", {filename_only = true})
     add_rules("utils.bin2c", {
         extensions = {".png"}
     })

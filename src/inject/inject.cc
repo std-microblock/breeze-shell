@@ -1,8 +1,11 @@
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,6 +27,7 @@ static unsigned char g_icon_png[] = {
 };
 
 #include <Windows.h>
+#include <winver.h>
 
 #include "data_directory.inc"
 #include <TlHelp32.h>
@@ -62,6 +66,282 @@ std::wstring GetModuleDirectory() {
     return fs::path(path).parent_path().wstring();
 }
 
+std::wstring GetSelfPath() {
+    wchar_t path[MAX_PATH];
+    GetModuleFileNameW(NULL, path, MAX_PATH);
+    return path;
+}
+
+struct instance_config {
+    std::wstring id;
+    std::wstring target_root;
+    std::wstring run_key = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+    std::wstring task_name = L"breeze-shell-startup";
+};
+
+instance_config g_instance;
+
+std::string ToUtf8(const std::wstring &wide) {
+    int size = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), (int)wide.size(),
+                                   nullptr, 0, nullptr, nullptr);
+    std::string out(size, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), (int)wide.size(), out.data(),
+                        size, nullptr, nullptr);
+    return out;
+}
+
+std::vector<std::wstring> SplitLines(const std::wstring &text) {
+    std::vector<std::wstring> lines;
+    std::wstring current;
+    for (wchar_t c : text) {
+        if (c == L'\n') {
+            if (!current.empty() && current.back() == L'\r') {
+                current.pop_back();
+            }
+            lines.push_back(current);
+            current.clear();
+        } else {
+            current.push_back(c);
+        }
+    }
+    if (!current.empty()) {
+        if (current.back() == L'\r') {
+            current.pop_back();
+        }
+        lines.push_back(current);
+    }
+    return lines;
+}
+
+void LoadInstanceConfig() {
+    auto read = [](const wchar_t *name) -> std::wstring {
+        wchar_t buf[1024] = {0};
+        DWORD n = GetEnvironmentVariableW(name, buf, 1024);
+        return n > 0 && n < 1024 ? std::wstring(buf) : L"";
+    };
+    g_instance.id = read(L"BREEZE_INSTANCE");
+    g_instance.target_root = read(L"BREEZE_TARGET_ROOT");
+    auto runKey = read(L"BREEZE_RUN_KEY");
+    if (!runKey.empty()) {
+        g_instance.run_key = runKey;
+    }
+    auto taskName = read(L"BREEZE_TASK_NAME");
+    if (!taskName.empty()) {
+        g_instance.task_name = taskName;
+    }
+}
+
+std::optional<std::wstring> ReadInstanceMarker() {
+    std::ifstream file(data_directory() / L"instance", std::ios::binary);
+    if (!file.is_open()) {
+        return std::nullopt;
+    }
+    std::string narrow((std::istreambuf_iterator<char>(file)),
+                       std::istreambuf_iterator<char>());
+    std::wstring marker(narrow.begin(), narrow.end());
+    while (!marker.empty() && (marker.back() == L'\r' || marker.back() == L'\n')) {
+        marker.pop_back();
+    }
+    return marker;
+}
+
+bool InstanceMarkerMatches() {
+    auto marker = ReadInstanceMarker();
+    if (!marker) {
+        return true;
+    }
+    return *marker == g_instance.id;
+}
+
+std::wstring ScopedName(const std::wstring &name) {
+    if (g_instance.id.empty()) {
+        return name;
+    }
+    return name + L"-" + g_instance.id;
+}
+
+struct version_number {
+    int parts[3] = {0, 0, 0};
+    bool valid = false;
+};
+
+version_number ParseVersionNumber(const std::wstring &text) {
+    version_number version;
+    int index = 0;
+    int current = -1;
+    for (wchar_t c : text) {
+        if (c == L'.') {
+            if (current < 0 || index >= 3) {
+                return version;
+            }
+            version.parts[index++] = current;
+            current = -1;
+        } else if (c >= L'0' && c <= L'9') {
+            current = current < 0 ? 0 : current * 10;
+            current += c - L'0';
+        } else if (current >= 0 || index > 0) {
+            break;
+        }
+    }
+    if (current >= 0 && index < 3) {
+        version.parts[index++] = current;
+    }
+    version.valid = index == 3;
+    return version;
+}
+
+std::wstring GetFileProductVersion(const std::wstring &path) {
+    DWORD handle = 0;
+    DWORD size = GetFileVersionInfoSizeW(path.c_str(), &handle);
+    if (!size) {
+        return L"";
+    }
+    std::vector<char> data(size);
+    if (!GetFileVersionInfoW(path.c_str(), 0, size, data.data())) {
+        return L"";
+    }
+    struct lang_codepage {
+        WORD language;
+        WORD code_page;
+    } *translate = nullptr;
+    UINT length = 0;
+    if (!VerQueryValueW(data.data(), L"\\VarFileInfo\\Translation",
+                        (LPVOID *)&translate, &length) ||
+        length < sizeof(lang_codepage)) {
+        return L"";
+    }
+    wchar_t query[256];
+    swprintf_s(query, L"\\StringFileInfo\\%04x%04x\\ProductVersion",
+               translate[0].language, translate[0].code_page);
+    wchar_t *value = nullptr;
+    if (!VerQueryValueW(data.data(), query, (LPVOID *)&value, &length) ||
+        !value) {
+        return L"";
+    }
+    return value;
+}
+
+int CompareVersions(const version_number &a, const version_number &b) {
+    for (int i = 0; i < 3; i++) {
+        if (a.parts[i] != b.parts[i]) {
+            return a.parts[i] < b.parts[i] ? -1 : 1;
+        }
+    }
+    return 0;
+}
+
+fs::path CanonicalBinDir() { return data_directory() / L"bin"; }
+
+fs::path CanonicalExePath() { return CanonicalBinDir() / L"breeze.exe"; }
+
+fs::path TimestampedPath(const fs::path &base, const std::wstring &suffix) {
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    wchar_t stamp[64];
+    swprintf_s(stamp, L"-%04u%02u%02u-%02u%02u%02u", st.wYear, st.wMonth,
+               st.wDay, st.wHour, st.wMinute, st.wSecond);
+    return base.wstring() + stamp + suffix;
+}
+
+void EnsureCanonicalInstall() {
+    std::error_code ec;
+    fs::path self(GetSelfPath());
+    fs::path canonical = CanonicalExePath();
+
+    auto lower = [](std::wstring s) {
+        std::transform(s.begin(), s.end(), s.begin(), ::towlower);
+        return s;
+    };
+    if (lower(self.wstring()) == lower(canonical.wstring())) {
+        return;
+    }
+
+    fs::create_directories(CanonicalBinDir(), ec);
+    ec.clear();
+
+    bool should_sync = !fs::exists(canonical, ec);
+    ec.clear();
+    if (!should_sync) {
+        auto self_version = ParseVersionNumber(GetFileProductVersion(self));
+        auto canonical_version =
+            ParseVersionNumber(GetFileProductVersion(canonical.wstring()));
+        if (self_version.valid && !canonical_version.valid) {
+            should_sync = true;
+        } else if (self_version.valid && canonical_version.valid &&
+                   CompareVersions(self_version, canonical_version) > 0) {
+            should_sync = true;
+        } else if (!self_version.valid && !canonical_version.valid &&
+                   fs::last_write_time(self, ec) >
+                       fs::last_write_time(canonical, ec)) {
+            should_sync = true;
+        }
+        ec.clear();
+    }
+
+    if (!should_sync) {
+        return;
+    }
+
+    fs::path staged = CanonicalBinDir() / L"breeze.exe.new";
+    fs::remove(staged, ec);
+    ec.clear();
+    if (!fs::copy_file(self, staged, ec)) {
+        spdlog::error("Failed to stage injector: {}", ec.message());
+        return;
+    }
+    ec.clear();
+
+    fs::path backup = CanonicalBinDir() / L"breeze.exe.old";
+    fs::remove(backup, ec);
+    ec.clear();
+    if (fs::exists(canonical, ec)) {
+        ec.clear();
+        fs::rename(canonical, backup, ec);
+        if (ec) {
+            spdlog::error("Failed to move current injector: {}", ec.message());
+            fs::remove(staged, ec);
+            return;
+        }
+    }
+    ec.clear();
+    fs::rename(staged, canonical, ec);
+    if (ec) {
+        spdlog::error("Failed to install canonical injector: {}",
+                      ec.message());
+        if (!fs::exists(canonical, ec) && fs::exists(backup, ec)) {
+            ec.clear();
+            fs::rename(backup, canonical, ec);
+        }
+        return;
+    }
+    spdlog::info("Canonical injector installed: {}", ToUtf8(canonical.wstring()));
+}
+
+bool IsUnderTargetRoot(DWORD pid) {
+    if (g_instance.target_root.empty()) {
+        return false;
+    }
+    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!process) {
+        return false;
+    }
+    wchar_t path[MAX_PATH];
+    DWORD size = MAX_PATH;
+    bool under = false;
+    if (QueryFullProcessImageNameW(process, 0, path, &size)) {
+        std::wstring cmp(path);
+        std::wstring root = g_instance.target_root;
+        std::transform(cmp.begin(), cmp.end(), cmp.begin(), ::towlower);
+        std::transform(root.begin(), root.end(), root.begin(), ::towlower);
+        while (root.size() > 1 && root.back() == L'\\') {
+            root.pop_back();
+        }
+        under = cmp.rfind(root, 0) == 0;
+    }
+    CloseHandle(process);
+    return under;
+}
+
 std::vector<DWORD> GetExplorerPIDs() {
     std::vector<DWORD> pids;
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -75,6 +355,10 @@ std::vector<DWORD> GetExplorerPIDs() {
                     exeFile == "OneCommander.exe" ||
                     exeFile == "360FileBrowser64.exe" ||
                     exeFile == "DesktopMgr64.exe") {
+                    if (!g_instance.target_root.empty() &&
+                        !IsUnderTargetRoot(pe32.th32ProcessID)) {
+                        continue;
+                    }
                     pids.push_back(pe32.th32ProcessID);
                 }
             } while (Process32Next(hSnapshot, &pe32));
@@ -156,8 +440,9 @@ void SetKeepInjectingAfterCrash(bool keep_injecting_after_crash) {
 }
 
 void SignalInjectConsistentExit() {
-    HANDLE event =
-        CreateEventW(NULL, TRUE, FALSE, L"breeze-shell-inject-consistent-exit");
+    HANDLE event = CreateEventW(
+        NULL, TRUE, FALSE,
+        ScopedName(L"breeze-shell-inject-consistent-exit").c_str());
     SetEvent(event);
     CloseHandle(event);
 }
@@ -173,6 +458,64 @@ const char *BlameName(mb_shell::crash_blame blame) {
     default:
         return "none";
     }
+}
+
+bool TryRollbackPendingShellUpdate() {
+    fs::path pending = data_directory() / L"update-pending";
+    fs::path updateDir = data_directory() / L"update";
+
+    std::wstring backupName;
+    std::wstring version;
+    {
+        std::ifstream file(pending, std::ios::binary);
+        if (!file.is_open()) {
+            return false;
+        }
+        std::string narrow((std::istreambuf_iterator<char>(file)),
+                           std::istreambuf_iterator<char>());
+        std::wstring content(narrow.begin(), narrow.end());
+        auto lines = SplitLines(content);
+        if (lines.size() < 2 || lines[0].empty() || lines[1].empty()) {
+            return false;
+        }
+        backupName = lines[0];
+        version = lines[1];
+    }
+
+    fs::path backup = updateDir / backupName;
+    fs::path current = data_directory() / L"shell.dll";
+
+    if (!fs::exists(backup)) {
+        std::error_code ec;
+        fs::remove(pending, ec);
+        return false;
+    }
+
+    std::error_code ec;
+    fs::path quarantined = TimestampedPath(
+        updateDir / (L"shell-bad-" + version), L".dll");
+    fs::rename(current, quarantined, ec);
+    if (ec) {
+        spdlog::error("Rollback: cannot move current shell.dll: {}",
+                      ec.message());
+        return false;
+    }
+    ec.clear();
+    fs::rename(backup, current, ec);
+    if (ec) {
+        spdlog::error("Rollback: cannot restore backup: {}", ec.message());
+        ec.clear();
+        fs::rename(quarantined, current, ec);
+        return false;
+    }
+
+    fs::remove(pending, ec);
+    ec.clear();
+    std::ofstream marker(data_directory() / L"update-rolledback");
+    marker << ToUtf8(version);
+    spdlog::warn("Shell {} crashed repeatedly after update, rolled back to {}",
+                 ToUtf8(version), ToUtf8(backupName));
+    return true;
 }
 
 void OnInjectedProcessExit(DWORD pid, DWORD exitCode) {
@@ -215,13 +558,16 @@ void OnInjectedProcessExit(DWORD pid, DWORD exitCode) {
     if (!limit_reached)
         return;
 
+    if (TryRollbackPendingShellUpdate()) {
+        return;
+    }
+
     if (!ShouldKeepInjectingAfterCrash())
         injection_suspended = true;
     if (!crash_dialog_open.exchange(true)) {
         ShowCrashDialog();
         crash_dialog_open = false;
-    }
-}
+    }}
 
 int InjectToPID(int targetPID, std::wstring_view dllPath) {
     if (injection_suspended.load()) {
@@ -271,8 +617,7 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         WaitForSingleObject(hProcess, INFINITE);
         DWORD exitCode = 0;
         if (!GetExitCodeProcess(hProcess, &exitCode)) {
-            spdlog::error("GetExitCodeProcess failed: {}", GetLastError());
-        }
+            spdlog::error("GetExitCodeProcess failed: {}", GetLastError());        }
         CloseHandle(hProcess);
         OnInjectedProcessExit(targetPID, exitCode);
     }).detach();
@@ -370,9 +715,8 @@ struct start_when_startup_switch : public ui::button_widget {
 
     static bool check_startup() {
         HKEY hkey;
-        if (RegOpenKeyExW(HKEY_CURRENT_USER,
-                          L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
-                          0, KEY_READ, &hkey) != ERROR_SUCCESS) {
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, g_instance.run_key.c_str(), 0,
+                          KEY_READ, &hkey) != ERROR_SUCCESS) {
             return false;
         }
 
@@ -386,17 +730,17 @@ struct start_when_startup_switch : public ui::button_widget {
 
     static void set_startup(bool startup) {
         HKEY hkey;
-        if (RegOpenKeyExW(HKEY_CURRENT_USER,
-                          L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
-                          0, KEY_SET_VALUE, &hkey) != ERROR_SUCCESS) {
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, g_instance.run_key.c_str(), 0,
+                          KEY_SET_VALUE, &hkey) != ERROR_SUCCESS) {
             return;
         }
 
         if (startup) {
-            wchar_t path[MAX_PATH];
-            GetModuleFileNameW(NULL, path, MAX_PATH);
-            std::wstring command =
-                L"\"" + std::wstring(path) + L"\" inject-consistent";
+            std::error_code ec;
+            std::wstring exe = fs::exists(CanonicalExePath(), ec)
+                                   ? CanonicalExePath().wstring()
+                                   : GetSelfPath();
+            std::wstring command = L"\"" + exe + L"\" inject-consistent";
             RegSetValueExW(hkey, L"breeze-shell", 0, REG_SZ,
                            (BYTE *)command.c_str(),
                            (command.size() + 1) * sizeof(wchar_t));
@@ -658,7 +1002,7 @@ struct startup_priority_selector : public ui::flex_widget {
                 hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
                 if (SUCCEEDED(hr)) {
                     IRegisteredTask *pTask = NULL;
-                    hr = pRootFolder->GetTask(_bstr_t(L"breeze-shell-startup"),
+                    hr = pRootFolder->GetTask(_bstr_t(g_instance.task_name.c_str()),
                                               &pTask);
                     if (SUCCEEDED(hr)) {
                         ITaskDefinition *pTaskDef = NULL;
@@ -768,7 +1112,7 @@ struct startup_priority_selector : public ui::flex_widget {
             return false;
         }
 
-        pRootFolder->DeleteTask(_bstr_t(L"breeze-shell-startup"), 0);
+        pRootFolder->DeleteTask(_bstr_t(g_instance.task_name.c_str()), 0);
 
         ITaskDefinition *pTask = NULL;
         hr = pService->NewTask(0, &pTask);
@@ -839,9 +1183,11 @@ struct startup_priority_selector : public ui::flex_widget {
                 hr = pAction->QueryInterface(IID_IExecAction,
                                              (void **)&pExecAction);
                 if (SUCCEEDED(hr)) {
-                    wchar_t path[MAX_PATH];
-                    GetModuleFileNameW(NULL, path, MAX_PATH);
-                    pExecAction->put_Path(_bstr_t(path));
+                    std::error_code ec;
+                    std::wstring exe = fs::exists(CanonicalExePath(), ec)
+                                           ? CanonicalExePath().wstring()
+                                           : GetSelfPath();
+                    pExecAction->put_Path(_bstr_t(exe.c_str()));
                     pExecAction->put_Arguments(_bstr_t(L"inject-consistent"));
                     pExecAction->Release();
                 }
@@ -852,7 +1198,7 @@ struct startup_priority_selector : public ui::flex_widget {
 
         IRegisteredTask *pRegisteredTask = NULL;
         hr = pRootFolder->RegisterTaskDefinition(
-            _bstr_t(L"breeze-shell-startup"), pTask, TASK_CREATE_OR_UPDATE,
+            _bstr_t(g_instance.task_name.c_str()), pTask, TASK_CREATE_OR_UPDATE,
             _variant_t(), _variant_t(), TASK_LOGON_INTERACTIVE_TOKEN,
             _variant_t(L""), &pRegisteredTask);
 
@@ -884,7 +1230,7 @@ struct startup_priority_selector : public ui::flex_widget {
                 ITaskFolder *pRootFolder = NULL;
                 hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
                 if (SUCCEEDED(hr)) {
-                    pRootFolder->DeleteTask(_bstr_t(L"breeze-shell-startup"),
+                    pRootFolder->DeleteTask(_bstr_t(g_instance.task_name.c_str()),
                                             0);
                     pRootFolder->Release();
                 }
@@ -928,8 +1274,29 @@ struct startup_priority_selector : public ui::flex_widget {
 };
 
 void restart_explorer() {
-    std::vector<DWORD> pids = GetExplorerPIDs();
-    for (DWORD pid : pids) {
+    // TerminateProcess leaves exit code != 0, which the injector's crash
+    // watcher would count as a shell crash. Ask the shell to exit itself
+    // instead, so restarts are never mistaken for bad builds.
+    HWND tray = g_instance.id.empty()
+                    ? FindWindowW(L"Shell_TrayWnd", nullptr)
+                    : nullptr;
+    if (tray) {
+        DWORD trayPid = 0;
+        GetWindowThreadProcessId(tray, &trayPid);
+        auto pids = GetExplorerPIDs();
+        if (trayPid && std::ranges::contains(pids, trayPid)) {
+            SendMessageTimeoutW(tray, WM_COMMAND, 516, 0, SMTO_ABORTIFHUNG,
+                                3000, nullptr);
+            for (int i = 0; i < 40; i++) {
+                Sleep(250);
+                if (!std::ranges::contains(GetExplorerPIDs(), trayPid)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    for (DWORD pid : GetExplorerPIDs()) {
         HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         if (hProcess) {
             TerminateProcess(hProcess, 0);
@@ -938,7 +1305,7 @@ void restart_explorer() {
     }
 
     Sleep(1000);
-    if (GetExplorerPIDs().empty()) {
+    if (g_instance.id.empty() && GetExplorerPIDs().empty()) {
         ShellExecuteW(NULL, L"open", L"explorer.exe", L"", NULL, SW_SHOW);
     }
 }
@@ -1023,8 +1390,8 @@ struct inject_all_switch : public ui::button_widget {
     }
 
     void check_is_injecting_all() {
-        HANDLE mutex =
-            CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
+        HANDLE mutex = CreateMutexW(
+            NULL, TRUE, ScopedName(L"breeze-shell-inject-consistent").c_str());
         if (GetLastError() == ERROR_ALREADY_EXISTS) {
             injecting_all = true;
         } else {
@@ -1037,11 +1404,13 @@ struct inject_all_switch : public ui::button_widget {
     void on_click() override {
         injecting_all = !injecting_all;
         if (injecting_all) {
-            wchar_t path[MAX_PATH];
-            GetModuleFileNameW(NULL, path, MAX_PATH);
+            std::error_code ec;
+            std::wstring exe = fs::exists(CanonicalExePath(), ec)
+                                   ? CanonicalExePath().wstring()
+                                   : GetSelfPath();
             SHELLEXECUTEINFOW sei = {sizeof(sei)};
             sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-            sei.lpFile = path;
+            sei.lpFile = exe.c_str();
             sei.lpParameters = L"inject-consistent";
             sei.nShow = SW_HIDE;
             ShellExecuteExW(&sei);
@@ -1323,57 +1692,448 @@ void ShowCrashDialog() {
 }
 
 void UpdateDllPath() {
-    auto dllPathNew = data_directory().wstring() + L"\\shell.dll";
-    auto dllPathPacked = GetModuleDirectory() + L"\\shell.dll";
+    std::error_code ec;
+    fs::path dataDll = data_directory() / L"shell.dll";
+    fs::path packedDll = fs::path(GetModuleDirectory()) / L"shell.dll";
+    fs::path binDll = CanonicalBinDir() / L"shell.dll";
 
-    auto updateDllFile = [&](const std::wstring &packed,
-                             const std::wstring &target) {
-        std::error_code ec;
-        fs::remove(target, ec);
+    fs::create_directories(CanonicalBinDir(), ec);
+    ec.clear();
+    bool packedSameAsBin = false;
+    if (fs::exists(packedDll, ec) && fs::exists(binDll, ec)) {
+        ec.clear();
+        packedSameAsBin = fs::equivalent(packedDll, binDll, ec);
+        ec.clear();
+    }
 
+    if (fs::exists(packedDll, ec) && !packedSameAsBin) {
+        ec.clear();
+        fs::copy_file(packedDll, binDll, fs::copy_options::overwrite_existing,
+                      ec);
         if (ec) {
-            ec.clear();
-            std::wstring oldPath =
-                fs::path(target).parent_path() / L"shell_old.dll";
-            if (fs::exists(oldPath)) {
-                fs::remove(oldPath, ec);
-            }
-
-            if (!ec) {
-                fs::rename(target, oldPath, ec);
-                if (!ec) {
-                    fs::copy(packed, target,
-                             fs::copy_options::overwrite_existing);
-                }
-            }
-        } else {
-            fs::copy(packed, target, fs::copy_options::overwrite_existing);
+            spdlog::warn("Failed to sync packed shell.dll into bin: {}",
+                         ec.message());
         }
+        ec.clear();
+    }
+
+    if (!fs::exists(dataDll, ec)) {
+        ec.clear();
+        fs::create_directories(dataDll.parent_path(), ec);
+        ec.clear();
+        if (fs::exists(binDll, ec)) {
+            fs::copy_file(binDll, dataDll, ec);
+        } else if (fs::exists(packedDll, ec)) {
+            fs::copy_file(packedDll, dataDll, ec);
+        }
+        dllPath = dataDll.wstring();
+        return;
+    }
+
+    fs::path source;
+    if (fs::exists(binDll, ec)) {
+        source = binDll;
+    } else if (fs::exists(packedDll, ec) && !packedSameAsBin) {
+        source = packedDll;
+    }
+    ec.clear();
+    if (source.empty()) {
+        dllPath = dataDll.wstring();
+        return;
+    }
+
+    bool sameFile = false;
+    if (fs::exists(source, ec)) {
+        ec.clear();
+        sameFile = fs::equivalent(source, dataDll, ec);
+        ec.clear();
+    }
+    if (sameFile) {
+        dllPath = dataDll.wstring();
+        return;
+    }
+
+    auto packedVersion = ParseVersionNumber(GetFileProductVersion(source.wstring()));
+    auto dataVersion = ParseVersionNumber(GetFileProductVersion(dataDll.wstring()));
+
+    bool packedNewer = false;
+    if (packedVersion.valid && !dataVersion.valid) {
+        packedNewer = true;
+    } else if (packedVersion.valid && dataVersion.valid &&
+               CompareVersions(packedVersion, dataVersion) > 0) {
+        packedNewer = true;
+    } else if (!packedVersion.valid && !dataVersion.valid &&
+               fs::last_write_time(source, ec) >
+                   fs::last_write_time(dataDll, ec)) {
+        packedNewer = true;
+    }
+    ec.clear();
+
+    if (!packedNewer) {
+        dllPath = dataDll.wstring();
+        return;
+    }
+
+    fs::path backup = TimestampedPath(data_directory() / L"shell.dll",
+                                      L".bak");
+    fs::rename(dataDll, backup, ec);
+    if (ec) {
+        spdlog::error("Cannot move current shell.dll: {}", ec.message());
+        dllPath = dataDll.wstring();
+        return;
+    }
+    ec.clear();
+    if (!fs::copy_file(source, dataDll, ec)) {
+        spdlog::error("Cannot install newer shell.dll: {}", ec.message());
+        ec.clear();
+        fs::rename(backup, dataDll, ec);
+    } else {
+        spdlog::info("shell.dll updated from packed copy: {}",
+                     ToUtf8(source.wstring()));
+    }
+    dllPath = dataDll.wstring();
+}
+
+std::optional<std::wstring> ReadRunKeyValue() {
+    HKEY hkey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, g_instance.run_key.c_str(), 0,
+                      KEY_READ, &hkey) != ERROR_SUCCESS) {
+        return std::nullopt;
+    }
+    wchar_t value[1024];
+    DWORD size = sizeof(value);
+    DWORD type = 0;
+    bool ok = RegQueryValueExW(hkey, L"breeze-shell", nullptr, &type,
+                               (LPBYTE)value, &size) == ERROR_SUCCESS &&
+              type == REG_SZ;
+    RegCloseKey(hkey);
+    if (!ok) {
+        return std::nullopt;
+    }
+    return std::wstring(value, size / sizeof(wchar_t) - 1);
+}
+
+void WriteRunKeyValue(const std::wstring &command) {
+    HKEY hkey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, g_instance.run_key.c_str(), 0,
+                      KEY_SET_VALUE, &hkey) != ERROR_SUCCESS) {
+        spdlog::error("Cannot open Run key: {}", GetLastError());
+        return;
+    }
+    RegSetValueExW(hkey, L"breeze-shell", 0, REG_SZ,
+                   (BYTE *)command.c_str(),
+                   (command.size() + 1) * sizeof(wchar_t));
+    RegCloseKey(hkey);
+}
+
+std::optional<std::wstring> ReadScheduledTaskPath() {
+    std::optional<std::wstring> result;
+    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    bool need_uninit = SUCCEEDED(hr);
+    ITaskService *pService = NULL;
+    hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                          IID_ITaskService, (void **)&pService);
+    if (SUCCEEDED(hr)) {
+        if (SUCCEEDED(pService->Connect(_variant_t(), _variant_t(),
+                                        _variant_t(), _variant_t()))) {
+            ITaskFolder *pRootFolder = NULL;
+            if (SUCCEEDED(pService->GetFolder(_bstr_t(L"\\"), &pRootFolder))) {
+                IRegisteredTask *pTask = NULL;
+                if (SUCCEEDED(pRootFolder->GetTask(
+                        _bstr_t(g_instance.task_name.c_str()), &pTask))) {
+                    ITaskDefinition *pTaskDef = NULL;
+                    if (SUCCEEDED(pTask->get_Definition(&pTaskDef))) {
+                        IActionCollection *pActions = NULL;
+                        if (SUCCEEDED(pTaskDef->get_Actions(&pActions))) {
+                            IAction *pAction = NULL;
+                            if (SUCCEEDED(pActions->get_Item(1, &pAction))) {
+                                IExecAction *pExec = NULL;
+                                if (SUCCEEDED(pAction->QueryInterface(
+                                        IID_IExecAction, (void **)&pExec))) {
+                                    BSTR path = NULL;
+                                    if (SUCCEEDED(pExec->get_Path(&path)) &&
+                                        path) {
+                                        result = std::wstring(path);
+                                        SysFreeString(path);
+                                    }
+                                    pExec->Release();
+                                }
+                                pAction->Release();
+                            }
+                            pActions->Release();
+                        }
+                        pTaskDef->Release();
+                    }
+                    pTask->Release();
+                }
+                pRootFolder->Release();
+            }
+        }
+        pService->Release();
+    }
+    if (need_uninit) {
+        CoUninitialize();
+    }
+    return result;
+}
+
+int RunHidden(const std::wstring &cmdline) {
+    STARTUPINFOW si = {sizeof(si)};
+    PROCESS_INFORMATION pi = {};
+    if (!CreateProcessW(nullptr, const_cast<LPWSTR>(cmdline.c_str()),
+                        nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr,
+                        nullptr, &si, &pi)) {
+        return -1;
+    }
+    CloseHandle(pi.hThread);
+    WaitForSingleObject(pi.hProcess, 15000);
+    DWORD code = 0;
+    GetExitCodeProcess(pi.hProcess, &code);
+    CloseHandle(pi.hProcess);
+    return (int)code;
+}
+
+void ReplaceLegacyInjectorInPlace(const std::wstring &legacyExe) {
+    std::error_code ec;
+    fs::path self(GetSelfPath());
+    fs::path legacy(legacyExe);
+
+    auto lower = [](std::wstring s) {
+        std::transform(s.begin(), s.end(), s.begin(), ::towlower);
+        return s;
+    };
+    if (lower(self.wstring()) == lower(legacy.wstring())) {
+        return;
+    }
+    if (!fs::exists(CanonicalExePath(), ec)) {
+        return;
+    }
+    ec.clear();
+
+    fs::path staged(legacyExe + L".new");
+    fs::remove(staged, ec);
+    ec.clear();
+    if (!fs::copy_file(CanonicalExePath(), staged, ec)) {
+        spdlog::error("Cannot stage replacement for legacy injector: {}",
+                      ec.message());
+        return;
+    }
+    ec.clear();
+
+    fs::path backup(legacyExe + L".old");
+    fs::remove(backup, ec);
+    ec.clear();
+    fs::rename(legacy, backup, ec);
+    if (ec) {
+        spdlog::error("Cannot move legacy injector: {}", ec.message());
+        fs::remove(staged, ec);
+        return;
+    }
+    ec.clear();
+    fs::rename(staged, legacy, ec);
+    if (ec) {
+        spdlog::error("Cannot install replacement injector: {}",
+                      ec.message());
+        ec.clear();
+        if (!fs::exists(legacy, ec) && fs::exists(backup, ec)) {
+            ec.clear();
+            fs::rename(backup, legacy, ec);
+        }
+        return;
+    }
+    spdlog::info("Legacy injector replaced in place: {}",
+                 ToUtf8(legacy.wstring()));
+}
+
+bool ConsistentInjectorRunning() {
+    SetLastError(0);
+    HANDLE mutex = CreateMutexW(
+        NULL, TRUE, ScopedName(L"breeze-shell-inject-consistent").c_str());
+    bool running = GetLastError() == ERROR_ALREADY_EXISTS ||
+                   GetLastError() == ERROR_ACCESS_DENIED;
+    CloseHandle(mutex);
+    return running;
+}
+
+void MigrateStartupRegistrations() {
+    std::error_code ec;
+    fs::path canonical = CanonicalExePath();
+    if (!fs::exists(canonical, ec)) {
+        return;
+    }
+    ec.clear();
+
+    std::wstring canonicalStr = canonical.wstring();
+    std::wstring wantCommand = L"\"" + canonicalStr + L"\" inject-consistent";
+
+    auto pathFromCommand = [](const std::wstring &command) {
+        if (command.size() >= 2 && command[0] == L'"') {
+            auto end = command.find(L'"', 1);
+            if (end != std::wstring::npos) {
+                return command.substr(1, end - 1);
+            }
+        }
+        return command;
     };
 
-    if (fs::exists(dllPathNew)) {
-        if (fs::exists(dllPathPacked)) {
-            auto packedTime = fs::last_write_time(dllPathPacked);
-            auto newTime = fs::last_write_time(dllPathNew);
+    auto lower = [](std::wstring s) {
+        std::transform(s.begin(), s.end(), s.begin(), ::towlower);
+        return s;
+    };
 
-            if (packedTime > newTime) {
-                updateDllFile(dllPathPacked, dllPathNew);
-            }
-        }
-    } else {
-        fs::create_directories(fs::path(dllPathNew).parent_path());
-
-        if (fs::exists(dllPathPacked)) {
-            fs::copy(dllPathPacked, dllPathNew);
+    if (auto runValue = ReadRunKeyValue()) {
+        auto currentExe = pathFromCommand(*runValue);
+        if (lower(currentExe) != lower(canonicalStr)) {
+            WriteRunKeyValue(wantCommand);
+            spdlog::info("Run entry migrated: {} -> {}",
+                         ToUtf8(currentExe), ToUtf8(canonicalStr));
         }
     }
 
-    dllPath = dllPathNew;
+    if (auto taskPath = ReadScheduledTaskPath()) {
+        if (lower(*taskPath) == lower(canonicalStr)) {
+            return;
+        }
+        spdlog::info("Scheduled task points to {}", ToUtf8(*taskPath));
+
+        std::wstring change = L"schtasks.exe /Change /TN \"" +
+                              g_instance.task_name + L"\" /TR \"\"" +
+                              wantCommand + L"\"\"";
+        int code = RunHidden(change);
+        if (code == 0) {
+            spdlog::info("Scheduled task retargeted via schtasks");
+            return;
+        }
+        spdlog::warn("schtasks /Change failed ({}), trying task scheduler API",
+                     code);
+
+        HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        bool need_uninit = SUCCEEDED(hr);
+        bool retargeted = false;
+        ITaskService *pService = NULL;
+        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+                              IID_ITaskService, (void **)&pService);
+        if (SUCCEEDED(hr)) {
+            if (SUCCEEDED(pService->Connect(_variant_t(), _variant_t(),
+                                            _variant_t(), _variant_t()))) {
+                ITaskFolder *pRootFolder = NULL;
+                if (SUCCEEDED(pService->GetFolder(_bstr_t(L"\\"),
+                                                  &pRootFolder))) {
+                    IRegisteredTask *pTask = NULL;
+                    if (SUCCEEDED(pRootFolder->GetTask(
+                            _bstr_t(g_instance.task_name.c_str()), &pTask))) {
+                        ITaskDefinition *pTaskDef = NULL;
+                        if (SUCCEEDED(pTask->get_Definition(&pTaskDef))) {
+                            IActionCollection *pActions = NULL;
+                            if (SUCCEEDED(pTaskDef->get_Actions(&pActions))) {
+                                IAction *pAction = NULL;
+                                if (SUCCEEDED(pActions->get_Item(1,
+                                                                 &pAction))) {
+                                    IExecAction *pExec = NULL;
+                                    if (SUCCEEDED(pAction->QueryInterface(
+                                            IID_IExecAction,
+                                            (void **)&pExec))) {
+                                        pExec->put_Path(
+                                            _bstr_t(canonicalStr.c_str()));
+                                        pExec->put_Arguments(
+                                            _bstr_t(L"inject-consistent"));
+                                        pExec->Release();
+                                        retargeted = true;
+                                    }
+                                    pAction->Release();
+                                }
+                            }
+                            if (retargeted) {
+                                IRegisteredTask *pRegistered = NULL;
+                                hr = pRootFolder->RegisterTaskDefinition(
+                                    _bstr_t(g_instance.task_name.c_str()),
+                                    pTaskDef, TASK_CREATE_OR_UPDATE,
+                                    _variant_t(), _variant_t(),
+                                    TASK_LOGON_INTERACTIVE_TOKEN,
+                                    _variant_t(L""), &pRegistered);
+                                retargeted = SUCCEEDED(hr);
+                                if (pRegistered) {
+                                    pRegistered->Release();
+                                }
+                            }
+                            pActions->Release();
+                        }
+                        pTaskDef->Release();
+                    }
+                    pTask->Release();
+                }
+                pRootFolder->Release();
+            }
+        }
+        pService->Release();
+
+        if (need_uninit) {
+            CoUninitialize();
+        }
+
+        if (retargeted) {
+            spdlog::info("Scheduled task retargeted via task scheduler API");
+        } else {
+            spdlog::warn(
+                "Scheduled task migration failed, replacing legacy injector "
+                "in place");
+            ReplaceLegacyInjectorInPlace(*taskPath);
+        }
+    }
+}
+
+bool AnyStartupRegistrationPresent() {
+    if (ReadRunKeyValue()) {
+        return true;
+    }
+    return ReadScheduledTaskPath().has_value();
+}
+
+void WaitForConsistentInjectorExit(int timeoutMs) {
+    SignalInjectConsistentExit();
+    for (int waited = 0; waited < timeoutMs; waited += 250) {
+        if (!ConsistentInjectorRunning()) {
+            return;
+        }
+        Sleep(250);
+    }
+}
+
+void StartConsistentInjection() {
+    HANDLE mutex = CreateMutexW(
+        NULL, TRUE, ScopedName(L"breeze-shell-inject-consistent").c_str());
+    if (GetLastError() == ERROR_ALREADY_EXISTS ||
+        GetLastError() == ERROR_ACCESS_DENIED) {
+        spdlog::warn("Another consistent injector is still running.");
+        CloseHandle(mutex);
+        return;
+    }
+
+    std::thread([]() {
+        HANDLE event = CreateEventW(
+            NULL, TRUE, FALSE,
+            ScopedName(L"breeze-shell-inject-consistent-exit").c_str());
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
+        exit(0);
+    }).detach();
+
+    InjectAllConsistent();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nShowCmd) {
     init_inject_logger();
+    LoadInstanceConfig();
+
+    if (!InstanceMarkerMatches()) {
+        spdlog::error(
+            "Refusing to run: data directory belongs to instance '{}' but "
+            "this process is instance '{}'",
+            ToUtf8(ReadInstanceMarker().value_or(L"<missing>")),
+            ToUtf8(g_instance.id));
+        return 1;
+    }
 
     int argc = 0;
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -1384,8 +2144,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     UpdateDllPath();
+    EnsureCanonicalInstall();
 
     if (args.size() <= 1) {
+        MigrateStartupRegistrations();
+
         if (false) {
             AttachConsole(ATTACH_PARENT_PROCESS);
             freopen("CONOUT$", "w", stdout);
@@ -1408,22 +2171,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         if (args[1] == L"new") {
             NewExplorerProcessAndInject();
         } else if (args[1] == L"inject-consistent") {
-            HANDLE mutex =
-                CreateMutexW(NULL, TRUE, L"breeze-shell-inject-consistent");
-            if (GetLastError() == ERROR_ALREADY_EXISTS) {
-                spdlog::error("Another instance is running.");
-                return 1;
+            StartConsistentInjection();
+        } else if (args[1] == L"restart-consistent") {
+            WaitForConsistentInjectorExit(10000);
+            StartConsistentInjection();
+        } else if (args[1] == L"migrate") {
+            bool hadRegistration = AnyStartupRegistrationPresent();
+            bool wasRunning = ConsistentInjectorRunning();
+            MigrateStartupRegistrations();
+            WaitForConsistentInjectorExit(10000);
+            if (hadRegistration || wasRunning) {
+                StartConsistentInjection();
             }
-
-            std::thread([]() {
-                HANDLE event = CreateEventW(
-                    NULL, TRUE, FALSE, L"breeze-shell-inject-consistent-exit");
-                WaitForSingleObject(event, INFINITE);
-                CloseHandle(event);
-                exit(0);
-            }).detach();
-
-            InjectAllConsistent();
+        } else if (args[1] == L"restart-explorer") {
+            restart_explorer();
         } else {
             spdlog::error("Invalid argument.");
         }

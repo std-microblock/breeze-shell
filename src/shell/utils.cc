@@ -120,9 +120,10 @@ bool mb_shell::is_composition_acrylic_available() {
 }
 
 std::optional<std::string> mb_shell::env(const std::string &name) {
-    wchar_t buffer[32767];
-    GetEnvironmentVariableW(utf8_to_wstring(name).c_str(), buffer, 32767);
-    if (buffer[0] == 0) {
+    wchar_t buffer[32767] = {0};
+    DWORD len = GetEnvironmentVariableW(utf8_to_wstring(name).c_str(), buffer,
+                                        32767);
+    if (len == 0 || len >= 32767) {
         return std::nullopt;
     }
     return wstring_to_utf8(buffer);

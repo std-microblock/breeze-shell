@@ -658,6 +658,12 @@ struct breeze {
     static std::string current_process_path();
     static void crash_cpu_exception();
     static void crash_cpp_exception();
+    static int64_t try_named_mutex(std::string name);
+    static void release_named_mutex(int64_t token);
+    static std::string file_sha256(std::string path);
+    static int64_t file_size(std::string path);
+    static bool file_is_x64_pe(std::string path);
+    static std::string file_version(std::string path);
 };
 
 struct win32 {

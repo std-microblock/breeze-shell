@@ -1185,6 +1185,12 @@ export class breeze {
 	static current_process_path(): string
 	static crash_cpu_exception(): void
 	static crash_cpp_exception(): void
+	static try_named_mutex(name: string): number
+	static release_named_mutex(token: number): void
+	static file_sha256(path: string): string
+	static file_size(path: string): number
+	static file_is_x64_pe(path: string): boolean
+	static file_version(path: string): string
 }
 export class win32 {
 	/**

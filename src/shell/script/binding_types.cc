@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <WinUser.h>
+#include <bcrypt.h>
 #include <roapi.h>
 #include <roerrorapi.h>
 #include <winstring.h>
@@ -9,7 +10,9 @@
 #include "binding_types_breeze_ui.h"
 #include "breeze-js/quickjspp.hpp"
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <print>
@@ -441,9 +444,7 @@ std::string network::post(std::string url, std::string data) {
     }
 
     HINTERNET hConnect = WinHttpConnect(hSession, hostName,
-                                        urlComp.nScheme == INTERNET_SCHEME_HTTPS
-                                            ? INTERNET_DEFAULT_HTTPS_PORT
-                                            : INTERNET_DEFAULT_HTTP_PORT,
+                                        urlComp.nPort ? urlComp.nPort : 80,
                                         0);
     if (!hConnect) {
         WinHttpCloseHandle(hSession);
@@ -758,10 +759,7 @@ void network::download_with_progress_async(
 
             hConnect =
                 WinHttpConnect(hSession, hostName,
-                               urlComp.nScheme == INTERNET_SCHEME_HTTPS
-                                   ? INTERNET_DEFAULT_HTTPS_PORT
-                                   : INTERNET_DEFAULT_HTTP_PORT,
-                               0);
+                               urlComp.nPort ? urlComp.nPort : 80, 0);
             if (!hConnect) {
                 throw std::runtime_error("Failed to connect to server");
             }
@@ -1887,4 +1885,143 @@ void breeze::crash_cpu_exception() {
 void breeze::crash_cpp_exception() {
     throw std::runtime_error("Crash!");
 }
+std::mutex named_mutex_lock;
+std::map<int64_t, HANDLE> named_mutex_handles;
+int64_t breeze::try_named_mutex(std::string name) {
+    auto wname = mb_shell::utf8_to_wstring(name);
+    std::lock_guard lock(named_mutex_lock);
+    HANDLE mutex = CreateMutexW(nullptr, FALSE, wname.c_str());
+    if (!mutex) {
+        return -1;
+    }
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        CloseHandle(mutex);
+        return -1;
+    }
+    static int64_t next_token = 1;
+    int64_t token = next_token++;
+    named_mutex_handles[token] = mutex;
+    return token;
+}
+void breeze::release_named_mutex(int64_t token) {
+    std::lock_guard lock(named_mutex_lock);
+    if (auto it = named_mutex_handles.find(token);
+        it != named_mutex_handles.end()) {
+        CloseHandle(it->second);
+        named_mutex_handles.erase(it);
+    }
+}
+std::string breeze::file_sha256(std::string path) {
+    HANDLE file = CreateFileW(mb_shell::utf8_to_wstring(path).c_str(),
+                              GENERIC_READ, FILE_SHARE_READ, nullptr,
+                              OPEN_EXISTING, 0, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        throw std::runtime_error("Failed to open file: " +
+                                 std::to_string(GetLastError()));
+    }
+
+    unsigned char hash[32];
+    BCRYPT_ALG_HANDLE alg = nullptr;
+    BCRYPT_HASH_HANDLE hash_handle = nullptr;
+    auto cleanup = [&]() {
+        if (hash_handle)
+            BCryptDestroyHash(hash_handle);
+        if (alg)
+            BCryptCloseAlgorithmProvider(alg, 0);
+        CloseHandle(file);
+    };
+
+    if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, nullptr,
+                                    0) != 0 ||
+        BCryptCreateHash(alg, &hash_handle, nullptr, 0, nullptr, 0, 0) != 0) {
+        cleanup();
+        throw std::runtime_error("Failed to create sha256 hash object");
+    }
+
+    unsigned char buffer[65536];
+    DWORD read = 0;
+    while (ReadFile(file, buffer, sizeof(buffer), &read, nullptr) && read > 0) {
+        if (BCryptHashData(hash_handle, buffer, read, 0) != 0) {
+            cleanup();
+            throw std::runtime_error("Failed to hash file data");
+        }
+    }
+
+    DWORD hash_len = 0;
+    if (BCryptFinishHash(hash_handle, hash, sizeof(hash), 0) != 0) {
+        cleanup();
+        throw std::runtime_error("Failed to finish sha256 hash");
+    }
+    cleanup();
+
+    static const char *digits = "0123456789abcdef";
+    std::string hex;
+    for (unsigned char byte : hash) {
+        hex += digits[byte >> 4];
+        hex += digits[byte & 0xf];
+    }
+    return hex;
+}
+int64_t breeze::file_size(std::string path) {
+    std::error_code ec;
+    auto size = std::filesystem::file_size(path, ec);
+    if (ec) {
+        return -1;
+    }
+    return size;
+}
+bool breeze::file_is_x64_pe(std::string path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    IMAGE_DOS_HEADER dos{};
+    file.read(reinterpret_cast<char *>(&dos), sizeof(dos));
+    if (!file.good() || dos.e_magic != IMAGE_DOS_SIGNATURE) {
+        return false;
+    }
+
+    file.seekg(dos.e_lfanew);
+    IMAGE_NT_HEADERS nt{};
+    file.read(reinterpret_cast<char *>(&nt), sizeof(nt));
+    return file.good() && nt.Signature == IMAGE_NT_SIGNATURE &&
+           nt.FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64;
+}
+std::string breeze::file_version(std::string path) {
+    auto wpath = mb_shell::utf8_to_wstring(path);
+    DWORD handle = 0;
+    DWORD size = GetFileVersionInfoSizeW(wpath.c_str(), &handle);
+    if (size == 0) {
+        return "";
+    }
+
+    std::vector<char> data(size);
+    if (!GetFileVersionInfoW(wpath.c_str(), 0, size, data.data())) {
+        return "";
+    }
+
+    struct LANGCODEPAGE {
+        WORD language;
+        WORD code_page;
+    } *translate = nullptr;
+    UINT translate_len = 0;
+    if (!VerQueryValueW(data.data(), L"\\VarFileInfo\\Translation",
+                        (LPVOID *)&translate, &translate_len) ||
+        translate_len < sizeof(LANGCODEPAGE)) {
+        return "";
+    }
+
+    wchar_t query[256];
+    swprintf_s(query, L"\\StringFileInfo\\%04x%04x\\ProductVersion",
+               translate[0].language, translate[0].code_page);
+    wchar_t *value = nullptr;
+    UINT value_len = 0;
+    if (!VerQueryValueW(data.data(), query, (LPVOID *)&value, &value_len) ||
+        !value) {
+        return "";
+    }
+    return mb_shell::wstring_to_utf8(value);
+}
+
 } // namespace mb_shell::js

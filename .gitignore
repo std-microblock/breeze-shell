@@ -3,6 +3,7 @@ compile_commands.json
 .xmake
 .cache
 build_info.h
+version.rc
 /test
 Xenos.log
 _sentry/

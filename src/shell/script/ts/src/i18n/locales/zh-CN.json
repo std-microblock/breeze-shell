@@ -55,10 +55,15 @@
     "changelog": "更新日志",
     "updating": "更新中...",
     "downloading": "下载中",
+    "verifying": "正在校验文件...",
     "applying": "正在替换文件...",
     "updateSuccess": "新版本已下载，将于下次重启资源管理器生效",
     "updateFailed": "更新失败: ",
-    "cannotMoveFile": "无法移动当前文件"
+    "cannotMoveFile": "无法移动当前文件",
+    "pendingRestart": "新版本已下载，等待重启资源管理器",
+    "restartNow": "重启资源管理器",
+    "injectorVersion": "注入器版本",
+    "injectorNotInstalled": "未安装"
   },
   "common": {
     "loading": "加载中...",
