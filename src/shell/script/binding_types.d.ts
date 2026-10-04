@@ -48,6 +48,14 @@ export class js_widget {
      * @returns void
      */
     set_animation(variable_name: string, enabled: boolean): void
+	/**
+     * 
+     * @param variable_name: string
+     * @param duration: number
+     * @param easing: string
+     * @returns void
+     */
+    set_animation_curve(variable_name: string, duration: number, easing: string): void
 	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_textbox_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_spacer_widget
 }
 }
@@ -61,6 +69,8 @@ export class js_text_widget extends js_widget {
     set font_weight(value: number);
 	get max_width(): number;
     set max_width(value: number);
+	get font_family(): string;
+    set font_family(value: string);
 	get color(): [number, number, number, number] | undefined;
     set color(value: [number, number, number, number] | undefined);
 }
@@ -212,6 +222,8 @@ export class js_flex_layout_widget extends js_widget {
     set border_paint(value: breeze_ui.breeze_paint);
 	get border_radius(): number;
     set border_radius(value: number);
+	get opacity(): number;
+    set opacity(value: number);
 	get gap(): number;
     set gap(value: number);
 	get border_color(): [number, number, number, number] | undefined;
@@ -942,7 +954,7 @@ export class network {
      * @param url: string
      * @param path: string
      * @param callback: (() => void)
-    * @param error_callback: ((arg1: string) => void)
+     * @param error_callback: ((arg1: string) => void)
      * @returns void
      */
     static download_async(url: string, path: string, callback: (() => void), error_callback: ((arg1: string) => void)): void
@@ -1394,6 +1406,79 @@ export class infra {
      * @returns string
      */
     static btoa(str: string): string
+}
+export class log_entry {
+	id: number
+	time: number
+	/**
+     *  trace / debug / info / warn / error / critical
+     */
+    level: string
+	message: string
+	thread: number
+	source: string
+	/**
+     *  JSON object string, empty when the entry has no structured fields
+     */
+    fields: string
+}
+export class diagnostic_problem {
+	/**
+     *  config / script / runtime
+     */
+    category: string
+	/**
+     *  info / warning / error / critical
+     */
+    severity: string
+	title: string
+	detail: string
+	source: string
+	time: number
+	count: number
+}
+export class diagnostics {
+	/**
+     * 
+     * @param after_id: number
+     * @param max_count: number
+     * @returns Array<log_entry>
+     */
+    static logs(after_id: number, max_count: number): Array<log_entry>
+	static clear_logs(): void
+	/**
+     *  fields: JSON object string attached to the entry
+     * @param level: string
+     * @param message: string
+     * @param fields: string
+     * @param source: string
+     * @returns void
+     */
+    static log(level: string, message: string, fields: string, source: string): void
+	static problems(): Array<diagnostic_problem>
+	static take_new_problems(): Array<diagnostic_problem>
+	static problems_revision(): number
+	/**
+     * 
+     * @param severity: string
+     * @param title: string
+     * @param detail: string
+     * @param source: string
+     * @returns void
+     */
+    static report_problem(severity: string, title: string, detail: string, source: string): void
+	/**
+     * 
+     * @param category: string
+     * @returns void
+     */
+    static clear_problems(category: string): void
+	static log_file_path(): string
+	static config_file_path(): string
+	static data_directory(): string
+	static effective_config(): string
+	static default_config(): string
+	static reload_config(): void
 }
 }
 

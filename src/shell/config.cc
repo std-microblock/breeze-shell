@@ -5,7 +5,7 @@
 #include <mutex>
 #include <thread>
 
-#include "entry.h"
+#include "diag.h"
 #include "logger.h"
 #include "rfl.hpp"
 #include "rfl/DefaultIfMissing.hpp"
@@ -83,6 +83,7 @@ void config::write_config() {
 void config::read_config() {
     std::lock_guard read_lock(config_read_mutex());
     auto config_file = data_directory() / "config.json";
+    std::vector<diag::problem> problems;
 
 #ifdef __llvm__
     if (!std::filesystem::exists(config_file)) {
@@ -101,6 +102,11 @@ void config::read_config() {
         spdlog::warn(
             "Config file could not be opened. Using default config instead.");
         config::current = std::make_unique<config>();
+        problems.push_back({.severity = "warning",
+                            .title = "Config file could not be opened",
+                            .detail = "Breeze is running with the default "
+                                      "config until the file becomes readable.",
+                            .source = config_file.string()});
     } else {
         std::string json_str;
         std::copy(std::istreambuf_iterator<char>(ifs),
@@ -116,10 +122,14 @@ void config::read_config() {
             config::current = std::make_unique<config>(json.value());
             spdlog::info("Config reloaded.");
         } else {
-            spdlog::error(
+            spdlog::warn(
                 "Failed to read config file: {}\nUsing default config instead.",
                 json.error().what());
             config::current = std::make_unique<config>();
+            problems.push_back({.severity = "error",
+                                .title = "Config file is invalid",
+                                .detail = json.error().what(),
+                                .source = config_file.string()});
         }
     }
 #else
@@ -128,13 +138,36 @@ void config::read_config() {
     spdlog::info("We don't support loading config file when compiled with MSVC "
                  "because of a bug in MSVC.");
     config::current = std::make_unique<config>();
+    problems.push_back({.severity = "warning",
+                        .title = "Config loading is unavailable",
+                        .detail = "This build was compiled with MSVC, which "
+                                  "cannot load config.json.",
+                        .source = config_file.string()});
 #endif
 
-    if (config::current->debug_console) {
-        init_console(true);
-    } else {
-        init_console(false);
+    auto checked = std::make_unique<config>(*config::current);
+    for (auto [name, font, fallback] :
+         {std::tuple{"font_path_main", &checked->font_path_main,
+                     default_main_font()},
+          std::tuple{"font_path_fallback", &checked->font_path_fallback,
+                     default_fallback_font()},
+          std::tuple{"font_path_monospace", &checked->font_path_monospace,
+                     default_mono_font()}}) {
+        std::error_code ec;
+        if (!std::filesystem::exists(*font, ec)) {
+            spdlog::warn("Font not found: {} ({})", name, font->string());
+            problems.push_back(
+                {.severity = "warning",
+                 .title = std::format("Font not found: {}", name),
+                 .detail = std::format("{} does not exist, using {} instead",
+                                       font->string(), fallback.string()),
+                 .source = config_file.string()});
+            *font = fallback;
+        }
     }
+    config::current = std::move(checked);
+
+    diag::set_problems("config", std::move(problems));
 }
 
 std::filesystem::path config::data_directory() {

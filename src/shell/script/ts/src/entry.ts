@@ -3,6 +3,9 @@ globalThis.h = React.createElement
 globalThis.Fragment = React.Fragment
 
 import * as shell from "mshell"
+import { installConsole, startProblemNotifier } from "./utils/diagnostics";
+installConsole();
+
 import { plugin } from "./plugin";
 
 import { createRenderer } from "./react/renderer";
@@ -42,6 +45,7 @@ shell.menu_controller.add_menu_listener(ctx => {
 
 doCompats();
 void runAutoUpdateIfEnabled();
+startProblemNotifier(() => showConfigPage("problems"));
 
 globalThis.plugin = plugin as any
 globalThis.React = React

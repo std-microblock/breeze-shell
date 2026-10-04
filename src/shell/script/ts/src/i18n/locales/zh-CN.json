@@ -8,7 +8,9 @@
     "update": "更新",
     "pluginStore": "插件商店",
     "pluginConfig": "插件配置",
-    "updateSource": "更新源"
+    "updateSource": "更新源",
+    "problems": "问题",
+    "logs": "日志"
   },
   "settings": {
     "title": "Breeze 设置",
@@ -16,7 +18,7 @@
     "animation": "动画",
     "misc": "杂项",
     "language": "语言",
-    "debugConsole": "调试控制台",
+    "debugConsole": "出现问题时通知我",
     "vsync": "垂直同步",
     "ignoreOwnerDraw": "忽略自绘菜单",
     "reverseIfOpenToUp": "向上展开时反向排列",
@@ -122,6 +124,57 @@
       "easeOut": "缓出",
       "easeInOut": "缓入缓出"
     }
+  },
+  "logs": {
+    "title": "日志",
+    "subtitle": "本次会话共捕获 {{n}} 条",
+    "pause": "暂停",
+    "resume": "继续",
+    "search": "按文本、字段或来源筛选",
+    "empty": "没有符合当前筛选条件的日志",
+    "level": {
+      "debug": "调试",
+      "info": "信息",
+      "warn": "警告",
+      "error": "错误",
+      "critical": "严重"
+    }
+  },
+  "problems": {
+    "title": "问题",
+    "subtitle": "Breeze 检测到的配置、脚本与运行时问题",
+    "summary": "共 {{n}} 个问题，其中 {{errors}} 个错误",
+    "none": "这里没有问题",
+    "healthy": {
+      "title": "一切正常",
+      "message": "Breeze 没有检测到任何配置、脚本或运行时问题。"
+    },
+    "tab": {
+      "all": "全部",
+      "config": "配置",
+      "script": "脚本",
+      "runtime": "运行时"
+    },
+    "category": {
+      "config": "配置",
+      "script": "脚本",
+      "runtime": "运行时"
+    },
+    "config": {
+      "title": "当前生效的配置",
+      "reload": "重新加载",
+      "overrides": "{{n}} 项设置与默认值不同",
+      "default": "默认"
+    },
+    "copy": "复制",
+    "open": "打开",
+    "clearRuntime": "清除运行时问题",
+    "justNow": "刚刚",
+    "minutesAgo": "{{n}} 分钟前",
+    "hoursAgo": "{{n}} 小时前",
+    "toastTitle": "Breeze 发现了问题",
+    "toastMore": "以及另外 {{n}} 个",
+    "toastView": "查看详情"
   },
   "test": {
     "title": "测试",

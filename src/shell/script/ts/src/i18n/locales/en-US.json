@@ -8,7 +8,9 @@
     "update": "Update",
     "pluginStore": "Plugin Store",
     "pluginConfig": "Plugin Config",
-    "updateSource": "Update Source"
+    "updateSource": "Update Source",
+    "problems": "Problems",
+    "logs": "Logs"
   },
   "settings": {
     "title": "Breeze Settings",
@@ -16,7 +18,7 @@
     "animation": "Animation",
     "misc": "Miscellaneous",
     "language": "Language",
-    "debugConsole": "Debug Console",
+    "debugConsole": "Notify me when problems occur",
     "vsync": "Vertical Sync",
     "ignoreOwnerDraw": "Ignore Owner Draw",
     "reverseIfOpenToUp": "Reverse When Opening Upward",
@@ -122,6 +124,57 @@
       "easeOut": "Ease Out",
       "easeInOut": "Ease In Out"
     }
+  },
+  "logs": {
+    "title": "Logs",
+    "subtitle": "{{n}} entries captured in this session",
+    "pause": "Pause",
+    "resume": "Resume",
+    "search": "Filter by text, field or source",
+    "empty": "No log entries match the current filters",
+    "level": {
+      "debug": "Debug",
+      "info": "Info",
+      "warn": "Warning",
+      "error": "Error",
+      "critical": "Critical"
+    }
+  },
+  "problems": {
+    "title": "Problems",
+    "subtitle": "Configuration, script and runtime issues detected by Breeze",
+    "summary": "{{n}} problems detected, {{errors}} of them errors",
+    "none": "Nothing to report here",
+    "healthy": {
+      "title": "Everything looks good",
+      "message": "Breeze has not detected any configuration, script or runtime problems."
+    },
+    "tab": {
+      "all": "All",
+      "config": "Config",
+      "script": "Scripts",
+      "runtime": "Runtime"
+    },
+    "category": {
+      "config": "Config",
+      "script": "Script",
+      "runtime": "Runtime"
+    },
+    "config": {
+      "title": "Active configuration",
+      "reload": "Reload",
+      "overrides": "{{n}} settings differ from the defaults",
+      "default": "default"
+    },
+    "copy": "Copy",
+    "open": "Open",
+    "clearRuntime": "Clear runtime",
+    "justNow": "just now",
+    "minutesAgo": "{{n}} min ago",
+    "hoursAgo": "{{n}} h ago",
+    "toastTitle": "Breeze found a problem",
+    "toastMore": "and {{n}} more",
+    "toastView": "View details"
   },
   "test": {
     "title": "Test",

@@ -3,11 +3,13 @@
 #include "binding_qjs.h"
 #include "shell/config.h"
 #include "shell/contextmenu/contextmenu.h"
+#include "shell/diag.h"
 #include "shell/logger.h"
 
 #include <algorithm>
 #include <exception>
 #include <atomic>
+#include <optional>
 #include <ranges>
 #include <thread>
 
@@ -29,15 +31,37 @@ void println(qjs::rest<std::string> args) {
         }));
 }
 
+std::optional<std::string>
+module_rejection(script_context &ctx,
+                 const std::expected<qjs::Value, std::string> &res) {
+    if (!res)
+        return res.error();
+    return ctx.post_sync([&]() -> std::optional<std::string> {
+        auto *c = ctx.js->ctx;
+        if (JS_PromiseState(c, res->v) != JS_PROMISE_REJECTED)
+            return std::nullopt;
+        qjs::Value reason{c, JS_PromiseResult(c, res->v)};
+        auto message = reason.as<std::string>();
+        if (reason.isError())
+            message += "\n" + reason["stack"].as<std::string>();
+        return message;
+    });
+}
+
 script_context::script_context() {
     on_bind.push_back([this]() {
         auto &module = js->addModule("mshell");
         module.function("println", println);
         mshell_bindAll(module);
 
-        if (auto res = eval_string(breeze_script_js, "breeze-script.js");
-            !res) {
-            spdlog::error("Error in breeze_script_js: {}", res.error());
+        if (auto error = module_rejection(
+                *this, eval_string(breeze_script_js, "breeze-script.js"))) {
+            diag::report(spdlog::level::err,
+                         {.category = "script",
+                          .severity = "critical",
+                          .title = "Built-in script failed to start",
+                          .detail = *error,
+                          .source = "breeze-script.js"});
             return;
         }
     });
@@ -72,6 +96,7 @@ void script_context::watch_folder(const std::filesystem::path &path,
 
     auto reload_all = [&]() {
         spdlog::info("Reloading all scripts");
+        diag::clear_problems("script");
 
         menu_callbacks_js.clear();
         is_js_ready.store(false);
@@ -111,9 +136,14 @@ void script_context::watch_folder(const std::filesystem::path &path,
         });
 
         for (const auto &script_path : files) {
-            if (auto res = eval_file(script_path); !res) {
-                spdlog::error("Error evaluating file {}: {}",
-                              script_path.string(), res.error());
+            if (auto error = module_rejection(*this, eval_file(script_path))) {
+                diag::report(spdlog::level::err,
+                             {.category = "script",
+                              .severity = "error",
+                              .title = "Failed to load " +
+                                       script_path.filename().string(),
+                              .detail = *error,
+                              .source = script_path.string()});
             }
         }
 

@@ -135,6 +135,8 @@ IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, text, std::string);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_size, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_weight, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, max_width, float);
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_family,
+                 std::string);
 IMPL_COLOR_PROP(breeze_ui::js_text_widget, ui::text_widget, color);
 IMPL_SIMPLE_PROP(breeze_ui::js_textbox_widget, ui::textbox_widget, text,
                  std::string);
@@ -505,13 +507,16 @@ struct widget_js_base : public ui::flex_widget {
         }
     }
 
-    ui::sp_anim_float opacity = anim_float(255), border_radius = anim_float(0),
-                      border_width = anim_float(0);
+    ui::sp_anim_float opacity = anim_float(255, "opacity"),
+                      border_radius = anim_float(0, "border_radius"),
+                      border_width = anim_float(0, "border_width");
     ui::animated_color background_color = {this, 0.f, 0.f, 0.f, 0.f},
                        border_color = {this, 0.0f, 0.0f, 0.0f, 1.0f};
     bool inset_border = false;
 
     std::optional<paint_color> background_paint, border_paint;
+
+    static inline thread_local float inherited_alpha = 1.f;
 
     void render(ui::nanovg_context ctx) override {
         float rx = *x, ry = *y, rw = *width, rh = *height;
@@ -524,7 +529,13 @@ struct widget_js_base : public ui::flex_widget {
 
         auto scope = ctx.transaction();
 
-        ctx.globalAlpha(*opacity / 255.f);
+        const float parent_alpha = inherited_alpha;
+        const float alpha =
+            parent_alpha * std::clamp(*opacity / 255.f, 0.f, 1.f);
+        if (alpha <= 0.001f)
+            return;
+        inherited_alpha = alpha;
+        ctx.globalAlpha(alpha);
         if (background_paint) {
             background_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
         } else {
@@ -545,6 +556,7 @@ struct widget_js_base : public ui::flex_widget {
         }
 
         super::render(ctx);
+        inherited_alpha = parent_alpha;
     }
 };
 
@@ -634,6 +646,8 @@ IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    border_radius, float)
 IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    border_width, float)
+IMPL_ANIMATED_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, opacity,
+                   float)
 
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, auto_size,
                  bool)
@@ -767,6 +781,22 @@ void breeze_ui::js_widget::set_animation(std::string variable_name,
             } else {
                 anim_float->set_easing(ui::easing_type::mutation);
             }
+        }
+    }
+}
+
+void breeze_ui::js_widget::set_animation_curve(std::string variable_name,
+                                               float duration,
+                                               std::string easing) {
+    if (!$widget)
+        return;
+    auto curve = mb_shell::enum_from_string<ui::easing_type>(easing).value_or(
+        ui::easing_type::ease_in_out);
+    auto lock = $rt_lock();
+    for (auto &anim_float : $widget->anim_floats) {
+        if (anim_float->name == variable_name) {
+            anim_float->set_duration(duration);
+            anim_float->set_easing(curve);
         }
     }
 }

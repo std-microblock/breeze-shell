@@ -41,6 +41,8 @@ struct breeze_ui {
                                 int after_index);
 
         void set_animation(std::string variable_name, bool enabled);
+        void set_animation_curve(std::string variable_name, float duration,
+                                 std::string easing);
 
         float get_x() const;
         void set_x(float x);
@@ -71,6 +73,8 @@ struct breeze_ui {
         void set_font_weight(int weight);
         float get_max_width() const;
         void set_max_width(float w);
+        std::string get_font_family() const;
+        void set_font_family(std::string family);
         std::optional<std::tuple<float, float, float, float>> get_color() const;
         void
         set_color(std::optional<std::tuple<float, float, float, float>> color);
@@ -169,6 +173,7 @@ struct breeze_ui {
         DEFINE_PROP(std::shared_ptr<breeze_paint>, background_paint)
         DEFINE_PROP(std::shared_ptr<breeze_paint>, border_paint)
         DEFINE_PROP(float, border_radius)
+        DEFINE_PROP(float, opacity)
         DEFINE_PROP(float, gap)
         void set_border_color(
             std::optional<std::tuple<float, float, float, float>> color);

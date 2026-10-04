@@ -1,6 +1,6 @@
 import * as shell from "mshell";
 import { Button, Text, Toggle, ThemeCustomEditor, AnimationCustomEditor } from "../components";
-import { ContextMenuContext, DebugConsoleContext, LanguageContext } from "../contexts";
+import { ContextMenuContext, LanguageContext } from "../contexts";
 import { getNestedValue, setNestedValue } from "../utils";
 import { useTranslation } from "../hooks";
 import { theme_presets, animation_presets } from "../constants";
@@ -8,7 +8,6 @@ import { memo, useContext, useState } from "react";
 
 const ContextMenuConfig = memo(() => {
     const { config, defaultConfig, update } = useContext(ContextMenuContext)!;
-    const { value: debugConsole, update: updateDebugConsole } = useContext(DebugConsoleContext)!;
     const { language, setLanguage } = useContext(LanguageContext)!;
     const { t } = useTranslation();
     const [, forceUpdate] = useState(0);
@@ -190,7 +189,11 @@ const ContextMenuConfig = memo(() => {
 
             <flex gap={10} alignItems="stretch" justifyContent="center">
                 <Text fontSize={18}>{t("settings.misc")}</Text>
-                <Toggle label={t("settings.debugConsole")} value={debugConsole} onChange={updateDebugConsole} />
+                <Toggle label={t("settings.debugConsole")} value={getNestedValue(config, "debug_console") ?? false} onChange={(v) => {
+                    const newConfig = { ...config };
+                    setNestedValue(newConfig, "debug_console", v);
+                    update(newConfig);
+                }} />
                 <Toggle label={t("settings.vsync")} value={getNestedValue(config, "vsync") ?? getNestedValue(defaultConfig, "vsync")} onChange={(v) => {
                     const newConfig = { ...config };
                     setNestedValue(newConfig, "vsync", v);

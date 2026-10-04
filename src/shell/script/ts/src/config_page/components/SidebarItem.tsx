@@ -8,11 +8,13 @@ export const SidebarItem = memo((({
     onClick,
     icon,
     isActive,
+    badge,
     children
 }: {
     onClick: () => void;
     icon: string;
     isActive: boolean;
+    badge?: number;
     children: string;
 }) => {
     const isLightTheme = breeze.is_light_theme();
@@ -47,6 +49,21 @@ export const SidebarItem = memo((({
                 borderRadius={3} autoSize={false} animatedVars={['.a', 'height']} />
             {iconElement(icon, 14)}
             <Text fontSize={14}>{children}</Text>
+            {badge ? (
+                <>
+                    <spacer />
+                    <flex
+                        backgroundColor={isLightTheme ? '#C42B1C' : '#FF99A4'}
+                        borderRadius={8}
+                        paddingLeft={6}
+                        paddingRight={6}
+                        paddingTop={1}
+                        paddingBottom={1}
+                    >
+                        <Text fontSize={10} fontWeight={700} color={isLightTheme ? '#FFFFFFFF' : '#000000FF'}>{String(badge)}</Text>
+                    </flex>
+                </>
+            ) : null}
         </flex>
     );
 }));

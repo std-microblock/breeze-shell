@@ -1062,8 +1062,10 @@ struct Timer {
     int id;
 };
 
+std::mutex timers_mutex;
 std::list<std::unique_ptr<Timer>> timers;
 std::optional<std::thread> timer_thread;
+int next_timer_id = 0;
 
 void timer_thread_func() {
     while (true) {
@@ -1071,30 +1073,30 @@ void timer_thread_func() {
         Sleep(sleep_time);
 
         std::vector<std::function<void()>> callbacks;
-        for (auto &timer : timers) {
-            if (!timer || timer->ctx.expired()) {
-                timer = nullptr;
-                continue;
-            }
-            timer->elapsed += sleep_time;
-            if (timer->elapsed >= timer->delay) {
-
-                bool repeat = timer->repeat;
-                timer->elapsed = 0;
-                callbacks.push_back(timer->callback);
-                if (!repeat) {
+        {
+            std::lock_guard lock(timers_mutex);
+            for (auto &timer : timers) {
+                if (!timer || timer->ctx.expired()) {
                     timer = nullptr;
+                    continue;
+                }
+                timer->elapsed += sleep_time;
+                if (timer->elapsed >= timer->delay) {
+                    timer->elapsed = 0;
+                    callbacks.push_back(timer->callback);
+                    if (!timer->repeat) {
+                        timer = nullptr;
+                    }
                 }
             }
-        }
 
-        timers.erase(std::remove_if(timers.begin(), timers.end(),
-                                    [](const auto &timer) { return !timer; }),
-                     timers.end());
+            timers.remove_if([](const auto &timer) { return !timer; });
+        }
 
         for (const auto &callback : callbacks) {
             try {
                 callback();
+            } catch (qjs::qjs_context_destroyed_exception &) {
             } catch (std::exception &e) {
                 spdlog::error("Error in timer callback: {}", e.what());
             } catch (...) {
@@ -1104,47 +1106,36 @@ void timer_thread_func() {
     }
 }
 
-void ensure_timer_thread() {
+int add_timer(std::function<void()> callback, int delay, bool repeat) {
+    std::lock_guard lock(timers_mutex);
     if (!timer_thread) {
         timer_thread = std::thread(timer_thread_func);
     }
+
+    auto timer = std::make_unique<Timer>();
+    timer->callback = std::move(callback);
+    timer->delay = delay;
+    timer->repeat = repeat;
+    timer->ctx = qjs::Context::current->weak_from_this();
+    timer->id = ++next_timer_id;
+    auto id = timer->id;
+    timers.push_back(std::move(timer));
+    return id;
 }
 
 int infra::setTimeout(std::function<void()> callback, int delay) {
-    ensure_timer_thread();
-
-    auto timer = std::make_unique<Timer>();
-    timer->callback = callback;
-    timer->delay = delay;
-    timer->repeat = false;
-    timer->ctx = qjs::Context::current->weak_from_this();
-    timer->id = timers.size() + 1;
-    auto id = timer->id;
-    timers.push_back(std::move(timer));
-
-    return id;
+    return add_timer(std::move(callback), delay, false);
 };
 void infra::clearTimeout(int id) {
-    if (auto it = std::find_if(
-            timers.begin(), timers.end(),
-            [id](const auto &timer) { return timer && timer->id == id; });
-        it != timers.end()) {
-        timers.erase(it);
+    std::lock_guard lock(timers_mutex);
+    for (auto &timer : timers) {
+        if (timer && timer->id == id) {
+            timer = nullptr;
+        }
     }
 };
 int infra::setInterval(std::function<void()> callback, int delay) {
-    ensure_timer_thread();
-
-    auto timer = std::make_unique<Timer>();
-    timer->callback = callback;
-    timer->delay = delay;
-    timer->repeat = true;
-    timer->ctx = qjs::Context::current->weak_from_this();
-    timer->id = timers.size() + 1;
-    auto id = timer->id;
-    timers.push_back(std::move(timer));
-
-    return id;
+    return add_timer(std::move(callback), delay, true);
 };
 void infra::clearInterval(int id) { clearTimeout(id); };
 std::string infra::atob(std::string base64) {

@@ -1,5 +1,11 @@
 import { breeze_paint } from "mshell";
 
+type AnimationCurve = {
+  duration: number;
+  easing: 'mutation' | 'linear' | 'ease_in' | 'ease_out' | 'ease_in_out';
+  vars: string[];
+};
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
@@ -39,6 +45,8 @@ declare module 'react' {
         enableScrolling?: boolean;
         enableChildClipping?: boolean;
         cropOverflow?: boolean;
+        opacity?: number;
+        animationCurve?: AnimationCurve;
       },
       text: {
         text?: string[] | string;
@@ -54,6 +62,8 @@ declare module 'react' {
         flexGrow?: number;
         flexShrink?: number;
         maxWidth?: number;
+        fontFamily?: 'main' | 'monospace' | 'fallback';
+        animationCurve?: AnimationCurve;
       },
       textbox: {
         text?: string;

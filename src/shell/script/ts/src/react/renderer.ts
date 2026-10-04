@@ -119,8 +119,23 @@ const animatedVarsProp = {
     }
 }
 
+const animationCurveProp = {
+    set: (instance: shell.breeze_ui.js_widget, value: { duration: number, easing: string, vars: string[] }) => {
+        for (const v of value.vars) {
+            instance.set_animation_curve(v, value.duration, value.easing);
+        }
+        // @ts-ignore
+        instance._last_animation_curve = value;
+    },
+    get: (instance: shell.breeze_ui.js_widget) => {
+        // @ts-ignore
+        return instance._last_animation_curve;
+    }
+}
+
 const commonProps = {
     animatedVars: animatedVarsProp,
+    animationCurve: animationCurveProp,
     x: getSetFactory('x'),
     y: getSetFactory('y'),
     width: getSetFactory('width'),
@@ -145,6 +160,7 @@ const componentMap = {
             fontWeight: getSetFactory('font_weight'),
             color: getSetFactoryColor('color'),
             maxWidth: getSetFactory('max_width'),
+            fontFamily: getSetFactory('font_family'),
             ...commonProps
         }
     },
@@ -221,6 +237,7 @@ const componentMap = {
             enableScrolling: getSetFactory('enable_scrolling'),
             enableChildClipping: getSetFactory('enable_child_clipping'),
             cropOverflow: getSetFactory('crop_overflow'),
+            opacity: getSetFactory('opacity'),
             ...commonProps
         }
     },

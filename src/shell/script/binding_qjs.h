@@ -58,6 +58,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_widget::remove_child>("remove_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child_after>("append_child_after")
                 .fun<&mb_shell::js::breeze_ui::js_widget::set_animation>("set_animation")
+                .fun<&mb_shell::js::breeze_ui::js_widget::set_animation_curve>("set_animation_curve")
                 .fun<&mb_shell::js::breeze_ui::js_widget::get_x>("get_x")
                 .fun<&mb_shell::js::breeze_ui::js_widget::set_x>("set_x")
                 .fun<&mb_shell::js::breeze_ui::js_widget::get_y>("get_y")
@@ -80,6 +81,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
                     .property<&mb_shell::js::breeze_ui::js_text_widget::get_font_size, &mb_shell::js::breeze_ui::js_text_widget::set_font_size>("font_size")
                     .property<&mb_shell::js::breeze_ui::js_text_widget::get_font_weight, &mb_shell::js::breeze_ui::js_text_widget::set_font_weight>("font_weight")
                     .property<&mb_shell::js::breeze_ui::js_text_widget::get_max_width, &mb_shell::js::breeze_ui::js_text_widget::set_max_width>("max_width")
+                    .property<&mb_shell::js::breeze_ui::js_text_widget::get_font_family, &mb_shell::js::breeze_ui::js_text_widget::set_font_family>("font_family")
                     .property<&mb_shell::js::breeze_ui::js_text_widget::get_color, &mb_shell::js::breeze_ui::js_text_widget::set_color>("color")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_text>("get_text")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::set_text>("set_text")
@@ -89,6 +91,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_text_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::set_font_weight>("set_font_weight")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_max_width>("get_max_width")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::set_max_width>("set_max_width")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::get_font_family>("get_font_family")
+                .fun<&mb_shell::js::breeze_ui::js_text_widget::set_font_family>("set_font_family")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::get_color>("get_color")
                 .fun<&mb_shell::js::breeze_ui::js_text_widget::set_color>("set_color")
             ;
@@ -233,6 +237,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_background_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_background_paint>("background_paint")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_paint, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("border_paint")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("border_radius")
+                    .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_opacity, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_opacity>("opacity")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_gap, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_gap>("gap")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("border_color")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("border_width")
@@ -286,6 +291,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_paint>("set_border_paint")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_radius>("get_border_radius")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_radius>("set_border_radius")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_opacity>("get_opacity")
+                .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_opacity>("set_opacity")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_gap>("get_gap")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_gap>("set_gap")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("set_border_color")
@@ -1384,6 +1391,153 @@ template<> struct js_bind<mb_shell::js::infra> {
     }
 };
 
+template <> struct qjs::js_traits<mb_shell::js::log_entry> {
+    static mb_shell::js::log_entry unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::log_entry obj;
+
+        obj.id = js_traits<int64_t>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "id"));
+
+        obj.time = js_traits<int64_t>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "time"));
+
+        obj.level = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "level"));
+
+        obj.message = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "message"));
+
+        obj.thread = js_traits<int64_t>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "thread"));
+
+        obj.source = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "source"));
+
+        obj.fields = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "fields"));
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::log_entry &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        JS_SetPropertyStr(ctx, obj, "id", js_traits<int64_t>::wrap(ctx, val.id));
+
+        JS_SetPropertyStr(ctx, obj, "time", js_traits<int64_t>::wrap(ctx, val.time));
+
+        JS_SetPropertyStr(ctx, obj, "level", js_traits<std::string>::wrap(ctx, val.level));
+
+        JS_SetPropertyStr(ctx, obj, "message", js_traits<std::string>::wrap(ctx, val.message));
+
+        JS_SetPropertyStr(ctx, obj, "thread", js_traits<int64_t>::wrap(ctx, val.thread));
+
+        JS_SetPropertyStr(ctx, obj, "source", js_traits<std::string>::wrap(ctx, val.source));
+
+        JS_SetPropertyStr(ctx, obj, "fields", js_traits<std::string>::wrap(ctx, val.fields));
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::log_entry> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::log_entry>("log_entry")
+            .constructor<>()
+                .fun<&mb_shell::js::log_entry::id>("id")
+                .fun<&mb_shell::js::log_entry::time>("time")
+                .fun<&mb_shell::js::log_entry::level>("level")
+                .fun<&mb_shell::js::log_entry::message>("message")
+                .fun<&mb_shell::js::log_entry::thread>("thread")
+                .fun<&mb_shell::js::log_entry::source>("source")
+                .fun<&mb_shell::js::log_entry::fields>("fields")
+            ;
+    }
+};
+
+template <> struct qjs::js_traits<mb_shell::js::diagnostic_problem> {
+    static mb_shell::js::diagnostic_problem unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::diagnostic_problem obj;
+
+        obj.category = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "category"));
+
+        obj.severity = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "severity"));
+
+        obj.title = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "title"));
+
+        obj.detail = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "detail"));
+
+        obj.source = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "source"));
+
+        obj.time = js_traits<int64_t>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "time"));
+
+        obj.count = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "count"));
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::diagnostic_problem &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        JS_SetPropertyStr(ctx, obj, "category", js_traits<std::string>::wrap(ctx, val.category));
+
+        JS_SetPropertyStr(ctx, obj, "severity", js_traits<std::string>::wrap(ctx, val.severity));
+
+        JS_SetPropertyStr(ctx, obj, "title", js_traits<std::string>::wrap(ctx, val.title));
+
+        JS_SetPropertyStr(ctx, obj, "detail", js_traits<std::string>::wrap(ctx, val.detail));
+
+        JS_SetPropertyStr(ctx, obj, "source", js_traits<std::string>::wrap(ctx, val.source));
+
+        JS_SetPropertyStr(ctx, obj, "time", js_traits<int64_t>::wrap(ctx, val.time));
+
+        JS_SetPropertyStr(ctx, obj, "count", js_traits<int>::wrap(ctx, val.count));
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::diagnostic_problem> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::diagnostic_problem>("diagnostic_problem")
+            .constructor<>()
+                .fun<&mb_shell::js::diagnostic_problem::category>("category")
+                .fun<&mb_shell::js::diagnostic_problem::severity>("severity")
+                .fun<&mb_shell::js::diagnostic_problem::title>("title")
+                .fun<&mb_shell::js::diagnostic_problem::detail>("detail")
+                .fun<&mb_shell::js::diagnostic_problem::source>("source")
+                .fun<&mb_shell::js::diagnostic_problem::time>("time")
+                .fun<&mb_shell::js::diagnostic_problem::count>("count")
+            ;
+    }
+};
+
+template <> struct qjs::js_traits<mb_shell::js::diagnostics> {
+    static mb_shell::js::diagnostics unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::diagnostics obj;
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::diagnostics &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::diagnostics> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::diagnostics>("diagnostics")
+            .constructor<>()
+                .static_fun<&mb_shell::js::diagnostics::logs>("logs")
+                .static_fun<&mb_shell::js::diagnostics::clear_logs>("clear_logs")
+                .static_fun<&mb_shell::js::diagnostics::log>("log")
+                .static_fun<&mb_shell::js::diagnostics::problems>("problems")
+                .static_fun<&mb_shell::js::diagnostics::take_new_problems>("take_new_problems")
+                .static_fun<&mb_shell::js::diagnostics::problems_revision>("problems_revision")
+                .static_fun<&mb_shell::js::diagnostics::report_problem>("report_problem")
+                .static_fun<&mb_shell::js::diagnostics::clear_problems>("clear_problems")
+                .static_fun<&mb_shell::js::diagnostics::log_file_path>("log_file_path")
+                .static_fun<&mb_shell::js::diagnostics::config_file_path>("config_file_path")
+                .static_fun<&mb_shell::js::diagnostics::data_directory>("data_directory")
+                .static_fun<&mb_shell::js::diagnostics::effective_config>("effective_config")
+                .static_fun<&mb_shell::js::diagnostics::default_config>("default_config")
+                .static_fun<&mb_shell::js::diagnostics::reload_config>("reload_config")
+            ;
+    }
+};
+
 inline void mshell_bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::breeze_ui>::bind(mod);
@@ -1453,5 +1607,11 @@ inline void mshell_bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::notification>::bind(mod);
 
     js_bind<mb_shell::js::infra>::bind(mod);
+
+    js_bind<mb_shell::js::log_entry>::bind(mod);
+
+    js_bind<mb_shell::js::diagnostic_problem>::bind(mod);
+
+    js_bind<mb_shell::js::diagnostics>::bind(mod);
 
 }

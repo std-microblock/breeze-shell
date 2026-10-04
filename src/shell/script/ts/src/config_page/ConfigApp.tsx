@@ -17,12 +17,15 @@ import UpdatePage from "./pages/UpdatePage";
 import PluginStore from "./pages/PluginStore";
 import PluginConfig from "./pages/PluginConfig";
 import TestPage from "./pages/TestPage";
+import LogViewer from "./pages/LogViewer";
+import ProblemsPage from "./pages/ProblemsPage";
+import { Entrance } from "./components/Fluent";
 import { useState, useEffect } from "react";
 import { changeLanguage, getCurrentLanguage } from "../i18n";
 import { getUpdateSource } from "../utils/appConfig";
 
-export const ConfigApp = () => {
-    const [activePage, setActivePage] = useState('context-menu');
+export const ConfigApp = ({ initialPage = 'context-menu' }: { initialPage?: string }) => {
+    const [activePage, setActivePage] = useState(initialPage);
     const [contextMenuConfig, setContextMenuConfig] = useState<any>({});
     const [defaultContextMenuConfig, setDefaultContextMenuConfig] = useState<any>({});
     const [debugConsole, setDebugConsole] = useState<boolean>(false);
@@ -115,13 +118,15 @@ export const ConfigApp = () => {
                                         sidebarWidth={SIDEBAR_WIDTH}
                                         windowHeight={WINDOW_HEIGHT}
                                     />
-                                    <flex padding={20}>
+                                    <Entrance key={activePage} padding={20} offset={16}>
                                         {activePage === 'context-menu' && <ContextMenuConfig />}
                                         {activePage === 'update' && <UpdatePage />}
                                         {activePage === 'plugin-store' && <PluginStore />}
                                         {activePage === 'plugin-config' && <PluginConfig />}
+                                        {activePage === 'problems' && <ProblemsPage />}
+                                        {activePage === 'logs' && <LogViewer />}
                                         {activePage === 'test' && <TestPage />}
-                                    </flex>
+                                    </Entrance>
                                 </flex>
                             </PluginSourceContext.Provider>
                         </NotificationContext.Provider>

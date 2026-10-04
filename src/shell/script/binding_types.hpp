@@ -719,6 +719,50 @@ struct infra {
     static std::string btoa(std::string str);
 };
 
+struct log_entry {
+    int64_t id;
+    int64_t time;
+    // trace / debug / info / warn / error / critical
+    std::string level;
+    std::string message;
+    int64_t thread;
+    std::string source;
+    // JSON object string, empty when the entry has no structured fields
+    std::string fields;
+};
+
+struct diagnostic_problem {
+    // config / script / runtime
+    std::string category;
+    // info / warning / error / critical
+    std::string severity;
+    std::string title;
+    std::string detail;
+    std::string source;
+    int64_t time;
+    int count;
+};
+
+struct diagnostics {
+    static std::vector<log_entry> logs(int64_t after_id, int max_count);
+    static void clear_logs();
+    // fields: JSON object string attached to the entry
+    static void log(std::string level, std::string message, std::string fields,
+                    std::string source);
+    static std::vector<diagnostic_problem> problems();
+    static std::vector<diagnostic_problem> take_new_problems();
+    static int64_t problems_revision();
+    static void report_problem(std::string severity, std::string title,
+                               std::string detail, std::string source);
+    static void clear_problems(std::string category);
+    static std::string log_file_path();
+    static std::string config_file_path();
+    static std::string data_directory();
+    static std::string effective_config();
+    static std::string default_config();
+    static void reload_config();
+};
+
 } // namespace mb_shell::js
 
 namespace mb_shell {

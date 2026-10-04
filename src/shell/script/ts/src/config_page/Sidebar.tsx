@@ -1,6 +1,6 @@
 import * as shell from "mshell";
 import { showMenu } from "./utils";
-import { memo, useEffect, useContext } from "react";
+import { memo, useEffect, useContext, useState } from "react";
 import { Button, SidebarItem, Text, iconElement } from "./components";
 import {
     ICON_BREEZE,
@@ -9,6 +9,8 @@ import {
     ICON_PLUGIN_STORE,
     ICON_PLUGIN_CONFIG,
     ICON_TEST,
+    ICON_LOGS,
+    ICON_PROBLEMS,
     PLUGIN_SOURCES
 } from "./constants";
 import { UpdateDataContext, NotificationContext, PluginSourceContext } from "./contexts";
@@ -57,6 +59,14 @@ const Sidebar = memo(({
         loadSourceData(currentPluginSource);
     }, [currentPluginSource]);
 
+    const [problemCount, setProblemCount] = useState(0);
+    useEffect(() => {
+        const refresh = () => setProblemCount(shell.diagnostics.problems().length);
+        refresh();
+        const id = setInterval(refresh, 1000);
+        return () => clearInterval(id);
+    }, []);
+
     return (
         <flex
             width={sidebarWidth}
@@ -75,6 +85,9 @@ const Sidebar = memo(({
             <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>{t('sidebar.update')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>{t('sidebar.pluginStore')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>{t('sidebar.pluginConfig')}</SidebarItem>
+            <flex height={1} autoSize={false} backgroundColor={shell.breeze.is_light_theme() ? '#00000014' : '#FFFFFF15'} />
+            <SidebarItem onClick={() => setActivePage('problems')} icon={ICON_PROBLEMS} isActive={activePage === 'problems'} badge={problemCount}>{t('sidebar.problems')}</SidebarItem>
+            <SidebarItem onClick={() => setActivePage('logs')} icon={ICON_LOGS} isActive={activePage === 'logs'}>{t('sidebar.logs')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('test')} icon={ICON_TEST} isActive={activePage === 'test'}>{t('test.title')}</SidebarItem>
             <spacer />
 

@@ -89,7 +89,7 @@ const disposeExistingConfigWindow = () => {
     }
 };
 
-export const showConfigPage = () => {
+export const showConfigPage = (page = 'context-menu') => {
     disposeExistingConfigWindow();
     shell.breeze.allow_js_reload(false);
     const generation = ++configWindowGeneration;
@@ -108,6 +108,6 @@ export const showConfigPage = () => {
     const widget = shell.breeze_ui.widgets_factory.create_flex_layout_widget();
     renderer = createRenderer(widget);
     existingConfigRenderer = renderer;
-    renderer.render(React.createElement(ConfigApp, null));
+    renderer.render(React.createElement(ConfigApp, { initialPage: page }));
     win.root_widget = widget
 }

@@ -540,7 +540,7 @@ export const makeBreezeConfigMenu = (mainMenu) => {
 
                     sub.append_spacer()
 
-                    createBoolToggle(sub, "调试控制台", "debug_console", false);
+                    createBoolToggle(sub, "出现问题时通知我", "debug_console", false);
                     createBoolToggle(sub, "垂直同步", "context_menu.vsync", true);
                     createBoolToggle(sub, "忽略自绘菜单", "context_menu.ignore_owner_draw", true);
                     createBoolToggle(sub, "向上展开时反向排列", "context_menu.reverse_if_open_to_up", true);

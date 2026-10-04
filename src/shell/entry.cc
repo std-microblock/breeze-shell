@@ -26,7 +26,6 @@
 #include <chrono>
 #include <codecvt>
 #include <condition_variable>
-#include <consoleapi3.h>
 #include <cstddef>
 #include <exception>
 #include <filesystem>
@@ -41,7 +40,6 @@
 #include <thread>
 #include <vector>
 
-#include <consoleapi.h>
 #include <debugapi.h>
 #include <type_traits>
 #include <winreg.h>
@@ -56,22 +54,9 @@
 namespace mb_shell {
 window_proc_hook entry::main_window_loop_hook{};
 
-static bool console_allocated = false;
-
-void init_console(bool show) {
-    if (show && !console_allocated) {
-        AllocConsole();
-        console_allocated = true;
-        add_console_sink();
-        ShowWindow(GetConsoleWindow(), SW_SHOW);
-    } else if (show && console_allocated) {
-        ShowWindow(GetConsoleWindow(), SW_SHOW);
-        SetForegroundWindow(GetConsoleWindow());
-    } else if (!show && console_allocated) {
-        remove_console_sink();
-        FreeConsole();
-        console_allocated = false;
-    }
+script_context &main_script_context() {
+    static script_context ctx;
+    return ctx;
 }
 
 void main() {
@@ -81,11 +66,6 @@ void main() {
     install_error_handlers();
     config::run_config_loader();
 
-    if (config::current->debug_console) {
-        init_console(true);
-    }
-
-    static script_context script_ctx;
     std::thread([]() {
         auto data_dir = config::data_directory();
         auto script_dir = data_dir / "scripts";
@@ -93,7 +73,7 @@ void main() {
         if (!std::filesystem::exists(script_dir))
             std::filesystem::create_directories(script_dir);
 
-        script_ctx.watch_folder(script_dir, [&]() {
+        main_script_context().watch_folder(script_dir, [&]() {
             return !context_menu_hooks::block_js_reload.load();
         });
     }).detach();
@@ -182,8 +162,8 @@ void main() {
     if (filename == "asan_test.exe") {
         // ASAN environment
         init_render_global();
-        init_console(true);
         std::thread([]() {
+            auto &script_ctx = main_script_context();
             script_ctx.is_js_ready.wait(false);
             spdlog::info("Is js ready: %d", script_ctx.is_js_ready.load());
             try {
