@@ -437,7 +437,14 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             static HWND window = nullptr;
             window = (HWND)menu_render.rt->hwnd();
             // set keyboard hook to handle keyboard input
-            auto hook = SetWindowsHookExW(
+            struct keyboard_hook_guard {
+                HHOOK hook = nullptr;
+                ~keyboard_hook_guard() {
+                    if (hook) {
+                        UnhookWindowsHookEx(hook);
+                    }
+                }
+            } hook_guard{SetWindowsHookExW(
                 WH_KEYBOARD,
                 [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
                     if (nCode == HC_ACTION) {
@@ -449,7 +456,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                     }
                     return CallNextHookEx(NULL, nCode, wParam, lParam);
                 },
-                NULL, thread_id_orig);
+                NULL, thread_id_orig)};
 
             SetWindowLongPtrW(window, GWL_EXSTYLE,
                               GetWindowLongPtrW(window, GWL_EXSTYLE) |
@@ -457,7 +464,6 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             if (on_before_show)
                 on_before_show(menu_render);
             menu_render.rt->start_loop();
-            UnhookWindowsHookEx(hook);
 
             return menu_render.selected_menu;
         } catch (std::exception &e) {
