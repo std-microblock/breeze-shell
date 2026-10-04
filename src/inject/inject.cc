@@ -201,7 +201,7 @@ void OnInjectedProcessExit(DWORD pid, DWORD exitCode) {
         fs::rename(marker_path, archived, ec);
     }
 
-    if (blame == mb_shell::crash_blame::foreign)
+    if (!mb_shell::counts_toward_limit(blame))
         return;
 
     bool limit_reached;

@@ -72,6 +72,10 @@ inline crash_blame blame_crash(DWORD exit_code,
                                          : crash_blame::none;
 }
 
+inline bool counts_toward_limit(crash_blame blame) {
+    return blame != crash_blame::none;
+}
+
 class crash_window {
   public:
     using clock = std::chrono::steady_clock;
