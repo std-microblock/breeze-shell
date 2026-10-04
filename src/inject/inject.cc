@@ -6,6 +6,8 @@
 #include <thread>
 #include <vector>
 
+#include "crash_detection.h"
+
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -206,8 +208,8 @@ int InjectToPID(int targetPID, std::wstring_view dllPath) {
         if (!GetExitCodeProcess(hProcess, (LPDWORD)&exitCode)) {
             spdlog::error("GetExitCodeProcess failed: %d", GetLastError());
         }
-        if (exitCode != 0) {
-            spdlog::error("Process exited with code: %d", exitCode);
+        if (mb_shell::is_crash_exit_code(exitCode)) {
+            spdlog::error("Process crashed with exit code: 0x{:08x}", exitCode);
             auto current_crash_count = ++crash_count;
             if (current_crash_count >= MAX_CRASH_COUNT) {
                 ShowCrashDialog();
