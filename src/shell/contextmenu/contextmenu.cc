@@ -134,6 +134,12 @@ std::wstring strip_extra_infos(std::wstring_view str) {
         if (str[i] == '\t') {
             break;
         }
+
+        if (str[i] == 0x200B || str[i] == 0x200C || str[i] == 0x200D ||
+            str[i] == 0xFEFF || str[i] == 0x00AD) {
+            continue;
+        }
+
         result.push_back(str[i]);
     }
 
