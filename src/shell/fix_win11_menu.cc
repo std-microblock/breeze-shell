@@ -162,9 +162,82 @@ void mb_shell::fix_win11_menu::install() {
                 return false;
             };
 
+            // Classic menu or not is decided from the extended-verbs flag;
+            // forcing that decision keeps the flag out of the shell handlers.
+            constexpr int kExtendedVerbs = 0x100;
+
+            auto patch_classic_menu_decision = [&](auto mem, auto module) {
+                auto shift_check = find_key_state_check(mem, 0x10);
+                if (!shift_check)
+                    return false;
+
+                void *decision = nullptr;
+                bool after_shift_check = false;
+                for (auto it = mem.begin(); it != mem.end(); ++it) {
+                    auto &insn = *it;
+                    if (insn.ptr().data() == shift_check)
+                        after_shift_check = true;
+                    if (!after_shift_check)
+                        continue;
+                    if (insn->getMnemonic() != zasm::x86::Mnemonic::Call)
+                        continue;
+                    const auto &operand = insn->getOperand(0);
+                    if (!operand.template holds<zasm::Imm>())
+                        continue;
+
+                    decision = (void *)operand.template get<zasm::Imm>()
+                                   .template value<uintptr_t>();
+                    break;
+                }
+
+                auto module_begin = (uintptr_t)module->base().data();
+                auto module_end = module_begin + module->size();
+                if (!decision || (uintptr_t)decision < module_begin ||
+                    (uintptr_t)decision >= module_end) {
+                    return false;
+                }
+
+                auto decision_code =
+                    blook::Pointer(decision).range_size(0x200).disassembly();
+                for (auto it = decision_code.begin(); it != decision_code.end();
+                     ++it) {
+                    auto &insn = *it;
+                    if (insn->getMnemonic() == zasm::x86::Mnemonic::Ret)
+                        return false;
+                    if (insn->getMnemonic() != zasm::x86::Mnemonic::And ||
+                        insn->getOperandCount() < 2)
+                        continue;
+
+                    const auto &dst = insn->getOperand(0);
+                    const auto &src = insn->getOperand(1);
+                    if (!dst.template holds<zasm::x86::Reg>() ||
+                        !src.template holds<zasm::Imm>())
+                        continue;
+                    if (src.template get<zasm::Imm>().template value<int>() !=
+                        kExtendedVerbs)
+                        continue;
+
+                    auto reg = zasm::x86::Gp(
+                        dst.template get<zasm::x86::Reg>().getId());
+                    auto patched =
+                        insn.ptr().range_next_instr(1).try_reassembly_with_padding(
+                            [reg](zasm::x86::Assembler a) {
+                                a.or_(reg, kExtendedVerbs);
+                            });
+                    if (!patched)
+                        return false;
+
+                    patched->patch();
+                    spdlog::info(
+                        "Patched shell32.dll extended-verbs menu decision: {}",
+                        (void *)decision);
+                    return true;
+                }
+
+                return false;
+            };
+
             if (auto shell32 = proc->module("shell32.dll")) {
-                // mov ecx, 10
-                // call GetKeyState/GetAsyncKeyState
                 auto disasm = shell32.value()->section(".text")->disassembly();
 
                 // the function to determine if show win10 menu or win11 menu
@@ -173,13 +246,20 @@ void mb_shell::fix_win11_menu::install() {
                     if (imported_call_target(ins) != extraInfo)
                         continue;
 
-                    if (patch_key_state_check(
-                            ins.ptr()
-                                .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
-                                ->range_size(0xB50)
-                                .disassembly(),
-                            0x10)) {
-                        spdlog::info("Patched shell32.dll for win11 menu fix");
+                    auto function =
+                        ins.ptr()
+                            .find_upwards({0xCC, 0xCC, 0xCC, 0xCC, 0xCC})
+                            ->range_size(0xB50);
+
+                    if (patch_classic_menu_decision(function.disassembly(),
+                                                    shell32.value())) {
+                        break;
+                    }
+
+                    if (patch_key_state_check(function.disassembly(), 0x10)) {
+                        spdlog::warn("Patched shell32.dll by faking the SHIFT "
+                                     "key state; \"Send To\" may list the user "
+                                     "profile folders");
                         break;
                     }
                 }
@@ -218,3 +298,4 @@ void mb_shell::fix_win11_menu::install() {
         }
     }).detach();
 }
+

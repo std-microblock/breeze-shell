@@ -136,7 +136,7 @@ std::vector<std::string> extract_hotkeys(const std::string &name) {
 menu menu::construct_with_hmenu(
     HMENU hMenu, HWND hWnd, bool is_top,
     std::function<void(int, WPARAM, LPARAM)> HandleMenuMsg,
-    LPARAM init_popup_lparam) {
+    LPARAM init_popup_lparam, bool send_init_msg) {
     menu m;
 
     if (!HandleMenuMsg)
@@ -144,8 +144,10 @@ menu menu::construct_with_hmenu(
             SendMessageW(hWnd, message, wParam, lParam);
         };
 
-    HandleMenuMsg(WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
-                  init_popup_lparam);
+    if (send_init_msg) {
+        HandleMenuMsg(WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hMenu),
+                      init_popup_lparam);
+    }
     for (int i = 0; i < GetMenuItemCount(hMenu); i++) {
         menu_item item;
         wchar_t buffer[256];

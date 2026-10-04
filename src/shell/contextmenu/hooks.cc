@@ -323,6 +323,33 @@ void sync_native_menu_item_update(HMENU hMenu, UINT item, BOOL fByPosition,
         },
         true);
 }
+
+void schedule_menu_content_resync(HMENU hMenu) {
+    if (!should_warn_menu_mutation(hMenu)) {
+        return;
+    }
+
+    auto render = mb_shell::menu_render::current;
+    if (!render || !(*render) || !(*render)->rt) {
+        return;
+    }
+
+    (*render)->rt->post_loop_thread_task(
+        [hMenu]() {
+            auto root = current_root_menu_widget();
+            if (!root) {
+                return;
+            }
+
+            auto target = find_menu_widget_by_handle(root, hMenu);
+            if (!target || target->menu_data.is_top_level) {
+                return;
+            }
+
+            target->native_content_dirty = true;
+        },
+        true);
+}
 } // namespace
 
 #define WARN_LATE_MENU_MUTATION(API_NAME, HMENU_VALUE, FMT, ...)               \
@@ -332,6 +359,7 @@ void sync_native_menu_item_update(HMENU hMenu, UINT item, BOOL fByPosition,
                          " (current_menu={}, hMenu={}, " FMT ")",              \
                          current_live_menu(), (void *)(HMENU_VALUE),           \
                          __VA_ARGS__);                                         \
+            schedule_menu_content_resync(HMENU_VALUE);                         \
         }                                                                      \
     } while (false)
 

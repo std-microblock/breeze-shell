@@ -120,6 +120,8 @@ struct menu_widget : public ui::flex_widget {
     bool bg_appear_initialized = false;
     std::optional<menu_animation_rect> bg_start_rect;
     void init_from_data(menu menu_data);
+    bool native_content_dirty = false;
+    void resync_native_content();
     void arm_background_animation(
         std::optional<menu_animation_rect> initial_rect = std::nullopt);
     bool animate_appear_started = false;

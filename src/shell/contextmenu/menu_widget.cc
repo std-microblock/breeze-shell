@@ -353,6 +353,11 @@ void mb_shell::menu_widget::arm_background_animation(
 }
 
 void mb_shell::menu_widget::update(ui::update_context &ctx) {
+    if (native_content_dirty) {
+        native_content_dirty = false;
+        resync_native_content();
+    }
+
     if (dying_time) {
         if (dying_time.changed() && is_top_level_menu) {
             y->animate_to(*y - 10);
@@ -969,6 +974,53 @@ void mb_shell::menu_widget::init_from_data(menu menu_data) {
 
     update_icon_width();
     this->menu_data = menu_data;
+}
+
+namespace {
+bool same_native_menu_layout(const std::vector<mb_shell::menu_item> &a,
+                             const std::vector<mb_shell::menu_item> &b) {
+    if (a.size() != b.size())
+        return false;
+
+    for (size_t i = 0; i < a.size(); i++) {
+        if (a[i].type != b[i].type || a[i].name != b[i].name ||
+            a[i].origin_name != b[i].origin_name || a[i].wID != b[i].wID ||
+            a[i].submenu.has_value() != b[i].submenu.has_value())
+            return false;
+    }
+
+    return true;
+}
+} // namespace
+
+void mb_shell::menu_widget::resync_native_content() {
+    if (is_top_level_menu || !menu_data.native_handle)
+        return;
+
+    auto hMenu = (HMENU)menu_data.native_handle;
+    auto fresh = menu::construct_with_hmenu(
+        hMenu, (HWND)menu_data.parent_window, false, {}, 0xFFFFFFFF, false);
+
+    if (same_native_menu_layout(fresh.items, menu_data.items))
+        return;
+
+    spdlog::info("Native submenu {} changed after being shown ({} -> {} items)",
+                 (void *)hMenu, menu_data.items.size(), fresh.items.size());
+
+    for (auto &child : children) {
+        if (auto item = child->downcast<menu_item_normal_widget>())
+            item->hide_submenu();
+    }
+
+    if (current_submenu) {
+        current_submenu->close();
+        current_submenu = nullptr;
+    }
+    rendering_submenus.clear();
+    children.clear();
+
+    init_from_data(fresh);
+    needs_repaint = true;
 }
 void mb_shell::menu_widget::update_icon_width() {
     bool has_icon = std::ranges::any_of(children, [](auto &item) {
