@@ -256,11 +256,12 @@ export const IconButton = ({ icon, label, onClick, accent }: {
     );
 };
 
-export const InfoBar = ({ severity, title, message, children }: {
+export const InfoBar = ({ severity, title, message, children, maxTextWidth = 480 }: {
     severity: string;
     title: string;
     message?: string;
     children?: ReactNode;
+    maxTextWidth?: number;
 }) => {
     const s = severityStyle(severity);
     const c = fluent();
@@ -279,18 +280,18 @@ export const InfoBar = ({ severity, title, message, children }: {
                 <Text fontSize={11} fontWeight={700} color={c.light ? "#FFFFFFFF" : "#000000FF"}>{severity === "info" ? "i" : "!"}</Text>
             </flex>
             <flex gap={4} flexGrow={1} alignItems="stretch">
-                <Text fontSize={13} fontWeight={600} color={c.text}>{title}</Text>
-                {message && <Text fontSize={12} color={c.textSecondary}>{message}</Text>}
+                <Text fontSize={13} fontWeight={600} color={c.text} maxWidth={maxTextWidth}>{title}</Text>
+                {message && <Text fontSize={12} color={c.textSecondary} maxWidth={maxTextWidth}>{message}</Text>}
                 {children}
             </flex>
         </flex>
     );
 };
 
-export const SectionHeader = ({ title, subtitle, children }: { title: string; subtitle?: string; children?: ReactNode }) => {
+export const SectionHeader = ({ title, subtitle, children, gutter = 0 }: { title: string; subtitle?: string; children?: ReactNode; gutter?: number }) => {
     const c = fluent();
     return (
-        <flex horizontal alignItems="end" justifyContent="space-between">
+        <flex horizontal alignItems="end" justifyContent="space-between" paddingRight={gutter}>
             <flex gap={2}>
                 <Text fontSize={26} fontWeight={600} color={c.text}>{title}</Text>
                 {subtitle && <Text fontSize={12} color={c.textSecondary}>{subtitle}</Text>}

@@ -3,7 +3,11 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Text } from "../components";
 import { Card, Entrance, IconButton, InfoBar, Pill, SectionHeader, SegmentedControl, fluent, severityStyle } from "../components/Fluent";
 import { useTranslation } from "../hooks";
-import { ICON_COPY, ICON_OPEN, ICON_REFRESH } from "../constants";
+import { CONTENT_WIDTH, ICON_COPY, ICON_OPEN, ICON_REFRESH, SCROLL_GUTTER } from "../constants";
+
+const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 3 - 28 - 2;
+const CODE_WIDTH = CARD_INNER - 16;
+const TITLE_WIDTH = CARD_INNER - 60 - 50 - 40 - 60 - 32;
 
 type Tab = "all" | "config" | "script" | "runtime";
 
@@ -32,21 +36,21 @@ const ProblemCard = memo(({ p, index, expanded, onToggle }: {
                 <flex horizontal gap={8} alignItems="center">
                     <Pill text={s.label} fg={s.fg} bg={s.bg} fontSize={10} />
                     <Pill text={t(`problems.category.${p.category}`)} fg={c.textSecondary} bg={c.subtle} fontSize={10} />
-                    <Text fontSize={13} fontWeight={600} color={c.text} maxWidth={360}>{p.title}</Text>
+                    <Text fontSize={13} fontWeight={600} color={c.text} maxWidth={TITLE_WIDTH}>{p.title}</Text>
                     {p.count > 1 && <Pill text={`×${p.count}`} fg={c.accent} bg={c.subtle} fontSize={10} />}
                     <spacer />
                     <Text fontSize={11} color={c.textTertiary}>{relativeTime(p.time, t)}</Text>
                 </flex>
                 {hasDetail && (
                     <flex padding={8} borderRadius={4} backgroundColor={c.codeBg}>
-                        <Text fontSize={12} fontFamily="monospace" maxWidth={540} color={c.textSecondary}>
+                        <Text fontSize={12} fontFamily="monospace" maxWidth={CODE_WIDTH} color={c.textSecondary}>
                             {expanded ? p.detail : p.detail.split("\n").slice(0, 3).join("\n").slice(0, 280)}
                         </Text>
                     </flex>
                 )}
                 {expanded && p.source && (
                     <flex horizontal gap={8} alignItems="center">
-                        <Text fontSize={11} color={c.textTertiary}>{p.source}</Text>
+                        <Text fontSize={11} color={c.textTertiary} maxWidth={CARD_INNER - 200}>{p.source}</Text>
                         <spacer />
                         <IconButton icon={ICON_COPY} label={t("problems.copy")} onClick={() => shell.clipboard.write_text(`${p.title}\n${p.detail}\n${p.source}`)} />
                         {shell.fs.exists(p.source) && (
@@ -94,7 +98,7 @@ const ConfigSummary = memo(() => {
                 <flex horizontal alignItems="center" gap={8}>
                     <flex gap={2} flexGrow={1}>
                         <Text fontSize={14} fontWeight={600} color={c.text}>{t("problems.config.title")}</Text>
-                        <Text fontSize={11} color={c.textTertiary}>{shell.diagnostics.config_file_path()}</Text>
+                        <Text fontSize={11} color={c.textTertiary} maxWidth={CARD_INNER - 230}>{shell.diagnostics.config_file_path()}</Text>
                     </flex>
                     <IconButton icon={ICON_REFRESH} label={t("problems.config.reload")} onClick={() => { shell.diagnostics.reload_config(); setRevision(r => r + 1); }} />
                     <IconButton icon={ICON_OPEN} label={t("problems.open")} onClick={() => shell.subproc.open(shell.diagnostics.config_file_path(), "")} />
@@ -104,10 +108,10 @@ const ConfigSummary = memo(() => {
                     <flex gap={3} padding={8} borderRadius={4} backgroundColor={c.codeBg} alignItems="stretch">
                         {overrides.slice(0, 40).map(o => (
                             <flex key={o.path} horizontal gap={8}>
-                                <Text fontSize={12} fontFamily="monospace" color={c.textSecondary}>{o.path}</Text>
-                                <Text fontSize={12} fontFamily="monospace" color={c.text} maxWidth={300}>{JSON.stringify(o.value)}</Text>
+                                <Text fontSize={12} fontFamily="monospace" color={c.textSecondary} maxWidth={CODE_WIDTH * 0.45}>{o.path}</Text>
+                                <Text fontSize={12} fontFamily="monospace" color={c.text} maxWidth={CODE_WIDTH * 0.3}>{JSON.stringify(o.value)}</Text>
                                 {o.def !== undefined && (
-                                    <Text fontSize={11} fontFamily="monospace" color={c.textTertiary}>{`(${t("problems.config.default")} ${JSON.stringify(o.def)})`}</Text>
+                                    <Text fontSize={11} fontFamily="monospace" color={c.textTertiary} maxWidth={CODE_WIDTH * 0.25}>{`(${t("problems.config.default")} ${JSON.stringify(o.def)})`}</Text>
                                 )}
                             </flex>
                         ))}
@@ -148,8 +152,8 @@ const ProblemsPage = memo(() => {
     const keyOf = (p: shell.diagnostic_problem) => `${p.category}|${p.title}`;
 
     return (
-        <flex gap={14} alignItems="stretch" width={600} autoSize={false}>
-            <SectionHeader title={t("problems.title")} subtitle={t("problems.subtitle")}>
+        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH} autoSize={false}>
+            <SectionHeader title={t("problems.title")} subtitle={t("problems.subtitle")} gutter={SCROLL_GUTTER}>
                 {tab !== "config" && problems.some(p => p.category === "runtime") && (
                     <IconButton label={t("problems.clearRuntime")} onClick={() => shell.diagnostics.clear_problems("runtime")} />
                 )}
@@ -166,11 +170,11 @@ const ProblemsPage = memo(() => {
                 ]}
             />
 
-            <flex enableScrolling maxHeight={440} gap={8} alignItems="stretch">
+            <flex enableScrolling maxHeight={440} gap={8} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
                 {tab === "all" && (
                     <Entrance>
                         {problems.length === 0
-                            ? <InfoBar severity="info" title={t("problems.healthy.title")} message={t("problems.healthy.message")} />
+                            ? <InfoBar severity="info" title={t("problems.healthy.title")} message={t("problems.healthy.message")} maxTextWidth={CODE_WIDTH - 30} />
                             : <InfoBar severity={errors ? "error" : "warning"} title={t("problems.summary", { n: problems.length, errors })} />}
                     </Entrance>
                 )}

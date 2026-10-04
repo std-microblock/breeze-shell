@@ -3,7 +3,12 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Text } from "../components";
 import { Card, ChipToggle, Entrance, IconButton, Pill, SectionHeader, fluent, severityStyle } from "../components/Fluent";
 import { useTranslation } from "../hooks";
-import { ICON_CLEAR, ICON_COPY, ICON_OPEN, ICON_PAUSE, ICON_PLAY } from "../constants";
+import { CONTENT_WIDTH, ICON_CLEAR, ICON_COPY, ICON_OPEN, ICON_PAUSE, ICON_PLAY, SCROLL_GUTTER } from "../constants";
+
+const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 3 - 16 - 2;
+const CODE_WIDTH = CARD_INNER - 16;
+const VALUE_WIDTH = CODE_WIDTH - 90;
+const HEADLINE_WIDTH = CARD_INNER - 80 - 50 - 40 - 24;
 
 type Level = "trace" | "debug" | "info" | "warn" | "error" | "critical";
 const LEVELS: Level[] = ["debug", "info", "warn", "error", "critical"];
@@ -52,7 +57,7 @@ const JsonTree = ({ data, depth = 0 }: { data: any; depth?: number }) => {
                         <flex horizontal gap={6}>
                             <Text fontSize={12} fontFamily="monospace" color={c.textSecondary}>{`${k}:`}</Text>
                             {!nested && (
-                                <Text fontSize={12} fontFamily="monospace" maxWidth={480} color={valueColor(v, c)}>
+                                <Text fontSize={12} fontFamily="monospace" maxWidth={VALUE_WIDTH - depth * 14} color={valueColor(v, c)}>
                                     {typeof v === "string" ? `"${v}"` : String(v)}
                                 </Text>
                             )}
@@ -82,7 +87,7 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
     const structured = fields ?? inline?.data;
     const headline = inline ? inline.head || entry.message : entry.message;
     const firstLine = headline.split("\n")[0];
-    const multiline = headline.includes("\n") || headline.length > 110;
+    const multiline = headline.includes("\n") || headline.length > 80;
 
     return (
         <Entrance offset={6}>
@@ -90,8 +95,8 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
                 <flex horizontal gap={8} alignItems="center">
                     <Text fontSize={11} fontFamily="monospace" color={c.textTertiary}>{formatTime(entry.time)}</Text>
                     <Pill text={s.label} fg={s.fg} bg={s.bg} fontSize={10} />
-                    <Text fontSize={12} color={c.text} maxWidth={expanded ? -1 : 420}>
-                        {expanded ? firstLine : firstLine.slice(0, 110) + (multiline ? " …" : "")}
+                    <Text fontSize={12} color={c.text} maxWidth={HEADLINE_WIDTH}>
+                        {expanded ? firstLine : firstLine.slice(0, 80) + (multiline || firstLine.length > 80 ? " …" : "")}
                     </Text>
                     {structured && <Pill text="{ }" fg={c.accent} bg={c.subtle} fontSize={10} />}
                 </flex>
@@ -99,7 +104,7 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
                     <flex gap={8} alignItems="stretch">
                         {multiline && (
                             <flex padding={8} borderRadius={4} backgroundColor={c.codeBg}>
-                                <Text fontSize={12} fontFamily="monospace" maxWidth={540} color={c.text}>{headline}</Text>
+                                <Text fontSize={12} fontFamily="monospace" maxWidth={CODE_WIDTH} color={c.text}>{headline}</Text>
                             </flex>
                         )}
                         {structured && (
@@ -110,7 +115,7 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
                         <flex horizontal gap={12}>
                             <Text fontSize={11} color={c.textTertiary}>{`#${entry.id}`}</Text>
                             <Text fontSize={11} color={c.textTertiary}>{`thread ${entry.thread}`}</Text>
-                            {entry.source && <Text fontSize={11} color={c.textTertiary}>{entry.source}</Text>}
+                            {entry.source && <Text fontSize={11} color={c.textTertiary} maxWidth={CODE_WIDTH - 140}>{entry.source}</Text>}
                         </flex>
                     </flex>
                 )}
@@ -172,8 +177,8 @@ const LogViewer = memo(() => {
     };
 
     return (
-        <flex gap={14} alignItems="stretch" width={600} autoSize={false}>
-            <SectionHeader title={t("logs.title")} subtitle={t("logs.subtitle", { n: entries.length })}>
+        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH} autoSize={false}>
+            <SectionHeader title={t("logs.title")} subtitle={t("logs.subtitle", { n: entries.length })} gutter={SCROLL_GUTTER}>
                 <IconButton icon={paused ? ICON_PLAY : ICON_PAUSE} label={paused ? t("logs.resume") : t("logs.pause")} onClick={() => setPaused(!paused)} accent={paused} />
                 <IconButton icon={ICON_COPY} onClick={copyVisible} />
                 <IconButton icon={ICON_OPEN} onClick={() => shell.subproc.open(shell.diagnostics.log_file_path(), "")} />
@@ -192,23 +197,25 @@ const LogViewer = memo(() => {
                 ))}
             </flex>
 
-            <textbox
-                value={query}
-                placeholder={t("logs.search")}
-                width={600}
-                height={32}
-                fontSize={13}
-                borderRadius={5}
-                backgroundColor={c.light ? "#FFFFFFB3" : "#FFFFFF0F"}
-                borderColor={c.light ? "#00000024" : "#FFFFFF1F"}
-                focusBorderColor={c.accent}
-                textColor={c.text}
-                placeholderColor={c.textTertiary}
-                caretColor={c.text}
-                onChange={setQuery}
-            />
+            <flex horizontal>
+                <textbox
+                    value={query}
+                    placeholder={t("logs.search")}
+                    width={CONTENT_WIDTH - SCROLL_GUTTER}
+                    height={32}
+                    fontSize={13}
+                    borderRadius={5}
+                    backgroundColor={c.light ? "#FFFFFFB3" : "#FFFFFF0F"}
+                    borderColor={c.light ? "#00000024" : "#FFFFFF1F"}
+                    focusBorderColor={c.accent}
+                    textColor={c.text}
+                    placeholderColor={c.textTertiary}
+                    caretColor={c.text}
+                    onChange={setQuery}
+                />
+            </flex>
 
-            <flex enableScrolling maxHeight={410} gap={4} alignItems="stretch">
+            <flex enableScrolling maxHeight={410} gap={4} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
                 {visible.length === 0 && (
                     <Entrance>
                         <flex padding={30} alignItems="center" justifyContent="center">

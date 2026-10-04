@@ -35,6 +35,8 @@ export const ICON_REFRESH = `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 
 export const WINDOW_WIDTH = 800;
 export const WINDOW_HEIGHT = 600;
 export const SIDEBAR_WIDTH = 170;
+export const CONTENT_WIDTH = WINDOW_WIDTH - SIDEBAR_WIDTH - 10 - 40;
+export const SCROLL_GUTTER = 14;
 
 // Theme presets
 export const theme_presets = {
