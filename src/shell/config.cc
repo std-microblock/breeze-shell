@@ -13,6 +13,7 @@
 
 #include "breeze_ui/font.h"
 #include "utils.h"
+#include <shlobj.h>
 #include "windows.h"
 #include "wtr/watcher.hpp"
 
@@ -142,8 +143,23 @@ std::filesystem::path config::data_directory() {
     std::lock_guard lock(mtx);
 
     if (!path) {
-        path =
-            std::filesystem::path(env("USERPROFILE").value()) / ".breeze-shell";
+        std::filesystem::path base;
+        if (auto profile = env("USERPROFILE");
+            profile && !profile->empty()) {
+            base = std::filesystem::path(*profile);
+        } else if (auto home = env("HOME"); home && !home->empty()) {
+            base = std::filesystem::path(*home);
+        } else {
+            wchar_t folder[MAX_PATH] = {0};
+            if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0,
+                                           folder))) {
+                base = std::filesystem::path(folder);
+            } else {
+                base = std::filesystem::current_path();
+            }
+        }
+
+        path = base / ".breeze-shell";
     }
 
     if (!std::filesystem::exists(*path)) {
