@@ -6,6 +6,7 @@
 #include "shell/logger.h"
 
 #include <algorithm>
+#include <exception>
 #include <atomic>
 #include <ranges>
 #include <thread>
@@ -42,8 +43,31 @@ script_context::script_context() {
     });
 }
 
+namespace {
+// The UCRT keeps std::terminate's handler in per-thread state, so the handler
+// installed on the main thread does not apply to the worker threads created here.
+// Without one, an uncaught C++ exception aborts the host process - the entire
+// desktop shell when injected into explorer.exe - without any diagnostics.
+void install_worker_terminate_handler() {
+    std::set_terminate([] {
+        try {
+            if (auto eptr = std::current_exception())
+                std::rethrow_exception(eptr);
+        } catch (const std::exception &e) {
+            spdlog::critical("Uncaught exception in background thread: {}",
+                             e.what());
+        } catch (...) {
+            spdlog::critical("Uncaught non-std exception in background thread");
+        }
+        spdlog::default_logger()->flush();
+        std::abort();
+    });
+}
+}  // namespace
+
 void script_context::watch_folder(const std::filesystem::path &path,
                                   std::function<bool()> on_reload) {
+    install_worker_terminate_handler();
     std::atomic_bool has_update = false;
 
     auto reload_all = [&]() {

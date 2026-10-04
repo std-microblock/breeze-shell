@@ -10,6 +10,7 @@
 #include "shell/entry.h"
 #include "shell/logger.h"
 #include "shell/script/binding_types.hpp"
+#include <exception>
 #include <mutex>
 #include <thread>
 
@@ -113,7 +114,16 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         spdlog::info("[perf] JS plugins start");
         auto before_js = rt->clock.now();
         for (auto &listener : menu_callbacks_js) {
-            listener->operator()(menu_info);
+            // Plugin callbacks can run against an already destroyed JS context
+            // (scripts are reloaded asynchronously); a single misbehaving plugin
+            // must not be able to abort the whole shell process.
+            try {
+                listener->operator()(menu_info);
+            } catch (const std::exception &e) {
+                spdlog::error("Error in JS menu callback: {}", e.what());
+            } catch (...) {
+                spdlog::error("Error in JS menu callback: unknown exception");
+            }
         }
         spdlog::info("[perf] JS plugins costed {}ms",
                std::chrono::duration_cast<std::chrono::milliseconds>(

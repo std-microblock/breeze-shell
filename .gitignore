@@ -5,3 +5,5 @@ compile_commands.json
 build_info.h
 /test
 Xenos.log
+_sentry/
+dependencies/glfw/

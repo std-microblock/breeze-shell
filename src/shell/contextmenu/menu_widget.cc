@@ -132,15 +132,21 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
             reload_icon_img(ctx);
         item.icon_updated = false;
 
-        auto paintY = floor(*y + (*height - icon_width) / 2);
-        auto imageX = *x + padding + margin + icon_padding;
-        auto paint = ctx.imagePattern(imageX, paintY, icon_width, icon_width, 0,
-                                      icon_img->id, *opacity / 255.f);
+        // reload_icon_img() may legitimately fail (unconvertible bitmap, invalid
+        // SVG, failed texture upload). Never dereference an empty icon_img and
+        // never feed a negative image id into nanovg.
+        if (icon_img && icon_img->id >= 0) {
+            auto paintY = floor(*y + (*height - icon_width) / 2);
+            auto imageX = *x + padding + margin + icon_padding;
+            auto paint = ctx.imagePattern(imageX, paintY, icon_width,
+                                          icon_width, 0, icon_img->id,
+                                          *opacity / 255.f);
 
-        ctx.beginPath();
-        ctx.rect(imageX, paintY, icon_width, icon_width);
-        ctx.fillPaint(paint);
-        ctx.fill();
+            ctx.beginPath();
+            ctx.rect(imageX, paintY, icon_width, icon_width);
+            ctx.fillPaint(paint);
+            ctx.fill();
+        }
     }
 
     // Draw text
