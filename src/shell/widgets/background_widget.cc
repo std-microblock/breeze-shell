@@ -3,6 +3,7 @@
 #include "nanovg.h"
 #include "shell/config.h"
 #include "shell/contextmenu/menu_render.h"
+#include "shell/logger.h"
 #include "shell/utils.h"
 
 namespace mb_shell {
@@ -18,9 +19,20 @@ background_widget::background_widget(bool is_main) {
                 : parse_color(
                       config::current->context_menu.theme.acrylic_color_dark);
 
-        auto acrylic = std::make_shared<ui::acrylic_background_widget>();
-        acrylic->acrylic_bg_color = acrylic_color;
-        bg_impl = acrylic;
+        const bool composition_acrylic = is_composition_acrylic_available();
+        if (composition_acrylic) {
+            auto acrylic = std::make_shared<ui::acrylic_background_widget>();
+            acrylic->acrylic_bg_color = acrylic_color;
+            bg_impl = acrylic;
+        } else {
+            auto acrylic =
+                std::make_shared<ui::dwm_acrylic_background_widget>(false);
+            acrylic->acrylic_bg_color = acrylic_color;
+            bg_impl = acrylic;
+        }
+        spdlog::info("acrylic background: {}",
+                     composition_acrylic ? "windows.ui.composition"
+                                         : "dwm-accent");
 
         if (light_color)
             bg_impl->bg_color = nvgRGBAf(1, 1, 1, 0);

@@ -112,6 +112,13 @@ bool mb_shell::is_acrylic_available() {
     static personalize_bool_cache cache;
     return get_cached_personalize_dword_value(L"EnableTransparency", cache);
 }
+
+bool mb_shell::is_composition_acrylic_available() {
+    // Windows.UI.Composition host backdrop needs DWMWA_USE_HOSTBACKDROPBRUSH,
+    // which only the Windows 11 compositor implements.
+    return is_win11_or_later();
+}
+
 std::optional<std::string> mb_shell::env(const std::string &name) {
     wchar_t buffer[32767];
     GetEnvironmentVariableW(utf8_to_wstring(name).c_str(), buffer, 32767);
