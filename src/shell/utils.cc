@@ -1,7 +1,5 @@
 #include "utils.h"
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 #include <atomic>
-#include <codecvt>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -16,18 +14,37 @@
 #include "logger.h"
 
 std::wstring mb_shell::utf8_to_wstring(std::string const &str) {
-    std::wstring_convert<
-        std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
-                           std::codecvt_utf8_utf16<wchar_t>>>
-        converter;
-    return converter.from_bytes(str);
+    if (str.empty()) {
+        return {};
+    }
+
+    auto size = MultiByteToWideChar(CP_UTF8, 0, str.data(),
+                                    static_cast<int>(str.size()), nullptr, 0);
+    if (size <= 0) {
+        return {};
+    }
+
+    std::wstring result(static_cast<size_t>(size), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()),
+                        result.data(), size);
+    return result;
 }
 std::string mb_shell::wstring_to_utf8(std::wstring const &str) {
-    std::wstring_convert<
-        std::conditional_t<sizeof(wchar_t) == 4, std::codecvt_utf8<wchar_t>,
-                           std::codecvt_utf8_utf16<wchar_t>>>
-        converter;
-    return converter.to_bytes(str);
+    if (str.empty()) {
+        return {};
+    }
+
+    auto size = WideCharToMultiByte(CP_UTF8, 0, str.data(),
+                                    static_cast<int>(str.size()), nullptr, 0,
+                                    nullptr, nullptr);
+    if (size <= 0) {
+        return {};
+    }
+
+    std::string result(static_cast<size_t>(size), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()),
+                        result.data(), size, nullptr, nullptr);
+    return result;
 }
 
 bool mb_shell::is_win11_or_later() {
