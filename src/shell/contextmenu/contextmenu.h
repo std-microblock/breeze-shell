@@ -23,7 +23,7 @@ struct menu {
     construct_with_hmenu(HMENU hMenu, HWND hWnd, bool is_top = true,
                          std::function<void(int, WPARAM, LPARAM)>
                              HandleMenuMsg = {},
-                         LPARAM init_popup_lparam = 0xFFFFFFFF,
+                         LPARAM init_popup_lparam = 0,
                          bool send_init_msg = true);
 };
 

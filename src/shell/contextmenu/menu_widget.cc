@@ -999,7 +999,7 @@ void mb_shell::menu_widget::resync_native_content() {
 
     auto hMenu = (HMENU)menu_data.native_handle;
     auto fresh = menu::construct_with_hmenu(
-        hMenu, (HWND)menu_data.parent_window, false, {}, 0xFFFFFFFF, false);
+        hMenu, (HWND)menu_data.parent_window, false, {}, 0, false);
 
     if (same_native_menu_layout(fresh.items, menu_data.items))
         return;
