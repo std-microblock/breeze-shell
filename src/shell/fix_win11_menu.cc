@@ -291,9 +291,18 @@ void mb_shell::fix_win11_menu::install() {
                             continue;
                         }
 
+                        if (patch_classic_menu_decision(function,
+                                                        explorerframe.value())) {
+                            spdlog::info("Patched explorerframe.dll classic "
+                                         "menu decision: {}",
+                                         ins.ptr().data());
+                            break;
+                        }
+
                         if (patch_key_state_check(function, 0x10)) {
-                            spdlog::info("Patched explorerframe.dll for win11 "
-                                         "menu fix: {}",
+                            spdlog::warn("Patched explorerframe.dll by faking "
+                                         "the SHIFT key state; extended verbs "
+                                         "may show up without Shift: {}",
                                          ins.ptr().data());
                             break;
                         }
