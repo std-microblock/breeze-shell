@@ -57,6 +57,25 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
         return result;
     }
 
+    BITMAPINFO bitmap_info = {0};
+    bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmap_info.bmiHeader.biWidth = result.width;
+    bitmap_info.bmiHeader.biHeight = -static_cast<LONG>(result.height);
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+
+    void *bitmap_bits = nullptr;
+    result.bitmap = CreateDIBSection(hdc, &bitmap_info, DIB_RGB_COLORS,
+                                     &bitmap_bits, nullptr, 0);
+    if (!result.bitmap) {
+        DeleteDC(memDC);
+        ReleaseDC(hwnd, hdc);
+        return result;
+    }
+
+    auto old_bitmap = SelectObject(memDC, result.bitmap);
+
     RECT rcItem = {0, 0, static_cast<LONG>(result.width),
                    static_cast<LONG>(result.height)};
     FillRect(memDC, &rcItem, (HBRUSH)GetStockObject(WHITE_BRUSH));
@@ -72,15 +91,22 @@ owner_draw_menu_info getBitmapFromOwnerDraw(MENUITEMINFOW *menuItemInfo,
     drawItem.rcItem = rcItem;
     drawItem.itemData = (ULONG_PTR)(menuItemInfo->dwItemData);
 
-    SendMessageW(hwnd, WM_DRAWITEM, 0,
-                 reinterpret_cast<LPARAM>(&drawItem)); // 发送绘制消息
+    SendMessageW(hwnd, WM_DRAWITEM, 0, reinterpret_cast<LPARAM>(&drawItem));
 
-    result.bitmap = CreateCompatibleBitmap(hdc, result.width, result.height);
-    if (!result.bitmap) {
-        DeleteDC(memDC);
-        ReleaseDC(hwnd, hdc);
-        return result;
+    if (bitmap_bits) {
+        auto *pixels = static_cast<unsigned char *>(bitmap_bits);
+        const size_t count = static_cast<size_t>(result.width) *
+                             static_cast<size_t>(result.height);
+        for (size_t i = 0; i < count; i++) {
+            pixels[i * 4 + 3] = 0xff;
+        }
     }
+
+    if (old_bitmap) {
+        SelectObject(memDC, old_bitmap);
+    }
+    DeleteDC(memDC);
+    ReleaseDC(hwnd, hdc);
     return result;
 }
 
