@@ -84,9 +84,7 @@ void config::read_config() {
     auto config_file = data_directory() / "config.json";
 
 #ifdef __llvm__
-    std::ifstream ifs(config_file);
     if (!std::filesystem::exists(config_file)) {
-        auto config_file = data_directory() / "config.json";
         std::ofstream ofs(config_file);
         if (!ofs) {
             spdlog::error("Failed to write config file.");
@@ -96,12 +94,12 @@ void config::read_config() {
   "$schema": "https://raw.githubusercontent.com/std-microblock/breeze-shell/refs/heads/master/resources/schema.json"
 })";
     }
+
+    std::ifstream ifs(config_file);
     if (!ifs) {
         spdlog::warn(
             "Config file could not be opened. Using default config instead.");
-        auto next = std::make_unique<config>();
-        next->debug_console = true;
-        config::current = std::move(next);
+        config::current = std::make_unique<config>();
     } else {
         std::string json_str;
         std::copy(std::istreambuf_iterator<char>(ifs),
@@ -120,9 +118,7 @@ void config::read_config() {
             spdlog::error(
                 "Failed to read config file: {}\nUsing default config instead.",
                 json.error().what());
-            auto next = std::make_unique<config>();
-            next->debug_console = true;
-            config::current = std::move(next);
+            config::current = std::make_unique<config>();
         }
     }
 #else
@@ -130,9 +126,7 @@ void config::read_config() {
     "We don't support loading config file on MSVC because of a bug in MSVC."
     spdlog::info("We don't support loading config file when compiled with MSVC "
                  "because of a bug in MSVC.");
-    auto next = std::make_unique<config>();
-    next->debug_console = true;
-    config::current = std::move(next);
+    config::current = std::make_unique<config>();
 #endif
 
     if (config::current->debug_console) {
