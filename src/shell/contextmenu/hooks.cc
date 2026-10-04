@@ -454,12 +454,21 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
     static auto NtUserTrackHook = NtUserTrackPopupMenu->inline_hook();
 
     NtUserTrackHook->install(+[](HMENU hMenu, int64_t uFlags, int64_t x,
-                                 int64_t y, HWND hWnd, int64_t lptpm) {
+                                 int64_t y, HWND hWnd, int64_t lptpm) -> int32_t {
         if (GetPropW(hWnd, L"COwnerDrawPopupMenu_This") &&
             config::current->context_menu.ignore_owner_draw) {
             return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x,
                                                              y, hWnd, lptpm);
         }
+
+        struct js_reload_guard {
+            js_reload_guard() {
+                mb_shell::context_menu_hooks::block_js_reload.fetch_add(1);
+            }
+            ~js_reload_guard() {
+                mb_shell::context_menu_hooks::block_js_reload.fetch_sub(1);
+            }
+        } reload_guard;
 
         static std::unordered_map<int, std::string_view> FLAGS_MAP{
             {TPM_CENTERALIGN, "TPM_CENTERALIGN"},
@@ -479,39 +488,46 @@ void mb_shell::context_menu_hooks::install_NtUserTrackPopupMenuEx_hook() {
             {TPM_VERPOSANIMATION, "TPM_VERPOSANIMATION"},
         };
 
-        spdlog::info(
-            "TrackPopupMenuEx called (hMenu={}, flags=0x{:x}({}), x={}, y={}, "
-            "hWnd={}, lptpm={})",
-            (void *)hMenu, uFlags,
-            [](int64_t flags) {
-                std::string result;
-                for (const auto &[flag, name] : FLAGS_MAP) {
-                    if (flags & flag) {
-                        if (!result.empty()) {
-                            result += " | ";
+        try {
+            spdlog::info(
+                "TrackPopupMenuEx called (hMenu={}, flags=0x{:x}({}), x={}, "
+                "y={}, hWnd={}, lptpm={})",
+                (void *)hMenu, uFlags,
+                [](int64_t flags) {
+                    std::string result;
+                    for (const auto &[flag, name] : FLAGS_MAP) {
+                        if (flags & flag) {
+                            if (!result.empty()) {
+                                result += " | ";
+                            }
+                            result += name;
                         }
-                        result += name;
                     }
-                }
-                return result;
-            }(uFlags),
-            x, y, (void *)hWnd, lptpm);
+                    return result;
+                }(uFlags),
+                x, y, (void *)hWnd, lptpm);
 
-        entry::main_window_loop_hook.install(hWnd);
-        block_js_reload.fetch_add(1);
+            entry::main_window_loop_hook.install(hWnd);
 
-        perf_counter perf("TrackPopupMenuEx");
-        menu menu = menu::construct_with_hmenu(hMenu, hWnd);
-        perf.end("construct_with_hmenu");
+            perf_counter perf("TrackPopupMenuEx");
+            menu menu = menu::construct_with_hmenu(hMenu, hWnd);
+            perf.end("construct_with_hmenu");
 
-        auto selected_menu = track_popup_menu(menu, x, y);
-        if (selected_menu && !(uFlags & TPM_NONOTIFY) &&
-            !(uFlags & TPM_RETURNCMD) && hWnd) {
-            PostMessageW(hWnd, WM_COMMAND, *selected_menu, 0);
-            PostMessageW(hWnd, WM_NULL, 0, 0);
+            auto selected_menu = track_popup_menu(menu, x, y);
+            if (selected_menu && !(uFlags & TPM_NONOTIFY) &&
+                !(uFlags & TPM_RETURNCMD) && hWnd) {
+                PostMessageW(hWnd, WM_COMMAND, *selected_menu, 0);
+                PostMessageW(hWnd, WM_NULL, 0, 0);
+            }
+            return (int32_t)selected_menu.value_or(0);
+        } catch (const std::exception &e) {
+            spdlog::error("TrackPopupMenuEx hook failed: {}", e.what());
+        } catch (...) {
+            spdlog::error("TrackPopupMenuEx hook failed with an unknown error");
         }
-        mb_shell::context_menu_hooks::block_js_reload.fetch_sub(1);
-        return (int32_t)selected_menu.value_or(0);
+
+        return NtUserTrackHook->call_trampoline<int32_t>(hMenu, uFlags, x, y,
+                                                         hWnd, lptpm);
     });
     hook_registry::register_uninstaller(
         []() { NtUserTrackHook->uninstall(); });
