@@ -143,6 +143,7 @@ struct config {
         std::vector<std::string> main = {"Segoe UI"};
         std::vector<std::string> monospace = {"Consolas"};
         std::vector<std::string> fallback = {};
+        std::string locale = "zh-CN";
         bool system_fallback = true;
         bool color_emoji = true;
     } font;

@@ -137,6 +137,7 @@ Breeze Shell 配置文件的 JSON Schema 位于
     "main": ["Segoe UI"],
     "monospace": ["Consolas"],
     "fallback": [],
+    "locale": "zh-CN",
     "system_fallback": true,
     "color_emoji": true
   },

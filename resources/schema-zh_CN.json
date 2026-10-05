@@ -432,6 +432,12 @@
           "items": { "type": "string" },
           "default": []
         },
+        "locale": {
+          "title": "字形区域",
+          "description": "系统回退选字时使用的区域，决定汉字等字形，例如 zh-CN（简中）、zh-TW、ja-JP、ko-KR。留空则跟随 Windows 用户区域",
+          "type": "string",
+          "default": "zh-CN"
+        },
         "system_fallback": {
           "title": "系统字体回退",
           "description": "配置的字体都缺字时由 Windows 选择合适的字体",

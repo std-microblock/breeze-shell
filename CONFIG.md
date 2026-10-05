@@ -143,6 +143,7 @@ The following is a fully annotated default JSON configuration. Note that this **
     "main": ["Segoe UI"],
     "monospace": ["Consolas"],
     "fallback": [],
+    "locale": "zh-CN",
     "system_fallback": true,
     "color_emoji": true
   },

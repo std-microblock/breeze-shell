@@ -244,6 +244,7 @@ ui::font_settings config::font_settings() const {
         .main = font.main,
         .monospace = font.monospace,
         .fallback = font.fallback,
+        .locale = font.locale,
         .system_fallback = font.system_fallback,
         .color_glyphs = font.color_emoji,
     };

@@ -468,6 +468,12 @@
           "items": { "type": "string" },
           "default": []
         },
+        "locale": {
+          "title": "Font Locale",
+          "description": "Locale used by the system fallback to pick regional glyphs, e.g. zh-CN (Simplified Chinese), zh-TW, ja-JP, ko-KR. Empty follows the Windows user locale",
+          "type": "string",
+          "default": "zh-CN"
+        },
         "system_fallback": {
           "title": "System Font Fallback",
           "description": "Ask Windows for a font when no configured font has a character",
