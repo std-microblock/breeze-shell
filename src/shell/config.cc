@@ -1,5 +1,6 @@
 #include "config.h"
 #include <chrono>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -208,8 +209,15 @@ void config::run_config_loader() {
 
     static auto watcher =
         wtr::watch(config::data_directory(), [](const wtr::event &e) {
-            if (e.path_name.filename() == "config.json") {
+            if (e.path_name.filename() != "config.json") {
+                return;
+            }
+            try {
                 config::read_config();
+            } catch (const std::exception &ex) {
+                spdlog::warn("Config reload failed: {}", ex.what());
+            } catch (...) {
+                spdlog::warn("Config reload failed: unknown error");
             }
         });
 }
