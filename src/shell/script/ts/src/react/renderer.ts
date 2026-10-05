@@ -266,6 +266,37 @@ type HostContext = {};
 type ChildSet = void;
 type HostComponent = shell.breeze_ui.js_widget
 
+const DEFERRED_PROPS = new Set(['animatedVars', 'animationCurve']);
+
+const childLists = new WeakMap<object, object[]>();
+const childList = (parent: object) => {
+    let list = childLists.get(parent);
+    if (!list) childLists.set(parent, list = []);
+    return list;
+}
+
+const detach = (parent: Instance, child: Instance) => {
+    const list = childList(parent);
+    const index = list.indexOf(child);
+    if (index >= 0) {
+        list.splice(index, 1);
+        parent.remove_child(child);
+    }
+}
+
+const attach = (parent: Instance, child: Instance, before?: Instance) => {
+    detach(parent, child);
+    const list = childList(parent);
+    const index = before ? list.indexOf(before) : -1;
+    if (index < 0) {
+        list.push(child);
+        parent.append_child(child);
+    } else {
+        list.splice(index, 0, child);
+        parent.append_child_after(child, index);
+    }
+}
+
 const HostConfig: Reconciler.HostConfig<
     Type,
     Props,
@@ -317,10 +348,9 @@ const HostConfig: Reconciler.HostConfig<
                 throw new Error(`Unknown component type: ${type}`);
             }
             const instance = componentMap[type].creator();
-            for (const key in props) {
-                if (key === 'children') {
-                    continue;
-                }
+            const keys = Object.keys(props).filter(k => k !== 'children');
+            keys.sort((a, b) => Number(DEFERRED_PROPS.has(a)) - Number(DEFERRED_PROPS.has(b)));
+            for (const key of keys) {
                 const propSetter = componentMap[type]?.props?.[key];
                 if (propSetter) {
                     propSetter.set(instance, props[key]);
@@ -336,7 +366,7 @@ const HostConfig: Reconciler.HostConfig<
 
     },
     appendInitialChild(parentInstance: Instance, child: Instance | TextInstance): void {
-        parentInstance.append_child(child);
+        attach(parentInstance, child);
     },
 
     finalizeInitialChildren(
@@ -451,31 +481,32 @@ const HostConfig: Reconciler.HostConfig<
         for (const child of container.children()) {
             container.remove_child(child);
         }
+        childLists.delete(container);
     },
     appendChild(
         parentInstance: Instance,
         child: Instance | TextInstance
     ): void {
-        parentInstance.append_child(child);
+        attach(parentInstance, child);
     },
     appendChildToContainer(
         container: RootContainer,
         child: Instance | TextInstance
     ): void {
-        container.append_child(child);
+        attach(container, child);
     },
     removeChild(
         parentInstance: Instance,
         child: Instance | TextInstance
     ): void {
-        parentInstance.remove_child(child);
+        detach(parentInstance, child);
     },
 
     removeChildFromContainer(
         container: RootContainer,
         child: Instance | TextInstance
     ): void {
-        container.remove_child(child);
+        detach(container, child);
     },
 
     commitTextUpdate(
@@ -487,12 +518,11 @@ const HostConfig: Reconciler.HostConfig<
     },
 
     insertBefore(parentInstance, child, beforeChild) {
-        if (beforeChild) {
-            parentInstance.append_child_after(child,
-                parentInstance.children().indexOf(beforeChild) - 1);
-        } else {
-            parentInstance.append_child(child);
-        }
+        attach(parentInstance, child, beforeChild as Instance);
+    },
+
+    insertInContainerBefore(container, child, beforeChild) {
+        attach(container, child, beforeChild as Instance);
     },
 
     resetTextContent(instance: Instance): void {

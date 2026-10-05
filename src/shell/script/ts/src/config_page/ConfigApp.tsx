@@ -1,5 +1,5 @@
 import * as shell from "mshell";
-import { WINDOW_WIDTH, WINDOW_HEIGHT, SIDEBAR_WIDTH } from "./constants";
+import { WINDOW_WIDTH, WINDOW_HEIGHT, SIDEBAR_WIDTH, PAGE_PADDING, SCROLL_GUTTER } from "./constants";
 import { loadConfig, saveConfig } from "./utils";
 import {
     AppConfigContext,
@@ -111,21 +111,23 @@ export const ConfigApp = ({ initialPage = 'context-menu' }: { initialPage?: stri
                                 cachedPluginIndex,
                                 setCachedPluginIndex
                             }}>
-                                <flex horizontal width={WINDOW_WIDTH} height={WINDOW_HEIGHT} autoSize={false} gap={10}>
+                                <flex horizontal width={WINDOW_WIDTH} height={WINDOW_HEIGHT}>
                                     <Sidebar
                                         activePage={activePage}
                                         setActivePage={setActivePage}
                                         sidebarWidth={SIDEBAR_WIDTH}
                                         windowHeight={WINDOW_HEIGHT}
                                     />
-                                    <Entrance key={activePage} padding={20} offset={16}>
-                                        {activePage === 'context-menu' && <ContextMenuConfig />}
-                                        {activePage === 'update' && <UpdatePage />}
-                                        {activePage === 'plugin-store' && <PluginStore />}
-                                        {activePage === 'plugin-config' && <PluginConfig />}
-                                        {activePage === 'problems' && <ProblemsPage />}
-                                        {activePage === 'logs' && <LogViewer />}
-                                        {activePage === 'test' && <TestPage />}
+                                    <Entrance key={activePage} paddingLeft={PAGE_PADDING} paddingRight={PAGE_PADDING - SCROLL_GUTTER / 2} offset={12}>
+                                        <flex paddingTop={22} alignItems="stretch">
+                                            {activePage === 'context-menu' && <ContextMenuConfig />}
+                                            {activePage === 'update' && <UpdatePage />}
+                                            {activePage === 'plugin-store' && <PluginStore />}
+                                            {activePage === 'plugin-config' && <PluginConfig />}
+                                            {activePage === 'problems' && <ProblemsPage />}
+                                            {activePage === 'logs' && <LogViewer />}
+                                            {activePage === 'test' && <TestPage />}
+                                        </flex>
                                     </Entrance>
                                 </flex>
                             </PluginSourceContext.Provider>

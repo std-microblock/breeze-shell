@@ -310,6 +310,7 @@ void breeze_ui::js_widget::set_height(float value) {
 std::shared_ptr<breeze_ui::js_text_widget>
 breeze_ui::widgets_factory::create_text_widget() {
     auto text_widget = std::make_shared<ui::text_widget>();
+    text_widget->snap_initial_layout = true;
 
     auto res = std::make_shared<js_text_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(text_widget);
@@ -319,6 +320,7 @@ breeze_ui::widgets_factory::create_text_widget() {
 std::shared_ptr<breeze_ui::js_textbox_widget>
 breeze_ui::widgets_factory::create_textbox_widget() {
     auto textbox_widget = std::make_shared<ui::textbox_widget>();
+    textbox_widget->snap_initial_layout = true;
 
     auto res = std::make_shared<js_textbox_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(textbox_widget);
@@ -423,16 +425,24 @@ struct image_widget : public ui::widget {
 
     std::variant<data_svg> image_data;
     std::optional<ui::NVGImage> image;
-    void render(ui::nanovg_context ctx) override {
-        if (!image) {
-            if (std::get_if<data_svg>(&image_data)) {
-                const auto &data = std::get<data_svg>(image_data);
-                auto svg = data.svg;
+    bool image_dirty = true;
 
-                ui::nanovg_context::NSVGimageRAII parsed_svg(
-                    nsvgParse(svg.data(), "px", 96));
-                image = ctx.imageFromSVG(parsed_svg.image);
-            }
+    void render(ui::nanovg_context ctx) override {
+        const float dpi = ctx.rt ? ctx.rt->dpi_scale : 1.f;
+        const long target = std::lround(*width * dpi);
+        const bool rescale = image && image->id != -1 && target > 0 &&
+                             std::abs(image->width - target) > 1;
+        if (image_dirty || !image || rescale) {
+            std::string svg = std::get<data_svg>(image_data).svg;
+            ui::nanovg_context::NSVGimageRAII parsed(
+                nsvgParse(svg.data(), "px", 96));
+            float scale = dpi;
+            if (parsed.image && parsed.image->width > 0 && *width > 0)
+                scale = *width / parsed.image->width * dpi;
+            if (image && image->id != -1)
+                ctx.deleteImage(image->id);
+            image = ctx.imageFromSVG(parsed.image, scale);
+            image_dirty = false;
         }
 
         if (image) {
@@ -452,12 +462,16 @@ std::string breeze_ui::js_image_widget::get_svg() const {
 void breeze_ui::js_image_widget::set_svg(std::string svg) {
     auto w = $widget->downcast<image_widget>();
     if (w) {
+        auto lock = $rt_lock();
         w->image_data = image_widget::data_svg{std::move(svg)};
+        w->image_dirty = true;
+        w->needs_repaint = true;
     }
 }
 std::shared_ptr<breeze_ui::js_image_widget>
 breeze_ui::widgets_factory::create_image_widget() {
     auto iw = std::make_shared<image_widget>();
+    iw->snap_initial_layout = true;
 
     auto res = std::make_shared<js_image_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(iw);
@@ -467,6 +481,7 @@ breeze_ui::widgets_factory::create_image_widget() {
 std::shared_ptr<breeze_ui::js_spacer_widget>
 breeze_ui::widgets_factory::create_spacer_widget() {
     auto iw = std::make_shared<ui::flex_widget::spacer>();
+    iw->snap_initial_layout = true;
 
     auto res = std::make_shared<js_spacer_widget>();
     res->$widget = std::dynamic_pointer_cast<ui::widget>(iw);
@@ -514,8 +529,10 @@ struct widget_js_base : public ui::flex_widget {
     }
 
     void handle_mouse_move(ui::mouse_event &e) override {
-        if (on_mouse_move && hovered())
-            post([cb = on_mouse_move, x = e.x, y = e.y] { cb(x, y); });
+        if (on_mouse_move)
+            post([cb = on_mouse_move, x = e.x - abs_x(), y = e.y - abs_y()] {
+                cb(x, y);
+            });
     }
 
     void handle_mouse_down(ui::mouse_event &e) override {
@@ -544,22 +561,19 @@ struct widget_js_base : public ui::flex_widget {
                       border_width = anim_float(0, "border_width");
     ui::animated_color background_color = {this, 0.f, 0.f, 0.f, 0.f},
                        border_color = {this, 0.0f, 0.0f, 0.0f, 1.0f};
-    bool inset_border = false;
+    bool inset_border = true;
 
     std::optional<paint_color> background_paint, border_paint;
 
     static inline thread_local float inherited_alpha = 1.f;
 
+    widget_js_base() { snap_initial_layout = true; }
+
     void render(ui::nanovg_context ctx) override {
         float rx = *x, ry = *y, rw = *width, rh = *height;
-        if (inset_border) {
-            rx += *border_width / 2;
-            ry += *border_width / 2;
-            rw -= *border_width;
-            rh -= *border_width;
-        }
-
-        auto scope = ctx.transaction();
+        const float bw = std::max(border_width->var(), 0.f);
+        const float radius =
+            std::clamp(border_radius->var(), 0.f, std::min(rw, rh) / 2);
 
         const float parent_alpha = inherited_alpha;
         const float alpha =
@@ -570,19 +584,22 @@ struct widget_js_base : public ui::flex_widget {
         ctx.globalAlpha(alpha);
         if (background_paint) {
             background_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
-            ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
+            ctx.fillRoundedRect(rx, ry, rw, rh, radius);
         } else if (background_color.a->var() > 0) {
             ctx.fillColor(background_color);
-            ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
+            ctx.fillRoundedRect(rx, ry, rw, rh, radius);
         }
 
-        if (*border_width > 0 && (border_paint || border_color.a->var() > 0)) {
+        if (bw > 0 && (border_paint || border_color.a->var() > 0)) {
             if (border_paint)
                 border_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
             else
                 ctx.strokeColor(border_color);
-            ctx.strokeWidth(*border_width);
-            ctx.strokeRoundedRect(rx, ry, rw, rh, *border_radius);
+            const float inset = inset_border ? bw / 2 : 0;
+            ctx.strokeWidth(bw);
+            ctx.strokeRoundedRect(rx + inset, ry + inset, rw - inset * 2,
+                                  rh - inset * 2,
+                                  std::max(radius - inset, 0.f));
         }
 
         super::render(ctx);

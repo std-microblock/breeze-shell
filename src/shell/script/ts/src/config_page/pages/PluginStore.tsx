@@ -1,91 +1,88 @@
 import * as shell from "mshell";
-import { Button, Text } from "../components";
+import { Text } from "../components";
+import { Button, InfoBar, PageHeader, Pill, fluent } from "../components/Fluent";
+import { iconElement } from "../components/Icon";
 import { UpdateDataContext, NotificationContext, PluginSourceContext } from "../contexts";
 import { useTranslation } from "../hooks";
-import { PLUGIN_SOURCES } from "../constants";
-import { memo, useContext, useEffect, useState } from "react";
+import { CONTENT_WIDTH, ICON_DOWNLOAD, ICON_EXTENSION, PAGE_BODY_HEIGHT, PLUGIN_SOURCES, SCROLL_GUTTER } from "../constants";
+import { memo, useContext, useState } from "react";
+
+const DESC_WIDTH = CONTENT_WIDTH - SCROLL_GUTTER - 16 * 2 - 36 - 16 * 2 - 150;
 
 const PluginStore = memo(() => {
     const { updateData } = useContext(UpdateDataContext)!;
     const { setErrorMessage } = useContext(NotificationContext)!;
     const { currentPluginSource } = useContext(PluginSourceContext)!;
     const { t } = useTranslation();
+    const c = fluent();
+    const [installing, setInstalling] = useState<Set<string>>(new Set());
+    const [, rerender] = useState(0);
+    const plugins: any[] = updateData?.plugins ?? [];
 
-    const [plugins, setPlugins] = useState<any[]>([]);
-    const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(new Set());
-
-    useEffect(() => {
-        if (updateData) {
-            setPlugins(updateData.plugins);
-        }
-    }, [updateData]);
+    const finish = (name: string) => setInstalling(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+    });
 
     const installPlugin = (plugin: any) => {
-        if (installingPlugins.has(plugin.name)) return;
-
-        setInstallingPlugins(prev => new Set(prev).add(plugin.name));
+        if (installing.has(plugin.name)) return;
+        setInstalling(prev => new Set(prev).add(plugin.name));
         const path = shell.breeze.data_directory() + '/scripts/' + plugin.local_path;
-        const url = PLUGIN_SOURCES[currentPluginSource] + plugin.path;
-        shell.network.get_async(url, (data: string) => {
+        shell.network.get_async(PLUGIN_SOURCES[currentPluginSource] + plugin.path, (data: string) => {
             shell.fs.write(path, data);
             shell.println(t('plugin.installSuccess') + plugin.name);
-            setInstallingPlugins(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(plugin.name);
-                return newSet;
-            });
+            finish(plugin.name);
+            rerender(n => n + 1);
         }, (e: any) => {
             shell.println(e);
             setErrorMessage(t('plugin.installFailed') + plugin.name);
-            setInstallingPlugins(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(plugin.name);
-                return newSet;
-            });
+            finish(plugin.name);
         });
     };
 
-    const [_, rerender] = useState(0);
+    const localState = (plugin: any) => {
+        const base = shell.breeze.data_directory() + '/scripts/' + plugin.local_path;
+        const path = shell.fs.exists(base) ? base : shell.fs.exists(base + '.disabled') ? base + '.disabled' : null;
+        if (!path) return { installed: false, version: null as string | null };
+        const match = shell.fs.read(path).match(/\/\/ @version:\s*(.*)/);
+        return { installed: true, version: match ? match[1].trim() : null };
+    };
 
     return (
-        <flex gap={20}>
-            <Text fontSize={24}>{t("plugin.store")}</Text>
-            <flex gap={10} alignItems="stretch" width={570} height={500} autoSize={false}>
-                <flex enableScrolling maxHeight={500} alignItems="stretch">
-                    {plugins.map((plugin: any) => {
-                        let install_path = null;
-                        if (shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path)) {
-                            install_path = shell.breeze.data_directory() + '/scripts/' + plugin.local_path;
-                        }
-                        if (shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled')) {
-                            install_path = shell.breeze.data_directory() + '/scripts/' + plugin.local_path + '.disabled';
-                        }
-                        const installed = install_path !== null;
-                        const local_version_match = installed ? shell.fs.read(install_path).match(/\/\/ @version:\s*(.*)/) : null;
-                        const local_version = local_version_match ? local_version_match[1] : t('plugin.notInstalled');
-                        const have_update = installed && local_version !== plugin.version;
-
-                        return (
-                            <flex key={plugin.name} horizontal alignItems="center">
-                                <flex autoSize={false} width={4} height={20} borderRadius={2} backgroundColor={
-                                    installed ? (have_update ? '#FFA500' : '#2979FF') : (shell.breeze.is_light_theme() ? '#C0C0C0aa' : '#505050aa')
-                                } />
-                                <flex gap={10} padding={10} borderRadius={8}
-                                    flexGrow={1} horizontal>
-                                    <flex gap={10} alignItems="stretch" flexGrow={1}>
-                                        <Text fontSize={18}>{plugin.name}</Text>
-                                        <Text>{plugin.description}</Text>
-                                    </flex>
-                                    <flex gap={10} alignItems="center" flexShrink={0}>
-                                        <Button onClick={() => installPlugin(plugin)}>
-                                            <Text>{installingPlugins.has(plugin.name) ? t("plugin.installing") : (installed ? (have_update ? `${t("plugin.update")} (${local_version} -> ${plugin.version})` : t('plugin.alreadyInstalled')) : t('plugin.install'))}</Text>
-                                        </Button>
-                                    </flex>
-                                </flex>
+        <flex gap={16} alignItems="stretch" width={CONTENT_WIDTH}>
+            <PageHeader title={t("plugin.store")} subtitle={t("plugin.storeSubtitle", { source: currentPluginSource })} gutter={SCROLL_GUTTER} />
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT} alignItems="stretch" paddingRight={SCROLL_GUTTER} paddingBottom={16} gap={4}>
+                {!updateData && <InfoBar severity="info" title={t("common.loading")} />}
+                {plugins.map((plugin: any) => {
+                    const local = localState(plugin);
+                    const hasUpdate = local.installed && local.version !== plugin.version;
+                    const busy = installing.has(plugin.name);
+                    return (
+                        <flex key={plugin.name} horizontal gap={16} alignItems="center" padding={16} borderRadius={7}
+                            borderWidth={1} borderColor={c.cardStroke} backgroundColor={c.card}>
+                            <flex width={36} height={36} borderRadius={8} backgroundColor={c.accentSubtle} justifyContent="center" alignItems="center">
+                                {iconElement(ICON_EXTENSION, 18, c.accent)}
                             </flex>
-                        );
-                    })}
-                </flex>
+                            <flex gap={4} flexGrow={1} flexShrink={1}>
+                                <flex horizontal gap={8} alignItems="center">
+                                    <Text fontSize={14} fontWeight={600} color={c.text}>{plugin.name}</Text>
+                                    <Text fontSize={12} color={c.textTertiary}>{`v${plugin.version}`}</Text>
+                                    {local.installed && !hasUpdate && <Pill text={t("plugin.alreadyInstalled")} fg={c.accent} bg={c.accentSubtle} />}
+                                    {hasUpdate && <Pill text={`${local.version ?? "?"} → ${plugin.version}`} fg={c.light ? "#9D5D00FF" : "#FCE100FF"} bg={c.light ? "#FFF4CEE6" : "#433519E6"} />}
+                                </flex>
+                                <Text fontSize={12} color={c.textSecondary} maxWidth={DESC_WIDTH}>{plugin.description ?? ""}</Text>
+                            </flex>
+                            <Button
+                                icon={ICON_DOWNLOAD}
+                                label={busy ? t("plugin.installing") : hasUpdate ? t("plugin.update") : local.installed ? t("plugin.reinstall") : t("plugin.install")}
+                                variant={!local.installed || hasUpdate ? "accent" : "standard"}
+                                disabled={busy}
+                                onClick={() => installPlugin(plugin)}
+                            />
+                        </flex>
+                    );
+                })}
             </flex>
         </flex>
     );

@@ -27,8 +27,8 @@ declare module 'react' {
         onMouseDown?: () => void;
         onMouseUp?: () => void;
         onMouseMove?: (x: number, y: number) => void;
-        justifyContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly';
-        alignItems?: 'start' | 'center' | 'end' | 'stretch';
+        justifyContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'free';
+        alignItems?: 'start' | 'center' | 'end' | 'stretch' | 'free';
         horizontal?: boolean;
         children?: React.ReactNode | React.ReactNode[];
         key?: string | number;

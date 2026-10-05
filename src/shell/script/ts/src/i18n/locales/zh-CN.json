@@ -4,7 +4,7 @@
     "manage": "管理 Breeze Shell"
   },
   "sidebar": {
-    "mainConfig": "主配置",
+    "mainConfig": "设置",
     "update": "更新",
     "pluginStore": "插件商店",
     "pluginConfig": "插件配置",
@@ -13,7 +13,7 @@
     "logs": "日志"
   },
   "settings": {
-    "title": "Breeze 设置",
+    "title": "设置",
     "theme": "主题",
     "animation": "动画",
     "misc": "杂项",
@@ -23,10 +23,26 @@
     "ignoreOwnerDraw": "忽略自绘菜单",
     "reverseIfOpenToUp": "向上展开时反向排列",
     "tryWin11RoundCorner": "尝试使用 Windows 11 圆角",
-    "acrylicBackground": "亚克力背景效果",
+    "acrylicBackground": "亚克力背景",
     "hotkeys": "键盘热键",
-    "showSettingsButton": "在左上角显示设置按钮",
-    "patchExplorerFrameDll": "启用 ExplorerFrame Patch（左侧栏 Breeze 右键菜单）"
+    "showSettingsButton": "显示设置按钮",
+    "patchExplorerFrameDll": "ExplorerFrame 补丁",
+    "appearance": "外观",
+    "behavior": "菜单行为",
+    "general": "通用",
+    "on": "开",
+    "off": "关",
+    "themeDesc": "选择右键菜单的尺寸、间距与圆角风格",
+    "animationDesc": "选择菜单展开与悬停时的动画效果",
+    "acrylicBackgroundDesc": "菜单背景使用半透明的模糊材质",
+    "vsyncDesc": "与显示器刷新率同步绘制，减少画面撕裂",
+    "ignoreOwnerDrawDesc": "跳过由程序自行绘制的菜单项，避免显示异常",
+    "reverseIfOpenToUpDesc": "菜单向上弹出时把常用项保持在靠近鼠标的位置",
+    "hotkeysDesc": "允许使用键盘快捷键操作菜单",
+    "showSettingsButtonDesc": "在菜单左上角显示进入 Breeze 设置的按钮",
+    "patchExplorerFrameDllDesc": "让资源管理器左侧导航栏也使用 Breeze 右键菜单",
+    "languageDesc": "设置界面与菜单使用的语言",
+    "debugConsoleDesc": "检测到配置或脚本问题时弹出通知"
   },
   "plugin": {
     "title": "插件",
@@ -45,7 +61,14 @@
     "notInstalled": "未安装",
     "alreadyInstalled": "已安装",
     "configParseFailed": "配置文件解析失败: ",
-    "configChanged": "配置文件变更: "
+    "configChanged": "配置文件变更: ",
+    "priorityShort": "优先",
+    "configSubtitle": "已安装 {{n}} 个插件",
+    "openFolder": "打开插件目录",
+    "empty": "还没有安装插件",
+    "emptyDesc": "可以在插件商店中浏览并安装插件。",
+    "storeSubtitle": "来自 {{source}} 的插件",
+    "reinstall": "重新安装"
   },
   "update": {
     "title": "更新",
@@ -63,7 +86,12 @@
     "pendingRestart": "新版本已下载，等待重启资源管理器",
     "restartNow": "重启资源管理器",
     "injectorVersion": "注入器版本",
-    "injectorNotInstalled": "未安装"
+    "injectorNotInstalled": "未安装",
+    "autoUpdateDesc": "Breeze 启动时在后台检查并下载新版本",
+    "available": "发现新版本 {{version}}",
+    "upToDate": "已是最新版本",
+    "updateNow": "立即更新",
+    "checked": "已是最新"
   },
   "common": {
     "loading": "加载中...",
@@ -105,14 +133,20 @@
       "iconPadding": "图标内边距",
       "rightIconPadding": "右侧图标边距",
       "effects": "效果设置",
-      "useDwm": "使用DWM圆角",
+      "useDwm": "优先使用系统圆角与材质",
       "acrylic": "亚克力效果",
-      "backgroundOpacity": "背景透明度"
+      "backgroundOpacity": "背景不透明度",
+      "preview": "实时预览",
+      "previewDesc": "调整下方的数值，预览会立即更新；修改会自动保存并应用到下一次打开的菜单。",
+      "multibuttonLineGap": "多按钮行间距",
+      "borderWidth": "边框宽度",
+      "shadowSize": "阴影大小",
+      "useDwmDesc": "系统支持时由 DWM 绘制菜单背景"
     },
     "animation": {
       "title": "自定义动画",
       "done": "完成",
-      "menuItem": "菜单项动画",
+      "menuItem": "菜单项",
       "mainBg": "主菜单背景",
       "submenuBg": "子菜单背景",
       "opacity": "透明度",
@@ -123,12 +157,28 @@
       "blur": "模糊",
       "duration": "持续时长",
       "easing": "动画曲线",
-      "delayScale": "延迟缩放",
+      "delayScale": "延迟倍率",
       "linear": "线性",
       "easeIn": "缓入",
       "easeOut": "缓出",
-      "easeInOut": "缓入缓出"
-    }
+      "easeInOut": "缓入缓出",
+      "instant": "无动画",
+      "global": "全局",
+      "globalTitle": "默认动画",
+      "globalDesc": "未单独设置的动画属性都会使用这里的参数",
+      "fallback": "默认曲线",
+      "contextMenu": "右键菜单",
+      "modified": "已修改 {{n}} 项",
+      "mainMenu": "菜单弹出",
+      "mainMenuDesc": "菜单整体出现时的位移",
+      "menuItemDesc": "每个菜单项出现与悬停时的动画",
+      "mainBgDesc": "主菜单背景的展开动画",
+      "submenuBgDesc": "子菜单背景的展开动画",
+      "appearBlur": "出现时模糊",
+      "appearWScale": "出现时宽度比例",
+      "appearHScale": "出现时高度比例"
+    },
+    "reset": "恢复默认"
   },
   "logs": {
     "title": "日志",

@@ -3,9 +3,9 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Text } from "../components";
 import { Card, ChipToggle, Entrance, IconButton, Pill, SectionHeader, fluent, severityStyle } from "../components/Fluent";
 import { useTranslation } from "../hooks";
-import { CONTENT_WIDTH, ICON_CLEAR, ICON_COPY, ICON_OPEN, ICON_PAUSE, ICON_PLAY, SCROLL_GUTTER } from "../constants";
+import { CONTENT_WIDTH, ICON_CLEAR, ICON_COPY, ICON_OPEN, ICON_PAUSE, ICON_PLAY, SCROLL_GUTTER, PAGE_BODY_HEIGHT } from "../constants";
 
-const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 3 - 16 - 2;
+const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 4 - 16 - 2;
 const CODE_WIDTH = CARD_INNER - 16;
 const VALUE_WIDTH = CODE_WIDTH - 90;
 const HEADLINE_WIDTH = CARD_INNER - 80 - 50 - 40 - 24;
@@ -90,7 +90,7 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
     const multiline = headline.includes("\n") || headline.length > 80;
 
     return (
-        <Entrance offset={6}>
+        <flex alignItems="stretch">
             <Card padding={8} gap={6} onClick={() => onToggle(entry.id)} accentBar={s.fg}>
                 <flex horizontal gap={8} alignItems="center">
                     <Text fontSize={11} fontFamily="monospace" color={c.textTertiary}>{formatTime(entry.time)}</Text>
@@ -120,7 +120,7 @@ const LogRow = memo(({ entry, expanded, onToggle }: {
                     </flex>
                 )}
             </Card>
-        </Entrance>
+        </flex>
     );
 });
 
@@ -215,7 +215,7 @@ const LogViewer = memo(() => {
                 />
             </flex>
 
-            <flex enableScrolling maxHeight={410} gap={4} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT - 96} gap={4} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
                 {visible.length === 0 && (
                     <Entrance>
                         <flex padding={30} alignItems="center" justifyContent="center">

@@ -1,50 +1,58 @@
 import * as shell from "mshell";
 import { showMenu } from "./utils";
 import { memo, useEffect, useContext, useState } from "react";
-import { Button, SidebarItem, Text, iconElement } from "./components";
+import { SidebarItem, Text, iconElement } from "./components";
+import { fluent } from "./components/Fluent";
 import {
     ICON_BREEZE,
     ICON_CONTEXT_MENU,
-    ICON_UPDATE,
-    ICON_PLUGIN_STORE,
-    ICON_PLUGIN_CONFIG,
-    ICON_TEST,
+    ICON_HISTORY,
+    ICON_STORE,
+    ICON_EXTENSION,
+    ICON_BUG,
     ICON_LOGS,
     ICON_PROBLEMS,
+    ICON_CLOUD,
+    ICON_CHECK,
     PLUGIN_SOURCES
 } from "./constants";
 import { UpdateDataContext, NotificationContext, PluginSourceContext } from "./contexts";
 import { useTranslation } from "./hooks";
 
-const Sidebar = memo(({
-    activePage,
-    setActivePage,
-    sidebarWidth,
-    windowHeight
-}: {
+const Toast = ({ text, severity }: { text: string; severity: "error" | "info" }) => {
+    const c = fluent();
+    const bg = severity === "error" ? (c.light ? "#FDE7E9F2" : "#442726F2") : (c.light ? "#E5F1FBF2" : "#1F3346F2");
+    const fg = severity === "error" ? (c.light ? "#C42B1CFF" : "#FF99A4FF") : c.accent;
+    return (
+        <flex horizontal gap={8} padding={10} borderRadius={6} backgroundColor={bg} borderColor={c.cardStroke} borderWidth={1} alignItems="center">
+            <flex width={6} height={6} borderRadius={3} backgroundColor={fg} />
+            <Text fontSize={12} color={c.text} maxWidth={170}>{text}</Text>
+        </flex>
+    );
+};
+
+const Sidebar = memo(({ activePage, setActivePage, sidebarWidth, windowHeight }: {
     activePage: string;
     setActivePage: (page: string) => void;
     sidebarWidth: number;
     windowHeight: number;
 }) => {
     const { t } = useTranslation();
+    const c = fluent();
     const { setUpdateData } = useContext(UpdateDataContext)!;
     const { errorMessage, setErrorMessage, loadingMessage, setLoadingMessage } = useContext(NotificationContext)!;
     const { currentPluginSource, setCurrentPluginSource, setCachedPluginIndex } = useContext(PluginSourceContext)!;
 
     useEffect(() => {
         if (errorMessage) {
-            const timer = setTimeout(() => {
-                setErrorMessage(null);
-            }, 3000);
+            const timer = setTimeout(() => setErrorMessage(null), 3000);
             return () => clearTimeout(timer);
         }
     }, [errorMessage, setErrorMessage]);
 
-    const loadSourceData = (sourceName: string) => {
+    useEffect(() => {
         setLoadingMessage(t("common.switching"));
-
-        shell.network.get_async(PLUGIN_SOURCES[sourceName] + 'plugins-index.json', (data: string) => {
+        shell.network.get_async(PLUGIN_SOURCES[currentPluginSource] + 'plugins-index.json', (data: string) => {
             setCachedPluginIndex(data);
             setUpdateData(JSON.parse(data));
             setLoadingMessage(null);
@@ -53,10 +61,6 @@ const Sidebar = memo(({
             setErrorMessage(t("common.loadFailed"));
             setLoadingMessage(null);
         });
-    };
-
-    useEffect(() => {
-        loadSourceData(currentPluginSource);
     }, [currentPluginSource]);
 
     const [problemCount, setProblemCount] = useState(0);
@@ -67,78 +71,45 @@ const Sidebar = memo(({
         return () => clearInterval(id);
     }, []);
 
+    const item = (page: string, icon: string, label: string, badge?: number) => (
+        <SidebarItem key={page} onClick={() => setActivePage(page)} icon={icon} isActive={activePage === page} badge={badge}>{label}</SidebarItem>
+    );
+
+    const pickSource = () => showMenu(menu => {
+        for (const sourceName of Object.keys(PLUGIN_SOURCES)) {
+            menu.append_menu({
+                name: sourceName,
+                action() {
+                    setCurrentPluginSource(sourceName);
+                    menu.close();
+                },
+                icon_svg: sourceName === currentPluginSource
+                    ? ICON_CHECK.replace("<svg ", `<svg fill="${c.light ? "#000000" : "#FFFFFF"}" `)
+                    : undefined
+            });
+        }
+    });
+
     return (
-        <flex
-            width={sidebarWidth}
-            height={windowHeight}
-            backgroundColor={shell.breeze.is_light_theme() ? '#f0f0f077' : '#40404077'}
-            padding={10}
-            gap={10}
-            alignItems="stretch"
-            autoSize={false}
-        >
-            <flex horizontal alignItems="center" gap={3} padding={10}>
-                {iconElement(ICON_BREEZE, 24)}
-                <Text fontSize={18}>Breeze</Text>
+        <flex width={sidebarWidth} height={windowHeight} paddingLeft={8} paddingRight={8} paddingTop={8} paddingBottom={10} gap={4} alignItems="stretch">
+            <flex horizontal alignItems="center" gap={10} paddingLeft={14} paddingTop={10} paddingBottom={14}>
+                {iconElement(ICON_BREEZE, 20, c.accent)}
+                <Text fontSize={15} fontWeight={600} color={c.text}>Breeze</Text>
             </flex>
-            <SidebarItem onClick={() => setActivePage('context-menu')} icon={ICON_CONTEXT_MENU} isActive={activePage === 'context-menu'}>{t('sidebar.mainConfig')}</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>{t('sidebar.update')}</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>{t('sidebar.pluginStore')}</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>{t('sidebar.pluginConfig')}</SidebarItem>
-            <flex height={1} backgroundColor={shell.breeze.is_light_theme() ? '#00000014' : '#FFFFFF15'} />
-            <SidebarItem onClick={() => setActivePage('problems')} icon={ICON_PROBLEMS} isActive={activePage === 'problems'} badge={problemCount}>{t('sidebar.problems')}</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('logs')} icon={ICON_LOGS} isActive={activePage === 'logs'}>{t('sidebar.logs')}</SidebarItem>
-            <SidebarItem onClick={() => setActivePage('test')} icon={ICON_TEST} isActive={activePage === 'test'}>{t('test.title')}</SidebarItem>
+            {item('context-menu', ICON_CONTEXT_MENU, t('sidebar.mainConfig'))}
+            {item('update', ICON_HISTORY, t('sidebar.update'))}
+            {item('plugin-store', ICON_STORE, t('sidebar.pluginStore'))}
+            {item('plugin-config', ICON_EXTENSION, t('sidebar.pluginConfig'))}
+            <flex paddingTop={6} paddingBottom={6} paddingLeft={8} paddingRight={8} alignItems="stretch">
+                <flex height={1} backgroundColor={c.divider} />
+            </flex>
+            {item('problems', ICON_PROBLEMS, t('sidebar.problems'), problemCount)}
+            {item('logs', ICON_LOGS, t('sidebar.logs'))}
+            {item('test', ICON_BUG, t('test.title'))}
             <spacer />
-
-            {/* 错误提示 */}
-            {errorMessage && (
-                <flex
-                    backgroundColor="#FF4444AA"
-                    padding={8}
-                    borderRadius={6}
-                    paddingBottom={5}
-                >
-                    <text
-                        text={errorMessage}
-                        fontSize={12}
-                        color="#FFFFFFFF"
-                    />
-                </flex>
-            )}
-
-            {/* 加载提示 */}
-            {loadingMessage && (
-                <flex
-                    backgroundColor="#0078D4AA"
-                    padding={8}
-                    borderRadius={6}
-                    paddingBottom={5}
-                >
-                    <text
-                        text={loadingMessage}
-                        fontSize={12}
-                        color="#FFFFFFFF"
-                    />
-                </flex>
-            )}
-
-            <Button onClick={() => {
-                showMenu(menu => {
-                    Object.keys(PLUGIN_SOURCES).forEach(sourceName => {
-                        menu.append_menu({
-                            name: sourceName,
-                            action() {
-                                setCurrentPluginSource(sourceName);
-                                menu.close();
-                            },
-                            icon_svg: sourceName === currentPluginSource ? `<svg viewBox="0 0 24 24"><path fill="${shell.breeze.is_light_theme() ? '#000000ff' : '#ffffffff'}" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>` : undefined
-                        });
-                    });
-                });
-            }}>
-                <Text fontSize={12}>{`${t("sidebar.updateSource")} - ${currentPluginSource}`}</Text>
-            </Button>
+            {errorMessage && <Toast text={errorMessage} severity="error" />}
+            {loadingMessage && <Toast text={loadingMessage} severity="info" />}
+            <SidebarItem onClick={pickSource} icon={ICON_CLOUD} isActive={false} trailing={currentPluginSource}>{t("sidebar.updateSource")}</SidebarItem>
         </flex>
     );
 });

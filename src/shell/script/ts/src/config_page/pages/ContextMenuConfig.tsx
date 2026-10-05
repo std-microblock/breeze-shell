@@ -1,234 +1,205 @@
-import * as shell from "mshell";
-import { Button, Text, Toggle, ThemeCustomEditor, AnimationCustomEditor } from "../components";
-import { ContextMenuContext, LanguageContext } from "../contexts";
-import { getNestedValue, setNestedValue } from "../utils";
+import { ThemeCustomEditor, AnimationCustomEditor } from "../components";
+import {
+    ChoiceCard, ComboBox, Expander, PageHeader, SettingsCard, SettingsGroup, ToggleSwitch, fluent
+} from "../components/Fluent";
+import { AppConfigContext, ContextMenuContext, LanguageContext } from "../contexts";
+import {
+    applyThemePreset, animationPreviewSvg, matchAnimationPreset, matchThemePreset, presetKeys,
+    resolveFlat, themePreviewSvg, withPath
+} from "../utils";
 import { useTranslation } from "../hooks";
-import { theme_presets, animation_presets } from "../constants";
+import {
+    theme_presets, animation_presets, CONTENT_WIDTH, SCROLL_GUTTER, PAGE_BODY_HEIGHT,
+    ICON_PALETTE, ICON_MOTION, ICON_OPACITY, ICON_SYNC, ICON_BRUSH, ICON_SWAP_VERT, ICON_KEYBOARD,
+    ICON_PLUGIN_CONFIG, ICON_FOLDER, ICON_LANGUAGE, ICON_BELL
+} from "../constants";
 import { memo, useContext, useState } from "react";
+
+const LANGUAGES = [
+    { value: "zh-CN", label: "简体中文" },
+    { value: "en-US", label: "English" }
+];
+
+const GALLERY_WIDTH = CONTENT_WIDTH - SCROLL_GUTTER - 2 - 32;
+const GAP = 10;
+
+const Gallery = ({ items, columns }: { items: any[]; columns: number }) => {
+    const rows: any[][] = [];
+    for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));
+    return (
+        <flex gap={GAP} padding={16} alignItems="start">
+            {rows.map((row, i) => <flex key={i} horizontal gap={GAP}>{row}</flex>)}
+        </flex>
+    );
+};
 
 const ContextMenuConfig = memo(() => {
     const { config, defaultConfig, update } = useContext(ContextMenuContext)!;
+    const app = useContext(AppConfigContext)!;
     const { language, setLanguage } = useContext(LanguageContext)!;
     const { t } = useTranslation();
-    const [, forceUpdate] = useState(0);
-    const [showThemeEditor, setShowThemeEditor] = useState(false);
-    const [showAnimationEditor, setShowAnimationEditor] = useState(false);
+    const c = fluent();
+    const [view, setView] = useState<"main" | "theme" | "animation">("main");
 
-    const languages = [
-        { code: 'zh-CN', name: '简体中文' },
-        { code: 'en-US', name: 'English' }
-    ];
+    const theme = config?.theme ?? {};
+    const defaultTheme = defaultConfig?.theme ?? {};
+    const animation = theme.animation && typeof theme.animation === "object" ? theme.animation : {};
+    const defaultAnimation = defaultTheme.animation ?? {};
 
-    const currentTheme = config?.theme;
-    const currentAnimation =
-        config?.theme?.animation && typeof config.theme.animation === "object"
-            ? config.theme.animation
-            : {};
-    const defaultAnimation =
-        defaultConfig?.theme?.animation && typeof defaultConfig.theme.animation === "object"
-            ? defaultConfig.theme.animation
-            : {};
+    const themePreset = matchThemePreset(theme, defaultTheme, theme_presets);
+    const animationPreset = matchAnimationPreset(animation, defaultAnimation, animation_presets);
 
-    const getAllSubkeys = (presets: any) => {
-        if (!presets) return [];
-        const keys = new Set();
-        for (const v of Object.values(presets)) {
-            if (v)
-                for (const key of Object.keys(v)) {
-                    keys.add(key);
-                }
-        }
-        return [...keys];
+    const setTheme = (next: any) => update({ ...config, theme: next });
+    const setAnimation = (next: any) => {
+        const nextTheme = { ...theme };
+        if (next && Object.keys(next).length) nextTheme.animation = next;
+        else delete nextTheme.animation;
+        setTheme(nextTheme);
     };
+    const setValue = (path: string, value: any) => update(withPath(config, path, value, defaultConfig));
+    const valueOf = (path: string) =>
+        path.split(".").reduce((o: any, k) => o?.[k], config) ?? path.split(".").reduce((o: any, k) => o?.[k], defaultConfig);
 
-    const applyPreset = (preset: any, origin: any, presets: any) => {
-        const allSubkeys = getAllSubkeys(presets);
-        const newPreset = preset ? { ...preset } : {};
-        for (let key in origin) {
-            if (allSubkeys.includes(key)) continue;
-            newPreset[key] = origin[key];
-        }
-        return newPreset;
-    };
-
-    const checkPresetMatch = (current: any, preset: any, excludeKeys: string[] = []) => {
-        if (!current) return false;
-        if (!preset) return false;
-        return Object.keys(preset).every(key => {
-            if (excludeKeys.includes(key)) return true;
-            return JSON.stringify(current[key]) === JSON.stringify(preset[key]);
-        });
-    };
-
-    const getCurrentPreset = (current: any, presets: any, excludeKeys: string[] = []) => {
-        if (!current || Object.keys(current).length === 0) return "default";
-        for (const [name, preset] of Object.entries(presets)) {
-            if (preset && checkPresetMatch(current, preset, excludeKeys)) {
-                return name;
-            }
-        }
-        return "custom";
-    };
-
-    const currentThemePreset = getCurrentPreset(currentTheme, theme_presets, ["animation"]);
-    const currentAnimationPreset = getCurrentPreset(currentAnimation, animation_presets);
-
-    if (showThemeEditor) {
+    if (view === "theme") {
         return (
             <ThemeCustomEditor
-                theme={currentTheme}
-                onUpdate={(newTheme) => {
-                    update({ ...config, theme: newTheme });
-                }}
-                onClose={() => setShowThemeEditor(false)}
+                theme={theme}
+                defaultTheme={defaultTheme}
+                onUpdate={setTheme}
+                onClose={() => setView("main")}
             />
         );
     }
 
-    if (showAnimationEditor) {
+    if (view === "animation") {
         return (
             <AnimationCustomEditor
-                animation={currentAnimation}
+                animation={animation}
                 defaultAnimation={defaultAnimation}
-                onUpdate={(newAnimation) => {
-                    update({ ...config, theme: { ...(config?.theme || {}), animation: newAnimation } });
-                }}
-                onClose={() => setShowAnimationEditor(false)}
+                onUpdate={setAnimation}
+                globalAnimation={app.config?.default_animation ?? {}}
+                onGlobalUpdate={(next) => app.updateConfig(cur => {
+                    const out = { ...cur };
+                    if (next && Object.keys(next).length) out.default_animation = next;
+                    else delete out.default_animation;
+                    return out;
+                })}
+                onClose={() => setView("main")}
             />
         );
     }
 
+    const themeKeys = presetKeys(theme_presets);
+    const themeCardWidth = Math.floor((GALLERY_WIDTH - GAP * 2) / 3);
+    const themePreviewW = themeCardWidth - 18;
+    const themePreviewH = Math.round(themePreviewW * 0.6);
+    const themeCards = [
+        ...Object.keys(theme_presets).map(name => (
+            <ChoiceCard
+                key={name}
+                width={themeCardWidth}
+                label={t(`preset.${name}`)}
+                preview={themePreviewSvg(resolveFlat(theme_presets[name] ?? {}, defaultTheme, themeKeys), c.light, themePreviewW, themePreviewH)}
+                previewWidth={themePreviewW}
+                previewHeight={themePreviewH}
+                selected={themePreset === name}
+                onClick={() => setTheme(applyThemePreset(theme, theme_presets[name], theme_presets))}
+            />
+        )),
+        <ChoiceCard
+            key="custom"
+            width={themeCardWidth}
+            label={t("preset.custom")}
+            preview={themePreviewSvg(resolveFlat(theme, defaultTheme, themeKeys), c.light, themePreviewW, themePreviewH)}
+            previewWidth={themePreviewW}
+            previewHeight={themePreviewH}
+            selected={themePreset === "custom"}
+            onClick={() => setView("theme")}
+        />
+    ];
+
+    const animCardWidth = Math.floor((GALLERY_WIDTH - GAP * 3) / 4);
+    const animPreviewW = animCardWidth - 18;
+    const animPreviewH = Math.round(animPreviewW * 0.64);
+    const animationCards = [
+        ...Object.keys(animation_presets).map(name => (
+            <ChoiceCard
+                key={name}
+                width={animCardWidth}
+                label={t(`preset.${name}`)}
+                preview={animationPreviewSvg(name as any, c.light, animPreviewW, animPreviewH)}
+                previewWidth={animPreviewW}
+                previewHeight={animPreviewH}
+                selected={animationPreset === name}
+                onClick={() => setAnimation(animation_presets[name] ? JSON.parse(JSON.stringify(animation_presets[name])) : undefined)}
+            />
+        )),
+        <ChoiceCard
+            key="custom"
+            width={animCardWidth}
+            label={t("preset.custom")}
+            preview={animationPreviewSvg("custom", c.light, animPreviewW, animPreviewH)}
+            previewWidth={animPreviewW}
+            previewHeight={animPreviewH}
+            selected={animationPreset === "custom"}
+            onClick={() => setView("animation")}
+        />
+    ];
+
+    const toggle = (path: string, icon: string, key: string) => (
+        <SettingsCard key={path} icon={icon} title={t(`settings.${key}`)} description={t(`settings.${key}Desc`)}>
+            <ToggleSwitch value={!!valueOf(path)} onChange={v => setValue(path, v)} onLabel={t("settings.on")} offLabel={t("settings.off")} />
+        </SettingsCard>
+    );
+
     return (
-        <flex gap={20} alignItems="stretch" width={500}>
-            <Text fontSize={24}>{t("settings.title")}</Text>
-            <flex />
-            <flex gap={10}>
-                <Text fontSize={18}>{t("settings.theme")}</Text>
-                <flex horizontal gap={10}>
-                    {Object.keys(theme_presets).map(name => (
-                        <Button
-                            key={name}
-                            selected={name === currentThemePreset}
-                            onClick={() => {
-                                try {
-                                    let newTheme;
-                                    if (!theme_presets[name]) {
-                                        const currentAnim = config?.theme?.animation;
-                                        newTheme = currentAnim ? { animation: currentAnim } : undefined;
-                                    } else {
-                                        newTheme = applyPreset(theme_presets[name], config?.theme, theme_presets);
-                                    }
-                                    update({ ...config, theme: newTheme });
-                                } catch (e) {
-                                    shell.println(e);
-                                }
-                            }}
-                        >
-                            <Text fontSize={14}>{t(`preset.${name}`)}</Text>
-                        </Button>
-                    ))}
-                    <Button
-                        selected={currentThemePreset === "custom"}
-                        onClick={() => setShowThemeEditor(true)}
+        <flex gap={16} alignItems="stretch" width={CONTENT_WIDTH}>
+            <PageHeader title={t("settings.title")} gutter={SCROLL_GUTTER} />
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT} alignItems="stretch" paddingRight={SCROLL_GUTTER} paddingBottom={16}>
+                <SettingsGroup title={t("settings.appearance")}>
+                    <Expander
+                        icon={ICON_PALETTE}
+                        title={t("settings.theme")}
+                        description={t("settings.themeDesc")}
+                        header={<flex><text text={t(`preset.${themePreset}`)} fontSize={13} color={c.textSecondary} /></flex>}
+                        defaultOpen
                     >
-                        <Text fontSize={14}>{t("preset.custom")}</Text>
-                    </Button>
-                </flex>
-            </flex>
-
-            <flex gap={10}>
-                <Text fontSize={18}>{t("settings.animation")}</Text>
-                <flex horizontal gap={10}>
-                    {Object.keys(animation_presets).map(name => (
-                        <Button
-                            key={name}
-                            selected={name === currentAnimationPreset}
-                            onClick={() => {
-                                try {
-                                    let newAnimation;
-                                    if (!animation_presets[name]) {
-                                        newAnimation = undefined;
-                                    } else {
-                                        newAnimation = animation_presets[name];
-                                    }
-                                    update({ ...config, theme: { ...(config?.theme || {}), animation: newAnimation } });
-                                } catch (e) {
-                                    shell.println(e);
-                                }
-                            }}
-                        >
-                            <Text fontSize={14}>{t(`preset.${name}`)}</Text>
-                        </Button>
-                    ))}
-                    <Button
-                        selected={currentAnimationPreset === "custom"}
-                        onClick={() => setShowAnimationEditor(true)}
+                        <Gallery items={themeCards} columns={3} />
+                    </Expander>
+                    <Expander
+                        icon={ICON_MOTION}
+                        title={t("settings.animation")}
+                        description={t("settings.animationDesc")}
+                        header={<flex><text text={t(`preset.${animationPreset}`)} fontSize={13} color={c.textSecondary} /></flex>}
+                        defaultOpen
                     >
-                        <Text fontSize={14}>{t("preset.custom")}</Text>
-                    </Button>
-                </flex>
-            </flex>
+                        <Gallery items={animationCards} columns={4} />
+                    </Expander>
+                    {toggle("theme.acrylic", ICON_OPACITY, "acrylicBackground")}
+                </SettingsGroup>
 
-            <flex gap={10}>
-                <Text fontSize={18}>{t("settings.language")}</Text>
-                <flex horizontal gap={10}>
-                    {languages.map(lang => (
-                        <Button
-                            key={lang.code}
-                            selected={language === lang.code}
-                            onClick={() => {
-                                setLanguage(lang.code);
-                                forceUpdate(n => n + 1);
-                            }}
-                        >
-                            <Text fontSize={14}>{lang.name}</Text>
-                        </Button>
-                    ))}
-                </flex>
-            </flex>
+                <SettingsGroup title={t("settings.behavior")}>
+                    {toggle("vsync", ICON_SYNC, "vsync")}
+                    {toggle("ignore_owner_draw", ICON_BRUSH, "ignoreOwnerDraw")}
+                    {toggle("reverse_if_open_to_up", ICON_SWAP_VERT, "reverseIfOpenToUp")}
+                    {toggle("hotkeys", ICON_KEYBOARD, "hotkeys")}
+                    {toggle("show_settings_button", ICON_PLUGIN_CONFIG, "showSettingsButton")}
+                    {toggle("patch_explorerframe_dll", ICON_FOLDER, "patchExplorerFrameDll")}
+                </SettingsGroup>
 
-            <flex gap={10} alignItems="stretch" justifyContent="center">
-                <Text fontSize={18}>{t("settings.misc")}</Text>
-                <Toggle label={t("settings.debugConsole")} value={getNestedValue(config, "debug_console") ?? false} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "debug_console", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.vsync")} value={getNestedValue(config, "vsync") ?? getNestedValue(defaultConfig, "vsync")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "vsync", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.ignoreOwnerDraw")} value={getNestedValue(config, "ignore_owner_draw") ?? getNestedValue(defaultConfig, "ignore_owner_draw")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "ignore_owner_draw", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.reverseIfOpenToUp")} value={getNestedValue(config, "reverse_if_open_to_up") ?? getNestedValue(defaultConfig, "reverse_if_open_to_up")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "reverse_if_open_to_up", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.acrylicBackground")} value={getNestedValue(config, "theme.acrylic") ?? getNestedValue(defaultConfig, "theme.acrylic")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "theme.acrylic", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.hotkeys")} value={getNestedValue(config, "hotkeys") ?? getNestedValue(defaultConfig, "hotkeys")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "hotkeys", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.showSettingsButton")} value={getNestedValue(config, "show_settings_button") ?? getNestedValue(defaultConfig, "show_settings_button")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "show_settings_button", v);
-                    update(newConfig);
-                }} />
-                <Toggle label={t("settings.patchExplorerFrameDll")} value={getNestedValue(config, "patch_explorerframe_dll") ?? getNestedValue(defaultConfig, "patch_explorerframe_dll")} onChange={(v) => {
-                    const newConfig = { ...config };
-                    setNestedValue(newConfig, "patch_explorerframe_dll", v);
-                    update(newConfig);
-                }} />
+                <SettingsGroup title={t("settings.general")}>
+                    <SettingsCard icon={ICON_LANGUAGE} title={t("settings.language")} description={t("settings.languageDesc")}>
+                        <ComboBox value={LANGUAGES.some(l => l.value === language) ? language : "zh-CN"} options={LANGUAGES} onChange={setLanguage} />
+                    </SettingsCard>
+                    <SettingsCard icon={ICON_BELL} title={t("settings.debugConsole")} description={t("settings.debugConsoleDesc")}>
+                        <ToggleSwitch
+                            value={!!app.config?.debug_console}
+                            onChange={v => app.updateConfig(cur => ({ ...cur, debug_console: v }))}
+                            onLabel={t("settings.on")}
+                            offLabel={t("settings.off")}
+                        />
+                    </SettingsCard>
+                </SettingsGroup>
             </flex>
         </flex>
     );

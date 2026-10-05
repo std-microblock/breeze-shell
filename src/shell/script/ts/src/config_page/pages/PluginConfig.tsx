@@ -1,47 +1,30 @@
 import * as shell from "mshell";
 import { showMenu, loadPlugins, togglePlugin, deletePlugin } from "../utils";
-import { Text, PluginItem } from "../components";
+import {
+    Button, InfoBar, PageHeader, Pill, SettingsCard, SettingsGroup, ToggleSwitch, fluent
+} from "../components/Fluent";
 import { PluginLoadOrderContext } from "../contexts";
 import { useTranslation } from "../hooks";
+import { CONTENT_WIDTH, ICON_EXTENSION, ICON_FOLDER, ICON_MORE_VERT, PAGE_BODY_HEIGHT, SCROLL_GUTTER } from "../constants";
 import { memo, useContext, useEffect, useState } from "react";
 
 const PluginConfig = memo(() => {
     const { order, update } = useContext(PluginLoadOrderContext)!;
     const { t } = useTranslation();
-
+    const c = fluent();
     const [installedPlugins, setInstalledPlugins] = useState<string[]>([]);
 
-    useEffect(() => {
-        reloadPluginsList();
-    }, []);
+    const reloadPluginsList = () => setInstalledPlugins(loadPlugins());
+    useEffect(() => { reloadPluginsList(); }, []);
 
-    const reloadPluginsList = () => {
-        const plugins = loadPlugins();
-        setInstalledPlugins(plugins);
-    };
-
-    const handleTogglePlugin = (name: string) => {
-        togglePlugin(name);
-        reloadPluginsList();
-    };
-
-    const handleDeletePlugin = (name: string) => {
-        deletePlugin(name);
-        reloadPluginsList();
-    };
-
-    const isPrioritized = (name: string) => {
-        return order?.includes(name) || false;
-    };
+    const isPrioritized = (name: string) => order?.includes(name) || false;
+    const isEnabled = (name: string) => shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + name + '.js');
 
     const togglePrioritize = (name: string) => {
         const newOrder = [...(order || [])];
-        if (newOrder.includes(name)) {
-            const index = newOrder.indexOf(name);
-            newOrder.splice(index, 1);
-        } else {
-            newOrder.unshift(name);
-        }
+        const index = newOrder.indexOf(name);
+        if (index >= 0) newOrder.splice(index, 1);
+        else newOrder.unshift(name);
         update(newOrder);
     };
 
@@ -57,7 +40,8 @@ const PluginConfig = memo(() => {
             menu.append_menu({
                 name: t("common.delete"),
                 action() {
-                    handleDeletePlugin(pluginName);
+                    deletePlugin(pluginName);
+                    reloadPluginsList();
                     menu.close();
                 }
             });
@@ -67,52 +51,32 @@ const PluginConfig = memo(() => {
         });
     };
 
-    const prioritizedPlugins = installedPlugins.filter(name => isPrioritized(name));
-    const regularPlugins = installedPlugins.filter(name => !isPrioritized(name));
+    const card = (name: string) => (
+        <SettingsCard key={name} icon={ICON_EXTENSION} title={name}>
+            {isPrioritized(name) && <Pill text={t("plugin.priorityShort")} fg={c.accent} bg={c.accentSubtle} />}
+            <ToggleSwitch
+                value={isEnabled(name)}
+                onChange={() => { togglePlugin(name); reloadPluginsList(); }}
+                onLabel={t("settings.on")}
+                offLabel={t("settings.off")}
+            />
+            <Button icon={ICON_MORE_VERT} variant="subtle" onClick={() => showContextMenu(name)} />
+        </SettingsCard>
+    );
+
+    const prioritized = installedPlugins.filter(isPrioritized);
+    const regular = installedPlugins.filter(name => !isPrioritized(name));
 
     return (
-        <flex gap={20} width={580} height={550} autoSize={false} alignItems="stretch">
-            <Text fontSize={24}>{t("plugin.config")}</Text>
-
-            <flex enableScrolling maxHeight={500} alignItems="stretch">
-                {prioritizedPlugins.length > 0 && (
-                    <flex gap={10} alignItems="stretch" paddingBottom={10} paddingTop={10}>
-                        <Text fontSize={16}>{t("plugin.priorityLoad")}</Text>
-                        {prioritizedPlugins.map(name => {
-                            const isEnabled = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + name + '.js');
-                            return (
-                                <PluginItem
-                                    key={name}
-                                    name={name}
-                                    isEnabled={isEnabled}
-                                    isPrioritized={true}
-                                    onToggle={() => handleTogglePlugin(name)}
-                                    onMoreClick={showContextMenu}
-                                />
-                            );
-                        })}
-
-                        <flex height={1} backgroundColor={shell.breeze.is_light_theme() ? '#E0E0E0' : '#505050'} />
-                    </flex>
-                )}
-                <flex gap={10} alignItems="stretch">
-                    {prioritizedPlugins.length === 0 && <Text fontSize={16}>{t("plugin.installed")}</Text>}
-                    {regularPlugins.map(name => {
-                        const isEnabled = shell.fs.exists(shell.breeze.data_directory() + '/scripts/' + name + '.js');
-                        return (
-                            <PluginItem
-                                key={name}
-                                name={name}
-                                isEnabled={isEnabled}
-                                isPrioritized={false}
-                                onToggle={() => handleTogglePlugin(name)}
-                                onMoreClick={showContextMenu}
-                            />
-                        );
-                    })}
-                </flex>
+        <flex gap={16} alignItems="stretch" width={CONTENT_WIDTH}>
+            <PageHeader title={t("plugin.config")} subtitle={t("plugin.configSubtitle", { n: installedPlugins.length })} gutter={SCROLL_GUTTER}>
+                <Button icon={ICON_FOLDER} label={t("plugin.openFolder")} onClick={() => shell.subproc.open(shell.breeze.data_directory() + '/scripts', "")} />
+            </PageHeader>
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT} alignItems="stretch" paddingRight={SCROLL_GUTTER} paddingBottom={16} gap={4}>
+                {installedPlugins.length === 0 && <InfoBar severity="info" title={t("plugin.empty")} message={t("plugin.emptyDesc")} />}
+                {prioritized.length > 0 && <SettingsGroup title={t("plugin.priorityLoad")}>{prioritized.map(card)}</SettingsGroup>}
+                {regular.length > 0 && <SettingsGroup title={t("plugin.installed")}>{regular.map(card)}</SettingsGroup>}
             </flex>
-
         </flex>
     );
 });

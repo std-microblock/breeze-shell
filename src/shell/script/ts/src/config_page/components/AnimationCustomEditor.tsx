@@ -1,288 +1,217 @@
-import * as shell from "mshell";
-import { Button, Text, NumberBox, Select, iconElement } from "../components";
-import React, { memo, useCallback, useMemo, useState } from "react";
-import { breeze } from "mshell";
+import { memo, useMemo } from "react";
+import {
+    Button, ComboBox, Divider, Expander, NumberBox, PageHeader, SettingsGroup, Slider, fluent
+} from "./Fluent";
+import { iconElement } from "./Icon";
+import { Text } from "./Text";
 import { useTranslation } from "../hooks";
-import { ICON_EXPAND_MORE } from "../constants";
+import { easingCurveSvg, flatten, withPath } from "../utils";
+import { CONTENT_WIDTH, ICON_MOTION, ICON_RESET, PAGE_BODY_HEIGHT, SCROLL_GUTTER } from "../constants";
 
-interface AnimatedFloatConf {
-    duration?: number;
-    easing?: string;
-    delay_scale?: number;
-}
+type Conf = { duration?: number; easing?: string; delay_scale?: number };
+type Group = { key: string; title: string; desc: string; props: string[]; numbers?: { key: string; label: string; min: number; max: number; step: number }[] };
 
-interface AnimationConfig {
-    item?: {
-        opacity?: AnimatedFloatConf;
-        x?: AnimatedFloatConf;
-        y?: AnimatedFloatConf;
-        width?: AnimatedFloatConf;
-        blur?: AnimatedFloatConf;
-    };
-    main_bg?: {
-        opacity?: AnimatedFloatConf;
-        x?: AnimatedFloatConf;
-        y?: AnimatedFloatConf;
-        w?: AnimatedFloatConf;
-        h?: AnimatedFloatConf;
-    };
-    submenu_bg?: {
-        opacity?: AnimatedFloatConf;
-        x?: AnimatedFloatConf;
-        y?: AnimatedFloatConf;
-        w?: AnimatedFloatConf;
-        h?: AnimatedFloatConf;
-    };
-}
+const FALLBACK: Conf = { duration: 150, easing: "ease_in_out", delay_scale: 1 };
 
-const stripDefaultFields = (value: AnimatedFloatConf, defaultValue: AnimatedFloatConf): AnimatedFloatConf => {
-    const result: AnimatedFloatConf = {};
-
-    if (value.duration !== defaultValue.duration) {
-        result.duration = value.duration;
-    }
-    if (value.easing !== defaultValue.easing) {
-        result.easing = value.easing;
-    }
-    if (value.delay_scale !== defaultValue.delay_scale) {
-        result.delay_scale = value.delay_scale;
-    }
-
-    return result;
+const EasingPicker = ({ value, onChange, options }: {
+    value: string;
+    onChange: (v: string) => void;
+    options: { value: string; label: string }[];
+}) => {
+    const c = fluent();
+    return (
+        <flex horizontal alignItems="center" gap={10}>
+            <img svg={easingCurveSvg(value, c.accent.slice(0, 7), c.light ? "#000000" : "#FFFFFF")} width={40} height={28} />
+            <ComboBox value={value} options={options} onChange={onChange} width={150} />
+        </flex>
+    );
 };
 
-const AnimatedPropertyEditor = memo(({
-    label,
-    value,
-    defaultValue,
-    onChange,
-    easingOptions
-}: {
+const PropertyEditor = ({ label, conf, defaults, onChange, options, last }: {
     label: string;
-    value: AnimatedFloatConf;
-    defaultValue: AnimatedFloatConf;
-    onChange: (value: AnimatedFloatConf) => void;
-    easingOptions: Array<{ value: string; label: string }>;
+    conf: Conf;
+    defaults: Conf;
+    onChange: (field: keyof Conf, v: any) => void;
+    options: { value: string; label: string }[];
+    last?: boolean;
 }) => {
     const { t } = useTranslation();
-    const isLightTheme = breeze.is_light_theme();
-    const resolvedValue = { ...defaultValue, ...value };
-    const onResolvedValueChange = (nextValue: AnimatedFloatConf) => {
-        onChange(stripDefaultFields(nextValue, defaultValue));
-    };
-
+    const c = fluent();
+    const v = { ...FALLBACK, ...defaults, ...conf };
+    const modified = Object.keys(conf ?? {}).length > 0;
+    const off = v.easing === "mutation";
     return (
-        <flex
-            gap={8}
-            backgroundColor={isLightTheme ? '#ffffff30' : '#1a1a1a30'}
-            padding={12}
-            borderRadius={10}
-        >
-            <Text fontSize={13} opacity={0.8}>{label}</Text>
-            <flex horizontal gap={10}>
-                <NumberBox
-                    label={t("customEditor.animation.duration")}
-                    value={resolvedValue.duration}
-                    onChange={(v) => onResolvedValueChange({ ...resolvedValue, duration: Math.round(v) })}
-                    min={0}
-                    max={2000}
-                    step={50}
-                />
-                <NumberBox
-                    label={t("customEditor.animation.delayScale")}
-                    value={resolvedValue.delay_scale}
-                    onChange={(v) => onResolvedValueChange({ ...resolvedValue, delay_scale: Math.round(v * 10) / 10 })}
-                    min={0}
-                    max={5}
-                    step={0.1}
-                />
-            </flex>
-
-            <Select
-                label={t("customEditor.animation.easing")}
-                value={resolvedValue.easing}
-                options={easingOptions}
-                onChange={(v) => onResolvedValueChange({ ...resolvedValue, easing: v })}
-            />
-        </flex>
-    );
-});
-
-const PropertyGroupEditor = memo(({
-    title,
-    groupKey,
-    properties,
-    groupData,
-    defaultGroupData,
-    onUpdate,
-    easingOptions
-}: {
-    title: string;
-    groupKey: string;
-    properties: Array<{ key: string; label: string }>;
-    groupData: any;
-    defaultGroupData: any;
-    onUpdate: (groupKey: string, propKey: string, value: AnimatedFloatConf) => void;
-    easingOptions: Array<{ value: string; label: string }>;
-}) => {
-    const isLightTheme = breeze.is_light_theme();
-    const [folded, setFolded] = useState(true);
-    const getPropertyValue = (propKey: string): AnimatedFloatConf => {
-        return groupData?.[propKey] ?? {};
-    };
-    const getDefaultPropertyValue = (propKey: string): AnimatedFloatConf => {
-        return defaultGroupData?.[propKey] ?? {};
-    };
-
-    return (
-        <flex
-            backgroundColor={isLightTheme ? '#ffffff50' : '#2a2a2a50'}
-            padding={16}
-            borderRadius={14}
-            animatedVars={['height', 'width']}
-            alignItems="stretch"
-        >
-            <flex autoSize={false} width={480} height={0} />
-            <flex onClick={() => setFolded(!folded)} horizontal justifyContent="space-between">
-                <Text fontSize={16}>{title}</Text>
-                {folded && iconElement(ICON_EXPAND_MORE, 16)}
-            </flex>
-            {
-                !folded && <flex gap={8} paddingLeft={10} paddingTop={10}>
-                    {properties.map(({ key, label }) => (
-                        <AnimatedPropertyEditor
-                            key={key}
-                            label={label}
-                            value={getPropertyValue(key)}
-                            defaultValue={getDefaultPropertyValue(key)}
-                            onChange={(value) => onUpdate(groupKey, key, value)}
-                            easingOptions={easingOptions}
-                        />
-                    ))}
+        <flex alignItems="stretch">
+            <flex gap={8} paddingLeft={50} paddingRight={16} paddingTop={12} paddingBottom={12} alignItems="stretch">
+                <flex horizontal alignItems="center" gap={8}>
+                    <Text fontSize={13} fontWeight={600} color={c.text}>{label}</Text>
+                    {modified && <flex width={6} height={6} borderRadius={3} backgroundColor={c.accent} />}
+                    <spacer />
+                    <EasingPicker value={v.easing!} options={options} onChange={e => onChange("easing", e)} />
+                    <flex width={32} height={32} justifyContent="center" alignItems="center"
+                        opacity={modified ? 255 : 0}
+                        onClick={() => { if (modified) onChange("duration", undefined); }}>
+                        {iconElement(ICON_RESET, 14, c.textSecondary)}
+                    </flex>
                 </flex>
-            }
+                {!off && (
+                    <flex horizontal alignItems="center" gap={10}>
+                        <Text fontSize={12} color={c.textSecondary}>{t("customEditor.animation.duration")}</Text>
+                        <Slider value={Math.min(v.duration!, 1000)} min={0} max={1000} step={10} width={170} onChange={d => onChange("duration", d)} />
+                        <NumberBox value={v.duration!} min={0} max={5000} step={10} width={64} suffix="ms" onChange={d => onChange("duration", d)} />
+                        <spacer />
+                        <Text fontSize={12} color={c.textSecondary}>{t("customEditor.animation.delayScale")}</Text>
+                        <NumberBox value={v.delay_scale!} min={0} max={10} step={0.1} width={56} suffix="×" onChange={d => onChange("delay_scale", d)} />
+                    </flex>
+                )}
+            </flex>
+            {!last && <flex paddingLeft={50} alignItems="stretch"><Divider /></flex>}
         </flex>
     );
-});
+};
 
-export const AnimationCustomEditor = memo(({
-    animation,
-    defaultAnimation,
-    onUpdate,
-    onClose
-}: {
-    animation: AnimationConfig;
-    defaultAnimation: AnimationConfig;
-    onUpdate: (animation: AnimationConfig) => void;
+const NumberRow = ({ label, value, min, max, step, onChange, last }: {
+    label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; last?: boolean;
+}) => {
+    const c = fluent();
+    return (
+        <flex alignItems="stretch">
+            <flex horizontal alignItems="center" gap={10} paddingLeft={50} paddingRight={16} paddingTop={10} paddingBottom={10}>
+                <Text fontSize={13} fontWeight={600} color={c.text}>{label}</Text>
+                <spacer />
+                <Slider value={value} min={min} max={max} step={step} width={170} onChange={onChange} />
+                <NumberBox value={value} min={min} max={max} step={step} width={64} onChange={onChange} />
+            </flex>
+            {!last && <flex paddingLeft={50} alignItems="stretch"><Divider /></flex>}
+        </flex>
+    );
+};
+
+export const AnimationCustomEditor = memo(({ animation, defaultAnimation, onUpdate, globalAnimation, onGlobalUpdate, onClose }: {
+    animation: any;
+    defaultAnimation: any;
+    onUpdate: (animation: any) => void;
+    globalAnimation: Conf;
+    onGlobalUpdate: (conf: Conf) => void;
     onClose: () => void;
 }) => {
     const { t } = useTranslation();
-    const safeAnimation = useMemo<AnimationConfig>(() => {
-        return animation && typeof animation === "object" ? animation : {};
-    }, [animation]);
-    const safeDefaultAnimation = useMemo<AnimationConfig>(() => {
-        return defaultAnimation && typeof defaultAnimation === "object" ? defaultAnimation : {};
-    }, [defaultAnimation]);
-
-    const handleUpdate = useCallback((groupKey: string, propKey: string, value: AnimatedFloatConf) => {
-        try {
-            const newAnim = { ...safeAnimation } as AnimationConfig & Record<string, any>;
-            const nextGroup = { ...((safeAnimation as Record<string, any>)?.[groupKey] || {}) };
-
-            if (Object.keys(value).length === 0) {
-                delete nextGroup[propKey];
-            } else {
-                nextGroup[propKey] = value;
-            }
-
-            if (Object.keys(nextGroup).length === 0) {
-                delete newAnim[groupKey];
-            } else {
-                newAnim[groupKey] = nextGroup;
-            }
-
-            onUpdate(newAnim);
-        } catch (e) {
-            shell.println("[Config] Failed to update animation config:", e);
-        }
-    }, [safeAnimation, onUpdate]);
+    const c = fluent();
 
     const easingOptions = useMemo(() => [
-        { value: "mutation", label: t("preset.none") },
+        { value: "mutation", label: t("customEditor.animation.instant") },
         { value: "linear", label: t("customEditor.animation.linear") },
         { value: "ease_in", label: t("customEditor.animation.easeIn") },
         { value: "ease_out", label: t("customEditor.animation.easeOut") },
         { value: "ease_in_out", label: t("customEditor.animation.easeInOut") }
     ], [t]);
 
-    const animationGroups = useMemo(() => [
+    const groups: Group[] = [
+        { key: "main", title: "mainMenu", desc: "mainMenuDesc", props: ["y"] },
         {
-            title: t("customEditor.animation.menuItem"),
-            groupKey: "item",
-            properties: [
-                { key: "opacity", label: t("customEditor.animation.opacity") },
-                { key: "x", label: t("customEditor.animation.x") },
-                { key: "y", label: t("customEditor.animation.y") },
-                { key: "width", label: t("customEditor.animation.width") },
-                { key: "blur", label: t("customEditor.animation.blur") }
+            key: "item", title: "menuItem", desc: "menuItemDesc", props: ["opacity", "x", "y", "width", "blur"],
+            numbers: [{ key: "appear_blur", label: "appearBlur", min: 0, max: 10, step: 0.5 }]
+        },
+        {
+            key: "main_bg", title: "mainBg", desc: "mainBgDesc", props: ["opacity", "x", "y", "w", "h"],
+            numbers: [
+                { key: "appear_w_scale", label: "appearWScale", min: 0, max: 1, step: 0.05 },
+                { key: "appear_h_scale", label: "appearHScale", min: 0, max: 1, step: 0.05 }
             ]
         },
         {
-            title: t("customEditor.animation.mainBg"),
-            groupKey: "main_bg",
-            properties: [
-                { key: "opacity", label: t("customEditor.animation.opacity") },
-                { key: "x", label: t("customEditor.animation.x") },
-                { key: "y", label: t("customEditor.animation.y") },
-                { key: "w", label: t("customEditor.animation.width") },
-                { key: "h", label: t("customEditor.animation.height") }
+            key: "submenu_bg", title: "submenuBg", desc: "submenuBgDesc", props: ["opacity", "x", "y", "w", "h"],
+            numbers: [
+                { key: "appear_w_scale", label: "appearWScale", min: 0, max: 1, step: 0.05 },
+                { key: "appear_h_scale", label: "appearHScale", min: 0, max: 1, step: 0.05 }
             ]
         },
-        {
-            title: t("customEditor.animation.submenuBg"),
-            groupKey: "submenu_bg",
-            properties: [
-                { key: "opacity", label: t("customEditor.animation.opacity") },
-                { key: "x", label: t("customEditor.animation.x") },
-                { key: "y", label: t("customEditor.animation.y") },
-                { key: "w", label: t("customEditor.animation.width") },
-                { key: "h", label: t("customEditor.animation.height") }
-            ]
+    ];
+
+    const propLabel = (p: string) => t(`customEditor.animation.${p === "w" ? "width" : p === "h" ? "height" : p}`);
+
+    const setField = (path: string, field: keyof Conf, value: any) => {
+        if (value === undefined) {
+            onUpdate(withPath(animation, path, undefined));
+            return;
         }
-    ], [t]);
+        onUpdate(withPath(animation, `${path}.${field}`, value, defaultAnimation));
+    };
+
+    const global = { ...FALLBACK, ...globalAnimation };
+    const setGlobal = (field: keyof Conf, value: any) => {
+        const next: Conf = { ...globalAnimation };
+        if (value === undefined) {
+            onGlobalUpdate({});
+            return;
+        }
+        (next as any)[field] = value;
+        for (const k of Object.keys(next) as (keyof Conf)[])
+            if (next[k] === FALLBACK[k]) delete next[k];
+        onGlobalUpdate(next);
+    };
+
+    const modifiedIn = (group: string) => Object.keys(flatten(animation?.[group] ?? {})).length;
 
     return (
-        <flex
-            gap={20}
-            alignItems="stretch"
-            width={700}
-            enableScrolling
-            maxHeight={600}
-            paddingLeft={25}
-            paddingRight={25}
-            paddingTop={5}
-            paddingBottom={20}
-        >
-            <flex horizontal justifyContent="space-between" alignItems="center">
-                <Text fontSize={22}>{t("customEditor.animation.title")}</Text>
-                <Button onClick={onClose}>
-                    <Text fontSize={14}>{t("customEditor.animation.done")}</Text>
-                </Button>
-            </flex>
-
-            <flex gap={15}>
-                {animationGroups.map((group) => (
-                    <PropertyGroupEditor
-                        key={group.groupKey}
-                        title={group.title}
-                        groupKey={group.groupKey}
-                        properties={group.properties}
-                        groupData={(safeAnimation as Record<string, any>)?.[group.groupKey]}
-                        defaultGroupData={(safeDefaultAnimation as Record<string, any>)?.[group.groupKey]}
-                        onUpdate={handleUpdate}
-                        easingOptions={easingOptions}
-                    />
-                ))}
+        <flex gap={16} alignItems="stretch" width={CONTENT_WIDTH}>
+            <PageHeader title={t("customEditor.animation.title")} parent={t("settings.title")} onBack={onClose} gutter={SCROLL_GUTTER}>
+                <Button label={t("customEditor.reset")} onClick={() => onUpdate({})} />
+                <Button label={t("customEditor.animation.done")} variant="accent" onClick={onClose} />
+            </PageHeader>
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT} alignItems="stretch" paddingRight={SCROLL_GUTTER} paddingBottom={16} gap={4}>
+                <SettingsGroup title={t("customEditor.animation.global")}>
+                    <Expander icon={ICON_MOTION} title={t("customEditor.animation.globalTitle")} description={t("customEditor.animation.globalDesc")} defaultOpen>
+                        <PropertyEditor
+                            label={t("customEditor.animation.fallback")}
+                            conf={globalAnimation}
+                            defaults={FALLBACK}
+                            options={easingOptions}
+                            onChange={setGlobal}
+                            last
+                        />
+                    </Expander>
+                </SettingsGroup>
+                <SettingsGroup title={t("customEditor.animation.contextMenu")}>
+                    {groups.map(g => {
+                        const count = modifiedIn(g.key);
+                        return (
+                            <Expander
+                                key={g.key}
+                                icon={ICON_MOTION}
+                                title={t(`customEditor.animation.${g.title}`)}
+                                description={t(`customEditor.animation.${g.desc}`)}
+                                header={count > 0
+                                    ? <Text fontSize={12} color={c.accent}>{t("customEditor.animation.modified", { n: count })}</Text>
+                                    : undefined}
+                            >
+                                {g.props.map((p, i) => (
+                                    <PropertyEditor
+                                        key={p}
+                                        label={propLabel(p)}
+                                        conf={animation?.[g.key]?.[p] ?? {}}
+                                        defaults={defaultAnimation?.[g.key]?.[p] ?? {}}
+                                        options={easingOptions}
+                                        onChange={(field, v) => setField(`${g.key}.${p}`, field, v)}
+                                        last={i === g.props.length - 1 && !g.numbers?.length}
+                                    />
+                                ))}
+                                {(g.numbers ?? []).map((n, i) => (
+                                    <NumberRow
+                                        key={n.key}
+                                        label={t(`customEditor.animation.${n.label}`)}
+                                        value={animation?.[g.key]?.[n.key] ?? defaultAnimation?.[g.key]?.[n.key] ?? 0}
+                                        min={n.min}
+                                        max={n.max}
+                                        step={n.step}
+                                        onChange={v => onUpdate(withPath(animation, `${g.key}.${n.key}`, v, defaultAnimation))}
+                                        last={i === g.numbers!.length - 1}
+                                    />
+                                ))}
+                            </Expander>
+                        );
+                    })}
+                </SettingsGroup>
             </flex>
         </flex>
     );

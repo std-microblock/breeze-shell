@@ -3,9 +3,9 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Text } from "../components";
 import { Card, Entrance, IconButton, InfoBar, Pill, SectionHeader, SegmentedControl, fluent, severityStyle } from "../components/Fluent";
 import { useTranslation } from "../hooks";
-import { CONTENT_WIDTH, ICON_COPY, ICON_OPEN, ICON_REFRESH, SCROLL_GUTTER } from "../constants";
+import { CONTENT_WIDTH, ICON_COPY, ICON_OPEN, ICON_REFRESH, SCROLL_GUTTER, PAGE_BODY_HEIGHT } from "../constants";
 
-const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 3 - 28 - 2;
+const CARD_INNER = CONTENT_WIDTH - SCROLL_GUTTER - 4 - 28 - 2;
 const CODE_WIDTH = CARD_INNER - 16;
 const TITLE_WIDTH = CARD_INNER - 60 - 50 - 40 - 60 - 32;
 
@@ -31,7 +31,7 @@ const ProblemCard = memo(({ p, index, expanded, onToggle }: {
     const s = severityStyle(p.severity);
     const hasDetail = p.detail && p.detail !== p.title;
     return (
-        <Entrance delay={Math.min(index, 8) * 35}>
+        <flex alignItems="stretch">
             <Card onClick={onToggle} accentBar={s.fg} gap={6}>
                 <flex horizontal gap={8} alignItems="center">
                     <Pill text={s.label} fg={s.fg} bg={s.bg} fontSize={10} />
@@ -59,7 +59,7 @@ const ProblemCard = memo(({ p, index, expanded, onToggle }: {
                     </flex>
                 )}
             </Card>
-        </Entrance>
+        </flex>
     );
 });
 
@@ -170,7 +170,7 @@ const ProblemsPage = memo(() => {
                 ]}
             />
 
-            <flex enableScrolling maxHeight={440} gap={8} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
+            <flex enableScrolling maxHeight={PAGE_BODY_HEIGHT - 50} gap={8} alignItems="stretch" paddingRight={SCROLL_GUTTER}>
                 {tab === "all" && (
                     <Entrance>
                         {problems.length === 0
