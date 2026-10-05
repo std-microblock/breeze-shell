@@ -131,10 +131,15 @@ Breeze Shell 配置文件的 JSON Schema 位于
   // 开启调试窗口
   "debug_console": false,
 
-  // 主字体
-  "font_path_main": "C:\\WINDOWS\\Fonts\\segoeui.ttf",
-  // 副字体
-  "font_path_fallback": "C:\\WINDOWS\\Fonts\\msyh.ttc",
+  // 字体：已安装的字体族名或字体文件路径（".ttc#1" 指定集合中的字体），
+  // 按顺序查找，然后是 fallback，最后由 Windows 系统字体回退兜底
+  "font": {
+    "main": ["Segoe UI"],
+    "monospace": ["Consolas"],
+    "fallback": [],
+    "system_fallback": true,
+    "color_emoji": true
+  },
   // 使用 hook 方式加载更多 resid
   "res_string_loader_use_hook": false,
   // 调试选项，避免更改 UI 窗口大小

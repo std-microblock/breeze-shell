@@ -137,10 +137,15 @@ The following is a fully annotated default JSON configuration. Note that this **
   // Enable debug console
   "debug_console": false,
 
-  // Primary font path
-  "font_path_main": "C:\\WINDOWS\\Fonts\\segoeui.ttf",
-  // Fallback font path
-  "font_path_fallback": "C:\\WINDOWS\\Fonts\\msyh.ttc",
+  // Fonts: installed family names or font file paths (".ttc#1" picks a face),
+  // tried in order, then "fallback", then Windows' own font fallback
+  "font": {
+    "main": ["Segoe UI"],
+    "monospace": ["Consolas"],
+    "fallback": [],
+    "system_fallback": true,
+    "color_emoji": true
+  },
   // Use hook to load additional resource strings
   "res_string_loader_use_hook": false,
   // Debug option: avoid resizing UI windows

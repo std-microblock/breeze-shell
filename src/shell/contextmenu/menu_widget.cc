@@ -198,7 +198,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     }
 
     ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
-    ctx.fontFace("main");
+    ctx.fontFaceId(ui::resolve_font(ctx.ctx, "main"));
     auto font_size = config::current->context_menu.theme.font_size;
     auto hotkey_padding = config::current->context_menu.theme.hotkey_padding;
     ctx.fontSize(font_size);
@@ -244,7 +244,7 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.7));
         ctx.fontSize(font_size * 0.9);
         ctx.textAlign(NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
-        ctx.fontFace("monospace");
+        ctx.fontFaceId(ui::resolve_font(ctx.ctx, "monospace"));
         auto hotkey_x = right_x - hotkey_padding;
         auto hotkey_y = *y + *height / 2;
         ctx.fontBlur(*text_blur);
@@ -285,14 +285,14 @@ YGSize mb_shell::menu_item_normal_widget::measure(float, YGMeasureMode, float,
     if (has_icon_padding || icon_img)
         width += icon_padding * 2 + font_size + 2;
 
-    vg.fontFace("main");
+    vg.fontFaceId(ui::resolve_font(vg.ctx, "main"));
     vg.fontSize(font_size);
     if (item.name)
         width += vg.measureText(item.name->c_str()).first + text_padding * 2;
 
     if (item.hotkey && !item.hotkey->empty()) {
         vg.fontSize(font_size * 0.9);
-        vg.fontFace("monospace");
+        vg.fontFaceId(ui::resolve_font(vg.ctx, "monospace"));
         width += vg.measureText(item.hotkey->c_str()).first +
                  config::current->context_menu.theme.hotkey_padding * 2;
     }

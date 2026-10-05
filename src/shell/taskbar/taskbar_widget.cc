@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <windows.h>
 
+#include "breeze_ui/font.h"
 #include "breeze_ui/widget.h"
 #include "cinatra/coro_http_client.hpp"
 #include "shell/entry.h"
@@ -520,7 +521,7 @@ struct clock_widget : public background_widget {
 
         ctx.fillColor(text_color.nvg());
         ctx.fontSize(14);
-        ctx.fontFace("main");
+        ctx.fontFaceId(ui::resolve_font(ctx.ctx, "main"));
         ctx.textAlign(NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         ctx.text(*x + *width / 2, *y + 8, current_time.c_str(), nullptr);
         ctx.fontSize(11);

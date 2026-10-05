@@ -443,23 +443,62 @@
       "type": "boolean",
       "default": false
     },
+    "font": {
+      "title": "Fonts",
+      "description": "Fonts are looked up in order: the family list, then 'fallback', then Windows' own font fallback. Entries are installed family names (e.g. \"Segoe UI\") or font file paths (append #N to pick a face in a .ttc). Restart to apply.",
+      "type": "object",
+      "properties": {
+        "main": {
+          "title": "Main Fonts",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["Segoe UI"]
+        },
+        "monospace": {
+          "title": "Monospace Fonts",
+          "description": "Falls back to the main fonts afterwards",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["Consolas"]
+        },
+        "fallback": {
+          "title": "Fallback Fonts",
+          "description": "Tried for every family before the system fallback, e.g. [\"Microsoft YaHei UI\"] to force a CJK font",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "system_fallback": {
+          "title": "System Font Fallback",
+          "description": "Ask Windows for a font when no configured font has a character",
+          "type": "boolean",
+          "default": true
+        },
+        "color_emoji": {
+          "title": "Color Emoji",
+          "description": "Render color glyphs (emoji) in color",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
     "font_path_main": {
-      "title": "Font Path (Main)",
-      "description": "Path to the main font used in the application",
+      "title": "Font Path (Main, deprecated)",
+      "description": "Deprecated, use font.main. Prepended to font.main when set",
       "type": "string",
-      "default": "C:/Windows/Fonts/segoeui.ttf"
+      "deprecated": true
     },
     "font_path_fallback": {
-      "title": "Font Path (Fallback)",
-      "description": "Path to the fallback font used in the application",
+      "title": "Font Path (Fallback, deprecated)",
+      "description": "Deprecated, use font.fallback. Prepended to font.fallback when set",
       "type": "string",
-      "default": "C:/Windows/Fonts/msyh.ttc"
+      "deprecated": true
     },
-    "default_mono_font": {
-      "title": "Default Mono Font",
-      "description": "Default monospaced font used in the application",
+    "font_path_monospace": {
+      "title": "Font Path (Monospace, deprecated)",
+      "description": "Deprecated, use font.monospace. Prepended to font.monospace when set",
       "type": "string",
-      "default": "C:/Windows/Fonts/consola.ttf"
+      "deprecated": true
     },
     "res_string_loader_use_hook": {
       "title": "Enable Resource String Loader Hook",

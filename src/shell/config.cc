@@ -146,27 +146,25 @@ void config::read_config() {
                         .source = config_file.string()});
 #endif
 
-    auto checked = std::make_unique<config>(*config::current);
-    for (auto [name, font, fallback] :
-         {std::tuple{"font_path_main", &checked->font_path_main,
-                     default_main_font()},
-          std::tuple{"font_path_fallback", &checked->font_path_fallback,
-                     default_fallback_font()},
-          std::tuple{"font_path_monospace", &checked->font_path_monospace,
-                     default_mono_font()}}) {
-        std::error_code ec;
-        if (!std::filesystem::exists(*font, ec)) {
-            spdlog::warn("Font not found: {} ({})", name, font->string());
+    const auto fonts = config::current->font_settings();
+    for (auto [name, sources] :
+         {std::pair{"font.main", &fonts.main},
+          std::pair{"font.monospace", &fonts.monospace},
+          std::pair{"font.fallback", &fonts.fallback}}) {
+        for (const auto &source : *sources) {
+            if (ui::font_source_available(source)) {
+                continue;
+            }
+            spdlog::warn("Font not found: {} ({})", name, source);
             problems.push_back(
                 {.severity = "warning",
-                 .title = std::format("Font not found: {}", name),
-                 .detail = std::format("{} does not exist, using {} instead",
-                                       font->string(), fallback.string()),
+                 .title = std::format("Font not found: {}", source),
+                 .detail = std::format("{} in {} is neither an installed "
+                                       "font family nor a readable font file",
+                                       source, name),
                  .source = config_file.string()});
-            *font = fallback;
         }
     }
-    config::current = std::move(checked);
 
     diag::set_problems("config", std::move(problems));
 }
@@ -240,33 +238,31 @@ void config::animated_float_conf::operator()(ui::sp_anim_float &anim,
     apply_to(anim, delay);
 }
 
-std::filesystem::path config::default_main_font() {
-    return std::filesystem::path(env("WINDIR").value()) / "Fonts" /
-           "segoeui.ttf";
-}
-std::filesystem::path config::default_fallback_font() {
-    return std::filesystem::path(env("WINDIR").value()) / "Fonts" / "msyh.ttc";
-}
 std::string config::dump_config() { return rfl::json::write(*config::current); }
-std::filesystem::path config::default_mono_font() {
-    return std::filesystem::path(env("WINDIR").value()) / "Fonts" /
-           "consola.ttf";
+ui::font_settings config::font_settings() const {
+    ui::font_settings settings{
+        .main = font.main,
+        .monospace = font.monospace,
+        .fallback = font.fallback,
+        .system_fallback = font.system_fallback,
+        .color_glyphs = font.color_emoji,
+    };
+    for (auto [legacy, list] :
+         {std::pair{&font_path_main, &settings.main},
+          std::pair{&font_path_monospace, &settings.monospace},
+          std::pair{&font_path_fallback, &settings.fallback}}) {
+        if (legacy->has_value() && !(*legacy)->empty()) {
+            list->insert(list->begin(), **legacy);
+        }
+    }
+    return settings;
 }
 void config::apply_fonts_to_nvg(NVGcontext *nvg) {
     if (!nvg) {
         spdlog::error("Cannot register fonts without a NanoVG context.");
         return;
     }
-
-    // Copy paths from this immutable snapshot before entering NanoVG. This
-    // also makes it explicit that no config reload can affect the call.
-    const auto main_font = font_path_main;
-    const auto fallback_font = font_path_fallback;
-    const auto monospace_font = font_path_monospace;
-    ui::register_default_windows_font_suite(
-        nvg, {.main_regular = {.path = main_font},
-              .fallback_regular = {.path = fallback_font},
-              .monospace_regular = {.path = monospace_font}});
+    ui::configure_fonts(nvg, font_settings());
 }
 void config::animated_float_conf::apply_to(ui::animated_color &anim,
                                            float delay) {

@@ -407,23 +407,62 @@
       "type": "boolean",
       "default": false
     },
+    "font": {
+      "title": "字体",
+      "description": "按顺序查找字形：字体列表 → fallback → Windows 系统字体回退。每项可以是已安装的字体族名（如 \"Segoe UI\"、\"微软雅黑\"）或字体文件路径（.ttc 可用 #N 指定第几个字体）。重启后生效",
+      "type": "object",
+      "properties": {
+        "main": {
+          "title": "主字体",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["Segoe UI"]
+        },
+        "monospace": {
+          "title": "等宽字体",
+          "description": "之后会继续回退到主字体",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["Consolas"]
+        },
+        "fallback": {
+          "title": "备用字体",
+          "description": "在系统回退之前对所有字体生效，例如 [\"Microsoft YaHei UI\"] 可强制中文字形",
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "system_fallback": {
+          "title": "系统字体回退",
+          "description": "配置的字体都缺字时由 Windows 选择合适的字体",
+          "type": "boolean",
+          "default": true
+        },
+        "color_emoji": {
+          "title": "彩色 Emoji",
+          "description": "以彩色绘制 emoji 等彩色字形",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
     "font_path_main": {
-      "title": "字体路径",
-      "description": "字体的路径",
+      "title": "字体路径（已弃用）",
+      "description": "已弃用，请使用 font.main。设置后会插入到 font.main 最前面",
       "type": "string",
-      "default": "C:/Windows/Fonts/segoeui.ttf"
+      "deprecated": true
     },
     "font_path_fallback": {
-      "title": "字体路径（备用）",
-      "description": "备用字体的路径",
+      "title": "备用字体路径（已弃用）",
+      "description": "已弃用，请使用 font.fallback。设置后会插入到 font.fallback 最前面",
       "type": "string",
-      "default": "C:/Windows/Fonts/msyh.ttc"
+      "deprecated": true
     },
-    "default_mono_font": {
-      "title": "默认等宽字体路径",
-      "description": "默认等宽字体的路径",
+    "font_path_monospace": {
+      "title": "等宽字体路径（已弃用）",
+      "description": "已弃用，请使用 font.monospace。设置后会插入到 font.monospace 最前面",
       "type": "string",
-      "default": "C:/Windows/Fonts/consola.ttf"
+      "deprecated": true
     },
     "res_string_loader_use_hook": {
       "title": "启用资源字符串加载器钩子",

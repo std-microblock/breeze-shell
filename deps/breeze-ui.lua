@@ -3,8 +3,8 @@ package("breeze-glfw")
     set_urls("https://github.com/breeze-shell/glfw.git")
     add_versions("2026.03.07+1", "a79c32a7d9ef4cd8a15b5f8ccbcdf9510c48da03")
 
-local BREEZE_UI_VER = "2026.10.05+1"
-local BREEZE_UI_HASH = "e2248ddfafb12b5ef977060b93f3b053ad81c9ec"
+local BREEZE_UI_VER = "2026.10.05+2"
+local BREEZE_UI_HASH = "a17755403abc71085502770cf94575630bf46d65"
 local BREEZE_UI_LOCAL_PATH = path.join(os.scriptdir(), "..", "..", "breeze-ui")
 local USE_LOCAL_BREEZE_UI = os.exists(BREEZE_UI_LOCAL_PATH)
 
@@ -53,7 +53,7 @@ package("breeze-ui")
     add_configs("shared", {description = "Build shared library.", default = false, type = "boolean", readonly = true})
 
     if is_plat("windows") then
-        add_syslinks("dwmapi", "imm32", "shcore", "windowsapp", "CoreMessaging")
+        add_syslinks("dwmapi", "imm32", "shcore", "windowsapp", "CoreMessaging", "dwrite", "d2d1", "gdi32")
     end
 
     on_install("windows", function (package)

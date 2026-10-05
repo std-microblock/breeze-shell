@@ -1,6 +1,7 @@
 #pragma once
 
 #include "breeze_ui/animator.h"
+#include "breeze_ui/font.h"
 #include "breeze_ui/nanovg_wrapper.h"
 #include "nanovg.h"
 #include "utils.h"
@@ -8,6 +9,8 @@
 #include <filesystem>
 #include <memory>
 #include <numbers>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "paint_color.h"
@@ -29,10 +32,6 @@ struct config {
     private:
         std::atomic<config *> value{nullptr};
     };
-
-    static std::filesystem::path default_main_font();
-    static std::filesystem::path default_fallback_font();
-    static std::filesystem::path default_mono_font();
 
     struct animated_float_conf {
         float duration = _default_animation.duration;
@@ -140,9 +139,16 @@ struct config {
 
     bool debug_console = false;
     // Restart to apply font/hook changes
-    std::filesystem::path font_path_main = default_main_font();
-    std::filesystem::path font_path_fallback = default_fallback_font();
-    std::filesystem::path font_path_monospace = default_mono_font();
+    struct font {
+        std::vector<std::string> main = {"Segoe UI"};
+        std::vector<std::string> monospace = {"Consolas"};
+        std::vector<std::string> fallback = {};
+        bool system_fallback = true;
+        bool color_emoji = true;
+    } font;
+    std::optional<std::string> font_path_main;
+    std::optional<std::string> font_path_fallback;
+    std::optional<std::string> font_path_monospace;
     bool res_string_loader_use_hook = false;
     bool avoid_resize_ui = false;
     std::vector<std::string> plugin_load_order = {};
@@ -163,6 +169,7 @@ struct config {
     static std::string dump_default_config();
 
     static std::filesystem::path data_directory();
+    ui::font_settings font_settings() const;
     void apply_fonts_to_nvg(NVGcontext *nvg);
 };
 } // namespace mb_shell
