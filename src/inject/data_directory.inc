@@ -4,13 +4,19 @@ std::filesystem::path data_directory() {
   std::lock_guard lock(mtx);
 
   if (!path) {
-    wchar_t home_dir[MAX_PATH];
-    GetEnvironmentVariableW(L"USERPROFILE", home_dir, MAX_PATH);
-    path = std::filesystem::path(home_dir) / ".breeze-shell";
-  }
+    wchar_t custom_dir[32767] = {0};
+    DWORD custom_len =
+        GetEnvironmentVariableW(L"BREEZE_DATA_DIR", custom_dir, 32767);
+    if (custom_len > 0 && custom_len < 32767) {
+      path = std::filesystem::path(custom_dir);
+    } else {
+      wchar_t home_dir[MAX_PATH];
+      GetEnvironmentVariableW(L"USERPROFILE", home_dir, MAX_PATH);
+      path = std::filesystem::path(home_dir) / ".breeze-shell";
+    }
 
-  if (!std::filesystem::exists(*path)) {
-    std::filesystem::create_directories(*path);
+    std::error_code ec;
+    std::filesystem::create_directories(*path, ec);
   }
 
   return path.value();

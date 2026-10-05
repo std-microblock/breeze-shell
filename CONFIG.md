@@ -7,6 +7,8 @@ This project's configuration file adopts the JSON format, and it is recommended 
 The default location of the configuration file is:  
 `%USERPROFILE%/.breeze-shell/config.json`.  
 
+Set the `BREEZE_DATA_DIR` environment variable to move the whole data directory (configuration, plugins, logs) somewhere else, for example next to a portable copy of Breeze or into a folder synced between devices. It replaces `%USERPROFILE%/.breeze-shell`, so the configuration file then lives in `%BREEZE_DATA_DIR%/config.json`. Both the injector and the shell read it, and the shell runs inside Explorer, so it has to be set as a user environment variable (with Explorer restarted) rather than in a single terminal.
+
 When the configuration file is saved, the plugin will automatically reload the configuration without requiring a restart.
 
 **If a black window appears after saving, it indicates an error in the configuration file. Please read the error message in the black window and fix the issue accordingly.**

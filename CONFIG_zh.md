@@ -4,6 +4,8 @@
 
 本项目配置文件默认位于 `%USERPROFILE%/.breeze-shell/config.json`。
 
+设置环境变量 `BREEZE_DATA_DIR` 可以把整个数据目录（配置、插件、日志）挪到别处，例如便携版程序旁边，或者多台设备之间同步的目录。它会整体替代 `%USERPROFILE%/.breeze-shell`，配置文件随之位于 `%BREEZE_DATA_DIR%/config.json`。注入器和 shell 都会读取它，而 shell 是跑在 Explorer 里的，所以要设成用户环境变量并重启 Explorer，只在单个终端里设置不会生效。
+
 编辑配置文件并保存后，插件将会自动重载配置，无需重新启动。
 
 **如果保存后弹出了黑窗口，这大概是因为你的配置文件有错误，请阅读黑窗口内的报错信息并修复错误**

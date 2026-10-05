@@ -177,27 +177,35 @@ std::filesystem::path config::data_directory() {
     std::lock_guard lock(mtx);
 
     if (!path) {
-        std::filesystem::path base;
-        if (auto profile = env("USERPROFILE");
-            profile && !profile->empty()) {
-            base = std::filesystem::path(*profile);
-        } else if (auto home = env("HOME"); home && !home->empty()) {
-            base = std::filesystem::path(*home);
+        if (auto custom = env("BREEZE_DATA_DIR");
+            custom && !custom->empty()) {
+            path = std::filesystem::path(*custom);
         } else {
-            wchar_t folder[MAX_PATH] = {0};
-            if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0,
-                                           folder))) {
-                base = std::filesystem::path(folder);
+            std::filesystem::path base;
+            if (auto profile = env("USERPROFILE");
+                profile && !profile->empty()) {
+                base = std::filesystem::path(*profile);
+            } else if (auto home = env("HOME"); home && !home->empty()) {
+                base = std::filesystem::path(*home);
             } else {
-                base = std::filesystem::current_path();
+                wchar_t folder[MAX_PATH] = {0};
+                if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr,
+                                               0, folder))) {
+                    base = std::filesystem::path(folder);
+                } else {
+                    base = std::filesystem::current_path();
+                }
             }
+
+            path = base / ".breeze-shell";
         }
 
-        path = base / ".breeze-shell";
-    }
-
-    if (!std::filesystem::exists(*path)) {
-        std::filesystem::create_directories(*path);
+        std::error_code ec;
+        std::filesystem::create_directories(*path, ec);
+        if (ec) {
+            spdlog::warn("Failed to create data directory {}: {}",
+                         path->string(), ec.message());
+        }
     }
 
     return path.value();
