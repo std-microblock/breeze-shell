@@ -521,15 +521,23 @@ std::string network::get(std::string url) { return post(url, ""); }
 void network::get_async(std::string url,
                         std::function<void(std::string)> callback,
                         std::function<void(std::string)> error_callback) {
-    std::thread([url, callback, error_callback,
-                 weak_ctx = current_js_context()]() {
+    std::thread([url = std::move(url), callback = std::move(callback),
+                 error_callback = std::move(error_callback),
+                 weak_ctx = current_js_context()]() mutable {
         try {
             auto res = get(url);
-            enqueue_if_alive(weak_ctx, [=]() { callback(res); });
+            enqueue_if_alive(
+                weak_ctx,
+                [callback = std::move(callback), res = std::move(res)]() {
+                    callback(res);
+                });
         } catch (std::exception &e) {
             spdlog::error("Error in network::get_async: {}", e.what());
             auto error = std::string(e.what());
-            enqueue_if_alive(weak_ctx, [=]() { error_callback(error); });
+            enqueue_if_alive(
+                weak_ctx,
+                [error_callback = std::move(error_callback),
+                 error = std::move(error)]() { error_callback(error); });
         }
     }).detach();
 }
@@ -537,15 +545,24 @@ void network::get_async(std::string url,
 void network::post_async(std::string url, std::string data,
                          std::function<void(std::string)> callback,
                          std::function<void(std::string)> error_callback) {
-    std::thread([url, data, callback, error_callback,
-                 weak_ctx = current_js_context()]() {
+    std::thread([url = std::move(url), data = std::move(data),
+                 callback = std::move(callback),
+                 error_callback = std::move(error_callback),
+                 weak_ctx = current_js_context()]() mutable {
         try {
             auto res = post(url, data);
-            enqueue_if_alive(weak_ctx, [=]() { callback(res); });
+            enqueue_if_alive(
+                weak_ctx,
+                [callback = std::move(callback), res = std::move(res)]() {
+                    callback(res);
+                });
         } catch (std::exception &e) {
             spdlog::error("Error in network::post_async: {}", e.what());
             auto error = std::string(e.what());
-            enqueue_if_alive(weak_ctx, [=]() { error_callback(error); });
+            enqueue_if_alive(
+                weak_ctx,
+                [error_callback = std::move(error_callback),
+                 error = std::move(error)]() { error_callback(error); });
         }
     }).detach();
 }
@@ -597,10 +614,15 @@ subproc_result_data subproc::run(std::string cmd) {
 }
 void subproc::run_async(std::string cmd,
                         std::function<void(subproc_result_data)> callback) {
-    std::thread([cmd, callback, weak_ctx = current_js_context()]() {
+    std::thread([cmd = std::move(cmd), callback = std::move(callback),
+                 weak_ctx = current_js_context()]() mutable {
         try {
             auto res = run(cmd);
-            enqueue_if_alive(weak_ctx, [=]() { callback(res); });
+            enqueue_if_alive(
+                weak_ctx,
+                [callback = std::move(callback), res = std::move(res)]() {
+                    callback(res);
+                });
         } catch (std::exception &e) {
             spdlog::error("Error in subproc::run_async: {}", e.what());
         }
@@ -695,17 +717,23 @@ bool breeze::is_light_theme() { return is_light_mode(); }
 void network::download_async(std::string url, std::string path,
                              std::function<void()> callback,
                              std::function<void(std::string)> error_callback) {
-    std::thread([url, path, callback, error_callback,
-                 weak_ctx = current_js_context()]() {
+    std::thread([url = std::move(url), path = std::move(path),
+                 callback = std::move(callback),
+                 error_callback = std::move(error_callback),
+                 weak_ctx = current_js_context()]() mutable {
         try {
             auto data = get(url);
             fs::write_binary(path,
                              std::vector<uint8_t>(data.begin(), data.end()));
-            enqueue_if_alive(weak_ctx, [=]() { callback(); });
+            enqueue_if_alive(
+                weak_ctx, [callback = std::move(callback)]() { callback(); });
         } catch (std::exception &e) {
             auto error = std::string(e.what());
             spdlog::error("Error in network::download_async: {}", error);
-            enqueue_if_alive(weak_ctx, [=]() { error_callback(error); });
+            enqueue_if_alive(
+                weak_ctx,
+                [error_callback = std::move(error_callback),
+                 error = std::move(error)]() { error_callback(error); });
         }
     }).detach();
 }
@@ -714,8 +742,13 @@ void network::download_with_progress_async(
     std::string url, std::string path, std::function<void()> callback,
     std::function<void(std::string)> error_callback,
     std::function<void(size_t, size_t)> progress_callback) {
-    std::thread([url, path, callback, error_callback,
-                 progress_callback, weak_ctx = current_js_context()]() {
+    std::thread([url = std::move(url), path = std::move(path),
+                 callback = std::move(callback),
+                 error_callback = std::move(error_callback),
+                 progress_cb = std::make_shared<
+                     std::function<void(size_t, size_t)>>(
+                     std::move(progress_callback)),
+                 weak_ctx = current_js_context()]() mutable {
         HINTERNET hSession = nullptr;
         HINTERNET hConnect = nullptr;
         HINTERNET hRequest = nullptr;
@@ -836,21 +869,26 @@ void network::download_with_progress_async(
                 }
 
                 downloadedBytes += bytesRead;
-                enqueue_if_alive(weak_ctx, [=]() {
-                    progress_callback(downloadedBytes, totalBytes);
+                enqueue_if_alive(weak_ctx, [progress_cb, downloadedBytes,
+                                            totalBytes]() {
+                    (*progress_cb)(downloadedBytes, totalBytes);
                 });
             } while (bytesAvailable > 0);
 
             file.close();
             close_handles();
-            enqueue_if_alive(weak_ctx, [=]() { callback(); });
+            enqueue_if_alive(
+                weak_ctx, [callback = std::move(callback)]() { callback(); });
         } catch (std::exception &e) {
             close_handles();
             std::filesystem::remove(path);
             auto error = std::string(e.what());
             spdlog::error("Error in network::download_with_progress_async: {}",
                           error);
-            enqueue_if_alive(weak_ctx, [=]() { error_callback(error); });
+            enqueue_if_alive(
+                weak_ctx,
+                [error_callback = std::move(error_callback),
+                 error = std::move(error)]() { error_callback(error); });
         }
     }).detach();
 }
@@ -1041,10 +1079,13 @@ void subproc::open(std::string path, std::string args) {
 }
 void subproc::open_async(std::string path, std::string args,
                          std::function<void()> callback) {
-    std::thread([path, callback, args, weak_ctx = current_js_context()]() {
+    std::thread([path = std::move(path), args = std::move(args),
+                 callback = std::move(callback),
+                 weak_ctx = current_js_context()]() mutable {
         try {
             open(path, args);
-            enqueue_if_alive(weak_ctx, [=]() { callback(); });
+            enqueue_if_alive(
+                weak_ctx, [callback = std::move(callback)]() { callback(); });
         } catch (std::exception &e) {
             spdlog::error("Error in subproc::open_async: {}", e.what());
         }
@@ -1188,7 +1229,10 @@ std::string infra::btoa(std::string str) {
 
 void fs::copy_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool, std::string)> callback) {
-    std::thread([=, weak_ctx = current_js_context()] {
+    std::thread([src_path = std::move(src_path),
+                 dest_path = std::move(dest_path),
+                 callback = std::move(callback),
+                 weak_ctx = current_js_context()]() mutable {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
@@ -1234,13 +1278,21 @@ void fs::copy_shfile(std::string src_path, std::string dest_path,
 
         std::string utf8_path = wstring_to_utf8(final_path);
 
-        enqueue_if_alive(weak_ctx, [=]() { callback(success, utf8_path); });
+        enqueue_if_alive(
+            weak_ctx,
+            [callback = std::move(callback), success,
+             utf8_path = std::move(utf8_path)]() {
+                callback(success, utf8_path);
+            });
     }).detach();
 }
 
 void fs::move_shfile(std::string src_path, std::string dest_path,
                      std::function<void(bool)> callback) {
-    std::thread([=, weak_ctx = current_js_context()] {
+    std::thread([src_path = std::move(src_path),
+                 dest_path = std::move(dest_path),
+                 callback = std::move(callback),
+                 weak_ctx = current_js_context()]() mutable {
         SHFILEOPSTRUCTW FileOp = {GetForegroundWindow()};
         std::wstring wsrc = utf8_to_wstring(src_path);
         std::wstring wdest = utf8_to_wstring(dest_path);
@@ -1250,7 +1302,11 @@ void fs::move_shfile(std::string src_path, std::string dest_path,
         FileOp.pTo = wdest.c_str();
 
         auto res = SHFileOperationW(&FileOp);
-        enqueue_if_alive(weak_ctx, [=]() { callback(res == 0); });
+        bool ok = (res == 0);
+        enqueue_if_alive(
+            weak_ctx, [callback = std::move(callback), ok]() {
+                callback(ok);
+            });
     }).detach();
 }
 size_t win32::load_file_icon(std::string path) {
