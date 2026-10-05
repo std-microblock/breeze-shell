@@ -431,6 +431,11 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
             bool shift_pressed = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
 
             auto menu_render = menu_render::create(x, y, menu, run_js);
+            if (!menu_render.rt) {
+                spdlog::error(
+                    "Failed to create menu render target; native menu path");
+                return std::optional<int>{};
+            }
             menu_render.rt->last_time = menu_render.rt->clock.now();
             perf.end("menu_render::create");
 
