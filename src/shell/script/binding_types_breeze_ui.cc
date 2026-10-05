@@ -5,8 +5,12 @@
 #include "breeze_ui/widget.h"
 #include "shell/config.h"
 #include "shell/contextmenu/menu_widget.h"
-#include <memory>
+#include <condition_variable>
+#include <deque>
 #include <filesystem>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <print>
 #include <thread>
 #include <Windows.h>
@@ -27,6 +31,50 @@ void set_owner_rt_recursive(const std::shared_ptr<ui::widget> &widget,
         set_owner_rt_recursive(child, owner_rt);
     }
 }
+
+class js_callback_dispatcher {
+  public:
+    static js_callback_dispatcher &instance() {
+        static auto *dispatcher = new js_callback_dispatcher();
+        return *dispatcher;
+    }
+
+    void post(std::function<void()> fn) {
+        {
+            std::lock_guard lock(mutex_);
+            queue_.push_back(std::move(fn));
+        }
+        cv_.notify_one();
+    }
+
+  private:
+    js_callback_dispatcher() {
+        std::thread([this] { run(); }).detach();
+    }
+
+    void run() {
+        while (true) {
+            std::function<void()> fn;
+            {
+                std::unique_lock lock(mutex_);
+                cv_.wait(lock, [this] { return !queue_.empty(); });
+                fn = std::move(queue_.front());
+                queue_.pop_front();
+            }
+            try {
+                fn();
+            } catch (const std::exception &e) {
+                spdlog::error("Error in widget callback: {}", e.what());
+            } catch (...) {
+                spdlog::error("Error in widget callback: unknown exception");
+            }
+        }
+    }
+
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    std::deque<std::function<void()>> queue_;
+};
 } // namespace
 
 // Macro for getter/setter pairs with animation support
@@ -452,17 +500,7 @@ struct widget_js_base : public ui::flex_widget {
     std::function<void(int)> on_mouse_wheel;
 
     template <typename F> void post(F &&fn) {
-        if (!owner_rt)
-            return;
-        owner_rt->post_loop_thread_task(
-            [fn = std::forward<F>(fn)]() mutable {
-                try {
-                    fn();
-                } catch (const std::exception &e) {
-                    spdlog::error("Error in widget callback: {}", e.what());
-                }
-            },
-            true);
+        js_callback_dispatcher::instance().post(std::forward<F>(fn));
     }
 
     void handle_mouse_enter() override {
@@ -500,8 +538,9 @@ struct widget_js_base : public ui::flex_widget {
         super::handle_scroll(e);
     }
 
-    ui::sp_anim_float opacity = anim_float(255, "opacity"),
-                      border_radius = anim_float(0, "border_radius"),
+    ui::sp_anim_float opacity = paint_only(anim_float(255, "opacity")),
+                      border_radius =
+                          paint_only(anim_float(0, "border_radius")),
                       border_width = anim_float(0, "border_width");
     ui::animated_color background_color = {this, 0.f, 0.f, 0.f, 0.f},
                        border_color = {this, 0.0f, 0.0f, 0.0f, 1.0f};
@@ -531,19 +570,17 @@ struct widget_js_base : public ui::flex_widget {
         ctx.globalAlpha(alpha);
         if (background_paint) {
             background_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
-        } else {
+            ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
+        } else if (background_color.a->var() > 0) {
             ctx.fillColor(background_color);
+            ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
         }
 
-        ctx.fillRoundedRect(rx, ry, rw, rh, *border_radius);
-
-        if (border_paint) {
-            border_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
-        } else {
-            ctx.strokeColor(border_color);
-        }
-
-        if (*border_width > 0) {
+        if (*border_width > 0 && (border_paint || border_color.a->var() > 0)) {
+            if (border_paint)
+                border_paint->apply_to_ctx(ctx, rx, ry, rw, rh);
+            else
+                ctx.strokeColor(border_color);
             ctx.strokeWidth(*border_width);
             ctx.strokeRoundedRect(rx, ry, rw, rh, *border_radius);
         }

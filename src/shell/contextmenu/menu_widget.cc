@@ -837,7 +837,9 @@ void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
             ctx.scissor(*x, *y, *width, *height);
         }
 
-        render_children(ctx.with_offset(*x, *y + *scroll_top), children);
+        auto inner = ctx;
+        inner.clip_to(*x, *y, *width, *height);
+        render_children(inner.with_offset(*x, *y + *scroll_top), children);
         render_scrollbar(ctx);
     }
 
