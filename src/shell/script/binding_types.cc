@@ -1093,7 +1093,7 @@ void subproc::open_async(std::string path, std::string args,
 }
 
 struct Timer {
-    // qjs::Value refcounts are not thread-safe: copy once, move afterwards
+    // qjs::Value refcounts are not thread-safe: the callable is shared, never copied
     std::shared_ptr<std::function<void()>> callback;
     std::weak_ptr<qjs::Context> ctx;
     int delay;
@@ -1123,7 +1123,7 @@ void timer_thread_func() {
                 timer->elapsed += sleep_time;
                 if (timer->elapsed >= timer->delay) {
                     timer->elapsed = 0;
-                    callbacks.push_back(std::move(timer->callback));
+                    callbacks.push_back(timer->callback);
                     if (!timer->repeat) {
                         timer = nullptr;
                     }
