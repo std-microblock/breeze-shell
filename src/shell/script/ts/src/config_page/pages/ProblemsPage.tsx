@@ -152,7 +152,7 @@ const ProblemsPage = memo(() => {
     const keyOf = (p: shell.diagnostic_problem) => `${p.category}|${p.title}`;
 
     return (
-        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH} autoSize={false}>
+        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH}>
             <SectionHeader title={t("problems.title")} subtitle={t("problems.subtitle")} gutter={SCROLL_GUTTER}>
                 {tab !== "config" && problems.some(p => p.category === "runtime") && (
                     <IconButton label={t("problems.clearRuntime")} onClick={() => shell.diagnostics.clear_problems("runtime")} />

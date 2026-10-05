@@ -21,7 +21,6 @@ struct test_widget : public ui::acrylic_background_widget {
         height->animate_to(100);
 
         acrylic_bg_color = nvgRGBAf(0, 0.5, 0.5, 0.5);
-        update_color();
         radius->animate_to(10);
     }
 
@@ -33,13 +32,13 @@ struct test_widget : public ui::acrylic_background_widget {
         ctx.text(*x + 10, *y + 30, "Button", nullptr);
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-        if (ctx.mouse_down_on(this)) {
+    void tick(float delta_time) override {
+        super::tick(delta_time);
+        if (pressed()) {
             color_transition->animate_to(255);
             width->animate_to(200);
             height->animate_to(200);
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             color_transition->animate_to(0);
             width->animate_to(150);
             height->animate_to(150);
@@ -48,15 +47,16 @@ struct test_widget : public ui::acrylic_background_widget {
             width->animate_to(100);
             height->animate_to(100);
         }
+    }
 
-        if (ctx.mouse_clicked_on(this)) {
-            if (x->dest() == 100) {
-                x->animate_to(200);
-                y->animate_to(200);
-            } else {
-                x->animate_to(100);
-                y->animate_to(100);
-            }
+    void handle_mouse_down(ui::mouse_event &e) override {
+        e.handled = true;
+        if (x->dest() == 100) {
+            x->animate_to(200);
+            y->animate_to(200);
+        } else {
+            x->animate_to(100);
+            y->animate_to(100);
         }
     }
 };
@@ -86,19 +86,20 @@ struct dying_widget_test : public ui::widget {
         // std::println("Rendering dying widget");
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-        if (ctx.mouse_down_on(this)) {
-            dying_time = 200;
-        }
-
+    void tick(float delta_time) override {
+        super::tick(delta_time);
         if (dying_time) {
             opacity->animate_to(0);
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             opacity->animate_to(128);
         } else {
             opacity->animate_to(255);
         }
+    }
+
+    void handle_mouse_down(ui::mouse_event &e) override {
+        e.handled = true;
+        dying_time = 200;
     }
 };
 

@@ -79,13 +79,14 @@ background_widget::background_widget(bool is_main) {
     height = bg_impl->height;
     radius = bg_impl->radius;
     bg_color = bg_impl->bg_color;
+    anim_floats = bg_impl->anim_floats;
 }
 
-void background_widget::update(ui::update_context &ctx) {
+void background_widget::tick(float delta_time) {
     bg_impl->bg_color = bg_color;
-    bg_impl->update(ctx);
-
-    super::update(ctx);
+    bg_impl->owner_rt = owner_rt;
+    bg_impl->parent = this;
+    bg_impl->tick(delta_time);
 }
 
 void background_widget::render(ui::nanovg_context ctx) {

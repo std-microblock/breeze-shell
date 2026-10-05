@@ -177,7 +177,7 @@ const LogViewer = memo(() => {
     };
 
     return (
-        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH} autoSize={false}>
+        <flex gap={14} alignItems="stretch" width={CONTENT_WIDTH}>
             <SectionHeader title={t("logs.title")} subtitle={t("logs.subtitle", { n: entries.length })} gutter={SCROLL_GUTTER}>
                 <IconButton icon={paused ? ICON_PLAY : ICON_PAUSE} label={paused ? t("logs.resume") : t("logs.pause")} onClick={() => setPaused(!paused)} accent={paused} />
                 <IconButton icon={ICON_COPY} onClick={copyVisible} />

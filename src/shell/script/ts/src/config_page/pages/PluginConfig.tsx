@@ -92,7 +92,7 @@ const PluginConfig = memo(() => {
                             );
                         })}
 
-                        <flex height={1} autoSize={false} backgroundColor={shell.breeze.is_light_theme() ? '#E0E0E0' : '#505050'} />
+                        <flex height={1} backgroundColor={shell.breeze.is_light_theme() ? '#E0E0E0' : '#505050'} />
                     </flex>
                 )}
                 <flex gap={10} alignItems="stretch">

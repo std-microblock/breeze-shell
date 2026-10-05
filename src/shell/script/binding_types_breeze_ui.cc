@@ -237,8 +237,27 @@ void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
 
 IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, x, float)
 IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, y, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, width, float)
-IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, height, float)
+
+float breeze_ui::js_widget::get_width() const {
+    return $widget ? $widget->width->dest() : 0.f;
+}
+void breeze_ui::js_widget::set_width(float value) {
+    if (!$widget)
+        return;
+    auto lock = $rt_lock();
+    $widget->fixed_width = true;
+    $widget->width->animate_to(value);
+}
+float breeze_ui::js_widget::get_height() const {
+    return $widget ? $widget->height->dest() : 0.f;
+}
+void breeze_ui::js_widget::set_height(float value) {
+    if (!$widget)
+        return;
+    auto lock = $rt_lock();
+    $widget->fixed_height = true;
+    $widget->height->animate_to(value);
+}
 
 std::shared_ptr<breeze_ui::js_text_widget>
 breeze_ui::widgets_factory::create_text_widget() {
@@ -431,80 +450,54 @@ struct widget_js_base : public ui::flex_widget {
     std::function<void()> on_mouse_down;
     std::function<void()> on_mouse_up;
     std::function<void(int)> on_mouse_wheel;
-    std::function<void(ui::update_context &ctx)> on_update;
 
-    bool previous_hovered = false;
-
-    float prev_mouse_x = 0, prev_mouse_y = 0;
-
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-
-        try {
-            if (on_update) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_update]() mutable {
-                        callback(ctx);
-                    },
-                    true);
-            }
-
-            if (ctx.hovered(this) && ctx.mouse_clicked && on_click) {
-                ctx.rt.post_loop_thread_task(
-                    [callback = this->on_click]() mutable { callback(0); },
-                    true);
-            }
-
-            if (ctx.hovered(this) && !previous_hovered && on_mouse_enter) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_enter]() mutable {
-                        callback();
-                    },
-                    true);
-            } else if (!ctx.hovered(this) && previous_hovered &&
-                       on_mouse_leave) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_leave]() mutable {
-                        callback();
-                    },
-                    true);
-            }
-
-            previous_hovered = ctx.hovered(this);
-            if (ctx.mouse_down_on(this) && on_mouse_down) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_down]() mutable {
-                        callback();
-                    },
-                    true);
-            }
-
-            if (ctx.mouse_up && on_mouse_up) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_up]() mutable { callback(); },
-                    true);
-            }
-
-            if (ctx.mouse_x != prev_mouse_x || ctx.mouse_y != prev_mouse_y) {
-                prev_mouse_x = ctx.mouse_x;
-                prev_mouse_y = ctx.mouse_y;
-                if (on_mouse_move && ctx.hovered(this)) {
-                    ctx.rt.post_loop_thread_task(
-                        [=, callback = this->on_mouse_move]() mutable {
-                            callback(ctx.mouse_x, ctx.mouse_y);
-                        });
+    template <typename F> void post(F &&fn) {
+        if (!owner_rt)
+            return;
+        owner_rt->post_loop_thread_task(
+            [fn = std::forward<F>(fn)]() mutable {
+                try {
+                    fn();
+                } catch (const std::exception &e) {
+                    spdlog::error("Error in widget callback: {}", e.what());
                 }
-            }
+            },
+            true);
+    }
 
-            if (ctx.scroll_y != 0 && on_mouse_wheel) {
-                ctx.rt.post_loop_thread_task(
-                    [=, callback = this->on_mouse_wheel]() mutable {
-                        callback(ctx.scroll_y);
-                    });
-            }
-        } catch (const std::exception &e) {
-            spdlog::error("Error in widget callback: {}", e.what());
-        }
+    void handle_mouse_enter() override {
+        if (on_mouse_enter)
+            post([cb = on_mouse_enter] { cb(); });
+    }
+
+    void handle_mouse_leave() override {
+        if (on_mouse_leave)
+            post([cb = on_mouse_leave] { cb(); });
+    }
+
+    void handle_mouse_move(ui::mouse_event &e) override {
+        if (on_mouse_move && hovered())
+            post([cb = on_mouse_move, x = e.x, y = e.y] { cb(x, y); });
+    }
+
+    void handle_mouse_down(ui::mouse_event &e) override {
+        if (e.button != ui::mouse_button::left)
+            return;
+        if (on_mouse_down)
+            post([cb = on_mouse_down] { cb(); });
+        if (on_click)
+            post([cb = on_click] { cb(0); });
+    }
+
+    void handle_mouse_up(ui::mouse_event &e) override {
+        if (e.button == ui::mouse_button::left && on_mouse_up)
+            post([cb = on_mouse_up] { cb(); });
+    }
+
+    void handle_scroll(ui::scroll_event &e) override {
+        if (on_mouse_wheel)
+            post([cb = on_mouse_wheel, d = e.delta] { cb(d); });
+        super::handle_scroll(e);
     }
 
     ui::sp_anim_float opacity = anim_float(255, "opacity"),
@@ -808,10 +801,10 @@ void breeze_ui::js_widget::set_animation_curve(std::string variable_name,
 #undef IMPL_COLOR_PROP
 #undef IMPL_PAINT_PROP
 
-std::optional<std::unique_lock<std::recursive_mutex>>
+std::optional<std::unique_lock<ui::tree_lock>>
 breeze_ui::js_widget::$rt_lock() {
     if ($widget && $widget->owner_rt) {
-        return std::optional<std::unique_lock<std::recursive_mutex>>{
+        return std::optional<std::unique_lock<ui::tree_lock>>{
             std::in_place, $widget->owner_rt->rt_lock};
     }
     return std::nullopt;

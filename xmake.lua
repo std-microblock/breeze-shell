@@ -44,7 +44,7 @@ add_requires("yalantinglibs", {
 target("ui_test")
     set_default(false)
     set_kind("binary")
-    add_packages("breeze-ui")
+    add_packages("breeze-ui", "spdlog", "fmt")
     add_files("src/ui_test/*.cc")
     set_encodings("utf-8")
     add_tests("defualt")

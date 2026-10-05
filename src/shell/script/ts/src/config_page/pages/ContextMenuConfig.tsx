@@ -99,7 +99,7 @@ const ContextMenuConfig = memo(() => {
     }
 
     return (
-        <flex gap={20} alignItems="stretch" width={500} autoSize={false}>
+        <flex gap={20} alignItems="stretch" width={500}>
             <Text fontSize={24}>{t("settings.title")}</Text>
             <flex />
             <flex gap={10}>

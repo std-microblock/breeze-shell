@@ -32,6 +32,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         rt->decorated = false;
         rt->topmost = true;
         rt->vsync = config::current->context_menu.vsync;
+        rt->idle_poll_ms = 5;
 
         if (config::current->avoid_resize_ui) {
             rt->width = 3840;
@@ -87,6 +88,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
 
     glfwMakeContextCurrent(rt->window);
     glfwSwapInterval(config::current->context_menu.vsync ? 1 : 0);
+    glfwSetWindowAttrib(rt->window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
 
     rt->show();
     auto menu_wid = std::make_shared<mouse_menu_widget_main>(
@@ -94,7 +96,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         // convert the x and y to the window coordinates
         x - monitor_info.rcMonitor.left, y - monitor_info.rcMonitor.top);
     context_menu_hooks::set_active_root_menu_widget(menu_wid->menu_wid);
-    rt->root->children.push_back(menu_wid);
+    rt->root->add_child(menu_wid);
     auto current_js_context =
         entry::main_window_loop_hook
             .add_task([&]() {

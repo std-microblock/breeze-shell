@@ -15,7 +15,7 @@ public:
     background_widget(bool is_main);
 
     void render(ui::nanovg_context ctx) override;
-    void update(ui::update_context &ctx) override;
+    void tick(float delta_time) override;
 
     ui::sp_anim_float opacity;
     ui::sp_anim_float radius;

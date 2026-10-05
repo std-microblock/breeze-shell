@@ -1,4 +1,4 @@
-#include "taskbar_widget.h"
+﻿#include "taskbar_widget.h"
 #include "async_simple/Promise.h"
 #include "breeze_ui/nanovg_wrapper.h"
 #include <atlcomcli.h>
@@ -212,6 +212,8 @@ struct app_list_stack_widget : public ui::widget {
                       active_indicator_opacity = anim_float();
     ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
     app_list_stack_widget(const window_stack_info &stack) : stack(stack) {
+        width->reset_to(40);
+        height->reset_to(40);
         config::current->taskbar.theme.animation.bg_color.apply_to(bg_color);
         config::current->taskbar.theme.animation.active_indicator.apply_to(
             active_indicator_width);
@@ -249,7 +251,6 @@ struct app_list_stack_widget : public ui::widget {
             }
         }
 
-        // active indicator
         ctx.fillColor({1.0f, 1.0f, 1.0f, *active_indicator_opacity});
         ctx.fillRoundedRect(*x + (*width - *active_indicator_width) / 2,
                             *y + *height - 4, *active_indicator_width, 3, 1.5f);
@@ -257,24 +258,18 @@ struct app_list_stack_widget : public ui::widget {
 
     void update_stack(const window_stack_info &new_stack) {
         stack = new_stack;
-
-        // Reset icon to reload it next time
         icon.reset();
+        request_repaint();
     }
 
-    void update(ui::update_context &ctx) override {
-        ui::widget::update(ctx);
-        width->reset_to(40);
-        height->reset_to(40);
-
-        if (ctx.mouse_down_on(this)) {
+    void tick(float) override {
+        if (pressed()) {
             bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.5f});
         } else {
             bg_color.animate_to({0.1f, 0.1f, 0.1f, 0});
         }
-        // active predicator
         if (active) {
             active_indicator_width->animate_to(15);
             active_indicator_opacity->animate_to(0.7);
@@ -282,21 +277,21 @@ struct app_list_stack_widget : public ui::widget {
             active_indicator_width->animate_to(5);
             active_indicator_opacity->animate_to(0.3);
         }
+    }
 
-        if (ctx.mouse_clicked_on(this)) {
-            HWND hWnd = stack.windows.front().hwnd;
-            bool isForeground = active;
-            bool isMinimized = IsIconic(hWnd);
-
-            if (isMinimized) {
-                ShowWindow(hWnd, SW_RESTORE);
-                SetForegroundWindow(hWnd);
-            } else if (isForeground) {
-                ShowWindow(hWnd, SW_MINIMIZE);
-            } else {
-                SetForegroundWindow(hWnd);
-                ShowWindow(hWnd, SW_SHOW);
-            }
+    void handle_mouse_down(ui::mouse_event &e) override {
+        if (e.button != ui::mouse_button::left || stack.windows.empty())
+            return;
+        e.handled = true;
+        HWND hWnd = stack.windows.front().hwnd;
+        if (IsIconic(hWnd)) {
+            ShowWindow(hWnd, SW_RESTORE);
+            SetForegroundWindow(hWnd);
+        } else if (active) {
+            ShowWindow(hWnd, SW_MINIMIZE);
+        } else {
+            SetForegroundWindow(hWnd);
+            ShowWindow(hWnd, SW_SHOW);
         }
     }
 };
@@ -307,27 +302,26 @@ struct app_list_widget : public ui::flex_widget {
         std::pair<std::shared_ptr<app_list_stack_widget>, window_stack_info>>
         stacks;
 
-    background_widget bg;
+    std::shared_ptr<background_widget> bg =
+        std::make_shared<background_widget>(false);
 
-    app_list_widget() : super(), bg(false) {
+    app_list_widget() : super() {
         horizontal = true;
         gap = 2;
+        bg->hit_self = false;
+        add_floating(bg);
     }
 
     void update_stacks() {
         auto new_stacks = get_window_stacks();
-
-        // Mark which existing stacks have been matched
         std::vector<bool> matched(stacks.size(), false);
 
-        // firstly, try to match existing stacks with new ones
         for (auto &new_stack : new_stacks) {
             auto it = std::find_if(stacks.begin(), stacks.end(),
                                    [&new_stack](const auto &pair) {
                                        return pair.second.is_same(new_stack);
                                    });
             if (it != stacks.end()) {
-                // Mark this existing stack as matched
                 matched[std::distance(stacks.begin(), it)] = true;
                 it->second = new_stack;
                 it->first->update_stack(new_stack);
@@ -335,7 +329,7 @@ struct app_list_widget : public ui::flex_widget {
                 auto widget =
                     std::make_shared<app_list_stack_widget>(new_stack);
                 stacks.emplace_back(widget, new_stack);
-                matched.push_back(true); // New stack is automatically matched
+                matched.push_back(true);
                 if (!new_stack.windows.empty()) {
                     new_stack.windows[0].get_async_icon_cached().start(
                         [=](async_simple::Try<HICON> ico) mutable {
@@ -343,6 +337,7 @@ struct app_list_widget : public ui::flex_widget {
                                 widget->stack.windows[0].icon_handle =
                                     ico.value();
                                 widget->icon.reset();
+                                widget->request_repaint();
                             }
                         });
                 }
@@ -350,7 +345,6 @@ struct app_list_widget : public ui::flex_widget {
             }
         }
 
-        // Remove unmatched stacks
         for (int i = matched.size() - 1; i >= 0; --i) {
             if (!matched[i]) {
                 remove_child(stacks[i].first);
@@ -359,8 +353,8 @@ struct app_list_widget : public ui::flex_widget {
         }
     }
 
-    void update_active_stacks() {
-        if (GetForegroundWindow() == owner_rt->hwnd() ||
+    void tick(float) override {
+        if (!owner_rt || GetForegroundWindow() == owner_rt->hwnd() ||
             GetForegroundWindow() == 0)
             return;
         for (auto &pair : stacks) {
@@ -368,19 +362,21 @@ struct app_list_widget : public ui::flex_widget {
         }
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-        update_active_stacks();
-        bg.width->animate_to(*width);
-        bg.height->animate_to(*height);
-        bg.x->reset_to(*x);
-        bg.y->reset_to(*y);
-        bg.update(ctx);
+    void after_layout() override {
+        super::after_layout();
+        bg->x->reset_to(0);
+        bg->y->reset_to(0);
+        bg->width->animate_to(width->dest());
+        bg->height->animate_to(height->dest());
     }
 
     void render(ui::nanovg_context ctx) override {
-        bg.render(ctx);
-        super::render(ctx);
+        auto local = ctx.with_offset(*x, *y);
+        {
+            auto t = local.transaction();
+            bg->render(local);
+        }
+        render_children(local, children);
     }
 };
 
@@ -388,7 +384,6 @@ struct windows_button_widget : public background_widget {
     using super = background_widget;
     windows_button_widget() : background_widget(false) {}
     int is_windows_menu_open = false;
-    bool should_ignore_next_click = false;
     std::optional<ui::NVGImage> icon;
     ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.8f};
     void render(ui::nanovg_context ctx) override {
@@ -410,9 +405,8 @@ struct windows_button_widget : public background_widget {
                       *height - padding * 2);
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-        bool last_is_windows_menu_open = is_windows_menu_open;
+    void tick(float delta_time) override {
+        super::tick(delta_time);
         static ATL::CComPtr<IAppVisibility> appVisibility = nullptr;
         if (!appVisibility) {
             HRESULT hr = CoCreateInstance(CLSID_AppVisibility, nullptr,
@@ -426,36 +420,29 @@ struct windows_button_widget : public background_widget {
         }
         appVisibility->IsLauncherVisible(&is_windows_menu_open);
 
-        should_ignore_next_click =
-            (last_is_windows_menu_open && ctx.mouse_down_on(this)) ||
-            should_ignore_next_click;
-
-        if (should_ignore_next_click && ctx.mouse_clicked) {
-            should_ignore_next_click = false;
-            return;
-        }
-
-        if (last_is_windows_menu_open) {
+        if (is_windows_menu_open) {
             bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
-            return;
-        }
-
-        if (ctx.mouse_down_on(this)) {
+        } else if (pressed()) {
             bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.5f});
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.5f});
         } else {
             bg_color.animate_to({0.1f, 0.1f, 0.1f, 0});
         }
+    }
 
-        if (ctx.mouse_clicked_on(this)) {
-            INPUT input = {};
-            input.type = INPUT_KEYBOARD;
-            input.ki.wVk = VK_LWIN; // Left Windows key
-            SendInput(1, &input, sizeof(INPUT));
-            input.ki.dwFlags = KEYEVENTF_KEYUP;
-            SendInput(1, &input, sizeof(INPUT));
-        }
+    void handle_mouse_down(ui::mouse_event &e) override {
+        if (e.button != ui::mouse_button::left)
+            return;
+        e.handled = true;
+        if (is_windows_menu_open)
+            return;
+        INPUT input = {};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wVk = VK_LWIN;
+        SendInput(1, &input, sizeof(INPUT));
+        input.ki.dwFlags = KEYEVENTF_KEYUP;
+        SendInput(1, &input, sizeof(INPUT));
     }
 };
 
@@ -476,6 +463,9 @@ void init_polling_thread() {
             if (cnt != last_win_cnt) {
                 last_win_cnt = cnt;
                 for (auto *widget : taskbar_widgets) {
+                    std::optional<std::unique_lock<ui::tree_lock>> lock;
+                    if (widget->owner_rt)
+                        lock.emplace(widget->owner_rt->rt_lock);
                     widget->get_child<app_list_widget>()->update_stacks();
                 }
             }
@@ -487,11 +477,11 @@ void init_polling_thread() {
 void ensure_polling_thread_initialized() {
     static bool initialized = false;
     if (!initialized) {
+        initialized = true;
         init_polling_thread();
     }
 }
 
-// Clock widget
 struct clock_widget : public background_widget {
     using super = background_widget;
     std::string current_time;
@@ -499,7 +489,11 @@ struct clock_widget : public background_widget {
     ui::animated_color text_color = {this, 1.0f, 1.0f, 1.0f, 0.9f};
     ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.0f};
 
-    clock_widget() : background_widget(false) { update_time(); }
+    clock_widget() : background_widget(false) {
+        width->reset_to(80);
+        height->reset_to(40);
+        update_time();
+    }
 
     void update_time() {
         auto now = std::chrono::system_clock::now();
@@ -511,8 +505,11 @@ struct clock_widget : public background_widget {
         std::strftime(time_buffer, sizeof(time_buffer), "%H:%M:%S", &tm);
         std::strftime(date_buffer, sizeof(date_buffer), "%Y/%m/%d", &tm);
 
-        current_time = time_buffer;
-        current_date = date_buffer;
+        if (current_time != time_buffer || current_date != date_buffer) {
+            current_time = time_buffer;
+            current_date = date_buffer;
+            request_repaint();
+        }
     }
 
     void render(ui::nanovg_context ctx) override {
@@ -525,88 +522,79 @@ struct clock_widget : public background_widget {
         ctx.fontSize(14);
         ctx.fontFace("main");
         ctx.textAlign(NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-
-        // Draw time
         ctx.text(*x + *width / 2, *y + 8, current_time.c_str(), nullptr);
-
-        // Draw date
         ctx.fontSize(11);
         ctx.text(*x + *width / 2, *y + 24, current_date.c_str(), nullptr);
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
+    void tick(float delta_time) override {
+        super::tick(delta_time);
+        update_time();
+        if (owner_rt)
+            owner_rt->schedule_frame(250);
 
-        // Update time every second
-        static auto last_update = std::chrono::steady_clock::now();
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_update)
-                .count() >= 1) {
-            update_time();
-            last_update = now;
-        }
-
-        width->reset_to(80);
-        height->reset_to(40);
-
-        if (ctx.mouse_down_on(this)) {
+        if (pressed()) {
             bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.6f});
             text_color.animate_to({1.0f, 1.0f, 1.0f, 1.0f});
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.4f});
             text_color.animate_to({1.0f, 1.0f, 1.0f, 1.0f});
         } else {
             bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.0f});
             text_color.animate_to({1.0f, 1.0f, 1.0f, 0.9f});
         }
+    }
 
-        if (ctx.mouse_clicked_on(this)) {
-            // Open Windows calendar/date settings
-            ShellExecuteW(nullptr, L"open", L"ms-settings:dateandtime", nullptr,
-                          nullptr, SW_SHOWNORMAL);
-        }
+    void handle_mouse_down(ui::mouse_event &e) override {
+        if (e.button != ui::mouse_button::left)
+            return;
+        e.handled = true;
+        ShellExecuteW(nullptr, L"open", L"ms-settings:dateandtime", nullptr,
+                      nullptr, SW_SHOWNORMAL);
     }
 };
 
-// Desktop button widget
 struct desktop_button_widget : public background_widget {
     using super = background_widget;
     ui::animated_color bg_color = {this, 0.1f, 0.1f, 0.1f, 0.0f};
 
-    desktop_button_widget() : background_widget(false) {}
+    desktop_button_widget() : background_widget(false) {
+        width->reset_to(10);
+        height->reset_to(40);
+    }
 
     void render(ui::nanovg_context ctx) override {
         super::render(ctx);
-
         ctx.fillColor(bg_color.nvg());
         ctx.fillRoundedRect(*x, *y, *width, *height, 6);
     }
 
-    void update(ui::update_context &ctx) override {
-        super::update(ctx);
-        width->reset_to(10);
-        height->reset_to(40);
-
-        if (ctx.mouse_down_on(this)) {
+    void tick(float delta_time) override {
+        super::tick(delta_time);
+        if (pressed()) {
             bg_color.animate_to({0.3f, 0.3f, 0.3f, 0.6f});
-        } else if (ctx.hovered(this)) {
+        } else if (hovered()) {
             bg_color.animate_to({0.2f, 0.2f, 0.2f, 0.4f});
         } else {
             bg_color.animate_to({0.1f, 0.1f, 0.1f, 0.0f});
         }
+    }
 
-        if (ctx.mouse_clicked_on(this)) {
-            // Show desktop by minimizing all windows
-            keybd_event(VK_LWIN, 0, 0, 0);
-            keybd_event('D', 0, 0, 0);
-            keybd_event('D', 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-        }
+    void handle_mouse_down(ui::mouse_event &e) override {
+        if (e.button != ui::mouse_button::left)
+            return;
+        e.handled = true;
+        keybd_event(VK_LWIN, 0, 0, 0);
+        keybd_event('D', 0, 0, 0);
+        keybd_event('D', 0, KEYEVENTF_KEYUP, 0);
+        keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
     }
 };
 
 taskbar_widget::taskbar_widget() {
     horizontal = true;
+    auto_size = false;
+    align_items = align::center;
     gap = 7;
     auto left_padding = emplace_child<ui::rect_widget>();
     left_padding->width->reset_to(10);
@@ -621,8 +609,8 @@ taskbar_widget::taskbar_widget() {
     taskbar_widgets.insert(this);
 
     emplace_child<ui::flex_widget::spacer>();
-    auto clock = emplace_child<clock_widget>();
-    auto desktop_btn = emplace_child<desktop_button_widget>();
+    emplace_child<clock_widget>();
+    emplace_child<desktop_button_widget>();
 
     auto right_padding = emplace_child<ui::rect_widget>();
     right_padding->width->reset_to(5);

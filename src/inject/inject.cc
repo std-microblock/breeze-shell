@@ -1325,9 +1325,12 @@ struct switch_lang_btn : public ui::button_widget {
 
     void on_click() override {
         english = !english;
+        if (!owner_rt || !owner_rt->root)
+            return;
 
-        auto old_i = ctx->rt.root->children.back();
-        auto new_i = ctx->rt.root->emplace_child<injector_ui_main>();
+        auto &root = owner_rt->root;
+        auto old_i = root->children.back();
+        root->emplace_child<injector_ui_main>();
         old_i->dying_time = 200;
     }
 };
@@ -1668,7 +1671,10 @@ void ShowCrashDialog() {
             : button_widget(auto_disable_after_crash
                                 ? (english ? "Close" : "关闭")
                                 : (english ? "Continue" : "继续")) {}
-        void on_click() override { ctx->rt.hide_as_close(); }
+        void on_click() override {
+            if (owner_rt)
+                owner_rt->hide_as_close();
+        }
     };
 
     class github_button : public ui::button_widget {

@@ -108,7 +108,7 @@ export const Card = memo(({ children, onClick, padding = 14, gap = 8, horizontal
             animatedVars={[".r", ".g", ".b", ".a"]}
         >
             {accentBar && (
-                <flex width={3} autoSize={false} borderRadius={2} backgroundColor={accentBar} />
+                <flex width={3} borderRadius={2} backgroundColor={accentBar} />
             )}
             <flex
                 horizontal={horizontal}

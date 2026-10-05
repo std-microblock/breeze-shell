@@ -32,7 +32,6 @@ export const SidebarItem = memo((({
             paddingRight={12}
             paddingTop={8}
             paddingBottom={8}
-            autoSize={false}
             height={32}
             justifyContent="start"
             alignItems="center"

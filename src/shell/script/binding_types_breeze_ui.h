@@ -13,6 +13,7 @@
 namespace ui {
 struct widget;
 struct render_target;
+struct tree_lock;
 } // namespace ui
 
 namespace mb_shell::js {
@@ -31,7 +32,7 @@ struct breeze_ui {
         js_widget(std::shared_ptr<ui::widget> widget) : $widget(widget) {}
         virtual ~js_widget() = default;
 
-        std::optional<std::unique_lock<std::recursive_mutex>> $rt_lock();
+        std::optional<std::unique_lock<ui::tree_lock>> $rt_lock();
 
         std::vector<std::shared_ptr<js_widget>> children() const;
         void append_child(std::shared_ptr<js_widget> child);

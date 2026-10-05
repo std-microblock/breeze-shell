@@ -199,12 +199,7 @@ find_menu_widget_by_handle(const std::shared_ptr<mb_shell::menu_widget> &menu,
         }
     }
 
-    for (auto &submenu : menu->rendering_submenus) {
-        auto sub = submenu->downcast<mb_shell::menu_widget>();
-        if (!sub) {
-            continue;
-        }
-
+    for (auto &sub : menu->submenus()) {
         if (auto found = find_menu_widget_by_handle(sub, hMenu)) {
             return found;
         }

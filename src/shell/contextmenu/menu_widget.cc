@@ -13,9 +13,9 @@
 #include <algorithm>
 #include <cctype>
 #include <fmt/format.h>
-#include <iostream>
 #include <ranges>
 #include <spdlog/spdlog.h>
+#include <unordered_map>
 #include <vector>
 
 #include "shell/logger.h"
@@ -30,70 +30,125 @@ get_menu_bg_animation(const mb_shell::menu_widget *menu) {
 }
 
 mb_shell::menu_animation_rect make_collapsed_rect(
-    float target_x, float target_y, float target_width, float target_height,
+    const mb_shell::menu_animation_rect &target,
     const mb_shell::config::context_menu::theme::animation::bg &anim,
     mb_shell::popup_direction direction =
         mb_shell::popup_direction::bottom_right) {
-    if (target_width <= 0 || target_height <= 0) {
-        return {.x = target_x,
-                .y = target_y,
-                .width = target_width,
-                .height = target_height};
+    if (target.width <= 0 || target.height <= 0) {
+        return target;
     }
 
     auto width_scale = std::clamp(anim.appear_w_scale, 0.f, 1.f);
     auto height_scale = std::clamp(anim.appear_h_scale, 0.f, 1.f);
-    auto start_width = std::max(1.f, target_width * width_scale);
-    auto start_height = std::max(1.f, target_height * height_scale);
-    const auto start_x =
+    auto start_width = std::max(1.f, target.width * width_scale);
+    auto start_height = std::max(1.f, target.height * height_scale);
+    const bool from_right =
         direction == mb_shell::popup_direction::top_left ||
-                direction == mb_shell::popup_direction::bottom_left
-            ? target_x + (target_width - start_width)
-            : target_x;
-    const auto start_y =
+        direction == mb_shell::popup_direction::bottom_left;
+    const bool from_bottom =
         direction == mb_shell::popup_direction::top_left ||
-                direction == mb_shell::popup_direction::top_right
-            ? target_y + (target_height - start_height)
-            : target_y;
+        direction == mb_shell::popup_direction::top_right;
 
-    return {.x = start_x,
-            .y = start_y,
+    return {.x = from_right ? target.x + (target.width - start_width)
+                            : target.x,
+            .y = from_bottom ? target.y + (target.height - start_height)
+                             : target.y,
             .width = start_width,
             .height = start_height};
 }
 
 mb_shell::menu_animation_rect
-make_bg_target_rect(const mb_shell::menu_widget *menu, float target_x,
-                    float target_y, float target_width, float target_height) {
-    return {.x = target_x,
-            .y = target_y - menu->bg_padding_vertical,
-            .width = target_width,
-            .height = target_height + menu->bg_padding_vertical * 2};
+make_bg_target_rect(const mb_shell::menu_widget *menu) {
+    return {.x = 0,
+            .y = -menu->bg_padding_vertical,
+            .width = menu->width->dest(),
+            .height = menu->height->dest() + menu->bg_padding_vertical * 2};
 }
 
-mb_shell::popup_direction
-get_parent_menu_direction(const mb_shell::menu_item_widget *item) {
-    if (auto menu = const_cast<mb_shell::menu_item_widget *>(item)
-                        ->search_parent<mb_shell::menu_widget>()) {
-        return menu->direction;
-    }
-    return mb_shell::popup_direction::bottom_right;
+bool is_upward(mb_shell::popup_direction direction) {
+    return direction == mb_shell::popup_direction::top_left ||
+           direction == mb_shell::popup_direction::top_right;
 }
 
 float get_item_appear_offset_x(const mb_shell::menu_item_widget *item) {
-    const auto direction = get_parent_menu_direction(item);
+    auto menu = item->owner_menu();
+    const auto direction =
+        menu ? menu->direction : mb_shell::popup_direction::bottom_right;
     return direction == mb_shell::popup_direction::top_left ||
                    direction == mb_shell::popup_direction::bottom_left
                ? 20.0f
                : -20.0f;
 }
 
+void run_item_action(mb_shell::menu_item &item) {
+    if (!item.action)
+        return;
+    try {
+        item.action.value()();
+    } catch (std::exception &e) {
+        spdlog::error("Error in menu item action: {}", e.what());
+    }
+}
+
+bool hotkey_matches(const std::string &hotkey, const ui::key_event &e) {
+    static const auto translate_map = [] {
+        std::unordered_map<std::string, int> map{
+            {"ctrl", -GLFW_MOD_CONTROL},
+            {"shift", -GLFW_MOD_SHIFT},
+            {"alt", -GLFW_MOD_ALT},
+            {"win", -GLFW_MOD_SUPER},
+        };
+        for (char c = 'a'; c <= 'z'; ++c)
+            map[std::string(1, c)] = GLFW_KEY_A + (c - 'a');
+        for (char c = '0'; c <= '9'; ++c)
+            map[std::string(1, c)] = GLFW_KEY_0 + (c - '0');
+        return map;
+    }();
+
+    int required_mods = 0;
+    bool key_matched = false;
+    for (const auto part : hotkey | std::views::split('+')) {
+        auto key = std::string(part.begin(), part.end());
+        const auto first = key.find_first_not_of(" \t\n\r");
+        if (first == std::string::npos)
+            return false;
+        key.erase(0, first);
+        key.erase(key.find_last_not_of(" \t\n\r") + 1);
+        std::ranges::transform(key, key.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        auto it = translate_map.find(key);
+        if (it == translate_map.end())
+            return false;
+        if (it->second < 0)
+            required_mods |= -it->second;
+        else if (it->second == e.key)
+            key_matched = true;
+        else
+            return false;
+    }
+    return key_matched && (e.mods & required_mods) == required_mods;
+}
 } // namespace
-/*
-| padding | icon_padding | icon | icon_padding | text_padding | text |
-text_padding | hotkey_padding | hotkey | hotkey_padding | right_icon_padding |
-right_icon | right_icon_padding |
-*/
+
+mb_shell::menu_item_widget::menu_item_widget() {}
+
+mb_shell::menu_widget *mb_shell::menu_item_widget::owner_menu() const {
+    return const_cast<menu_item_widget *>(this)->search_parent<menu_widget>();
+}
+
+void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
+    for (auto &child : get_children<menu_item_widget>())
+        child->reset_appear_animation(delay);
+}
+
+mb_shell::menu_item_normal_widget::menu_item_normal_widget(menu_item item)
+    : super() {
+    opacity->reset_to(0);
+    text_blur->reset_to(0.f);
+    this->item = item;
+}
+
 void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     super::render(ctx);
 
@@ -107,17 +162,14 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         return;
     }
 
-    // Draw background
     ctx.fillColor(nvgRGBAf(c, c, c, *bg_opacity / 255.f));
     float roundcorner = std::min(
         height->dest() / 2, config::current->context_menu.theme.item_radius);
     ctx.fillRoundedRect(*x + margin, *y, *width - margin * 2, *height,
                         roundcorner);
 
-    // Draw focused border
     if (focused()) {
-        ctx.strokeColor(
-            nvgRGBAf(c, c, c, *opacity / 255.f * 0.5)); // Half opacity
+        ctx.strokeColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.5));
         constexpr auto border_width = 1.0f;
         ctx.strokeWidth(border_width);
         ctx.strokeRoundedRect(*x + margin + border_width / 2,
@@ -126,15 +178,11 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
                               *height - border_width, roundcorner);
     }
 
-    // Draw left icon
     if (item.icon_bitmap.has_value() || item.icon_svg.has_value()) {
         if (!icon_img || item.icon_updated)
             reload_icon_img(ctx);
         item.icon_updated = false;
 
-        // reload_icon_img() may legitimately fail (unconvertible bitmap, invalid
-        // SVG, failed texture upload). Never dereference an empty icon_img and
-        // never feed a negative image id into nanovg.
         if (icon_img && icon_img->id >= 0) {
             auto paintY = floor(*y + (*height - icon_width) / 2);
             auto imageX = *x + padding + margin + icon_padding;
@@ -149,7 +197,6 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         }
     }
 
-    // Draw text
     ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f));
     ctx.fontFace("main");
     auto font_size = config::current->context_menu.theme.font_size;
@@ -165,10 +212,8 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
         ctx.text(round(text_x), round(text_y), item.name->c_str(), nullptr);
     }
 
-    // Calculate right side positions
     auto right_x = *x + width->dest() - margin - padding;
 
-    // Draw right icon (submenu indicator)
     if (item.submenu) {
         if (!icon_unfold_img) {
             auto icon_unfold = fmt::format(
@@ -191,12 +236,9 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
 
         right_x = paintX;
     } else if (has_submenu_padding) {
-        // Reserve space for right icon alignment even if this item doesn't have
-        // submenu
         right_x -= icon_width;
     }
 
-    // Draw hotkey
     if (item.hotkey && !item.hotkey->empty()) {
         auto t = ctx.transaction();
         ctx.fillColor(nvgRGBAf(c, c, c, *opacity / 255.f * 0.7));
@@ -211,112 +253,103 @@ void mb_shell::menu_item_normal_widget::render(ui::nanovg_context ctx) {
     }
 }
 
-float mb_shell::menu_item_normal_widget::measure_width(
-    ui::update_context &ctx) {
+void mb_shell::menu_item_normal_widget::before_layout() {
+    super::before_layout();
+    auto key = fmt::format(
+        "{}|{}|{}|{}|{}|{}|{}", static_cast<int>(item.type),
+        item.name.value_or(""), item.hotkey.value_or(""),
+        has_icon_padding || icon_img.has_value(), has_submenu_padding,
+        config::current->context_menu.theme.font_size,
+        config::current->context_menu.theme.item_height);
+    if (key != measure_key) {
+        measure_key = std::move(key);
+        invalidate_measure();
+    }
+}
+
+YGSize mb_shell::menu_item_normal_widget::measure(float, YGMeasureMode, float,
+                                                  YGMeasureMode) {
     if (item.type == menu_item::type::spacer) {
-        return 1;
+        return {1, 1};
     }
 
+    const auto item_height = config::current->context_menu.theme.item_height;
+    ui::text_measure_scope scope(*this);
+    if (!scope) {
+        return {0, item_height};
+    }
+    auto &vg = scope.vg;
     auto font_size = config::current->context_menu.theme.font_size;
-    float width = 0;
+    float width = padding;
 
-    // Left padding
-    width += padding;
-
-    // Left icon
     if (has_icon_padding || icon_img)
         width += icon_padding * 2 + font_size + 2;
 
-    // Text
-    ctx.vg.fontSize(font_size);
+    vg.fontFace("main");
+    vg.fontSize(font_size);
     if (item.name)
-        width +=
-            ctx.vg.measureText(item.name->c_str()).first + text_padding * 2;
+        width += vg.measureText(item.name->c_str()).first + text_padding * 2;
 
-    // Hotkey
     if (item.hotkey && !item.hotkey->empty()) {
-        auto t = ctx.vg.transaction();
-        ctx.vg.fontSize(font_size * 0.9);
-        auto hotkey_padding =
-            config::current->context_menu.theme.hotkey_padding;
-        ctx.vg.fontFace("monospace");
-        width +=
-            ctx.vg.measureText(item.hotkey->c_str()).first + hotkey_padding * 2;
+        vg.fontSize(font_size * 0.9);
+        vg.fontFace("monospace");
+        width += vg.measureText(item.hotkey->c_str()).first +
+                 config::current->context_menu.theme.hotkey_padding * 2;
     }
 
-    // Right icon space (always reserve if any item in menu has submenu)
     if (has_submenu_padding) {
         width += font_size + 2 + right_icon_padding;
     }
 
-    // Right padding
     width += padding;
-
-    return width + margin * 2;
+    return {width + margin * 2, item_height};
 }
-void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
-    super::update(ctx);
 
-    if (parent->dying_time) {
+void mb_shell::menu_item_normal_widget::tick(float delta_time) {
+    auto menu = owner_menu();
+    if (menu && menu->dying_time) {
         bg_opacity->animate_to(0);
         opacity->animate_to(0);
         return;
     }
 
-    if (item.type == menu_item::type::spacer) {
-        height->reset_to(1);
-    } else {
-        height->reset_to(config::current->context_menu.theme.item_height);
-    }
-
     if (item.disabled) {
         opacity->animate_to(128);
         bg_opacity->animate_to(0);
-
         if (submenu_wid) {
             submenu_wid->close();
             submenu_wid = nullptr;
         }
         return;
-    } else {
-        opacity->animate_to(255);
     }
+    opacity->animate_to(255);
 
-    if (ctx.mouse_down_on(this)) {
+    if (pressed()) {
         bg_opacity->animate_to(40);
-    } else if (ctx.hovered(this)) {
+    } else if (hovered()) {
         bg_opacity->animate_to(20);
     } else {
         bg_opacity->animate_to(0);
     }
 
-    if (ctx.mouse_clicked_on(this)) {
-        if (item.action) {
-            try {
-                item.action.value()();
-            } catch (std::exception &e) {
-                spdlog::error("Error in menu item action: {}", e.what());
-            }
-        }
-    }
-
     if (item.submenu) {
-        float show_submenu_timer_before = show_submenu_timer;
-        /* 单帧 delta 可能很大 (首帧/掉帧), 不夹住的话悬停计时器会一步越过 150ms,
-           子菜单在鼠标刚扫过时就弹出来, 甚至抢在用户点击父项之前 */
-        const float step = std::min(ctx.delta_time, 50.f);
-        if (ctx.hovered(this)) {
+        float before = show_submenu_timer;
+        const float step = std::min(delta_time, 50.f);
+        if (hovered()) {
             show_submenu_timer = std::min(show_submenu_timer + step, 300.f);
-        } else if (ctx.within(parent).hovered(parent)) {
+        } else if (menu && menu->directly_hovered()) {
             show_submenu_timer = std::max(show_submenu_timer - step, 0.f);
         }
 
-        // only act if changed
-        if (show_submenu_timer_before != show_submenu_timer) {
+        if (before != show_submenu_timer) {
             if (show_submenu_timer >= 150.f) {
-                show_submenu(ctx);
+                show_submenu();
             } else {
                 hide_submenu();
+            }
+            if (owner_rt && show_submenu_timer > 0.f &&
+                show_submenu_timer < 300.f) {
+                owner_rt->schedule_frame(16);
             }
         }
     } else {
@@ -328,358 +361,20 @@ void mb_shell::menu_item_normal_widget::update(ui::update_context &ctx) {
     }
 }
 
-mb_shell::menu_widget::menu_widget(bool is_main) : super() {
-    gap = config::current->context_menu.theme.item_gap;
-    width->set_easing(ui::easing_type::mutation);
-    height->set_easing(ui::easing_type::mutation);
-    config::current->context_menu.theme.animation.main.y(y);
-    is_top_level_menu = is_main;
-    bg = std::make_shared<background_widget>(is_main);
-    enable_scrolling = true;
-    crop_overflow = false;
-    int c = mb_shell::is_light_mode() ? 0 : 1;
-    scroll_bar_color = nvgRGBAf(c, c, c, 0.3);
-    scroll_bar_width = config::current->context_menu.theme.scrollbar_width;
-    scroll_bar_radius = config::current->context_menu.theme.scrollbar_radius;
-}
+void mb_shell::menu_item_normal_widget::activate() { run_item_action(item); }
 
-void mb_shell::menu_widget::arm_background_animation(
-    std::optional<menu_animation_rect> initial_rect) {
-    if (bg_animation_armed) {
+void mb_shell::menu_item_normal_widget::handle_mouse_down(ui::mouse_event &e) {
+    if (e.button != ui::mouse_button::left)
         return;
-    }
-
-    bg_animation_armed = true;
-    bg_start_rect = initial_rect;
+    e.handled = true;
+    if (item.disabled || item.type == menu_item::type::spacer)
+        return;
+    auto menu = owner_menu();
+    if (menu && menu->dying_time)
+        return;
+    activate();
 }
 
-void mb_shell::menu_widget::update(ui::update_context &ctx) {
-    if (native_content_dirty) {
-        native_content_dirty = false;
-        resync_native_content();
-    }
-
-    if (dying_time) {
-        if (dying_time.changed() && is_top_level_menu) {
-            y->animate_to(*y - 10);
-        }
-        if (dying_time.changed()) {
-            int c = mb_shell::is_light_mode() ? 0 : 1;
-            scroll_bar_color =
-                nvgRGBAf(c, c, c, std::min(0.3 * dying_time.time / 200.f, 0.3));
-        }
-        if (bg)
-            bg->opacity->animate_to(0);
-    }
-
-    reverse = (direction == popup_direction::top_left ||
-               direction == popup_direction::top_right) &&
-              config::current->context_menu.reverse_if_open_to_up;
-
-    auto forkctx_1 = ctx.with_offset(*x, *y);
-    update_children(forkctx_1, rendering_submenus);
-
-    ui::flex_widget::update(ctx);
-
-    for (auto &item : children) {
-        item->width->reset_to(*width);
-    }
-
-    if (bg) {
-        auto target_rect = make_bg_target_rect(this, x->dest(), y->dest(),
-                                               width->dest(), height->dest());
-
-        if (bg_animation_armed && !bg_appear_initialized &&
-            target_rect.width > 0 && target_rect.height > 0) {
-            auto start_rect = bg_start_rect.value_or(
-                is_top_level_menu ? make_collapsed_rect(
-                                        target_rect.x, target_rect.y,
-                                        target_rect.width, target_rect.height,
-                                        get_menu_bg_animation(this), direction)
-                                  : target_rect);
-            bg->x->reset_to(start_rect.x);
-            bg->y->reset_to(start_rect.y);
-            bg->width->reset_to(start_rect.width);
-            bg->height->reset_to(start_rect.height);
-            bg_appear_initialized = true;
-        }
-
-        if (bg_animation_armed) {
-            bg->x->animate_to(target_rect.x);
-            bg->y->animate_to(target_rect.y);
-            bg->width->animate_to(target_rect.width);
-            bg->height->animate_to(target_rect.height);
-        } else {
-            bg->x->reset_to(target_rect.x);
-            bg->y->reset_to(target_rect.y);
-            bg->width->reset_to(target_rect.width);
-            bg->height->reset_to(target_rect.height);
-        }
-        bg->update(ctx);
-        ctx.hovered_hit(bg.get(), true);
-    }
-
-    // process keyboard actions
-    // 1. check if focused
-    //    we should handle keyboard actions only if this menu is focused or
-    //    nothing is focused and we don't have any submenus
-    bool should_handle_keyboard =
-        owner_rt &&
-        (focused() ||
-         std::ranges::any_of(
-             children, [](const auto &item) { return item->focus_within(); }) ||
-         (!owner_rt->focused_widget.has_value() && rendering_submenus.empty()));
-
-    if (should_handle_keyboard) {
-        auto move_key = [](bool next, auto &items) {
-            if (items.empty()) {
-                return;
-            }
-
-            auto focused_item = std::ranges::find_if(
-                items, [](const auto &item) { return item->focused(); });
-            auto index = focused_item == items.end()
-                             ? (next ? items.size() - 1 : size_t{0})
-                             : static_cast<size_t>(
-                                   std::distance(items.begin(), focused_item));
-
-            // A menu may contain only separators, disabled items or custom
-            // widgets. Bound the search by the item count instead of recursing
-            // forever when no keyboard-focusable item exists.
-            for (size_t attempts = 0; attempts < items.size(); ++attempts) {
-                index = next ? (index + 1) % items.size()
-                             : (index + items.size() - 1) % items.size();
-                auto wid =
-                    items[index]->template downcast<menu_item_normal_widget>();
-                if (wid && !wid->item.disabled &&
-                    wid->item.type != mb_shell::menu_item::type::spacer) {
-                    items[index]->set_focus(true);
-                    return;
-                }
-            }
-        };
-        if (ctx.key_pressed(GLFW_KEY_UP)) {
-            move_key(false, children);
-            ctx.need_repaint = true;
-        } else if (ctx.key_pressed(GLFW_KEY_DOWN)) {
-            move_key(true, children);
-            ctx.need_repaint = true;
-        } else if (ctx.key_pressed(GLFW_KEY_LEFT)) {
-            ctx.stop_key_propagation(GLFW_KEY_LEFT);
-
-            if (parent_item_widget) {
-                parent_item_widget->lock()->set_focus();
-            } else if (parent_menu) {
-                parent_menu->set_focus();
-                parent_menu->current_submenu = nullptr;
-                close();
-            } else {
-                close();
-            }
-
-            ctx.need_repaint = true;
-        } else if (ctx.key_pressed(GLFW_KEY_RIGHT)) {
-            auto focused_item = std::ranges::find_if(
-                children, [](const auto &item) { return item->focused(); });
-            if (focused_item != children.end()) {
-                if (auto wid =
-                        (*focused_item)->downcast<menu_item_normal_widget>())
-                    if (wid->item.submenu) {
-                        if (!wid->submenu_wid)
-                            wid->show_submenu(ctx);
-                        if (!current_submenu->focus_within()) {
-                            if (auto child = current_submenu->get_child<
-                                             menu_item_normal_widget>()) {
-                                child->set_focus();
-                            } else {
-                                current_submenu->set_focus();
-                            }
-                        }
-                    }
-            }
-            ctx.need_repaint = true;
-        } else if (ctx.key_pressed(GLFW_KEY_ENTER) ||
-                   ctx.key_pressed(GLFW_KEY_SPACE)) { // Enter or Space key
-            auto focused_item = std::ranges::find_if(
-                children, [](const auto &item) { return item->focused(); });
-            if (focused_item != children.end()) {
-                if (auto wid =
-                        (*focused_item)->downcast<menu_item_normal_widget>()) {
-                    if (wid->item.action) {
-                        try {
-                            wid->item.action.value()();
-                        } catch (std::exception &e) {
-                            spdlog::error("Error in menu item action: {}",
-                                          e.what());
-                        }
-                    } else if (wid->item.submenu) {
-                        wid->show_submenu(ctx);
-                    }
-                }
-            }
-            ctx.need_repaint = true;
-        } else {
-            auto menus_matching_key =
-                children | std::views::filter([&](const auto &item) {
-                    if (auto wid = item->template downcast<
-                                   menu_item_normal_widget>()) {
-                        if (!wid->item.hotkey)
-                            return false;
-                        static auto translate_map =
-                            std::unordered_map<std::string, int>{
-                                {"ctrl", GLFW_KEY_LEFT_CONTROL},
-                                {"shift", GLFW_KEY_LEFT_SHIFT},
-                                {"alt", GLFW_KEY_LEFT_ALT},
-                                {"win", GLFW_KEY_LEFT_SUPER},
-                                {"a", GLFW_KEY_A},
-                                {"b", GLFW_KEY_B},
-                                {"c", GLFW_KEY_C},
-                                {"d", GLFW_KEY_D},
-                                {"e", GLFW_KEY_E},
-                                {"f", GLFW_KEY_F},
-                                {"g", GLFW_KEY_G},
-                                {"h", GLFW_KEY_H},
-                                {"i", GLFW_KEY_I},
-                                {"j", GLFW_KEY_J},
-                                {"k", GLFW_KEY_K},
-                                {"l", GLFW_KEY_L},
-                                {"m", GLFW_KEY_M},
-                                {"n", GLFW_KEY_N},
-                                {"o", GLFW_KEY_O},
-                                {"p", GLFW_KEY_P},
-                                {"q", GLFW_KEY_Q},
-                                {"r", GLFW_KEY_R},
-                                {"s", GLFW_KEY_S},
-                                {"t", GLFW_KEY_T},
-                                {"u", GLFW_KEY_U},
-                                {"v", GLFW_KEY_V},
-                                {"w", GLFW_KEY_W},
-                                {"x", GLFW_KEY_X},
-                                {"y", GLFW_KEY_Y},
-                                {"z", GLFW_KEY_Z},
-                                {"0", GLFW_KEY_0},
-                                {"1", GLFW_KEY_1},
-                                {"2", GLFW_KEY_2},
-                                {"3", GLFW_KEY_3},
-                                {"4", GLFW_KEY_4},
-                                {"5", GLFW_KEY_5},
-                                {"6", GLFW_KEY_6},
-                                {"7", GLFW_KEY_7},
-                                {"8", GLFW_KEY_8},
-                                {"9", GLFW_KEY_9},
-                            };
-
-                        auto key_combination = std::vector<int>();
-                        const auto hotkey = *wid->item.hotkey;
-                        for (const auto part :
-                             hotkey | std::views::split('+')) {
-                            auto key = std::string(part.begin(), part.end());
-                            const auto first = key.find_first_not_of(" \t\n\r");
-                            if (first == std::string::npos) {
-                                return false;
-                            }
-                            key.erase(0, first);
-                            key.erase(key.find_last_not_of(" \t\n\r") + 1);
-                            std::ranges::transform(
-                                key, key.begin(), [](unsigned char c) {
-                                    return static_cast<char>(std::tolower(c));
-                                });
-
-                            if (auto it = translate_map.find(key);
-                                it != translate_map.end()) {
-                                key_combination.push_back(it->second);
-                            } else {
-                                // If the key is not found, we can ignore it
-                                return false;
-                            }
-                        }
-
-                        return std::ranges::all_of(
-                            key_combination,
-                            [&](int key) { return ctx.key_pressed(key); });
-                    }
-                    return false;
-                }) |
-                std::ranges::to<std::vector>();
-
-            if (menus_matching_key.size() > 0)
-                ctx.need_repaint = true;
-
-            if (menus_matching_key.size() == 1) {
-                auto wid = menus_matching_key.front()
-                               ->downcast<mb_shell::menu_item_normal_widget>();
-                if (wid && wid->item.action) {
-                    try {
-                        wid->item.action.value()();
-                    } catch (std::exception &e) {
-                        spdlog::error("Error in menu item action: {}",
-                                      e.what());
-                    }
-                } else if (wid && wid->item.submenu && !wid->submenu_wid) {
-                    wid->show_submenu(ctx);
-                    current_submenu->set_focus();
-                }
-            } else if (menus_matching_key.size() > 1) {
-                move_key(!ctx.key_pressed(GLFW_KEY_LEFT_SHIFT) &&
-                             !ctx.key_pressed(GLFW_KEY_RIGHT_SHIFT),
-                         menus_matching_key);
-            }
-        }
-    }
-}
-
-bool mb_shell::menu_widget::check_hit(const ui::update_context &ctx) {
-    auto hit = ui::widget::check_hit(ctx) || (bg && bg->check_hit(ctx));
-    return hit;
-}
-
-void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
-    if (bg) {
-        bg->render(ctx);
-    }
-
-    {
-        auto scope = ctx.transaction();
-        auto has_clip = false;
-
-        if (bg) {
-            float clip_x = *bg->x;
-            auto clip_y = *bg->y + bg_padding_vertical;
-            float clip_width = *bg->width;
-            auto clip_height =
-                std::max(0.f, *bg->height - bg_padding_vertical * 2);
-
-            ctx.scissor(clip_x, clip_y, std::max(0.f, clip_width), clip_height);
-            has_clip = true;
-        }
-
-        if (crop_overflow || enable_scrolling) {
-            if (has_clip) {
-                ctx.intersectScissor(*x, *y, *width, *height);
-            } else {
-                ctx.scissor(*x, *y, *width, *height);
-            }
-        }
-
-        ui::widget::render(ctx.with_offset(0, *scroll_top));
-
-        if (enable_scrolling && actual_height > height->dest()) {
-            auto scrollbar_height =
-                height->dest() * height->dest() / actual_height;
-            auto scrollbar_x = width->dest() - scroll_bar_width - 2 + *x;
-            auto scrollbar_y = *y - *scroll_top /
-                                        (actual_height - height->dest()) *
-                                        (height->dest() - scrollbar_height);
-
-            ctx.fillColor(scroll_bar_color);
-            ctx.fillRoundedRect(scrollbar_x, scrollbar_y, scroll_bar_width,
-                                scrollbar_height, scroll_bar_radius);
-        }
-    }
-
-    auto ctx2 = ctx.with_offset(*x, *y);
-    render_children(ctx2, rendering_submenus);
-}
 void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
     this->opacity->after_animate = [this](float dest) {
         this->opacity->set_delay(0);
@@ -702,272 +397,464 @@ void mb_shell::menu_item_normal_widget::reset_appear_animation(float delay) {
     text_blur->animate_to(0.f);
 }
 
-BOOL IsCursorVisible() {
-    CURSORINFO ci = {sizeof(CURSORINFO)};
-    if (GetCursorInfo(&ci)) {
-        return (ci.flags & CURSOR_SHOWING) != 0;
-    }
-    return FALSE;
-}
-
-mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
-                                                         float x, float y)
-    : widget(), anchor_x(x), anchor_y(y),
-      ignore_outside_click_until_mouse_release(true) {
-    menu_wid = std::make_shared<menu_widget>(true);
-    menu_wid->init_from_data(menu_data);
-
-    emplace_child<screenside_button_group_widget>();
-}
-void mb_shell::mouse_menu_widget_main::update(ui::update_context &ctx) {
-    ui::widget::update(ctx);
-
-    // process events of parents
-    PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
-
-    if (!direction_calibrated) {
-        calibrate_direction(ctx);
-        direction_calibrated = true;
-        calibrate_position(ctx, false);
-        position_calibrated = true;
-    }
-
-    if (!position_calibrated) {
-        calibrate_position(ctx);
-        position_calibrated = true;
-    }
-    menu_wid->update(ctx);
-
-    auto using_touchscreen = !IsCursorVisible();
-    auto has_pressed_mouse_button = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ||
-                                    (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
-
-    if (ignore_outside_click_until_mouse_release && !has_pressed_mouse_button) {
-        ignore_outside_click_until_mouse_release = false;
-    }
-
-    if (ctx.hovered_widgets->empty()) {
-        glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH,
-                            using_touchscreen ? GLFW_FALSE : GLFW_TRUE);
-
-        if (!ignore_outside_click_until_mouse_release &&
-            ((ctx.mouse_clicked || ctx.right_mouse_clicked) ||
-             has_pressed_mouse_button)) {
-            ctx.rt.hide_as_close();
-        }
+void mb_shell::menu_item_normal_widget::reload_icon_img(
+    ui::nanovg_context ctx) {
+    if (item.icon_bitmap)
+        icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
+    else if (item.icon_svg) {
+        std::string copy = item.icon_svg.value();
+        ui::nanovg_context::NSVGimageRAII svg(nsvgParse(copy.data(), "px", 96));
+        icon_img = ctx.imageFromSVG(svg.image, ctx.rt->dpi_scale);
     } else {
-        glfwSetWindowAttrib(ctx.rt.window, GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
+        icon_img = std::nullopt;
     }
 
-    // esc/alt to close
-    if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) ||
-        (GetAsyncKeyState(VK_MENU) & 0x8000) ||
-        (GetAsyncKeyState(VK_LMENU) & 0x8000)) {
-        ctx.rt.hide_as_close();
+    if (auto menu = owner_menu()) {
+        menu->update_icon_width();
     }
 }
-void mb_shell::mouse_menu_widget_main::render(ui::nanovg_context ctx) {
-    ui::widget::render(ctx);
-    menu_wid->render(ctx);
+
+void mb_shell::menu_item_normal_widget::hide_submenu() {
+    if (submenu_wid != nullptr) {
+        submenu_wid->close();
+        submenu_wid = nullptr;
+    }
 }
+
+void mb_shell::menu_item_normal_widget::show_submenu() {
+    if (submenu_wid != nullptr || !item.submenu || !owner_rt)
+        return;
+    auto menu = owner_menu();
+    if (!menu)
+        return;
+    auto &rt = *owner_rt;
+
+    submenu_wid = std::make_shared<menu_widget>(false);
+    item.submenu.value()(submenu_wid);
+    submenu_wid->compute_layout_now(owner_rt);
+
+    const float dpi = rt.dpi_scale;
+    float anchor_x = (abs_x() + width->dest()) * dpi;
+    float anchor_y = abs_y() * dpi;
+
+    auto direction = mouse_menu_widget_main::calculate_direction(
+        submenu_wid.get(), rt, anchor_x, anchor_y,
+        popup_direction::bottom_right);
+
+    if (direction == popup_direction::top_left ||
+        direction == popup_direction::bottom_left) {
+        anchor_x -= *width * dpi;
+    }
+    if (is_upward(direction)) {
+        anchor_y += *height * dpi;
+    }
+
+    auto [x, y] = mouse_menu_widget_main::calculate_position(
+        submenu_wid.get(), rt, anchor_x, anchor_y, direction);
+
+    auto target_x = x / dpi - menu->abs_x();
+    auto target_y = y / dpi - menu->abs_y();
+
+    submenu_wid->direction = direction;
+    submenu_wid->parent_item_widget = weak_from_this();
+
+    config::current->context_menu.theme.animation.submenu_bg.x(submenu_wid->x,
+                                                               0);
+    config::current->context_menu.theme.animation.submenu_bg.y(submenu_wid->y,
+                                                               0);
+    submenu_wid->x->reset_to(target_x);
+    submenu_wid->y->reset_to(target_y);
+
+    submenu_wid->arm_background_animation(make_collapsed_rect(
+        make_bg_target_rect(submenu_wid.get()),
+        config::current->context_menu.theme.animation.submenu_bg, direction));
+    submenu_wid->reset_animation(is_upward(direction));
+    if (menu->current_submenu) {
+        menu->current_submenu->close();
+        menu->current_submenu = nullptr;
+    }
+    menu->current_submenu = submenu_wid;
+    submenu_wid->parent_menu = menu;
+    menu->add_submenu(submenu_wid);
+}
+
+void mb_shell::menu_item_parent_widget::before_layout() {
+    super::before_layout();
+    YGNodeStyleSetFlexDirection(node, YGFlexDirectionRow);
+    YGNodeStyleSetAlignItems(node, YGAlignFlexStart);
+    YGNodeStyleSetGap(node, YGGutterColumn,
+                      config::current->context_menu.theme.multibutton_line_gap);
+}
+
+void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
+    y->set_easing(ui::easing_type::mutation);
+    x->reset_to(get_item_appear_offset_x(this));
+    x->animate_to(0);
+    opacity->reset_to(0);
+    opacity->animate_to(255);
+}
+
+mb_shell::menu_item_ownerdraw_widget::menu_item_ownerdraw_widget(
+    menu_item item) {
+    this->item = item;
+    if (item.owner_draw) {
+        owner_draw = item.owner_draw.value();
+        width->reset_to(owner_draw.width);
+        height->reset_to(owner_draw.height);
+    }
+}
+
+void mb_shell::menu_item_ownerdraw_widget::render(ui::nanovg_context ctx) {
+    if (!img)
+        img = ui::LoadBitmapImage(ctx, owner_draw.bitmap);
+
+    auto paint = ctx.imagePattern(*x, y->dest(), owner_draw.width,
+                                  owner_draw.height, 0, img->id, 1);
+
+    ctx.beginPath();
+    ctx.rect(*x, y->dest(), owner_draw.width, owner_draw.height);
+    ctx.fillPaint(paint);
+    ctx.fill();
+}
+
+void mb_shell::menu_item_ownerdraw_widget::reset_appear_animation(float delay) {
+}
+
+mb_shell::menu_item_custom_widget::menu_item_custom_widget(
+    std::shared_ptr<ui::widget> custom_widget)
+    : custom_widget(custom_widget) {
+    if (custom_widget)
+        add_child(custom_widget);
+}
+
+void mb_shell::menu_item_custom_widget::before_layout() {
+    super::before_layout();
+    YGNodeStyleSetFlexDirection(node, YGFlexDirectionColumn);
+    YGNodeStyleSetAlignItems(node, YGAlignFlexStart);
+}
+
+mb_shell::menu_widget::menu_widget(bool is_main) : super() {
+    gap = config::current->context_menu.theme.item_gap;
+    align_items = align::stretch;
+    width->set_easing(ui::easing_type::mutation);
+    height->set_easing(ui::easing_type::mutation);
+    config::current->context_menu.theme.animation.main.y(y);
+    is_top_level_menu = is_main;
+    bg = std::make_shared<background_widget>(is_main);
+    add_floating(bg);
+    enable_scrolling = true;
+    crop_overflow = false;
+    int c = mb_shell::is_light_mode() ? 0 : 1;
+    scroll_bar_color = nvgRGBAf(c, c, c, 0.3);
+    scroll_bar_width = config::current->context_menu.theme.scrollbar_width;
+    scroll_bar_radius = config::current->context_menu.theme.scrollbar_radius;
+}
+
+void mb_shell::menu_widget::arm_background_animation(
+    std::optional<menu_animation_rect> initial_rect) {
+    if (bg_animation_armed) {
+        return;
+    }
+
+    bg_animation_armed = true;
+    bg_start_rect = initial_rect;
+    request_repaint();
+}
+
+void mb_shell::menu_widget::add_submenu(std::shared_ptr<menu_widget> submenu) {
+    add_floating(std::move(submenu));
+}
+
+std::vector<std::shared_ptr<mb_shell::menu_widget>>
+mb_shell::menu_widget::submenus() const {
+    std::vector<std::shared_ptr<menu_widget>> res;
+    for (auto &w : floating) {
+        if (auto m = std::dynamic_pointer_cast<menu_widget>(w))
+            res.push_back(std::move(m));
+    }
+    return res;
+}
+
+bool mb_shell::menu_widget::directly_hovered() const {
+    if (!owner_rt)
+        return false;
+    for (auto w = owner_rt->hovered_widget(); w; w = w->parent) {
+        if (auto m = dynamic_cast<const menu_widget *>(w))
+            return m == this;
+    }
+    return false;
+}
+
+void mb_shell::menu_widget::tick(float delta_time) {
+    if (native_content_dirty) {
+        native_content_dirty = false;
+        resync_native_content();
+    }
+
+    if (dying_time) {
+        if (!closing_seen) {
+            closing_seen = true;
+            if (is_top_level_menu)
+                y->animate_to(y->dest() - 10);
+            scroll_bar_color.a = 0;
+        }
+        if (bg)
+            bg->opacity->animate_to(0);
+    }
+}
+
+void mb_shell::menu_widget::before_layout() {
+    reverse = is_upward(direction) &&
+              config::current->context_menu.reverse_if_open_to_up;
+    super::before_layout();
+}
+
+void mb_shell::menu_widget::after_layout() {
+    super::after_layout();
+    if (!bg)
+        return;
+
+    auto target = make_bg_target_rect(this);
+    if (bg_animation_armed && !bg_appear_initialized && target.width > 0 &&
+        target.height > 0) {
+        auto start = bg_start_rect.value_or(
+            is_top_level_menu
+                ? make_collapsed_rect(target, get_menu_bg_animation(this),
+                                      direction)
+                : target);
+        bg->x->reset_to(start.x);
+        bg->y->reset_to(start.y);
+        bg->width->reset_to(start.width);
+        bg->height->reset_to(start.height);
+        bg_appear_initialized = true;
+    }
+
+    if (bg_animation_armed) {
+        bg->x->animate_to(target.x);
+        bg->y->animate_to(target.y);
+        bg->width->animate_to(target.width);
+        bg->height->animate_to(target.height);
+    } else {
+        bg->x->reset_to(target.x);
+        bg->y->reset_to(target.y);
+        bg->width->reset_to(target.width);
+        bg->height->reset_to(target.height);
+    }
+}
+
+bool mb_shell::menu_widget::keyboard_owner() const {
+    if (!owner_rt || dying_time)
+        return false;
+    auto self = const_cast<menu_widget *>(this);
+    return self->focused() ||
+           std::ranges::any_of(children,
+                               [](const auto &item) {
+                                   return item && item->focus_within();
+                               }) ||
+           (!owner_rt->focused_widget.has_value() && submenus().empty());
+}
+
+void mb_shell::menu_widget::handle_key(ui::key_event &e) {
+    if (!keyboard_owner())
+        return;
+
+    auto move_key = [](bool next, auto &items) {
+        if (items.empty()) {
+            return;
+        }
+
+        auto focused_item = std::ranges::find_if(
+            items, [](const auto &item) { return item->focused(); });
+        auto index = focused_item == items.end()
+                         ? (next ? items.size() - 1 : size_t{0})
+                         : static_cast<size_t>(
+                               std::distance(items.begin(), focused_item));
+
+        for (size_t attempts = 0; attempts < items.size(); ++attempts) {
+            index = next ? (index + 1) % items.size()
+                         : (index + items.size() - 1) % items.size();
+            auto wid =
+                items[index]->template downcast<menu_item_normal_widget>();
+            if (wid && !wid->item.disabled &&
+                wid->item.type != mb_shell::menu_item::type::spacer) {
+                items[index]->set_focus(true);
+                return;
+            }
+        }
+    };
+
+    auto focused_item = [&]() -> std::shared_ptr<menu_item_normal_widget> {
+        auto it = std::ranges::find_if(
+            children, [](const auto &item) { return item->focused(); });
+        return it == children.end()
+                   ? nullptr
+                   : (*it)->template downcast<menu_item_normal_widget>();
+    };
+
+    switch (e.key) {
+    case GLFW_KEY_UP:
+        move_key(false, children);
+        break;
+    case GLFW_KEY_DOWN:
+        move_key(true, children);
+        break;
+    case GLFW_KEY_LEFT:
+        if (parent_item_widget) {
+            if (auto item = parent_item_widget->lock())
+                item->set_focus();
+        } else if (parent_menu) {
+            parent_menu->set_focus();
+            parent_menu->current_submenu = nullptr;
+        }
+        close();
+        break;
+    case GLFW_KEY_RIGHT:
+        if (auto wid = focused_item(); wid && wid->item.submenu) {
+            if (!wid->submenu_wid)
+                wid->show_submenu();
+            if (current_submenu && !current_submenu->focus_within()) {
+                if (auto child =
+                        current_submenu->get_child<menu_item_normal_widget>())
+                    child->set_focus();
+                else
+                    current_submenu->set_focus();
+            }
+        }
+        break;
+    case GLFW_KEY_ENTER:
+    case GLFW_KEY_SPACE:
+        if (e.repeat)
+            return;
+        if (auto wid = focused_item()) {
+            if (wid->item.action)
+                wid->activate();
+            else if (wid->item.submenu)
+                wid->show_submenu();
+        }
+        break;
+    default: {
+        if (e.repeat)
+            return;
+        auto matching =
+            children | std::views::filter([&](const auto &item) {
+                auto wid = item->template downcast<menu_item_normal_widget>();
+                return wid && wid->item.hotkey &&
+                       hotkey_matches(*wid->item.hotkey, e);
+            }) |
+            std::ranges::to<std::vector>();
+
+        if (matching.empty())
+            return;
+        if (matching.size() == 1) {
+            auto wid =
+                matching.front()->downcast<mb_shell::menu_item_normal_widget>();
+            if (wid && wid->item.action) {
+                wid->activate();
+            } else if (wid && wid->item.submenu && !wid->submenu_wid) {
+                wid->show_submenu();
+                if (current_submenu)
+                    current_submenu->set_focus();
+            }
+        } else {
+            move_key(!(e.mods & GLFW_MOD_SHIFT), matching);
+        }
+        break;
+    }
+    }
+    e.handled = true;
+    request_repaint();
+}
+
+bool mb_shell::menu_widget::hit_test(float px, float py) const {
+    if (ui::widget::hit_test(px, py))
+        return true;
+    if (!bg)
+        return false;
+    const float lx = px - x->var(), ly = py - y->var();
+    return lx >= bg->x->var() && lx <= bg->x->var() + bg->width->var() &&
+           ly >= bg->y->var() && ly <= bg->y->var() + bg->height->var();
+}
+
+ui::widget *mb_shell::menu_widget::hit_test_tree(float px, float py) {
+    if (!visible || dying_time)
+        return nullptr;
+    const float lx = px - x->var(), ly = py - y->var();
+    auto subs = submenus();
+    for (auto it = subs.rbegin(); it != subs.rend(); ++it) {
+        if (auto hit = (*it)->hit_test_tree(lx, ly))
+            return hit;
+    }
+    if (ui::widget::hit_test(px, py)) {
+        const float cy = ly - child_offset_y();
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            if (*it)
+                if (auto hit = (*it)->hit_test_tree(lx, cy))
+                    return hit;
+        }
+    }
+    return hit_test(px, py) ? this : nullptr;
+}
+
+void mb_shell::menu_widget::render(ui::nanovg_context ctx) {
+    if (bg) {
+        auto local = ctx.with_offset(*x, *y);
+        auto t = local.transaction();
+        bg->render(local);
+    }
+
+    {
+        auto scope = ctx.transaction();
+        if (bg) {
+            ctx.scissor(*x + bg->x->var(),
+                        *y + bg->y->var() + bg_padding_vertical,
+                        std::max(0.f, bg->width->var()),
+                        std::max(0.f, bg->height->var() -
+                                          bg_padding_vertical * 2));
+            ctx.intersectScissor(*x, *y, *width, *height);
+        } else {
+            ctx.scissor(*x, *y, *width, *height);
+        }
+
+        render_children(ctx.with_offset(*x, *y + *scroll_top), children);
+        render_scrollbar(ctx);
+    }
+
+    std::vector<std::shared_ptr<ui::widget>> subs;
+    for (auto &s : submenus())
+        subs.push_back(s);
+    render_children(ctx.with_offset(*x, *y), subs);
+}
+
 void mb_shell::menu_widget::reset_animation(bool reverse) {
     if (animate_appear_started)
         return;
 
     animate_appear_started = true;
-    auto children = this->children | std::ranges::views::transform([](auto &w) {
-                        return std::dynamic_pointer_cast<menu_item_widget>(w);
-                    });
+    std::vector<std::shared_ptr<menu_item_widget>> items;
+    for (auto &w : children) {
+        if (auto item = std::dynamic_pointer_cast<menu_item_widget>(w))
+            items.push_back(item);
+    }
+    if (items.empty())
+        return;
 
-    // the show duration for the menu should be within 200ms
-    float delay = std::min(200.f / children.size(), 30.f);
-
+    float delay = std::min(200.f / items.size(), 30.f);
     auto should_reverse =
         config::current->context_menu.reverse_if_open_to_up ? false : reverse;
 
-    for (size_t i = 0; i < children.size(); i++) {
-        auto child = children[i];
-        child->reset_appear_animation(
-            delay * (should_reverse ? children.size() - i : i));
+    for (size_t i = 0; i < items.size(); i++) {
+        items[i]->reset_appear_animation(
+            delay * (should_reverse ? items.size() - i : i));
     }
-}
-std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
-    menu_widget *menu_wid, ui::update_context &ctx, float anchor_x,
-    float anchor_y, popup_direction direction) {
-
-    menu_wid->update(ctx);
-    auto menu_width = menu_wid->width->dest();
-    auto menu_height = menu_wid->height->dest();
-
-    float x, y;
-
-    // avoid the menu to be out of the screen
-    constexpr auto mouse_padding = 1.f;
-    if (direction == popup_direction::top_left) {
-        x = anchor_x - menu_width * ctx.rt.dpi_scale - mouse_padding;
-        y = anchor_y - menu_height * ctx.rt.dpi_scale;
-    } else if (direction == popup_direction::top_right) {
-        x = anchor_x + mouse_padding;
-        y = anchor_y - menu_height * ctx.rt.dpi_scale;
-    } else if (direction == popup_direction::bottom_left) {
-        x = anchor_x - menu_width * ctx.rt.dpi_scale - mouse_padding;
-        y = anchor_y;
-    } else {
-        x = anchor_x + mouse_padding;
-        y = anchor_y;
-    }
-
-    auto padding_vertical =
-             config::current->context_menu.position.padding_horizontal *
-             ctx.rt.dpi_scale,
-         padding_horizontal =
-             config::current->context_menu.position.padding_vertical *
-             ctx.rt.dpi_scale;
-
-    if (x < padding_vertical) {
-        x = padding_vertical;
-    } else if (x + menu_width * ctx.rt.dpi_scale >
-               ctx.screen.width - padding_vertical) {
-        x = ctx.screen.width - menu_width * ctx.rt.dpi_scale - padding_vertical;
-    }
-    auto top_overflow = y < padding_horizontal;
-    auto bottom_overflow = y + menu_height * ctx.rt.dpi_scale >
-                           ctx.screen.height - padding_horizontal;
-
-    if (menu_height * ctx.rt.dpi_scale >
-        ctx.screen.height - padding_horizontal * 2) {
-        y = padding_horizontal;
-    } else if (top_overflow) {
-        y = padding_horizontal;
-    } else if (bottom_overflow) {
-        y = ctx.screen.height - menu_height * ctx.rt.dpi_scale -
-            padding_horizontal;
-    }
-
-    menu_wid->max_height =
-        (ctx.screen.height - y - padding_horizontal) / ctx.rt.dpi_scale;
-
-    return {x, y};
-}
-
-mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
-    menu_widget *menu_wid, ui::update_context &ctx, float anchor_x,
-    float anchor_y, popup_direction prefer_direction) {
-    auto menu_width = menu_wid->measure_width(ctx);
-    auto menu_height = menu_wid->measure_height(ctx);
-
-    auto padding_vertical =
-             config::current->context_menu.position.padding_horizontal,
-         padding_horizontal =
-             config::current->context_menu.position.padding_vertical;
-
-    bool bottom_overflow = (anchor_y + menu_height * ctx.rt.dpi_scale >
-                            ctx.screen.height - padding_vertical);
-    bool top_overflow =
-        (anchor_y - menu_height * ctx.rt.dpi_scale < padding_vertical);
-
-    bool right_overflow = (anchor_x + menu_width * ctx.rt.dpi_scale >
-                           ctx.screen.width - padding_horizontal);
-    bool left_overflow =
-        (anchor_x - menu_width * ctx.rt.dpi_scale < padding_horizontal);
-
-    bool top_revert = false;
-    bool left_revert = false;
-
-    if (prefer_direction == popup_direction::bottom_right) {
-        if (bottom_overflow && !top_overflow)
-            top_revert = true;
-        if (right_overflow && !left_overflow)
-            left_revert = true;
-    } else if (prefer_direction == popup_direction::bottom_left) {
-        if (bottom_overflow && !top_overflow)
-            top_revert = true;
-        if (left_overflow && !right_overflow)
-            left_revert = true;
-    } else if (prefer_direction == popup_direction::top_right) {
-        if (top_overflow && !bottom_overflow)
-            top_revert = true;
-        if (right_overflow && !left_overflow)
-            left_revert = true;
-    } else if (prefer_direction == popup_direction::top_left) {
-        if (top_overflow && !bottom_overflow)
-            top_revert = true;
-        if (left_overflow && !right_overflow)
-            left_revert = true;
-    }
-
-    if (top_revert && left_revert) {
-        return popup_direction::top_left;
-    } else if (top_revert && !left_revert) {
-        return popup_direction::top_right;
-    } else if (!top_revert && left_revert) {
-        return popup_direction::bottom_left;
-    } else {
-        return popup_direction::bottom_right;
-    }
-}
-
-void mb_shell::mouse_menu_widget_main::calibrate_position(
-    ui::update_context &ctx, bool animated) {
-    menu_wid->update(ctx);
-    auto [x, y] =
-        calculate_position(menu_wid.get(), ctx, anchor_x, anchor_y, direction);
-
-    spdlog::info("Calibrated position: {} {} in screen {} {}", x, y,
-                 ctx.screen.width, ctx.screen.height);
-
-    if (animated) {
-        this->menu_wid->x->animate_to(x / ctx.rt.dpi_scale);
-        this->menu_wid->y->animate_to(y / ctx.rt.dpi_scale);
-    } else {
-        this->menu_wid->x->reset_to(x / ctx.rt.dpi_scale);
-        this->menu_wid->y->reset_to(y / ctx.rt.dpi_scale);
-    }
-
-    this->menu_wid->arm_background_animation();
-}
-
-void mb_shell::mouse_menu_widget_main::calibrate_direction(
-    ui::update_context &ctx) {
-    menu_wid->update(ctx);
-    direction = calculate_direction(menu_wid.get(), ctx, anchor_x, anchor_y);
-    menu_wid->direction = direction;
-    menu_wid->reset_animation(direction == popup_direction::top_left ||
-                              direction == popup_direction::top_right);
-
-    spdlog::info("Calibrated direction: {}",
-                 direction == popup_direction::top_left       ? "top_left"
-                 : direction == popup_direction::top_right    ? "top_right"
-                 : direction == popup_direction::bottom_left  ? "bottom_left"
-                 : direction == popup_direction::bottom_right ? "bottom_right"
-                                                              : "unknown");
-}
-
-bool mb_shell::menu_item_normal_widget::check_hit(
-    const ui::update_context &ctx) {
-    return (ui::widget::check_hit(ctx)) ||
-           (submenu_wid && submenu_wid->check_hit(ctx));
-}
-
-mb_shell::menu_item_normal_widget::menu_item_normal_widget(menu_item item)
-    : super() {
-    opacity->reset_to(0);
-    text_blur->reset_to(0.f);
-    this->item = item;
 }
 
 void mb_shell::menu_widget::init_from_data(menu menu_data) {
     is_top_level_menu = menu_data.is_top_level;
-    auto init_items = menu_data.items;
-
-    for (size_t i = 0; i < init_items.size(); i++) {
-        auto &item = init_items[i];
+    for (auto &item : menu_data.items) {
         if (item.owner_draw) {
-            auto mi = std::make_shared<menu_item_ownerdraw_widget>(item);
-            children.push_back(mi);
+            add_child(std::make_shared<menu_item_ownerdraw_widget>(item));
         } else {
-            auto mi = std::make_shared<menu_item_normal_widget>(item);
-            children.push_back(mi);
+            add_child(std::make_shared<menu_item_normal_widget>(item));
         }
     }
 
@@ -1017,243 +904,238 @@ void mb_shell::menu_widget::resync_native_content() {
         current_submenu->close();
         current_submenu = nullptr;
     }
-    rendering_submenus.clear();
+    std::erase_if(floating, [this](auto &w) { return w != bg; });
     children.clear();
+    children_dirty = true;
 
     init_from_data(fresh);
-    needs_repaint = true;
+    request_repaint();
 }
+
 void mb_shell::menu_widget::update_icon_width() {
-    bool has_icon = std::ranges::any_of(children, [](auto &item) {
-        if (!item->template downcast<menu_item_normal_widget>())
-            return false;
-        auto i = item->template downcast<menu_item_normal_widget>()->item;
-        return i.icon_bitmap.has_value() || i.icon_svg.has_value();
-    });
-
-    bool has_submenu = std::ranges::any_of(children, [](auto &item) {
-        if (!item->template downcast<menu_item_normal_widget>())
-            return false;
-        auto i = item->template downcast<menu_item_normal_widget>()->item;
-        return i.submenu.has_value();
-    });
-
-    for (auto &item : children) {
-        auto mi = item->template downcast<menu_item_normal_widget>();
-        if (!mi)
-            continue;
-        mi->has_icon_padding = has_icon;
-        mi->has_submenu_padding = has_submenu;
-    }
-};
-void mb_shell::menu_item_normal_widget::reload_icon_img(
-    ui::nanovg_context ctx) {
-    if (item.icon_bitmap)
-        icon_img = ui::LoadBitmapImage(ctx, (HBITMAP)item.icon_bitmap.value());
-    else if (item.icon_svg) {
-        std::string copy = item.icon_svg.value();
-        ui::nanovg_context::NSVGimageRAII svg(nsvgParse(copy.data(), "px", 96));
-        icon_img = ctx.imageFromSVG(svg.image, ctx.rt->dpi_scale);
-    } else {
-        icon_img = std::nullopt;
+    bool has_icon = false, has_submenu = false;
+    for (auto &child : children) {
+        if (auto mi = child->downcast<menu_item_normal_widget>()) {
+            has_icon |= mi->item.icon_bitmap.has_value() ||
+                        mi->item.icon_svg.has_value();
+            has_submenu |= mi->item.submenu.has_value();
+        }
     }
 
-    if (auto pa = parent->downcast<menu_widget>()) {
-        pa->update_icon_width();
+    for (auto &child : children) {
+        if (auto mi = child->downcast<menu_item_normal_widget>()) {
+            mi->has_icon_padding = has_icon;
+            mi->has_submenu_padding = has_submenu;
+        }
     }
+    request_repaint();
 }
+
 void mb_shell::menu_widget::close() {
     if (menu_data.is_top_level) {
         auto current = menu_render::current;
         if (current) {
             (*current)->rt->hide_as_close();
         }
-    } else {
-        dying_time = 200;
-        if (parent_menu->current_submenu.get() == this) {
-            parent_menu->current_submenu = nullptr;
-        }
-
-        for (auto &item : children) {
-            auto mi = item->downcast<menu_item_normal_widget>();
-            if (mi) {
-                mi->hide_submenu();
-            }
-        }
-    }
-}
-mb_shell::menu_item_widget::menu_item_widget() {}
-void mb_shell::menu_item_widget::reset_appear_animation(float delay) {
-    for (auto &child : get_children<menu_item_widget>())
-        child->reset_appear_animation(delay);
-}
-void mb_shell::menu_item_parent_widget::update(ui::update_context &ctx) {
-    super::update(ctx);
-    float x = 0;
-    float gap = config::current->context_menu.theme.multibutton_line_gap;
-    float max_height = 0;
-    for (auto &item : children) {
-        item->x->reset_to(x);
-        item->y->reset_to(0);
-        auto item_width = item->measure_width(ctx);
-        item->width->reset_to(item_width);
-        x += item_width + gap;
-        max_height = std::max(max_height, item->measure_height(ctx));
-    }
-
-    width->reset_to(x - gap);
-    height->reset_to(max_height);
-}
-void mb_shell::menu_item_parent_widget::reset_appear_animation(float delay) {
-    y->set_easing(ui::easing_type::mutation);
-    x->reset_to(get_item_appear_offset_x(this));
-    x->animate_to(0);
-    opacity->reset_to(0);
-    opacity->animate_to(255);
-}
-float mb_shell::menu_item_parent_widget::measure_width(
-    ui::update_context &ctx) {
-    float total = 0;
-    float gap = config::current->context_menu.theme.multibutton_line_gap;
-    for (auto &child : children) {
-        total += child->measure_width(ctx);
-    }
-    if (!children.empty())
-        total += gap * (children.size() - 1);
-    return total;
-}
-void mb_shell::menu_item_normal_widget::hide_submenu() {
-    if (submenu_wid != nullptr) {
-        submenu_wid->close();
-        submenu_wid = nullptr;
-    }
-}
-void mb_shell::menu_item_normal_widget::show_submenu(ui::update_context &ctx) {
-    if (submenu_wid != nullptr)
         return;
-    submenu_wid = std::make_shared<menu_widget>(false);
-    item.submenu.value()(submenu_wid);
-
-    // We calculate the position of the submenu in
-    // the screen space, then convert it to the
-    // window space.
-
-    auto anchor_x = width->dest() + *x + ctx.offset_x;
-    auto anchor_y = **y + ctx.offset_y;
-
-    anchor_x *= ctx.rt.dpi_scale;
-    anchor_y *= ctx.rt.dpi_scale;
-
-    ctx.mouse_clicked = false;
-    ctx.mouse_down = false;
-    submenu_wid->update(ctx);
-    auto direction = mouse_menu_widget_main::calculate_direction(
-        submenu_wid.get(), ctx, anchor_x, anchor_y,
-        popup_direction::bottom_right);
-
-    if (direction == popup_direction::top_left ||
-        direction == popup_direction::bottom_left) {
-        anchor_x -= *width * ctx.rt.dpi_scale;
     }
 
-    if (direction == popup_direction::top_left ||
-        direction == popup_direction::top_right) {
-        anchor_y += *height * ctx.rt.dpi_scale;
-    }
-
-    auto [x, y] = mouse_menu_widget_main::calculate_position(
-        submenu_wid.get(), ctx, anchor_x, anchor_y, direction);
-
-    auto owner_menu = search_parent<menu_widget>();
-    if (owner_menu)
-        y += *owner_menu->scroll_top * ctx.rt.dpi_scale;
-
-    x -= ctx.offset_x * ctx.rt.dpi_scale;
-    y -= ctx.offset_y * ctx.rt.dpi_scale;
-
-    submenu_wid->direction = direction;
-    submenu_wid->parent_item_widget = weak_from_this();
-    auto parent_menu = parent->downcast<menu_widget>();
-    if (!parent_menu)
-        parent_menu = parent->parent->downcast<menu_widget>();
-
-    auto target_x = x / ctx.rt.dpi_scale;
-    auto target_y = y / ctx.rt.dpi_scale;
-
-    config::current->context_menu.theme.animation.submenu_bg.x(submenu_wid->x,
-                                                               0);
-    config::current->context_menu.theme.animation.submenu_bg.y(submenu_wid->y,
-                                                               0);
-
-    auto target_bg = make_bg_target_rect(submenu_wid.get(), target_x, target_y,
-                                         submenu_wid->width->dest(),
-                                         submenu_wid->height->dest());
-    auto start_bg = make_collapsed_rect(
-        target_bg.x, target_bg.y, target_bg.width, target_bg.height,
-        config::current->context_menu.theme.animation.submenu_bg, direction);
-    submenu_wid->x->reset_to(target_x);
-    submenu_wid->y->reset_to(target_y);
-
-    submenu_wid->arm_background_animation(start_bg);
-    submenu_wid->reset_animation(direction == popup_direction::top_left ||
-                                 direction == popup_direction::top_right);
-    if (parent_menu->current_submenu) {
-        parent_menu->current_submenu->close();
+    dying_time = 200;
+    if (parent_menu && parent_menu->current_submenu.get() == this) {
         parent_menu->current_submenu = nullptr;
     }
-    parent_menu->current_submenu = submenu_wid;
-    parent_menu->rendering_submenus.push_back(submenu_wid);
-    submenu_wid->parent_menu = parent_menu.get();
-}
-void mb_shell::menu_item_ownerdraw_widget::update(ui::update_context &ctx) {
-    width->reset_to(owner_draw.width);
-    height->reset_to(owner_draw.height);
-}
-void mb_shell::menu_item_ownerdraw_widget::render(ui::nanovg_context ctx) {
-    if (!img)
-        img = ui::LoadBitmapImage(ctx, owner_draw.bitmap);
 
-    auto paint = ctx.imagePattern(*x, y->dest(), owner_draw.width,
-                                  owner_draw.height, 0, img->id, 1);
+    for (auto &item : children) {
+        if (auto mi = item->downcast<menu_item_normal_widget>()) {
+            mi->hide_submenu();
+        }
+    }
+    request_repaint();
+}
 
-    ctx.beginPath();
-    ctx.rect(*x, y->dest(), owner_draw.width, owner_draw.height);
-    ctx.fillPaint(paint);
-    ctx.fill();
+BOOL IsCursorVisible() {
+    CURSORINFO ci = {sizeof(CURSORINFO)};
+    if (GetCursorInfo(&ci)) {
+        return (ci.flags & CURSOR_SHOWING) != 0;
+    }
+    return FALSE;
 }
-void mb_shell::menu_item_ownerdraw_widget::reset_appear_animation(float delay) {
+
+mb_shell::mouse_menu_widget_main::mouse_menu_widget_main(menu menu_data,
+                                                         float x, float y)
+    : widget(), anchor_x(x), anchor_y(y),
+      ignore_outside_click_until_mouse_release(true) {
+    hit_self = false;
+    menu_wid = std::make_shared<menu_widget>(true);
+    menu_wid->init_from_data(menu_data);
+
+    emplace_child<screenside_button_group_widget>();
+    add_child(menu_wid);
 }
-mb_shell::menu_item_ownerdraw_widget::menu_item_ownerdraw_widget(
-    menu_item item) {
-    this->item = item;
-    if (item.owner_draw) {
-        owner_draw = item.owner_draw.value();
-        width->reset_to(owner_draw.width);
-        height->reset_to(owner_draw.height);
+
+void mb_shell::mouse_menu_widget_main::tick(float delta_time) {
+    PeekMessage(nullptr, nullptr, 0, 0, PM_REMOVE);
+    if (!owner_rt)
+        return;
+    auto &rt = *owner_rt;
+
+    if (!direction_calibrated) {
+        calibrate_direction();
+        direction_calibrated = true;
+        calibrate_position(false);
+        position_calibrated = true;
+    }
+
+    if (!position_calibrated) {
+        calibrate_position();
+        position_calibrated = true;
+    }
+
+    auto using_touchscreen = !IsCursorVisible();
+    auto has_pressed_mouse_button = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ||
+                                    (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+
+    if (ignore_outside_click_until_mouse_release && !has_pressed_mouse_button) {
+        ignore_outside_click_until_mouse_release = false;
+    }
+
+    const bool nothing_hovered =
+        !rt.root || rt.root->hit_test_tree(rt.mouse_x, rt.mouse_y) == nullptr;
+    const bool passthrough = nothing_hovered && !using_touchscreen;
+    if (last_passthrough != passthrough) {
+        glfwSetWindowAttrib(rt.window, GLFW_MOUSE_PASSTHROUGH,
+                            passthrough ? GLFW_TRUE : GLFW_FALSE);
+        last_passthrough = passthrough;
+    }
+
+    if (nothing_hovered && !ignore_outside_click_until_mouse_release &&
+        has_pressed_mouse_button) {
+        rt.hide_as_close();
+    }
+
+    if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) ||
+        (GetAsyncKeyState(VK_MENU) & 0x8000) ||
+        (GetAsyncKeyState(VK_LMENU) & 0x8000)) {
+        rt.hide_as_close();
     }
 }
-void mb_shell::menu_item_custom_widget::update(ui::update_context &ctx) {
-    super::update(ctx);
-    if (custom_widget) {
-        auto ctx2 = ctx.with_offset(*x, *y);
-        custom_widget->update(ctx2);
-        custom_widget->parent = this;
+
+std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
+    menu_widget *menu_wid, ui::render_target &rt, float anchor_x,
+    float anchor_y, popup_direction direction) {
+    menu_wid->compute_layout_now(&rt);
+    const float dpi = rt.dpi_scale;
+    auto menu_width = menu_wid->width->dest() * dpi;
+    auto menu_height = menu_wid->height->dest() * dpi;
+
+    float x, y;
+    constexpr auto mouse_padding = 1.f;
+    if (direction == popup_direction::top_left) {
+        x = anchor_x - menu_width - mouse_padding;
+        y = anchor_y - menu_height;
+    } else if (direction == popup_direction::top_right) {
+        x = anchor_x + mouse_padding;
+        y = anchor_y - menu_height;
+    } else if (direction == popup_direction::bottom_left) {
+        x = anchor_x - menu_width - mouse_padding;
+        y = anchor_y;
+    } else {
+        x = anchor_x + mouse_padding;
+        y = anchor_y;
     }
-}
-void mb_shell::menu_item_custom_widget::render(ui::nanovg_context ctx) {
-    super::render(ctx);
-    if (custom_widget) {
-        custom_widget->render(ctx.with_offset(*x, *y));
+
+    auto padding_x =
+        config::current->context_menu.position.padding_horizontal * dpi;
+    auto padding_y =
+        config::current->context_menu.position.padding_vertical * dpi;
+
+    if (x < padding_x) {
+        x = padding_x;
+    } else if (x + menu_width > rt.screen.width - padding_x) {
+        x = rt.screen.width - menu_width - padding_x;
     }
+
+    if (menu_height > rt.screen.height - padding_y * 2 || y < padding_y) {
+        y = padding_y;
+    } else if (y + menu_height > rt.screen.height - padding_y) {
+        y = rt.screen.height - menu_height - padding_y;
+    }
+
+    menu_wid->max_height = (rt.screen.height - y - padding_y) / dpi;
+    return {x, y};
 }
-float mb_shell::menu_item_custom_widget::measure_width(
-    ui::update_context &ctx) {
-    return custom_widget->measure_width(ctx);
+
+mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
+    menu_widget *menu_wid, ui::render_target &rt, float anchor_x,
+    float anchor_y, popup_direction prefer_direction) {
+    menu_wid->compute_layout_now(&rt);
+    const float dpi = rt.dpi_scale;
+    auto menu_width = menu_wid->width->dest() * dpi;
+    auto menu_height = menu_wid->height->dest() * dpi;
+
+    auto padding_y = config::current->context_menu.position.padding_horizontal,
+         padding_x = config::current->context_menu.position.padding_vertical;
+
+    bool bottom_overflow = anchor_y + menu_height > rt.screen.height - padding_y;
+    bool top_overflow = anchor_y - menu_height < padding_y;
+    bool right_overflow = anchor_x + menu_width > rt.screen.width - padding_x;
+    bool left_overflow = anchor_x - menu_width < padding_x;
+
+    bool prefer_top = is_upward(prefer_direction);
+    bool prefer_left = prefer_direction == popup_direction::top_left ||
+                       prefer_direction == popup_direction::bottom_left;
+
+    bool top_revert = prefer_top ? (top_overflow && !bottom_overflow)
+                                 : (bottom_overflow && !top_overflow);
+    bool left_revert = prefer_left ? (left_overflow && !right_overflow)
+                                   : (right_overflow && !left_overflow);
+
+    if (top_revert && left_revert) {
+        return popup_direction::top_left;
+    } else if (top_revert) {
+        return popup_direction::top_right;
+    } else if (left_revert) {
+        return popup_direction::bottom_left;
+    }
+    return popup_direction::bottom_right;
 }
-float mb_shell::menu_item_custom_widget::measure_height(
-    ui::update_context &ctx) {
-    return custom_widget->measure_height(ctx);
+
+void mb_shell::mouse_menu_widget_main::calibrate_position(bool animated) {
+    if (!owner_rt)
+        return;
+    auto &rt = *owner_rt;
+    auto [x, y] =
+        calculate_position(menu_wid.get(), rt, anchor_x, anchor_y, direction);
+
+    spdlog::info("Calibrated position: {} {} in screen {} {}", x, y,
+                 rt.screen.width, rt.screen.height);
+
+    if (animated) {
+        menu_wid->x->animate_to(x / rt.dpi_scale);
+        menu_wid->y->animate_to(y / rt.dpi_scale);
+    } else {
+        menu_wid->x->reset_to(x / rt.dpi_scale);
+        menu_wid->y->reset_to(y / rt.dpi_scale);
+    }
+
+    menu_wid->arm_background_animation();
 }
+
+void mb_shell::mouse_menu_widget_main::calibrate_direction() {
+    if (!owner_rt)
+        return;
+    direction =
+        calculate_direction(menu_wid.get(), *owner_rt, anchor_x, anchor_y);
+    menu_wid->direction = direction;
+    menu_wid->reset_animation(is_upward(direction));
+
+    spdlog::info("Calibrated direction: {}",
+                 direction == popup_direction::top_left      ? "top_left"
+                 : direction == popup_direction::top_right   ? "top_right"
+                 : direction == popup_direction::bottom_left ? "bottom_left"
+                                                             : "bottom_right");
+}
+
 mb_shell::screenside_button_group_widget::screenside_button_group_widget()
     : super() {
     padding_left->reset_to(8);
@@ -1263,7 +1145,9 @@ mb_shell::screenside_button_group_widget::screenside_button_group_widget()
 
     gap = 4;
     horizontal = true;
+    hit_self = false;
 }
+
 mb_shell::screenside_button_group_widget::button_widget::button_widget(
     std::string icon_svg)
     : icon_svg(std::move(icon_svg)) {
@@ -1273,25 +1157,27 @@ mb_shell::screenside_button_group_widget::button_widget::button_widget(
     height->reset_to(30);
     config::current->context_menu.theme.animation.item.opacity(bg_opacity, 0);
 }
-void mb_shell::screenside_button_group_widget::button_widget::update(
-    ui::update_context &ctx) {
-    super::update(ctx);
-    if (ctx.mouse_down_on(this)) {
+
+void mb_shell::screenside_button_group_widget::button_widget::tick(float) {
+    if (pressed()) {
         bg_opacity->animate_to(0.6f);
-    } else if (ctx.hovered(this)) {
+    } else if (hovered()) {
         bg_opacity->animate_to(0.8f);
     } else {
         bg_opacity->animate_to(1);
     }
-
-    if (ctx.mouse_clicked_on(this)) {
-        if (on_click) {
-            on_click();
-        }
-    }
-
-    ctx.hovered_hit(this);
 }
+
+void mb_shell::screenside_button_group_widget::button_widget::handle_mouse_down(
+    ui::mouse_event &e) {
+    if (e.button != ui::mouse_button::left)
+        return;
+    e.handled = true;
+    if (on_click) {
+        on_click();
+    }
+}
+
 void mb_shell::screenside_button_group_widget::button_widget::render(
     ui::nanovg_context ctx) {
     super::render(ctx);

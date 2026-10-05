@@ -23,6 +23,7 @@ struct menu_item_widget : public ui::widget {
     ui::sp_anim_float opacity = anim_float(0, 200);
     menu_item_widget();
     virtual void reset_appear_animation(float delay);
+    menu_widget *owner_menu() const;
 };
 
 struct menu_item_ownerdraw_widget : public menu_item_widget {
@@ -30,16 +31,15 @@ struct menu_item_ownerdraw_widget : public menu_item_widget {
     owner_draw_menu_info owner_draw;
     std::optional<ui::NVGImage> img{};
     menu_item_ownerdraw_widget(menu_item item);
-    void update(ui::update_context &ctx) override;
     void render(ui::nanovg_context ctx) override;
     void reset_appear_animation(float delay) override;
 };
 
 struct menu_item_parent_widget : public menu_item_widget {
     using super = menu_item_widget;
-    void update(ui::update_context &ctx) override;
+    bool lays_out_children() const override { return true; }
+    void before_layout() override;
     void reset_appear_animation(float delay) override;
-    float measure_width(ui::update_context &ctx) override;
 };
 
 struct menu_item_normal_widget : public menu_item_widget {
@@ -65,34 +65,36 @@ struct menu_item_normal_widget : public menu_item_widget {
     ui::sp_anim_float bg_opacity = anim_float(0, 200);
     ui::sp_anim_float text_blur = anim_float(0, 200);
     void render(ui::nanovg_context ctx) override;
-    void update(ui::update_context &ctx) override;
-    float measure_width(ui::update_context &ctx) override;
-    bool check_hit(const ui::update_context &ctx) override;
+    void tick(float delta_time) override;
+    void before_layout() override;
+    bool has_measure() const override { return true; }
+    YGSize measure(float width, YGMeasureMode width_mode, float height,
+                   YGMeasureMode height_mode) override;
+    void handle_mouse_down(ui::mouse_event &e) override;
 
+    void activate();
     void hide_submenu();
-    void show_submenu(ui::update_context &ctx);
+    void show_submenu();
     void reload_icon_img(ui::nanovg_context ctx);
+
+  private:
+    std::string measure_key;
 };
 
 struct menu_item_custom_widget : public menu_item_widget {
     using super = menu_item_widget;
     std::shared_ptr<ui::widget> custom_widget;
-    menu_item_custom_widget(std::shared_ptr<ui::widget> custom_widget)
-        : custom_widget(custom_widget) {}
-    void render(ui::nanovg_context ctx) override;
-    void update(ui::update_context &ctx) override;
-    float measure_width(ui::update_context &ctx) override;
-    float measure_height(ui::update_context &ctx) override;
+    menu_item_custom_widget(std::shared_ptr<ui::widget> custom_widget);
+    bool lays_out_children() const override { return true; }
+    void before_layout() override;
 };
 
 enum class popup_direction {
-    // 第一象限 ~ 第四象限
     top_left,
     top_right,
     bottom_left,
     bottom_right,
 };
-struct menu_item_widget;
 struct menu_animation_rect {
     float x = 0;
     float y = 0;
@@ -108,7 +110,6 @@ struct menu_widget : public ui::flex_widget {
 
     std::shared_ptr<menu_widget> current_submenu;
     std::optional<std::weak_ptr<ui::widget>> parent_item_widget;
-    std::vector<std::shared_ptr<widget>> rendering_submenus;
 
     menu_widget *parent_menu = nullptr;
 
@@ -126,14 +127,24 @@ struct menu_widget : public ui::flex_widget {
         std::optional<menu_animation_rect> initial_rect = std::nullopt);
     bool animate_appear_started = false;
     void reset_animation(bool reverse = false);
-    void update(ui::update_context &ctx) override;
+    void tick(float delta_time) override;
+    void before_layout() override;
+    void after_layout() override;
+    void handle_key(ui::key_event &e) override;
 
     void update_icon_width();
+    void add_submenu(std::shared_ptr<menu_widget> submenu);
+    std::vector<std::shared_ptr<menu_widget>> submenus() const;
+    bool directly_hovered() const;
 
     void render(ui::nanovg_context ctx) override;
-
-    bool check_hit(const ui::update_context &ctx) override;
+    ui::widget *hit_test_tree(float px, float py) override;
+    bool hit_test(float px, float py) const override;
     void close();
+
+  private:
+    bool keyboard_owner() const;
+    bool closing_seen = false;
 };
 
 struct screenside_button_group_widget : public ui::flex_widget {
@@ -146,8 +157,8 @@ struct screenside_button_group_widget : public ui::flex_widget {
 
         ui::sp_anim_float bg_opacity = anim_float(0, 200);
 
-        void update(ui::update_context &ctx) override;
-
+        void tick(float delta_time) override;
+        void handle_mouse_down(ui::mouse_event &e) override;
         void render(ui::nanovg_context ctx) override;
     };
 
@@ -163,22 +174,23 @@ struct mouse_menu_widget_main : public ui::widget {
     popup_direction direction;
     std::shared_ptr<menu_widget> menu_wid;
 
-    void update(ui::update_context &ctx);
-
-    void render(ui::nanovg_context ctx);
+    void tick(float delta_time) override;
 
     static std::pair<float, float>
-    calculate_position(menu_widget *menu_wid, ui::update_context &ctx,
+    calculate_position(menu_widget *menu_wid, ui::render_target &rt,
                        float anchor_x, float anchor_y,
                        popup_direction direction);
 
     static popup_direction calculate_direction(
-        menu_widget *menu_wid, ui::update_context &ctx, float anchor_x,
+        menu_widget *menu_wid, ui::render_target &rt, float anchor_x,
         float anchor_y,
         popup_direction prefer_direction = popup_direction::bottom_right);
 
-    void calibrate_position(ui::update_context &ctx, bool animated = true);
-    void calibrate_direction(ui::update_context &ctx);
+    void calibrate_position(bool animated = true);
+    void calibrate_direction();
+
+  private:
+    std::optional<bool> last_passthrough;
 };
 
 } // namespace mb_shell

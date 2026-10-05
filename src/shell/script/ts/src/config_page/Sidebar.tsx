@@ -85,7 +85,7 @@ const Sidebar = memo(({
             <SidebarItem onClick={() => setActivePage('update')} icon={ICON_UPDATE} isActive={activePage === 'update'}>{t('sidebar.update')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-store')} icon={ICON_PLUGIN_STORE} isActive={activePage === 'plugin-store'}>{t('sidebar.pluginStore')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('plugin-config')} icon={ICON_PLUGIN_CONFIG} isActive={activePage === 'plugin-config'}>{t('sidebar.pluginConfig')}</SidebarItem>
-            <flex height={1} autoSize={false} backgroundColor={shell.breeze.is_light_theme() ? '#00000014' : '#FFFFFF15'} />
+            <flex height={1} backgroundColor={shell.breeze.is_light_theme() ? '#00000014' : '#FFFFFF15'} />
             <SidebarItem onClick={() => setActivePage('problems')} icon={ICON_PROBLEMS} isActive={activePage === 'problems'} badge={problemCount}>{t('sidebar.problems')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('logs')} icon={ICON_LOGS} isActive={activePage === 'logs'}>{t('sidebar.logs')}</SidebarItem>
             <SidebarItem onClick={() => setActivePage('test')} icon={ICON_TEST} isActive={activePage === 'test'}>{t('test.title')}</SidebarItem>

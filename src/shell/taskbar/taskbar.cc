@@ -15,6 +15,7 @@ std::expected<void, std::string> taskbar_render::init() {
     rt.topmost = true;
     rt.decorated = false;
     rt.title = "Breeze Shell Taskbar";
+    rt.idle_poll_ms = 100;
     if (auto res = rt.init(); !res) {
         return std::unexpected(res.error());
     }
