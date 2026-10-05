@@ -1093,7 +1093,8 @@ void subproc::open_async(std::string path, std::string args,
 }
 
 struct Timer {
-    std::function<void()> callback;
+    // qjs::Value refcounts are not thread-safe: copy once, move afterwards
+    std::shared_ptr<std::function<void()>> callback;
     std::weak_ptr<qjs::Context> ctx;
     int delay;
     int elapsed = 0;
@@ -1111,7 +1112,7 @@ void timer_thread_func() {
         constexpr auto sleep_time = 30;
         Sleep(sleep_time);
 
-        std::vector<std::function<void()>> callbacks;
+        std::vector<std::shared_ptr<std::function<void()>>> callbacks;
         {
             std::lock_guard lock(timers_mutex);
             for (auto &timer : timers) {
@@ -1122,7 +1123,7 @@ void timer_thread_func() {
                 timer->elapsed += sleep_time;
                 if (timer->elapsed >= timer->delay) {
                     timer->elapsed = 0;
-                    callbacks.push_back(timer->callback);
+                    callbacks.push_back(std::move(timer->callback));
                     if (!timer->repeat) {
                         timer = nullptr;
                     }
@@ -1133,8 +1134,10 @@ void timer_thread_func() {
         }
 
         for (const auto &callback : callbacks) {
+            if (!callback)
+                continue;
             try {
-                callback();
+                (*callback)();
             } catch (qjs::qjs_context_destroyed_exception &) {
             } catch (std::exception &e) {
                 spdlog::error("Error in timer callback: {}", e.what());
@@ -1152,7 +1155,8 @@ int add_timer(std::function<void()> callback, int delay, bool repeat) {
     }
 
     auto timer = std::make_unique<Timer>();
-    timer->callback = std::move(callback);
+    timer->callback =
+        std::make_shared<std::function<void()>>(std::move(callback));
     timer->delay = delay;
     timer->repeat = repeat;
     timer->ctx = qjs::Context::current->weak_from_this();
