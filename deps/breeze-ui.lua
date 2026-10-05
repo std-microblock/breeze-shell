@@ -3,8 +3,8 @@ package("breeze-glfw")
     set_urls("https://github.com/breeze-shell/glfw.git")
     add_versions("2026.03.07+1", "a79c32a7d9ef4cd8a15b5f8ccbcdf9510c48da03")
 
-local BREEZE_UI_VER = "2026.10.06+2"
-local BREEZE_UI_HASH = "cacd487fb69d4b8259a5cbc37d2296772fb2c328"
+local BREEZE_UI_VER = "2026.10.06+3"
+local BREEZE_UI_HASH = "9578537766f3404c78a821ae79bc8ab7bbaa7781"
 local BREEZE_UI_LOCAL_PATH = path.join(os.scriptdir(), "..", "..", "breeze-ui")
 local USE_LOCAL_BREEZE_UI = os.exists(BREEZE_UI_LOCAL_PATH)
 
