@@ -463,6 +463,35 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                 },
                 NULL, thread_id_orig)};
 
+            // 触摸板滚轮在"滚动非活动窗口"失效的设备上投给焦点窗口, 菜单收不到
+            struct wheel_hook_guard {
+                HHOOK hook = nullptr;
+                ~wheel_hook_guard() {
+                    if (hook) {
+                        UnhookWindowsHookEx(hook);
+                    }
+                }
+            } wheel_guard{SetWindowsHookExW(
+                WH_GETMESSAGE,
+                [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
+                    auto *msg = reinterpret_cast<MSG *>(lParam);
+                    if (nCode == HC_ACTION && wParam == PM_REMOVE && msg &&
+                        (msg->message == WM_MOUSEWHEEL ||
+                         msg->message == WM_MOUSEHWHEEL)) {
+                        RECT menu_rect;
+                        POINTS cursor = MAKEPOINTS(msg->lParam);
+                        POINT pt{cursor.x, cursor.y};
+                        if (GetWindowRect(window, &menu_rect) &&
+                            PtInRect(&menu_rect, pt)) {
+                            PostMessageW(window, msg->message, msg->wParam,
+                                         msg->lParam);
+                            msg->message = WM_NULL;
+                        }
+                    }
+                    return CallNextHookEx(NULL, nCode, wParam, lParam);
+                },
+                NULL, thread_id_orig)};
+
             SetWindowLongPtrW(window, GWL_EXSTYLE,
                               GetWindowLongPtrW(window, GWL_EXSTYLE) |
                                   WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
