@@ -296,6 +296,8 @@ struct menu_item_controller {
         $parent;
     int get_position() const;
     void set_position(int new_index);
+    bool get_visible() const;
+    void set_visible(bool visible);
     void set_data(js_menu_data data);
     void update_data(js_menu_data data);
     js_menu_data data();

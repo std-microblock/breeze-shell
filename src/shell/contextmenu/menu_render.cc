@@ -96,6 +96,7 @@ menu_render menu_render::create(int x, int y, menu menu, bool run_js) {
         // convert the x and y to the window coordinates
         x - monitor_info.rcMonitor.left, y - monitor_info.rcMonitor.top);
     context_menu_hooks::set_active_root_menu_widget(menu_wid->menu_wid);
+    rt->root->owner_rt = rt.get();
     rt->root->add_child(menu_wid);
     auto current_js_context =
         entry::main_window_loop_hook

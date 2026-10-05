@@ -675,7 +675,7 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
                          : (index + items.size() - 1) % items.size();
             auto wid =
                 items[index]->template downcast<menu_item_normal_widget>();
-            if (wid && !wid->item.disabled &&
+            if (wid && wid->visible && !wid->item.disabled &&
                 wid->item.type != mb_shell::menu_item::type::spacer) {
                 items[index]->set_focus(true);
                 return;
@@ -689,6 +689,24 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         return it == children.end()
                    ? nullptr
                    : (*it)->template downcast<menu_item_normal_widget>();
+    };
+
+    auto embedded_widget_focused = [&] {
+        return std::ranges::any_of(children, [](const auto &item) {
+            return !item->template downcast<menu_item_normal_widget>() &&
+                   item->focus_within();
+        });
+    };
+
+    auto first_visible_item = [&]() -> std::shared_ptr<menu_item_normal_widget> {
+        for (auto &item : children) {
+            auto wid = item->template downcast<menu_item_normal_widget>();
+            if (wid && wid->visible && !wid->item.disabled &&
+                wid->item.type != mb_shell::menu_item::type::spacer &&
+                (wid->item.action || wid->item.submenu))
+                return wid;
+        }
+        return nullptr;
     };
 
     switch (e.key) {
@@ -722,23 +740,27 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         }
         break;
     case GLFW_KEY_ENTER:
-    case GLFW_KEY_SPACE:
+    case GLFW_KEY_SPACE: {
         if (e.repeat)
             return;
-        if (auto wid = focused_item()) {
+        auto wid = focused_item();
+        if (!wid && e.key == GLFW_KEY_ENTER && embedded_widget_focused())
+            wid = first_visible_item();
+        if (wid) {
             if (wid->item.action)
                 wid->activate();
             else if (wid->item.submenu)
                 wid->show_submenu();
         }
         break;
+    }
     default: {
         if (e.repeat)
             return;
         auto matching =
             children | std::views::filter([&](const auto &item) {
                 auto wid = item->template downcast<menu_item_normal_widget>();
-                return wid && wid->item.hotkey &&
+                return wid && wid->visible && wid->item.hotkey &&
                        hotkey_matches(*wid->item.hotkey, e);
             }) |
             std::ranges::to<std::vector>();

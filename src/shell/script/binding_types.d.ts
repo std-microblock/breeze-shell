@@ -693,6 +693,8 @@ export class js_menu_data {
 export class menu_item_controller {
 	get position(): number;
     set position(value: number);
+	get visible(): boolean;
+    set visible(value: boolean);
 	/**
      * 
      * @param data: js_menu_data

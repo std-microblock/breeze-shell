@@ -172,6 +172,27 @@ void menu_item_controller::set_position(int new_index) {
     }
 }
 
+bool menu_item_controller::get_visible() const {
+    auto item = $item.lock();
+    return item && item->visible;
+}
+
+void menu_item_controller::set_visible(bool visible) {
+    if (!valid())
+        return;
+    auto item = $item.lock();
+    std::optional<std::unique_lock<ui::tree_lock>> lock;
+    if (item->owner_rt)
+        lock.emplace(item->owner_rt->rt_lock);
+    if (item->visible == visible)
+        return;
+    item->visible = visible;
+    if (!visible && item->owner_rt && item->focus_within())
+        item->owner_rt->focused_widget.reset();
+    if (item->parent)
+        item->parent->children_dirty = true;
+}
+
 static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     auto get_if_not_reset = [](auto &v) {
         return v.index() == 0 ? &std::get<0>(v) : nullptr;
@@ -1827,6 +1848,13 @@ void notification::send_with_buttons(
     WinToast::instance()->showToast(templ, handler);
 }
 
+static void adopt_render_target(ui::widget &widget, ui::render_target *rt) {
+    widget.owner_rt = rt;
+    for (auto &child : widget.children)
+        if (child)
+            adopt_render_target(*child, rt);
+}
+
 void menu_controller::append_widget_after(
     std::shared_ptr<mb_shell::js::breeze_ui::js_widget> widget,
     int after_index) {
@@ -1842,6 +1870,13 @@ void menu_controller::append_widget_after(
 
     auto widget_wrapper =
         std::make_shared<mb_shell::menu_item_custom_widget>(widget->$widget);
+    widget_wrapper->parent = m.get();
+    for (ui::widget *w = m.get(); w; w = w->parent) {
+        if (w->owner_rt) {
+            adopt_render_target(*widget_wrapper, w->owner_rt);
+            break;
+        }
+    }
 
     if (after_index >= m->children.size()) {
         m->children.push_back(widget_wrapper);
