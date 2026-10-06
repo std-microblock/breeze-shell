@@ -363,7 +363,7 @@ void mb_shell::menu_item_normal_widget::tick(float delta_time) {
 
 void mb_shell::menu_item_normal_widget::activate() { run_item_action(item); }
 
-void mb_shell::menu_item_normal_widget::handle_mouse_down(ui::mouse_event &e) {
+void mb_shell::menu_item_normal_widget::handle_click(ui::mouse_event &e) {
     if (e.button != ui::mouse_button::left)
         return;
     e.handled = true;
