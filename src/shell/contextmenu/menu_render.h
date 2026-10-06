@@ -9,6 +9,7 @@ namespace mb_shell {
 struct menu_render {
     std::shared_ptr<ui::render_target> rt;
     std::optional<int32_t> selected_menu;
+    bool took_keyboard_focus = false;
     bool light_color = is_light_mode();
     static std::optional<menu_render *> current;
 

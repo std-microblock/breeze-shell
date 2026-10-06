@@ -191,6 +191,10 @@ struct mouse_menu_widget_main : public ui::widget {
 
   private:
     std::optional<bool> last_passthrough;
+    bool keyboard_acquired = false;
+    bool escape_owned_by_ime = false;
+    void acquire_keyboard_for_text_input(ui::render_target &rt);
+    bool ime_composing(ui::render_target &rt);
 };
 
 } // namespace mb_shell

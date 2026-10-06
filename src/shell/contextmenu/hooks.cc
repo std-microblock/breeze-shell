@@ -37,6 +37,17 @@ void *current_live_menu() {
     return current_live_menu_handle.load(std::memory_order_relaxed);
 }
 
+void restore_keyboard_focus(HWND foreground, HWND focus) {
+    DWORD owner_pid = 0;
+    GetWindowThreadProcessId(GetForegroundWindow(), &owner_pid);
+    if (owner_pid && owner_pid != GetCurrentProcessId())
+        return;
+    if (foreground && IsWindow(foreground))
+        SetForegroundWindow(foreground);
+    if (focus && IsWindow(focus))
+        SetFocus(focus);
+}
+
 std::wstring strip_menu_item_text(std::wstring_view str) {
     std::wstring result;
     result.reserve(str.size());
@@ -402,6 +413,9 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                            std::function<void(menu_render &)> on_before_show,
                            bool run_js) {
     auto thread_id_orig = GetCurrentThreadId();
+    auto previous_foreground = GetForegroundWindow();
+    auto previous_focus = GetFocus();
+    bool took_keyboard_focus = false;
     auto selected_menu_future = renderer_thread.add_task([&]() {
         set_thread_name("breeze::renderer_thread");
         try {
@@ -499,6 +513,7 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
                 on_before_show(menu_render);
             menu_render.rt->start_loop();
 
+            took_keyboard_focus = menu_render.took_keyboard_focus;
             return menu_render.selected_menu;
         } catch (std::exception &e) {
             spdlog::error("Error in track_popup_menu: {}", e.what());
@@ -508,6 +523,9 @@ mb_shell::track_popup_menu(mb_shell::menu menu, int x, int y,
     qjs::wait_with_msgloop([&]() { selected_menu_future.wait(); });
 
     auto selected_menu = selected_menu_future.get();
+
+    if (took_keyboard_focus)
+        restore_keyboard_focus(previous_foreground, previous_focus);
 
     return selected_menu;
 }

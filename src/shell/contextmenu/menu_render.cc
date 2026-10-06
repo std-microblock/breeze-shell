@@ -155,11 +155,13 @@ menu_render::menu_render(menu_render &&t) {
 
     rt = std::move(t.rt);
     selected_menu = std::move(t.selected_menu);
+    took_keyboard_focus = t.took_keyboard_focus;
 }
 menu_render &menu_render::operator=(menu_render &&t) {
     current = this;
     rt = std::move(t.rt);
     selected_menu = std::move(t.selected_menu);
+    took_keyboard_focus = t.took_keyboard_focus;
     return *this;
 }
 }; // namespace mb_shell

@@ -1037,11 +1037,40 @@ void mb_shell::mouse_menu_widget_main::tick(float delta_time) {
         rt.hide_as_close();
     }
 
-    if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) ||
+    acquire_keyboard_for_text_input(rt);
+
+    const bool escape = GetAsyncKeyState(VK_ESCAPE) & 0x8000;
+    if (!escape)
+        escape_owned_by_ime = ime_composing(rt);
+
+    if ((escape && !escape_owned_by_ime) ||
         (GetAsyncKeyState(VK_MENU) & 0x8000) ||
         (GetAsyncKeyState(VK_LMENU) & 0x8000)) {
         rt.hide_as_close();
     }
+}
+
+bool mb_shell::mouse_menu_widget_main::ime_composing(ui::render_target &rt) {
+    std::lock_guard lock(rt.ime_composition_lock);
+    return rt.ime_composition.active;
+}
+
+void mb_shell::mouse_menu_widget_main::acquire_keyboard_for_text_input(
+    ui::render_target &rt) {
+    if (keyboard_acquired || !rt.focused_widget)
+        return;
+    auto focused = rt.focused_widget->lock();
+    if (!focused || !focused->downcast<ui::textbox_widget>())
+        return;
+
+    keyboard_acquired = true;
+    if (!SetForegroundWindow((HWND)rt.hwnd())) {
+        spdlog::info("Menu text input stays on the keyboard hook: foreground "
+                     "activation refused");
+        return;
+    }
+    if (menu_render::current)
+        menu_render::current.value()->took_keyboard_focus = true;
 }
 
 std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
