@@ -70,7 +70,7 @@ struct menu_item_normal_widget : public menu_item_widget {
     bool has_measure() const override { return true; }
     YGSize measure(float width, YGMeasureMode width_mode, float height,
                    YGMeasureMode height_mode) override;
-    void handle_mouse_down(ui::mouse_event &e) override;
+    void handle_click(ui::mouse_event &e) override;
 
     void activate();
     void hide_submenu();

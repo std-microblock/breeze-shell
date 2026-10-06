@@ -6,12 +6,6 @@ export const doOneCommanderCompat = () => {
             m.menu.close();
             shell.infra.setTimeout(() => {
                 shell.win32.simulate_hotkeys(keys);
-            }, 50);
-            shell.infra.setTimeout(() => {
-                shell.win32.simulate_hotkeys(keys);
-            }, 70);
-            shell.infra.setTimeout(() => {
-                shell.win32.simulate_hotkeys(keys);
             }, 100);
         }
 
