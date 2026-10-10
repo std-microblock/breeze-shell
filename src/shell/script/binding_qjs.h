@@ -1547,6 +1547,81 @@ template<> struct js_bind<mb_shell::js::diagnostics> {
     }
 };
 
+template <> struct qjs::js_traits<mb_shell::js::file_usage_process> {
+    static mb_shell::js::file_usage_process unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::file_usage_process obj;
+
+        obj.pid = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "pid"));
+
+        obj.name = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "name"));
+
+        obj.path = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "path"));
+
+        obj.app_name = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "app_name"));
+
+        obj.held_file = js_traits<std::string>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "held_file"));
+
+        obj.working_directory = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "working_directory"));
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::file_usage_process &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        JS_SetPropertyStr(ctx, obj, "pid", js_traits<int>::wrap(ctx, val.pid));
+
+        JS_SetPropertyStr(ctx, obj, "name", js_traits<std::string>::wrap(ctx, val.name));
+
+        JS_SetPropertyStr(ctx, obj, "path", js_traits<std::string>::wrap(ctx, val.path));
+
+        JS_SetPropertyStr(ctx, obj, "app_name", js_traits<std::string>::wrap(ctx, val.app_name));
+
+        JS_SetPropertyStr(ctx, obj, "held_file", js_traits<std::string>::wrap(ctx, val.held_file));
+
+        JS_SetPropertyStr(ctx, obj, "working_directory", js_traits<bool>::wrap(ctx, val.working_directory));
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::file_usage_process> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::file_usage_process>("file_usage_process")
+            .constructor<>()
+                .fun<&mb_shell::js::file_usage_process::terminate>("terminate")
+                .fun<&mb_shell::js::file_usage_process::pid>("pid")
+                .fun<&mb_shell::js::file_usage_process::name>("name")
+                .fun<&mb_shell::js::file_usage_process::path>("path")
+                .fun<&mb_shell::js::file_usage_process::app_name>("app_name")
+                .fun<&mb_shell::js::file_usage_process::held_file>("held_file")
+                .fun<&mb_shell::js::file_usage_process::working_directory>("working_directory")
+            ;
+    }
+};
+
+template <> struct qjs::js_traits<mb_shell::js::file_usage> {
+    static mb_shell::js::file_usage unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::file_usage obj;
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::file_usage &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::file_usage> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::file_usage>("file_usage")
+            .constructor<>()
+                .static_fun<&mb_shell::js::file_usage::in_use>("in_use")
+                .static_fun<&mb_shell::js::file_usage::query>("query")
+            ;
+    }
+};
+
 inline void mshell_bindAll(qjs::Context::Module &mod) {
 
     js_bind<mb_shell::js::breeze_ui>::bind(mod);
@@ -1622,5 +1697,9 @@ inline void mshell_bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::diagnostic_problem>::bind(mod);
 
     js_bind<mb_shell::js::diagnostics>::bind(mod);
+
+    js_bind<mb_shell::js::file_usage_process>::bind(mod);
+
+    js_bind<mb_shell::js::file_usage>::bind(mod);
 
 }

@@ -1490,6 +1490,62 @@ export class diagnostics {
 }
 }
 
+export class file_usage_process {
+	/**
+     *  进程 ID
+     *  Process id
+     */
+    pid: number
+	/**
+     *  进程名, 如 chrome.exe
+     *  Process name
+     */
+    name: string
+	/**
+     *  进程完整路径
+     *  Full path of the process
+     */
+    path: string
+	/**
+     *  系统给出的应用名, 可能为空
+     *  Application name given by the system, may be empty
+     */
+    app_name: string
+	/**
+     *  被打开的具体文件, 查文件夹时可能为空
+     *  The file actually opened, may be empty when querying a folder
+     */
+    held_file: string
+	/**
+     *  是否因为工作目录在该文件夹里而占用
+     *  Whether it holds the folder as its working directory
+     */
+    working_directory: boolean
+	/**
+     *  结束该进程
+     *  Kill the process
+      @returns boolean
+     */
+    terminate(): boolean
+}
+export class file_usage {
+	/**
+     *  路径是否被占用
+     *  Whether the path is in use
+     * @param path: string
+     * @returns boolean
+     */
+    static in_use(path: string): boolean
+	/**
+     *  占用该路径的进程列表, 空表示没有被占用
+     *  Processes using the path, empty when the path is not in use
+     * @param path: string
+     * @returns Array<file_usage_process>
+     */
+    static query(path: string): Array<file_usage_process>
+}
+}
+
 declare module "mshell" {
     export function println(...args: any[]): void;
     type size_t = number;
