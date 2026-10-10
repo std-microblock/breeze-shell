@@ -1,4 +1,6 @@
-import { breeze_paint } from "mshell";
+import { breeze_paint, breeze_ui } from "mshell";
+
+ type textboxInstance = breeze_ui.js_textbox_widget;
 
 type AnimationCurve = {
   duration: number;
@@ -36,6 +38,7 @@ declare module 'react' {
         onMouseDown?: () => void;
         onMouseUp?: () => void;
         onMouseMove?: (x: number, y: number) => void;
+        onKeyDown?: (key: number, shiftKey: boolean, ctrlKey: boolean, altKey: boolean, metaKey: boolean) => void;
         justifyContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly' | 'free';
         alignItems?: 'start' | 'center' | 'end' | 'stretch' | 'free';
         horizontal?: boolean;
@@ -110,8 +113,9 @@ declare module 'react' {
         caretColor?: string;
         compositionUnderlineColor?: string;
         onChange?: (value: string) => void;
-        onFocus?: () => void;
-        onBlur?: () => void;
+        // 回调会收到 textbox 实例, 可以直接调 select_all()/focus()/set_selection()。
+        onFocus?: (instance: textboxInstance) => void;
+        onBlur?: (instance: textboxInstance) => void;
         onKeyDown?: (key: number, shiftKey: boolean, ctrlKey: boolean, altKey: boolean, metaKey: boolean) => boolean;
         key?: string | number;
         animatedVars?: string[];

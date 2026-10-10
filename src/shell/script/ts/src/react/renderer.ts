@@ -224,9 +224,24 @@ const componentMap = {
             caretColor: getSetFactoryColor('caret_color'),
             compositionUnderlineColor: getSetFactoryColor('composition_underline_color'),
             onChange: getSetFactory('on_change'),
-            onFocus: getSetFactory('on_focus'),
-            onBlur: getSetFactory('on_blur'),
-            onKeyDown: getSetFactory('on_key_down'),
+            onFocus: {
+                set: (instance: shell.breeze_ui.js_textbox_widget, value: () => void) => {
+                    if (!value) {
+                        delete instance.on_focus;
+                        return;
+                    }
+                    instance.on_focus = () => value(instance);
+                }
+            },
+            onBlur: {
+                set: (instance: shell.breeze_ui.js_textbox_widget, value: () => void) => {
+                    if (!value) {
+                        delete instance.on_blur;
+                        return;
+                    }
+                    instance.on_blur = () => value(instance);
+                }
+            },            onKeyDown: getSetFactory('on_key_down'),
             ...commonProps
         }
     },
