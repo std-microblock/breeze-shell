@@ -307,6 +307,59 @@ void breeze_ui::js_widget::set_height(float value) {
     $widget->height->animate_to(value);
 }
 
+namespace {
+std::optional<ui::cursor_shape> parse_cursor(const std::string &name) {
+    if (name == "arrow" || name == "default")
+        return ui::cursor_shape::arrow;
+    if (name == "text" || name == "ibeam")
+        return ui::cursor_shape::text;
+    if (name == "hand" || name == "pointer")
+        return ui::cursor_shape::hand;
+    if (name == "crosshair")
+        return ui::cursor_shape::crosshair;
+    if (name == "size_h" || name == "ew-resize")
+        return ui::cursor_shape::size_h;
+    if (name == "size_v" || name == "ns-resize")
+        return ui::cursor_shape::size_v;
+    return std::nullopt;
+}
+
+const char *cursor_name(ui::cursor_shape shape) {
+    switch (shape) {
+    case ui::cursor_shape::text:
+        return "text";
+    case ui::cursor_shape::hand:
+        return "hand";
+    case ui::cursor_shape::crosshair:
+        return "crosshair";
+    case ui::cursor_shape::size_h:
+        return "size_h";
+    case ui::cursor_shape::size_v:
+        return "size_v";
+    default:
+        return "arrow";
+    }
+}
+} // namespace
+
+std::optional<std::string> breeze_ui::js_widget::get_cursor() const {
+    if (!$widget)
+        return std::nullopt;
+    return cursor_name(
+        $widget->effective_cursor().value_or(ui::cursor_shape::arrow));
+}
+
+void breeze_ui::js_widget::set_cursor(std::optional<std::string> value) {
+    if (!$widget)
+        return;
+    auto lock = $rt_lock();
+    if (!value || value->empty() || *value == "auto") {
+        $widget->set_cursor(std::nullopt);
+        return;
+    }
+    $widget->set_cursor(parse_cursor(*value));
+}
+
 std::shared_ptr<breeze_ui::js_text_widget>
 breeze_ui::widgets_factory::create_text_widget() {
     auto text_widget = std::make_shared<ui::text_widget>();

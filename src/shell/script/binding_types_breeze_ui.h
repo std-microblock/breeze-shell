@@ -54,6 +54,9 @@ struct breeze_ui {
         float get_height() const;
         void set_height(float height);
 
+        std::optional<std::string> get_cursor() const;
+        void set_cursor(std::optional<std::string> value);
+
         std::variant<
             std::shared_ptr<js_widget>, std::shared_ptr<js_text_widget>,
             std::shared_ptr<js_textbox_widget>,
