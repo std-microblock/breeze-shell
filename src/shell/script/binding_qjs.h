@@ -1078,6 +1078,67 @@ template<> struct js_bind<mb_shell::js::menu_info_basic_js> {
     }
 };
 
+template <> struct qjs::js_traits<mb_shell::js::menu_metrics> {
+    static mb_shell::js::menu_metrics unwrap(JSContext *ctx, JSValueConst v) {
+        mb_shell::js::menu_metrics obj;
+
+        obj.item_height = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "item_height"));
+
+        obj.item_radius = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "item_radius"));
+
+        obj.background_inset = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "background_inset"));
+
+        obj.font_size = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "font_size"));
+
+        obj.text_offset = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "text_offset"));
+
+        obj.icon_offset = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_offset"));
+
+        obj.icon_size = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "icon_size"));
+
+        obj.right_reserved = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "right_reserved"));
+
+        return obj;
+    }
+
+    static JSValue wrap(JSContext *ctx, const mb_shell::js::menu_metrics &val) noexcept {
+        JSValue obj = JS_NewObject(ctx);
+
+        JS_SetPropertyStr(ctx, obj, "item_height", js_traits<float>::wrap(ctx, val.item_height));
+
+        JS_SetPropertyStr(ctx, obj, "item_radius", js_traits<float>::wrap(ctx, val.item_radius));
+
+        JS_SetPropertyStr(ctx, obj, "background_inset", js_traits<float>::wrap(ctx, val.background_inset));
+
+        JS_SetPropertyStr(ctx, obj, "font_size", js_traits<float>::wrap(ctx, val.font_size));
+
+        JS_SetPropertyStr(ctx, obj, "text_offset", js_traits<float>::wrap(ctx, val.text_offset));
+
+        JS_SetPropertyStr(ctx, obj, "icon_offset", js_traits<float>::wrap(ctx, val.icon_offset));
+
+        JS_SetPropertyStr(ctx, obj, "icon_size", js_traits<float>::wrap(ctx, val.icon_size));
+
+        JS_SetPropertyStr(ctx, obj, "right_reserved", js_traits<float>::wrap(ctx, val.right_reserved));
+
+        return obj;
+    }
+};
+template<> struct js_bind<mb_shell::js::menu_metrics> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::menu_metrics>("menu_metrics")
+            .constructor<>()
+                .fun<&mb_shell::js::menu_metrics::item_height>("item_height")
+                .fun<&mb_shell::js::menu_metrics::item_radius>("item_radius")
+                .fun<&mb_shell::js::menu_metrics::background_inset>("background_inset")
+                .fun<&mb_shell::js::menu_metrics::font_size>("font_size")
+                .fun<&mb_shell::js::menu_metrics::text_offset>("text_offset")
+                .fun<&mb_shell::js::menu_metrics::icon_offset>("icon_offset")
+                .fun<&mb_shell::js::menu_metrics::icon_size>("icon_size")
+                .fun<&mb_shell::js::menu_metrics::right_reserved>("right_reserved")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::menu_controller> {
     static mb_shell::js::menu_controller unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::menu_controller obj;
@@ -1096,6 +1157,7 @@ template<> struct js_bind<mb_shell::js::menu_controller> {
         mod.class_<mb_shell::js::menu_controller>("menu_controller")
             .constructor<>()
                     .property<&mb_shell::js::menu_controller::get_widget>("widget")
+                    .property<&mb_shell::js::menu_controller::get_metrics>("metrics")
                     .property<&mb_shell::js::menu_controller::get_items>("items")
                 .fun<&mb_shell::js::menu_controller::get_widget>("get_widget")
                 .fun<&mb_shell::js::menu_controller::valid>("valid")
@@ -1575,6 +1637,8 @@ template <> struct qjs::js_traits<mb_shell::js::file_usage_process> {
 
         obj.working_directory = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "working_directory"));
 
+        obj.is_current = js_traits<bool>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "is_current"));
+
         return obj;
     }
 
@@ -1593,6 +1657,8 @@ template <> struct qjs::js_traits<mb_shell::js::file_usage_process> {
 
         JS_SetPropertyStr(ctx, obj, "working_directory", js_traits<bool>::wrap(ctx, val.working_directory));
 
+        JS_SetPropertyStr(ctx, obj, "is_current", js_traits<bool>::wrap(ctx, val.is_current));
+
         return obj;
     }
 };
@@ -1607,6 +1673,7 @@ template<> struct js_bind<mb_shell::js::file_usage_process> {
                 .fun<&mb_shell::js::file_usage_process::app_name>("app_name")
                 .fun<&mb_shell::js::file_usage_process::held_file>("held_file")
                 .fun<&mb_shell::js::file_usage_process::working_directory>("working_directory")
+                .fun<&mb_shell::js::file_usage_process::is_current>("is_current")
             ;
     }
 };
@@ -1683,6 +1750,8 @@ inline void mshell_bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::screenside_button_controller>::bind(mod);
 
     js_bind<mb_shell::js::menu_info_basic_js>::bind(mod);
+
+    js_bind<mb_shell::js::menu_metrics>::bind(mod);
 
     js_bind<mb_shell::js::menu_controller>::bind(mod);
 

@@ -4,7 +4,7 @@
 namespace mb_shell::js {
 
 bool file_usage_process::terminate() {
-    return mb_shell::file_usage::terminate((uint32_t)pid);
+    return mb_shell::file_usage::terminate((uint32_t)pid, path);
 }
 
 bool file_usage::in_use(std::string path) {
@@ -22,6 +22,7 @@ file_usage::query(std::string path) {
         process->app_name = entry.app_name;
         process->held_file = entry.held_file;
         process->working_directory = entry.working_directory;
+        process->is_current = entry.is_current;
         result.push_back(std::move(process));
     }
     return result;

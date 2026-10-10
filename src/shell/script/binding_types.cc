@@ -66,6 +66,39 @@ void enqueue_if_alive(const std::weak_ptr<qjs::Context> &weak_ctx,
 } // namespace
 
 bool menu_controller::valid() { return !$menu.expired(); }
+
+menu_metrics menu_controller::get_metrics() {
+    auto &theme = config::current->context_menu.theme;
+    const float icon_size = theme.font_size + 2;
+
+    bool has_icon = false, has_submenu = false;
+    auto menu = $menu.lock();
+    if (!menu)
+        menu = $menu_detached;
+    if (menu) {
+        for (auto &child : menu->children) {
+            if (auto item = child->downcast<menu_item_normal_widget>()) {
+                has_icon |= item->item.icon_bitmap.has_value() ||
+                            item->item.icon_svg.has_value();
+                has_submenu |= item->item.submenu.has_value();
+            }
+        }
+    }
+
+    menu_metrics metrics;
+    metrics.item_height = theme.item_height;
+    metrics.item_radius = theme.item_radius;
+    metrics.background_inset = theme.margin;
+    metrics.font_size = theme.font_size;
+    metrics.icon_size = has_icon ? icon_size : 0;
+    metrics.icon_offset = theme.margin + theme.padding + theme.icon_padding;
+    metrics.text_offset = theme.margin + theme.padding +
+                          (has_icon ? icon_size + theme.icon_padding * 2 : 0) +
+                          theme.text_padding;
+    metrics.right_reserved =
+        theme.margin + theme.padding + (has_submenu ? icon_size : 0);
+    return metrics;
+}
 std::shared_ptr<mb_shell::js::menu_item_controller>
 menu_controller::append_item_after(js_menu_data data, int after_index) {
     if (!valid())

@@ -374,11 +374,42 @@ struct menu_info_basic_js {
     std::shared_ptr<screenside_button_controller> screenside_button;
 };
 
+// 菜单的主题尺寸: 插件自绘的菜单行按它对齐原生菜单项
+// Theme metrics of a menu, so custom rows can line up with native items
+struct menu_metrics {
+    // 菜单项高度
+    // Height of a menu item
+    float item_height;
+    // 菜单项圆角
+    // Corner radius of the item background
+    float item_radius;
+    // 菜单项背景 (高亮) 的左右内缩
+    // Horizontal inset of the item background
+    float background_inset;
+    // 菜单项字体大小
+    // Font size of native items
+    float font_size;
+    // 原生菜单项文字的左偏移 (相对菜单项左边缘)
+    // Left offset of native item text, relative to the item box
+    float text_offset;
+    // 图标列里图标的左偏移与边长; 当前菜单没有图标列时边长为 0
+    // Left offset and size of the icon column; size is 0 when the menu has no icons
+    float icon_offset;
+    float icon_size;
+    // 右侧为子菜单箭头预留的宽度
+    // Width reserved on the right for the submenu arrow
+    float right_reserved;
+};
+
 struct menu_controller {
     std::weak_ptr<mb_shell::menu_widget> $menu;
     std::shared_ptr<mb_shell::menu_widget> $menu_detached;
 
     std::optional<std::shared_ptr<breeze_ui::js_widget>> get_widget();
+
+    // 当前菜单的主题尺寸
+    // Theme metrics of this menu
+    menu_metrics get_metrics();
 
     // 检查菜单控制器是否有效
     // Check if menu controller is valid
@@ -798,6 +829,9 @@ struct file_usage_process {
     // 是否因为工作目录在该文件夹里而占用
     // Whether it holds the folder as its working directory
     bool working_directory;
+    // 是否是当前进程 (即 shell 自己所在的进程)
+    // Whether this is the current process, i.e. the one running the shell
+    bool is_current;
 
     // 结束该进程
     // Kill the process

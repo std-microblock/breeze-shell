@@ -782,8 +782,55 @@ export class menu_info_basic_js {
 	context: js_menu_context
 	screenside_button: screenside_button_controller
 }
+export class menu_metrics {
+	/**
+     *  菜单项高度
+     *  Height of a menu item
+     */
+    item_height: number
+	/**
+     *  菜单项圆角
+     *  Corner radius of the item background
+     */
+    item_radius: number
+	/**
+     *  菜单项背景 (高亮) 的左右内缩
+     *  Horizontal inset of the item background
+     */
+    background_inset: number
+	/**
+     *  菜单项字体大小
+     *  Font size of native items
+     */
+    font_size: number
+	/**
+     *  原生菜单项文字的左偏移 (相对菜单项左边缘)
+     *  Left offset of native item text, relative to the item box
+     */
+    text_offset: number
+	/**
+     *  图标列里图标的左偏移
+     *  Left offset of the icon column
+     */
+    icon_offset: number
+	/**
+     *  图标列里图标的边长 (没有图标列时为 0)
+     *  Size of the icon column, 0 when the menu has no icons
+     */
+    icon_size: number
+	/**
+     *  右侧为子菜单箭头预留的宽度
+     *  Width reserved on the right for the submenu arrow
+     */
+    right_reserved: number
+}
 export class menu_controller {
 	get widget(): breeze_ui.js_widget | undefined;
+	/**
+     *  当前菜单的主题尺寸
+     *  Theme metrics of this menu
+     */
+    get metrics(): menu_metrics;
 	/**
      *  获取所有菜单项
      *  Get all menu items
@@ -1534,6 +1581,11 @@ export class file_usage_process {
      *  Whether it holds the folder as its working directory
      */
     working_directory: boolean
+	/**
+     *  是否是当前进程 (即 shell 自己所在的进程)
+     *  Whether this is the current process, i.e. the one running the shell
+     */
+    is_current: boolean
 	/**
      *  结束该进程
      *  Kill the process
