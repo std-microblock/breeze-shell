@@ -258,6 +258,22 @@ static void to_menu_item(menu_item &data, const js_menu_data &js_data) {
     if (js_data.disabled.has_value()) {
         data.disabled = js_data.disabled.value();
     }
+
+    if (js_data.wID.has_value()) {
+        data.wID = static_cast<size_t>(js_data.wID.value());
+    }
+
+    if (js_data.name_resid) {
+        data.name_resid = *js_data.name_resid;
+    }
+
+    if (js_data.origin_name) {
+        data.origin_name = *js_data.origin_name;
+    }
+
+    if (js_data.hotkey) {
+        data.hotkey = *js_data.hotkey;
+    }
 }
 
 void menu_item_controller::set_data(js_menu_data data) {
@@ -278,22 +294,19 @@ void menu_item_controller::remove() {
         return;
     auto item = $item.lock();
 
-    if (auto $menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent);
-        auto m = $menu->lock()) {
-        m->children.erase(
-            std::remove(m->children.begin(), m->children.end(), item),
-            m->children.end());
-
-        m->children_dirty = true;
-    } else if (auto parent =
-                   std::get_if<std::weak_ptr<menu_item_parent_widget>>(
-                       &$parent);
-               auto m = parent->lock()) {
+    auto erase_from = [&](auto &&m) {
+        if (!m)
+            return;
         m->children.erase(
             std::remove(m->children.begin(), m->children.end(), item),
             m->children.end());
         m->children_dirty = true;
-    }
+    };
+    if (auto menu = std::get_if<std::weak_ptr<menu_widget>>(&$parent))
+        erase_from(menu->lock());
+    else if (auto parent =
+                 std::get_if<std::weak_ptr<menu_item_parent_widget>>(&$parent))
+        erase_from(parent->lock());
 }
 bool menu_item_controller::valid() {
     if (auto a = std::get_if<0>(&$parent); a && a->expired())
@@ -302,6 +315,34 @@ bool menu_item_controller::valid() {
         return false;
 
     return !$item.expired();
+}
+std::vector<std::shared_ptr<menu_item_controller>>
+menu_item_controller::children() {
+    if (!valid())
+        return {};
+
+    auto item = $item.lock();
+    if (!item)
+        return {};
+
+    auto parent = item->downcast<menu_item_parent_widget>();
+    if (!parent)
+        return {};
+
+    std::vector<std::shared_ptr<menu_item_controller>> items;
+    for (auto &child : parent->children) {
+        auto subitem = child->downcast<menu_item_widget>();
+        if (!subitem)
+            continue;
+
+        auto controller = std::make_shared<menu_item_controller>();
+        controller->$item = subitem;
+        controller->$parent = parent;
+
+        items.push_back(controller);
+    }
+
+    return items;
 }
 js_menu_data menu_item_controller::data() {
     if (!valid())
@@ -347,6 +388,7 @@ js_menu_data menu_item_controller::data() {
     data.name_resid = item->item.name_resid;
     data.disabled = item->item.disabled;
     data.origin_name = item->item.origin_name;
+    data.hotkey = item->item.hotkey;
 
     return data;
 }

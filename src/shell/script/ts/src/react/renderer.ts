@@ -35,6 +35,18 @@ const getBindingValue = (instance: any, fieldname: string) => {
     throw new Error(`Unknown binding getter: ${fieldname}`);
 }
 
+type PropSetter = {
+    set: (instance: any, value: any) => void,
+    get?: (instance: any) => any,
+    reset?: (instance: any) => void,
+}
+
+const noop = () => { };
+
+const resetTo = (fieldname: string, value: any) => (instance: shell.breeze_ui.js_widget) => {
+    setBindingValue(instance, fieldname, [value]);
+}
+
 const getSetFactory = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_widget, value: any) => {
@@ -43,7 +55,8 @@ const getSetFactory = (fieldname: string) => {
         },
         get: (instance: shell.breeze_ui.js_widget) => {
             return getBindingValue(instance, fieldname);
-        }
+        },
+        reset: fieldname.startsWith('on_') ? resetTo(fieldname, noop) : undefined,
     }
 }
 
@@ -65,11 +78,15 @@ const getSetFactoryAutoRepeat = (fieldname: string, repeatTime: number = 4) => {
 const getSetFactoryColor = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_text_widget, value: string) => {
+            if (value === undefined || value === null) {
+                return;
+            }
             setBindingValue(instance, fieldname, [hex_to_rgba(value)]);
         },
         get: (instance: shell.breeze_ui.js_text_widget) => {
             return rgba_to_hex(getBindingValue(instance, fieldname));
-        }
+        },
+        reset: resetTo(fieldname, undefined),
     }
 }
 
@@ -142,7 +159,7 @@ const commonProps = {
     height: getSetFactory('height'),
     flexGrow: getSetFactory('flex_grow'),
     flexShrink: getSetFactory('flex_shrink'),
-    cursor: getSetFactory('cursor'),
+    cursor: { ...getSetFactory('cursor'), reset: resetTo('cursor', undefined) },
 }
 
 const componentMap = {
@@ -352,6 +369,9 @@ const HostConfig: Reconciler.HostConfig<
             const keys = Object.keys(props).filter(k => k !== 'children');
             keys.sort((a, b) => Number(DEFERRED_PROPS.has(a)) - Number(DEFERRED_PROPS.has(b)));
             for (const key of keys) {
+                if (props[key] === undefined) {
+                    continue;
+                }
                 const propSetter = componentMap[type]?.props?.[key];
                 if (propSetter) {
                     propSetter.set(instance, props[key]);
@@ -466,13 +486,19 @@ const HostConfig: Reconciler.HostConfig<
         newProps: Props,
         internalHandle: any
     ): void {
-        for (const key in newProps) {
-            if (key === 'children') {
+        const keys = new Set([...Object.keys(oldProps), ...Object.keys(newProps)]);
+        for (const key of keys) {
+            if (key === 'children' || newProps[key] === oldProps[key]) {
                 continue;
             }
 
-            const propSetter = componentMap[type].props[key];
-            if (propSetter && newProps[key] !== oldProps[key]) {
+            const propSetter: PropSetter | undefined = componentMap[type].props[key];
+            if (!propSetter) {
+                continue;
+            }
+            if (newProps[key] === undefined) {
+                propSetter.reset?.(instance);
+            } else {
                 propSetter.set(instance, newProps[key]);
             }
         }

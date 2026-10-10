@@ -287,6 +287,9 @@ struct js_menu_data {
     std::optional<int64_t> wID;
     std::optional<std::string> name_resid;
     std::optional<std::string> origin_name;
+    // 快捷键提示文本，仅用于显示
+    // Hotkey hint text, display only
+    std::optional<std::string> hotkey;
 };
 
 struct menu_item_controller {
@@ -303,6 +306,9 @@ struct menu_item_controller {
     js_menu_data data();
     void remove();
     bool valid();
+    // 水平菜单母项里的子项, 普通菜单项返回空
+    // Children of a horizontal button group, empty for a normal item
+    std::vector<std::shared_ptr<menu_item_controller>> children();
 };
 
 struct menu_item_parent_item_controller {

@@ -749,6 +749,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
 
         obj.origin_name = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "origin_name"));
 
+        obj.hotkey = js_traits<std::optional<std::string>>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "hotkey"));
+
         return obj;
     }
 
@@ -775,6 +777,8 @@ template <> struct qjs::js_traits<mb_shell::js::js_menu_data> {
 
         JS_SetPropertyStr(ctx, obj, "origin_name", js_traits<std::optional<std::string>>::wrap(ctx, val.origin_name));
 
+        JS_SetPropertyStr(ctx, obj, "hotkey", js_traits<std::optional<std::string>>::wrap(ctx, val.hotkey));
+
         return obj;
     }
 };
@@ -792,6 +796,7 @@ template<> struct js_bind<mb_shell::js::js_menu_data> {
                 .fun<&mb_shell::js::js_menu_data::wID>("wID")
                 .fun<&mb_shell::js::js_menu_data::name_resid>("name_resid")
                 .fun<&mb_shell::js::js_menu_data::origin_name>("origin_name")
+                .fun<&mb_shell::js::js_menu_data::hotkey>("hotkey")
             ;
     }
 };
@@ -824,6 +829,7 @@ template<> struct js_bind<mb_shell::js::menu_item_controller> {
                 .fun<&mb_shell::js::menu_item_controller::data>("data")
                 .fun<&mb_shell::js::menu_item_controller::remove>("remove")
                 .fun<&mb_shell::js::menu_item_controller::valid>("valid")
+                .fun<&mb_shell::js::menu_item_controller::children>("children")
             ;
     }
 };

@@ -689,6 +689,11 @@ export class js_menu_data {
     wID?: number | undefined
 	name_resid?: string | undefined
 	origin_name?: string | undefined
+	/**
+     *  快捷键提示文本，仅用于显示
+     *  Hotkey hint text, display only
+     */
+    hotkey?: string | undefined
 }
 export class menu_item_controller {
 	get position(): number;
@@ -704,6 +709,12 @@ export class menu_item_controller {
 	data(): js_menu_data
 	remove(): void
 	valid(): boolean
+	/**
+     *  水平菜单母项里的子项, 普通菜单项返回空
+     *  Children of a horizontal button group, empty for a normal item
+     * @returns Array<menu_item_controller>
+     */
+    children(): Array<menu_item_controller>
 }
 export class menu_item_parent_item_controller {
 	get position(): number;
