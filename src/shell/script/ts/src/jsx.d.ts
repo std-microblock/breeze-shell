@@ -37,6 +37,7 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        cursor?: 'arrow' | 'text' | 'hand' | 'crosshair' | 'size_h' | 'size_v' | 'auto';
         autoSize?: boolean;
         gap?: number;
         flexGrow?: number;
@@ -59,6 +60,7 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        cursor?: 'arrow' | 'text' | 'hand' | 'crosshair' | 'size_h' | 'size_v' | 'auto';
         flexGrow?: number;
         flexShrink?: number;
         maxWidth?: number;
@@ -101,6 +103,7 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        cursor?: 'arrow' | 'text' | 'hand' | 'crosshair' | 'size_h' | 'size_v' | 'auto';
         flexGrow?: number;
         flexShrink?: number;
       },
@@ -112,6 +115,7 @@ declare module 'react' {
         y?: number;
         width?: number;
         height?: number;
+        cursor?: 'arrow' | 'text' | 'hand' | 'crosshair' | 'size_h' | 'size_v' | 'auto';
         flexGrow?: number;
         flexShrink?: number;
       },

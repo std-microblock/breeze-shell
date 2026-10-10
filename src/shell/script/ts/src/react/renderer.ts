@@ -142,6 +142,7 @@ const commonProps = {
     height: getSetFactory('height'),
     flexGrow: getSetFactory('flex_grow'),
     flexShrink: getSetFactory('flex_shrink'),
+    cursor: getSetFactory('cursor'),
 }
 
 const componentMap = {
