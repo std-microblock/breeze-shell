@@ -237,6 +237,7 @@ const componentMap = {
             onMouseLeave: getSetFactory('on_mouse_leave'),
             onMouseDown: getSetFactory('on_mouse_down'),
             onMouseUp: getSetFactory('on_mouse_up'),
+            onKeyDown: getSetFactory('on_key_down'),
             onMouseMove: getSetFactory('on_mouse_move'),
             backgroundColor: getSetFactoryColor('background_color'),
             borderColor: getSetFactoryColor('border_color'),
