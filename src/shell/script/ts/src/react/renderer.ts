@@ -50,6 +50,7 @@ const resetTo = (fieldname: string, value: any) => (instance: shell.breeze_ui.js
 const getSetFactory = (fieldname: string) => {
     return {
         set: (instance: shell.breeze_ui.js_widget, value: any) => {
+            if (value === undefined || value === null) return;
             const v = Array.isArray(value) ? value : [value];
             setBindingValue(instance, fieldname, v);
         },
@@ -160,6 +161,9 @@ const commonProps = {
     flexGrow: getSetFactory('flex_grow'),
     flexShrink: getSetFactory('flex_shrink'),
     cursor: { ...getSetFactory('cursor'), reset: resetTo('cursor', undefined) },
+    minWidth: getSetFactory('min_width'),
+    minHeight: getSetFactory('min_height'),
+    alignSelf: getSetFactory('align_self'),
 }
 
 const componentMap = {
@@ -179,6 +183,8 @@ const componentMap = {
             color: getSetFactoryColor('color'),
             maxWidth: getSetFactory('max_width'),
             fontFamily: getSetFactory('font_family'),
+            lineHeight: getSetFactory('line_height_multiplier'),
+            textOverflow: getSetFactory('text_overflow'),
             ...commonProps
         }
     },
@@ -257,6 +263,12 @@ const componentMap = {
             enableChildClipping: getSetFactory('enable_child_clipping'),
             cropOverflow: getSetFactory('crop_overflow'),
             opacity: getSetFactory('opacity'),
+            flexWrap: getSetFactory('flex_wrap'),
+            reverse: getSetFactory('reverse'),
+            scrollBarColor: getSetFactoryColor('scroll_bar_color'),
+            scrollBarWidth: getSetFactory('scroll_bar_width'),
+            scrollBarRadius: getSetFactory('scroll_bar_radius'),
+            scrollBarMargin: getSetFactory('scroll_bar_margin'),
             ...commonProps
         }
     },

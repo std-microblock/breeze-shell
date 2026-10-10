@@ -7,6 +7,20 @@ export class breeze_ui {
 }
 namespace breeze_ui {
 export class js_widget {
+	/**
+     *  任何 widget 都能参与 flex 布局: 这几项在 ui::widget::before_layout
+     *  里会写进 Yoga。
+     */
+    get flex_grow(): number;
+    set flex_grow(value: number);
+	get flex_shrink(): number;
+    set flex_shrink(value: number);
+	get min_width(): number;
+    set min_width(value: number);
+	get min_height(): number;
+    set min_height(value: number);
+	get align_self(): string;
+    set align_self(value: string);
 	get x(): number;
     set x(value: number);
 	get y(): number;
@@ -15,6 +29,8 @@ export class js_widget {
     set width(value: number);
 	get height(): number;
     set height(value: number);
+	get cursor(): string | undefined;
+    set cursor(value: string | undefined);
 	children(): Array<breeze_ui.js_widget>
 	/**
      * 
@@ -69,6 +85,10 @@ export class js_text_widget extends js_widget {
     set font_weight(value: number);
 	get max_width(): number;
     set max_width(value: number);
+	get line_height_multiplier(): number;
+    set line_height_multiplier(value: number);
+	get text_overflow(): string;
+    set text_overflow(value: string);
 	get font_family(): string;
     set font_family(value: string);
 	get color(): [number, number, number, number] | undefined;
@@ -177,6 +197,8 @@ export class js_flex_layout_widget extends js_widget {
     set auto_size(value: boolean);
 	get horizontal(): boolean;
     set horizontal(value: boolean);
+	get reverse(): boolean;
+    set reverse(value: boolean);
 	get padding_left(): number;
     set padding_left(value: number);
 	get padding_right(): number;
@@ -185,10 +207,6 @@ export class js_flex_layout_widget extends js_widget {
     set padding_top(value: number);
 	get padding_bottom(): number;
     set padding_bottom(value: number);
-	get flex_grow(): number;
-    set flex_grow(value: number);
-	get flex_shrink(): number;
-    set flex_shrink(value: number);
 	get max_height(): number;
     set max_height(value: number);
 	get enable_scrolling(): boolean;
@@ -197,6 +215,14 @@ export class js_flex_layout_widget extends js_widget {
     set enable_child_clipping(value: boolean);
 	get crop_overflow(): boolean;
     set crop_overflow(value: boolean);
+	get scroll_bar_width(): number;
+    set scroll_bar_width(value: number);
+	get scroll_bar_radius(): number;
+    set scroll_bar_radius(value: number);
+	get scroll_bar_margin(): number;
+    set scroll_bar_margin(value: number);
+	get scroll_bar_color(): [number, number, number, number] | undefined;
+    set scroll_bar_color(value: [number, number, number, number] | undefined);
 	get padding(): [number, number, number, number];
 	get on_click(): ((arg1: number) => void);
     set on_click(value: ((arg1: number) => void));
@@ -210,12 +236,22 @@ export class js_flex_layout_widget extends js_widget {
     set on_mouse_down(value: (() => void));
 	get on_mouse_up(): (() => void);
     set on_mouse_up(value: (() => void));
-	get on_key_down(): ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean);
+	/**
+     *  键盘回调: 参数同 textbox.on_key_down (key, shift, ctrl, alt, super)
+     *  Keyboard callback: same arguments as textbox.on_key_down
+     */
+    get on_key_down(): ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean);
     set on_key_down(value: ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean));
-	get justify_content(): string;
+	/**
+     *  键盘回调: 参数同 textbox.on_key_down (key, shift, ctrl, alt, super)
+     *  Keyboard callback: same arguments as textbox.on_key_down
+     */
+    get justify_content(): string;
     set justify_content(value: string);
 	get align_items(): string;
     set align_items(value: string);
+	get flex_wrap(): string;
+    set flex_wrap(value: string);
 	get background_color(): [number, number, number, number] | undefined;
     set background_color(value: [number, number, number, number] | undefined);
 	get background_paint(): breeze_ui.breeze_paint;
@@ -714,7 +750,7 @@ export class menu_item_controller {
 	/**
      *  水平菜单母项里的子项, 普通菜单项返回空
      *  Children of a horizontal button group, empty for a normal item
-     * @returns Array<menu_item_controller>
+      @returns Array<menu_item_controller>
      */
     children(): Array<menu_item_controller>
 }
@@ -809,15 +845,11 @@ export class menu_metrics {
      */
     text_offset: number
 	/**
-     *  图标列里图标的左偏移
-     *  Left offset of the icon column
+     *  图标列里图标的左偏移与边长; 当前菜单没有图标列时边长为 0
+     *  Left offset and size of the icon column; size is 0 when the menu has no icons
      */
     icon_offset: number
-	/**
-     *  图标列里图标的边长 (没有图标列时为 0)
-     *  Size of the icon column, 0 when the menu has no icons
-     */
-    icon_size: number
+	icon_size: number
 	/**
      *  右侧为子菜单箭头预留的宽度
      *  Width reserved on the right for the submenu arrow
@@ -1247,12 +1279,42 @@ export class breeze {
 	static current_process_path(): string
 	static crash_cpu_exception(): void
 	static crash_cpp_exception(): void
-	static try_named_mutex(name: string): number
-	static release_named_mutex(token: number): void
-	static file_sha256(path: string): string
-	static file_size(path: string): number
-	static file_is_x64_pe(path: string): boolean
-	static file_version(path: string): string
+	/**
+     * 
+     * @param name: string
+     * @returns number
+     */
+    static try_named_mutex(name: string): number
+	/**
+     * 
+     * @param token: number
+     * @returns void
+     */
+    static release_named_mutex(token: number): void
+	/**
+     * 
+     * @param path: string
+     * @returns string
+     */
+    static file_sha256(path: string): string
+	/**
+     * 
+     * @param path: string
+     * @returns number
+     */
+    static file_size(path: string): number
+	/**
+     * 
+     * @param path: string
+     * @returns boolean
+     */
+    static file_is_x64_pe(path: string): boolean
+	/**
+     * 
+     * @param path: string
+     * @returns string
+     */
+    static file_version(path: string): string
 }
 export class win32 {
 	/**
@@ -1548,8 +1610,6 @@ export class diagnostics {
 	static default_config(): string
 	static reload_config(): void
 }
-}
-
 export class file_usage_process {
 	/**
      *  进程 ID

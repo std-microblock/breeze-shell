@@ -5,6 +5,7 @@
 #include "breeze_ui/widget.h"
 #include "shell/config.h"
 #include "shell/contextmenu/menu_widget.h"
+#include <cmath>
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
@@ -12,6 +13,7 @@
 #include <memory>
 #include <mutex>
 #include <print>
+#include <type_traits>
 #include <thread>
 #include <Windows.h>
 
@@ -94,6 +96,18 @@ class js_callback_dispatcher {
     }
 
 // Macro for simple getter/setter pairs
+// 数值属性先挡掉 NaN/inf: 一个 undefined 传进布局就会让 Yoga 每次测量都报错刷屏。
+template <typename T>
+constexpr std::enable_if_t<!std::is_arithmetic_v<T>, bool>
+finite_style_value(const T &) {
+    return true;
+}
+
+template <typename T>
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, bool>
+finite_style_value(T value) {
+    return std::isfinite(static_cast<double>(value));
+}
 #define IMPL_SIMPLE_PROP(class_name, widget_type, prop_name, prop_type)        \
     prop_type class_name::get_##prop_name() const {                            \
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
@@ -105,6 +119,10 @@ class js_callback_dispatcher {
         auto widget = std::dynamic_pointer_cast<widget_type>($widget);         \
         if (!widget)                                                           \
             return;                                                            \
+        if constexpr (std::is_arithmetic_v<prop_type>) {                       \
+            if (!finite_style_value(value))                                    \
+                return;                                                        \
+        }                                                                      \
         auto lock = $rt_lock();                                                \
         widget->prop_name = value;                                             \
         widget->needs_repaint = true;                                          \
@@ -183,6 +201,27 @@ IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, text, std::string);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_size, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_weight, int);
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, max_width, float);
+IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget,
+                 line_height_multiplier, float);
+
+std::string breeze_ui::js_text_widget::get_text_overflow() const {
+    auto widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
+    if (!widget)
+        return "";
+    return std::string(mb_shell::string_from_enum(widget->text_overflow));
+}
+
+void breeze_ui::js_text_widget::set_text_overflow(std::string mode) {
+    auto widget = std::dynamic_pointer_cast<ui::text_widget>($widget);
+    if (!widget)
+        return;
+    if (auto value = mb_shell::enum_from_string<ui::text_widget::overflow>(mode)) {
+        auto lock = $rt_lock();
+        widget->text_overflow = *value;
+        widget->invalidate_measure();
+        widget->needs_repaint = true;
+    }
+}
 IMPL_SIMPLE_PROP(breeze_ui::js_text_widget, ui::text_widget, font_family,
                  std::string);
 IMPL_COLOR_PROP(breeze_ui::js_text_widget, ui::text_widget, color);
@@ -285,6 +324,82 @@ void breeze_ui::js_widget::remove_child(std::shared_ptr<js_widget> child) {
 
 IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, x, float)
 IMPL_ANIMATED_PROP(breeze_ui::js_widget, ui::widget, y, float)
+
+namespace {
+std::string align_self_to_string(YGAlign align) {
+    switch (align) {
+    case YGAlignFlexStart:
+        return "start";
+    case YGAlignCenter:
+        return "center";
+    case YGAlignFlexEnd:
+        return "end";
+    case YGAlignStretch:
+        return "stretch";
+    case YGAlignBaseline:
+        return "baseline";
+    default:
+        return "auto";
+    }
+}
+
+std::optional<YGAlign> align_self_from_string(const std::string &name) {
+    if (name == "start" || name == "flex-start")
+        return YGAlignFlexStart;
+    if (name == "center")
+        return YGAlignCenter;
+    if (name == "end" || name == "flex-end")
+        return YGAlignFlexEnd;
+    if (name == "stretch")
+        return YGAlignStretch;
+    if (name == "baseline")
+        return YGAlignBaseline;
+    if (name == "auto")
+        return YGAlignAuto;
+    return std::nullopt;
+}
+} // namespace
+
+IMPL_SIMPLE_PROP(breeze_ui::js_widget, ui::widget, flex_grow, float)
+IMPL_SIMPLE_PROP(breeze_ui::js_widget, ui::widget, flex_shrink, float)
+
+float breeze_ui::js_widget::get_min_width() const {
+    return $widget ? $widget->style_min_width : 0.f;
+}
+
+void breeze_ui::js_widget::set_min_width(float value) {
+    if (!$widget || !std::isfinite(value))
+        return;
+    auto lock = $rt_lock();
+    $widget->style_min_width = value;
+    $widget->needs_repaint = true;
+}
+
+float breeze_ui::js_widget::get_min_height() const {
+    return $widget ? $widget->style_min_height : 0.f;
+}
+
+void breeze_ui::js_widget::set_min_height(float value) {
+    if (!$widget || !std::isfinite(value))
+        return;
+    auto lock = $rt_lock();
+    $widget->style_min_height = value;
+    $widget->needs_repaint = true;
+}
+
+std::string breeze_ui::js_widget::get_align_self() const {
+    return $widget ? align_self_to_string($widget->style_align_self) : "";
+}
+
+void breeze_ui::js_widget::set_align_self(std::string align) {
+    if (!$widget)
+        return;
+    if (auto value = align_self_from_string(align)) {
+        auto lock = $rt_lock();
+        $widget->style_align_self = *value;
+        $widget->needs_repaint = true;
+    }
+}
 
 float breeze_ui::js_widget::get_width() const {
     return $widget ? $widget->width->dest() : 0.f;
@@ -773,10 +888,50 @@ IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                  enable_scrolling, bool)
 IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                  crop_overflow, bool)
-IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, flex_grow,
-                 float)
-IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, flex_shrink,
-                 float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, reverse, bool)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 scroll_bar_width, float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 scroll_bar_radius, float)
+IMPL_SIMPLE_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
+                 scroll_bar_margin, float)
+
+breeze_ui::rgba_prop
+breeze_ui::js_flex_layout_widget::get_scroll_bar_color() const {
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
+    if (!widget)
+        return std::nullopt;
+    auto color = widget->scroll_bar_color;
+    return std::make_tuple(color.r, color.g, color.b, color.a);
+}
+
+void breeze_ui::js_flex_layout_widget::set_scroll_bar_color(rgba_prop color) {
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
+    if (!widget || !color)
+        return;
+    auto [r, g, b, a] = *color;
+    auto lock = $rt_lock();
+    widget->scroll_bar_color = nvgRGBAf(r, g, b, a);
+    widget->needs_repaint = true;
+}
+
+std::string breeze_ui::js_flex_layout_widget::get_flex_wrap() const {
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
+    if (!widget)
+        return "";
+    return std::string(mb_shell::string_from_enum(widget->flex_wrap));
+}
+
+void breeze_ui::js_flex_layout_widget::set_flex_wrap(std::string wrap) {
+    auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);
+    if (!widget)
+        return;
+    if (auto value = mb_shell::enum_from_string<ui::flex_widget::wrap>(wrap)) {
+        auto lock = $rt_lock();
+        widget->flex_wrap = *value;
+        widget->needs_repaint = true;
+    }
+}
 
 std::string breeze_ui::js_flex_layout_widget::get_justify_content() const {
     auto widget = std::dynamic_pointer_cast<ui::flex_widget>($widget);

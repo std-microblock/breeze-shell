@@ -45,6 +45,19 @@ struct breeze_ui {
         void set_animation_curve(std::string variable_name, float duration,
                                  std::string easing);
 
+        // 任何 widget 都能参与 flex 布局: 这几项在 ui::widget::before_layout
+        // 里会写进 Yoga。
+        float get_flex_grow() const;
+        void set_flex_grow(float value);
+        float get_flex_shrink() const;
+        void set_flex_shrink(float value);
+        float get_min_width() const;
+        void set_min_width(float value);
+        float get_min_height() const;
+        void set_min_height(float value);
+        std::string get_align_self() const;
+        void set_align_self(std::string align);
+
         float get_x() const;
         void set_x(float x);
         float get_y() const;
@@ -77,6 +90,10 @@ struct breeze_ui {
         void set_font_weight(int weight);
         float get_max_width() const;
         void set_max_width(float w);
+        float get_line_height_multiplier() const;
+        void set_line_height_multiplier(float value);
+        std::string get_text_overflow() const;
+        void set_text_overflow(std::string mode);
         std::string get_font_family() const;
         void set_font_family(std::string family);
         std::optional<std::tuple<float, float, float, float>> get_color() const;
@@ -144,16 +161,22 @@ struct breeze_ui {
         DEFINE_PROP(bool, auto_size)
 
         DEFINE_PROP(bool, horizontal)
+        DEFINE_PROP(bool, reverse)
         DEFINE_PROP(float, padding_left)
         DEFINE_PROP(float, padding_right)
         DEFINE_PROP(float, padding_top)
         DEFINE_PROP(float, padding_bottom)
-        DEFINE_PROP(float, flex_grow)
-        DEFINE_PROP(float, flex_shrink)
         DEFINE_PROP(float, max_height)
         DEFINE_PROP(bool, enable_scrolling)
         DEFINE_PROP(bool, enable_child_clipping)
         DEFINE_PROP(bool, crop_overflow)
+        DEFINE_PROP(float, scroll_bar_width)
+        DEFINE_PROP(float, scroll_bar_radius)
+        DEFINE_PROP(float, scroll_bar_margin)
+        void set_scroll_bar_color(
+            std::optional<std::tuple<float, float, float, float>> color);
+        std::optional<std::tuple<float, float, float, float>>
+        get_scroll_bar_color() const;
         std::tuple<float, float, float, float> get_padding() const;
         void set_padding(float left, float right, float top, float bottom);
 
@@ -172,6 +195,8 @@ struct breeze_ui {
         void set_justify_content(std::string justify);
         std::string get_align_items() const;
         void set_align_items(std::string align);
+        std::string get_flex_wrap() const;
+        void set_flex_wrap(std::string wrap);
 
         void set_background_color(
             std::optional<std::tuple<float, float, float, float>> color);
