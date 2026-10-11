@@ -58,6 +58,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_widget> {
                     .property<&mb_shell::js::breeze_ui::js_widget::get_width, &mb_shell::js::breeze_ui::js_widget::set_width>("width")
                     .property<&mb_shell::js::breeze_ui::js_widget::get_height, &mb_shell::js::breeze_ui::js_widget::set_height>("height")
                     .property<&mb_shell::js::breeze_ui::js_widget::get_cursor, &mb_shell::js::breeze_ui::js_widget::set_cursor>("cursor")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_global_x>("get_global_x")
+                .fun<&mb_shell::js::breeze_ui::js_widget::get_global_y>("get_global_y")
                 .fun<&mb_shell::js::breeze_ui::js_widget::children>("children")
                 .fun<&mb_shell::js::breeze_ui::js_widget::append_child>("append_child")
                 .fun<&mb_shell::js::breeze_ui::js_widget::prepend_child>("prepend_child")

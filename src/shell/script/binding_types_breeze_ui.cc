@@ -402,6 +402,15 @@ void breeze_ui::js_widget::set_align_self(std::string align) {
     }
 }
 
+float breeze_ui::js_widget::get_global_x() const {
+    auto lock = const_cast<js_widget *>(this)->$rt_lock();
+    return lock ? $widget->abs_x() : 0.f;
+}
+float breeze_ui::js_widget::get_global_y() const {
+    auto lock = const_cast<js_widget *>(this)->$rt_lock();
+    return lock ? $widget->abs_y() : 0.f;
+}
+
 float breeze_ui::js_widget::get_width() const {
     return $widget ? $widget->width->dest() : 0.f;
 }

@@ -67,6 +67,9 @@ struct breeze_ui {
         void set_x(float x);
         float get_y() const;
         void set_y(float y);
+        // 窗口内的绝对坐标 (含各级滚动偏移), 局部坐标没法用来定位鼠标
+        float get_global_x() const;
+        float get_global_y() const;
         float get_width() const;
         void set_width(float width);
         float get_height() const;
