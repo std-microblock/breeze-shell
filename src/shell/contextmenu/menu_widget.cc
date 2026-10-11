@@ -9,6 +9,7 @@
 #include "menu_render.h"
 #include "nanovg.h"
 #include "shell/config.h"
+#include "shell/script/binding_types_breeze_ui.h"
 #include "shell/utils.h"
 #include <algorithm>
 #include <cctype>
@@ -478,6 +479,16 @@ void mb_shell::menu_item_normal_widget::show_submenu() {
     menu->add_submenu(submenu_wid);
 }
 
+void mb_shell::menu_item_custom_widget::handle_key(ui::key_event &e) {
+    if (custom_widget)
+        custom_widget->handle_key(e);
+}
+
+bool mb_shell::menu_item_custom_widget::focusable() const {
+    return visible && custom_widget && custom_widget->visible &&
+           wants_keyboard_focus(*custom_widget);
+}
+
 void mb_shell::menu_item_parent_widget::before_layout() {
     super::before_layout();
     YGNodeStyleSetFlexDirection(node, YGFlexDirectionRow);
@@ -674,23 +685,6 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     if (!keyboard_owner())
         return;
 
-    // 自己处理键盘的自绘行先拿按键, 它没处理才走菜单的原生项逻辑
-    if (auto custom = std::ranges::find_if(
-            children, [](const auto &item) {
-                auto w = item->template downcast<menu_item_custom_widget>();
-                return w && item->focused() && w->wants_keys &&
-                       w->wants_keys();
-            });
-        custom != children.end()) {
-        if ((*custom)
-                ->template downcast<menu_item_custom_widget>()
-                ->key_handler(e)) {
-            e.handled = true;
-            request_repaint();
-            return;
-        }
-    }
-
     auto move_key = [](bool next, auto &items) {
         if (items.empty()) {
             return;
@@ -712,24 +706,23 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             const bool is_item =
                 wid && wid->visible && !wid->item.disabled &&
                 wid->item.type != mb_shell::menu_item::type::spacer;
-            const bool is_action = !wid && custom && custom->wants_keys &&
-                                   custom->wants_keys();
-            if (!is_item && !is_action)
+            const bool is_custom = !wid && custom && custom->focusable();
+            if (!is_item && !is_custom)
                 continue;
 
-            // 焦点离开自绘行时通知它复位
+            // 借鼠标进入/离开这两个虚钩子通知自绘行 (高亮和操作按钮都靠它)
             if (auto previous = std::ranges::find_if(
                     items, [](const auto &i) { return i->focused(); });
                 previous != items.end() && *previous != item) {
                 if (auto prev_custom =
                         (*previous)
                             ->template downcast<menu_item_custom_widget>();
-                    prev_custom && prev_custom->blur_handler)
-                    prev_custom->blur_handler();
+                    prev_custom && prev_custom->custom_widget)
+                    prev_custom->custom_widget->handle_mouse_leave();
             }
             item->set_focus(true);
-            if (is_action && custom->focus_handler)
-                custom->focus_handler();
+            if (is_custom && custom->custom_widget)
+                custom->custom_widget->handle_mouse_enter();
             return;
         }
     };
@@ -788,6 +781,15 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     case GLFW_KEY_SPACE: {
         if (e.repeat)
             return;
+        // 焦点在自绘行上时回车归它, 不再去激活原生项
+        if (std::ranges::any_of(children, [](const auto &item) {
+                return item->template downcast<menu_item_custom_widget>() &&
+                       item->focused();
+            })) {
+            e.handled = true;
+            request_repaint();
+            return;
+        }
         auto wid = focused_item();
         if (!wid && e.key == GLFW_KEY_ENTER && embedded_widget_focused())
             wid = first_visible_item();

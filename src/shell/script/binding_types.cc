@@ -1958,27 +1958,6 @@ void menu_controller::append_widget_after(
         std::make_shared<mb_shell::menu_item_custom_widget>(widget->$widget);
     widget_wrapper->parent = m.get();
 
-    // 回调在这里先接好, 具体有没有键盘能力到派发时再看 (插件可能刚才是后来才设的)
-    std::weak_ptr<mb_shell::js::breeze_ui::js_widget> weak = widget;
-    widget_wrapper->wants_keys = [weak] {
-        auto self = weak.lock();
-        return self && self->on_key_down != nullptr;
-    };
-    widget_wrapper->key_handler = [weak](ui::key_event &e) {
-        auto self = weak.lock();
-        return self && self->on_key_down
-                   ? self->on_key_down(e.key, e.shift(), e.ctrl(), e.alt(),
-                                       e.repeat)
-                   : false;
-    };
-    widget_wrapper->focus_handler = [weak]() {
-        if (auto self = weak.lock(); self && self->on_focus)
-            self->on_focus();
-    };
-    widget_wrapper->blur_handler = [weak]() {
-        if (auto self = weak.lock(); self && self->on_blur)
-            self->on_blur();
-    };
     for (ui::widget *w = m.get(); w; w = w->parent) {
         if (w->owner_rt) {
             adopt_render_target(*widget_wrapper, w->owner_rt);

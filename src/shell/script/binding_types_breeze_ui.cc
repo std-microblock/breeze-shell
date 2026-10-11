@@ -1156,3 +1156,8 @@ breeze_ui::js_widget::$rt_lock() {
     return std::nullopt;
 }
 } // namespace mb_shell::js
+
+bool mb_shell::wants_keyboard_focus(const ui::widget &w) {
+    auto base = dynamic_cast<const js::widget_js_base *>(&w);
+    return base && (base->on_key_down || base->on_click);
+}
