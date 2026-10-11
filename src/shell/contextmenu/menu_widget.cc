@@ -654,7 +654,23 @@ bool mb_shell::menu_widget::keyboard_owner() const {
            (!owner_rt->focused_widget.has_value() && submenus().empty());
 }
 
+void mb_shell::menu_widget::focus_first_item() {
+    if (auto child = get_child<menu_item_normal_widget>())
+        child->set_focus();
+    else
+        set_focus();
+}
+
 void mb_shell::menu_widget::handle_key(ui::key_event &e) {
+    // 子菜单开着的时候按键先归它: 焦点可能还停在主菜单上 (悬停打开的情况)
+    if (current_submenu && current_submenu.get() != this && !e.handled) {
+        current_submenu->handle_key(e);
+        if (e.handled) {
+            request_repaint();
+            return;
+        }
+    }
+
     if (!keyboard_owner())
         return;
 
@@ -662,7 +678,8 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     if (auto custom = std::ranges::find_if(
             children, [](const auto &item) {
                 auto w = item->template downcast<menu_item_custom_widget>();
-                return w && item->focused() && w->key_handler;
+                return w && item->focused() && w->wants_keys &&
+                       w->wants_keys();
             });
         custom != children.end()) {
         if ((*custom)
@@ -695,7 +712,8 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             const bool is_item =
                 wid && wid->visible && !wid->item.disabled &&
                 wid->item.type != mb_shell::menu_item::type::spacer;
-            const bool is_action = !wid && custom && custom->key_handler;
+            const bool is_action = !wid && custom && custom->wants_keys &&
+                                   custom->wants_keys();
             if (!is_item && !is_action)
                 continue;
 
@@ -761,15 +779,9 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         break;
     case GLFW_KEY_RIGHT:
         if (auto wid = focused_item(); wid && wid->item.submenu) {
-            if (!wid->submenu_wid)
-                wid->show_submenu();
-            if (current_submenu && !current_submenu->focus_within()) {
-                if (auto child =
-                        current_submenu->get_child<menu_item_normal_widget>())
-                    child->set_focus();
-                else
-                    current_submenu->set_focus();
-            }
+            wid->show_submenu();
+            if (current_submenu && !current_submenu->focus_within())
+                current_submenu->focus_first_item();
         }
         break;
     case GLFW_KEY_ENTER:
@@ -780,10 +792,13 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         if (!wid && e.key == GLFW_KEY_ENTER && embedded_widget_focused())
             wid = first_visible_item();
         if (wid) {
-            if (wid->item.action)
+            if (wid->item.action) {
                 wid->activate();
-            else if (wid->item.submenu)
+            } else if (wid->item.submenu) {
                 wid->show_submenu();
+                if (current_submenu)
+                    current_submenu->focus_first_item();
+            }
         }
         break;
     }
@@ -808,7 +823,7 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             } else if (wid && wid->item.submenu && !wid->submenu_wid) {
                 wid->show_submenu();
                 if (current_submenu)
-                    current_submenu->set_focus();
+                    current_submenu->focus_first_item();
             }
         } else {
             move_key(!(e.mods & GLFW_MOD_SHIFT), matching);

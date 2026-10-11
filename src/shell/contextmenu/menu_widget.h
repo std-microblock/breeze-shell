@@ -84,6 +84,8 @@ struct menu_item_normal_widget : public menu_item_widget {
 struct menu_item_custom_widget : public menu_item_widget {
     using super = menu_item_widget;
     std::shared_ptr<ui::widget> custom_widget;
+    // 键盘能力在派发时现查: 插件经常先把行挂进菜单, 之后才设回调
+    std::function<bool()> wants_keys;
     std::function<bool(ui::key_event &)> key_handler;
     std::function<void()> focus_handler;
     std::function<void()> blur_handler;
@@ -135,6 +137,7 @@ struct menu_widget : public ui::flex_widget {
     void before_layout() override;
     void after_layout() override;
     void handle_key(ui::key_event &e) override;
+    void focus_first_item();
 
     void update_icon_width();
     void add_submenu(std::shared_ptr<menu_widget> submenu);
