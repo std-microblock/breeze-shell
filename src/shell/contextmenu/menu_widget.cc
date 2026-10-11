@@ -672,6 +672,24 @@ void mb_shell::menu_widget::focus_first_item() {
         set_focus();
 }
 
+// 键盘焦点也要让自绘行亮起来: 插件把回调挂在行内部的小控件上, 所以要整棵子树通知
+static void notify_hover(ui::widget &w, bool entered) {
+    if (entered)
+        w.handle_mouse_enter();
+    else
+        w.handle_mouse_leave();
+    for (auto &child : w.children)
+        if (child)
+            notify_hover(*child, entered);
+}
+
+void mb_shell::menu_item_custom_widget::handle_focus_changed(bool focused) {
+    if (!custom_widget)
+        return;
+    custom_widget->handle_focus_changed(focused);
+    notify_hover(*custom_widget, focused);
+}
+
 void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     // 子菜单开着的时候按键先归它: 焦点可能还停在主菜单上 (悬停打开的情况)
     if (current_submenu && current_submenu.get() != this && !e.handled) {
@@ -710,18 +728,7 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             if (!is_item && !is_custom)
                 continue;
 
-            if (auto previous = std::ranges::find_if(
-                    items, [](const auto &i) { return i->focused(); });
-                previous != items.end() && *previous != item) {
-                if (auto prev_custom =
-                        (*previous)
-                            ->template downcast<menu_item_custom_widget>();
-                    prev_custom && prev_custom->custom_widget)
-                    prev_custom->custom_widget->handle_focus_changed(false);
-            }
             item->set_focus(true);
-            if (is_custom && custom->custom_widget)
-                custom->custom_widget->handle_focus_changed(true);
             return;
         }
     };

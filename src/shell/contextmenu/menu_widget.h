@@ -88,6 +88,7 @@ struct menu_item_custom_widget : public menu_item_widget {
     menu_item_custom_widget(std::shared_ptr<ui::widget> custom_widget);
     bool lays_out_children() const override { return true; }
     void handle_key(ui::key_event &e) override;
+    void handle_focus_changed(bool focused) override;
     void before_layout() override;
     bool focusable() const;
 };
