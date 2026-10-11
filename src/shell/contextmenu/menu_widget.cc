@@ -1189,13 +1189,23 @@ std::pair<float, float> mb_shell::mouse_menu_widget_main::calculate_position(
         x = rt.screen.width - menu_width - padding_x;
     }
 
-    if (menu_height > rt.screen.height - padding_y * 2 || y < padding_y) {
-        y = padding_y;
-    } else if (y + menu_height > rt.screen.height - padding_y) {
-        y = rt.screen.height - menu_height - padding_y;
-    }
+    // 高度上限按锚点这一侧的空间算: 向下展开用下方空间, 向上展开用上方空间
+    const float room = is_upward(direction)
+                           ? anchor_y - padding_y
+                           : rt.screen.height - anchor_y - padding_y;
+    menu_wid->max_height = std::max(room, 1.f) / dpi;
 
-    menu_wid->max_height = (rt.screen.height - y - padding_y) / dpi;
+    // 高度受 max_height 影响, 要再量一次, 否则用的是上一次的高度
+    menu_wid->compute_layout_now(&rt);
+    menu_height = menu_wid->height->dest() * dpi;
+    if (is_upward(direction))
+        y = anchor_y - menu_height;
+
+    // 尽量贴着锚点, 真的放不下才退到屏幕内
+    if (y + menu_height > rt.screen.height - padding_y)
+        y = rt.screen.height - menu_height - padding_y;
+    if (y < padding_y)
+        y = padding_y;
     return {x, y};
 }
 
@@ -1207,8 +1217,10 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
     auto menu_width = menu_wid->width->dest() * dpi;
     auto menu_height = menu_wid->height->dest() * dpi;
 
-    auto padding_y = config::current->context_menu.position.padding_horizontal,
-         padding_x = config::current->context_menu.position.padding_vertical;
+    auto padding_x =
+        config::current->context_menu.position.padding_horizontal * dpi;
+    auto padding_y =
+        config::current->context_menu.position.padding_vertical * dpi;
 
     bool bottom_overflow = anchor_y + menu_height > rt.screen.height - padding_y;
     bool top_overflow = anchor_y - menu_height < padding_y;
@@ -1221,6 +1233,10 @@ mb_shell::popup_direction mb_shell::mouse_menu_widget_main::calculate_direction(
 
     bool top_revert = prefer_top ? (top_overflow && !bottom_overflow)
                                  : (bottom_overflow && !top_overflow);
+    // 两边都放不下时按空间大的一侧对齐, 免得菜单被顶到屏幕最上方
+    if (top_overflow && bottom_overflow)
+        top_revert =
+            anchor_y - padding_y > rt.screen.height - anchor_y - padding_y;
     bool left_revert = prefer_left ? (left_overflow && !right_overflow)
                                    : (right_overflow && !left_overflow);
 
