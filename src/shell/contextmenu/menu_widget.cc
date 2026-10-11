@@ -710,7 +710,6 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             if (!is_item && !is_custom)
                 continue;
 
-            // 借鼠标进入/离开这两个虚钩子通知自绘行 (高亮和操作按钮都靠它)
             if (auto previous = std::ranges::find_if(
                     items, [](const auto &i) { return i->focused(); });
                 previous != items.end() && *previous != item) {
@@ -718,11 +717,11 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
                         (*previous)
                             ->template downcast<menu_item_custom_widget>();
                     prev_custom && prev_custom->custom_widget)
-                    prev_custom->custom_widget->handle_mouse_leave();
+                    prev_custom->custom_widget->handle_focus_changed(false);
             }
             item->set_focus(true);
             if (is_custom && custom->custom_widget)
-                custom->custom_widget->handle_mouse_enter();
+                custom->custom_widget->handle_focus_changed(true);
             return;
         }
     };
@@ -739,6 +738,13 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         return std::ranges::any_of(children, [](const auto &item) {
             return !item->template downcast<menu_item_normal_widget>() &&
                    item->focus_within();
+        });
+    };
+
+    auto custom_row_focused = [&] {
+        return std::ranges::any_of(children, [](const auto &item) {
+            return item->template downcast<menu_item_custom_widget>() &&
+                   item->focused();
         });
     };
 
@@ -779,17 +785,13 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         break;
     case GLFW_KEY_ENTER:
     case GLFW_KEY_SPACE: {
-        if (e.repeat)
-            return;
-        // 焦点在自绘行上时回车归它, 不再去激活原生项
-        if (std::ranges::any_of(children, [](const auto &item) {
-                return item->template downcast<menu_item_custom_widget>() &&
-                       item->focused();
-            })) {
+        if (custom_row_focused()) {
             e.handled = true;
             request_repaint();
             return;
         }
+        if (e.repeat)
+            return;
         auto wid = focused_item();
         if (!wid && e.key == GLFW_KEY_ENTER && embedded_widget_focused())
             wid = first_visible_item();
@@ -805,8 +807,6 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         break;
     }
     default: {
-        if (e.repeat)
-            return;
         auto matching =
             children | std::views::filter([&](const auto &item) {
                 auto wid = item->template downcast<menu_item_normal_widget>();
@@ -815,8 +815,11 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
             }) |
             std::ranges::to<std::vector>();
 
-        if (matching.empty())
+        if (e.repeat || matching.empty()) {
+            if (custom_row_focused())
+                e.handled = true;
             return;
+        }
         if (matching.size() == 1) {
             auto wid =
                 matching.front()->downcast<mb_shell::menu_item_normal_widget>();

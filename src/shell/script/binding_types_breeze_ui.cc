@@ -751,6 +751,13 @@ struct widget_js_base : public ui::flex_widget {
     std::function<void()> on_mouse_up;
     std::function<void(int)> on_mouse_wheel;
     std::function<void(int, bool, bool, bool, bool)> on_key_down;
+    std::function<void()> on_focus, on_blur;
+
+    void handle_focus_changed(bool focused) override {
+        auto cb = focused ? on_focus : on_blur;
+        if (cb)
+            post([c = std::move(cb)] { c(); });
+    }
 
     template <typename F> void post(F &&fn) {
         js_callback_dispatcher::instance().post(std::forward<F>(fn));
@@ -934,6 +941,10 @@ IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    on_mouse_up, std::function<void()>)
 IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                    on_key_down, std::function<void(int, bool, bool, bool, bool)>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, on_focus,
+                   std::function<void()>)
+IMPL_CALLBACK_PROP(breeze_ui::js_flex_layout_widget, widget_js_base, on_blur,
+                   std::function<void()>)
 
 IMPL_COLOR_PROP(breeze_ui::js_flex_layout_widget, widget_js_base,
                 background_color)

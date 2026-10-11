@@ -196,6 +196,8 @@ struct breeze_ui {
         // 焦点链上没人处理的键会广播给所有设了 on_key_down 的 flex
         std::function<void(int, bool, bool, bool, bool)> get_on_key_down() const;
         void set_on_key_down(std::function<void(int, bool, bool, bool, bool)>);
+        DEFINE_PROP(std::function<void()>, on_focus)
+        DEFINE_PROP(std::function<void()>, on_blur)
 
         std::string get_justify_content() const;
         void set_justify_content(std::string justify);
