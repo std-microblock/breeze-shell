@@ -672,6 +672,26 @@ void mb_shell::menu_widget::focus_first_item() {
         set_focus();
 }
 
+// 键盘选中的项要滚进视野, 和滚轮共用同一套 scroll_top
+static void reveal_item(ui::flex_widget &container, const ui::widget &item) {
+    if (!container.enable_scrolling || container.max_scroll() <= 0)
+        return;
+    const float visible = *container.height;
+    const float top = *item.y;
+    const float bottom = top + *item.height;
+    const float current = container.scroll_top->dest();
+    float target = current;
+    if (top < -current)
+        target = -top;
+    else if (bottom > visible - current)
+        target = visible - bottom;
+    if (target == current)
+        return;
+    container.scroll_top->animate_to(
+        std::clamp(target, -container.max_scroll(), 0.f));
+    container.request_repaint();
+}
+
 // 键盘焦点也要让自绘行亮起来: 插件把回调挂在行内部的小控件上, 所以要整棵子树通知
 static void notify_hover(ui::widget &w, bool entered) {
     if (entered)
@@ -703,7 +723,7 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     if (!keyboard_owner())
         return;
 
-    auto move_key = [](bool next, auto &items) {
+    auto move_key = [this](bool next, auto &items) {
         if (items.empty()) {
             return;
         }
@@ -729,6 +749,7 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
                 continue;
 
             item->set_focus(true);
+            reveal_item(*this, *item);
             return;
         }
     };
