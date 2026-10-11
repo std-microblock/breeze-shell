@@ -270,6 +270,8 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget> {
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_gap, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_gap>("gap")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_color, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_color>("border_color")
                     .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_border_width, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_border_width>("border_width")
+                    .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_focus, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_focus>("on_focus")
+                    .property<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_on_blur, &mb_shell::js::breeze_ui::js_flex_layout_widget::set_on_blur>("on_blur")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_auto_size>("get_auto_size")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::set_auto_size>("set_auto_size")
                 .fun<&mb_shell::js::breeze_ui::js_flex_layout_widget::get_horizontal>("get_horizontal")
