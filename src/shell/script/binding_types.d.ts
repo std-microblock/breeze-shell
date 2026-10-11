@@ -8,6 +8,16 @@ export class breeze_ui {
 namespace breeze_ui {
 export class js_widget {
 	/**
+     *  自己处理键盘: 菜单上下导航会停在设了它的行上, 按键先交给它
+     *  (key, shift, ctrl, alt, repeat), key 是 GLFW 键值
+     */
+    get on_key_down(): ((key: number, shift: boolean, ctrl: boolean, alt: boolean, repeat: boolean) => boolean) | null;
+    set on_key_down(value: ((key: number, shift: boolean, ctrl: boolean, alt: boolean, repeat: boolean) => boolean) | null);
+	get on_focus(): (() => void) | null;
+    set on_focus(value: (() => void) | null);
+	get on_blur(): (() => void) | null;
+    set on_blur(value: (() => void) | null);
+	/**
      *  任何 widget 都能参与 flex 布局: 这几项在 ui::widget::before_layout
      *  里会写进 Yoga。
      */

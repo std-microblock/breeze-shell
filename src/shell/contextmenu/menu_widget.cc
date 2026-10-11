@@ -658,6 +658,22 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
     if (!keyboard_owner())
         return;
 
+    // 自己处理键盘的自绘行先拿按键, 它没处理才走菜单的原生项逻辑
+    if (auto custom = std::ranges::find_if(
+            children, [](const auto &item) {
+                auto w = item->template downcast<menu_item_custom_widget>();
+                return w && item->focused() && w->key_handler;
+            });
+        custom != children.end()) {
+        if ((*custom)
+                ->template downcast<menu_item_custom_widget>()
+                ->key_handler(e)) {
+            e.handled = true;
+            request_repaint();
+            return;
+        }
+    }
+
     auto move_key = [](bool next, auto &items) {
         if (items.empty()) {
             return;
@@ -673,13 +689,30 @@ void mb_shell::menu_widget::handle_key(ui::key_event &e) {
         for (size_t attempts = 0; attempts < items.size(); ++attempts) {
             index = next ? (index + 1) % items.size()
                          : (index + items.size() - 1) % items.size();
-            auto wid =
-                items[index]->template downcast<menu_item_normal_widget>();
-            if (wid && wid->visible && !wid->item.disabled &&
-                wid->item.type != mb_shell::menu_item::type::spacer) {
-                items[index]->set_focus(true);
-                return;
+            auto &item = items[index];
+            auto wid = item->template downcast<menu_item_normal_widget>();
+            auto custom = item->template downcast<menu_item_custom_widget>();
+            const bool is_item =
+                wid && wid->visible && !wid->item.disabled &&
+                wid->item.type != mb_shell::menu_item::type::spacer;
+            const bool is_action = !wid && custom && custom->key_handler;
+            if (!is_item && !is_action)
+                continue;
+
+            // 焦点离开自绘行时通知它复位
+            if (auto previous = std::ranges::find_if(
+                    items, [](const auto &i) { return i->focused(); });
+                previous != items.end() && *previous != item) {
+                if (auto prev_custom =
+                        (*previous)
+                            ->template downcast<menu_item_custom_widget>();
+                    prev_custom && prev_custom->blur_handler)
+                    prev_custom->blur_handler();
             }
+            item->set_focus(true);
+            if (is_action && custom->focus_handler)
+                custom->focus_handler();
+            return;
         }
     };
 

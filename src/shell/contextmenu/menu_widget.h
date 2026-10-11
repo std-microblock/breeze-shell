@@ -84,6 +84,10 @@ struct menu_item_normal_widget : public menu_item_widget {
 struct menu_item_custom_widget : public menu_item_widget {
     using super = menu_item_widget;
     std::shared_ptr<ui::widget> custom_widget;
+    std::function<bool(ui::key_event &)> key_handler;
+    std::function<void()> focus_handler;
+    std::function<void()> blur_handler;
+
     menu_item_custom_widget(std::shared_ptr<ui::widget> custom_widget);
     bool lays_out_children() const override { return true; }
     void before_layout() override;

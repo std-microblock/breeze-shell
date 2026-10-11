@@ -35,6 +35,22 @@ struct breeze_ui {
 
         std::optional<std::unique_lock<ui::tree_lock>> $rt_lock();
 
+        // 想自己处理键盘的自绘控件: 菜单的上下导航会停在它上面, 按键先交给它
+        std::function<bool(int, bool, bool, bool, bool)> on_key_down;
+        std::function<bool(int, bool, bool, bool, bool)> get_on_key_down() const {
+            return on_key_down;
+        }
+        void
+        set_on_key_down(std::function<bool(int, bool, bool, bool, bool)> cb) {
+            on_key_down = std::move(cb);
+        }
+        std::function<void()> on_focus;
+        std::function<void()> get_on_focus() const { return on_focus; }
+        void set_on_focus(std::function<void()> cb) { on_focus = std::move(cb); }
+        std::function<void()> on_blur;
+        std::function<void()> get_on_blur() const { return on_blur; }
+        void set_on_blur(std::function<void()> cb) { on_blur = std::move(cb); }
+
         std::vector<std::shared_ptr<js_widget>> children() const;
         void append_child(std::shared_ptr<js_widget> child);
         void prepend_child(std::shared_ptr<js_widget> child);
