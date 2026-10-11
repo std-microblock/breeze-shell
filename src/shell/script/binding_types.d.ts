@@ -862,6 +862,11 @@ export class menu_metrics {
      *  Width reserved on the right for the submenu arrow
      */
     right_reserved: number
+	/**
+     *  真实原生菜单项个数 (不含分隔条)
+     *  Count of real native items (spacers excluded)
+     */
+    native_items: number
 }
 export class menu_controller {
 	get widget(): breeze_ui.js_widget | undefined;
