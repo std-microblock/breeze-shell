@@ -72,12 +72,18 @@ menu_metrics menu_controller::get_metrics() {
     const float icon_size = theme.font_size + 2;
 
     bool has_icon = false, has_submenu = false;
+    int native_items = 0;
     auto menu = $menu.lock();
     if (!menu)
         menu = $menu_detached;
     if (menu) {
+        std::optional<std::unique_lock<ui::tree_lock>> lock;
+        if (menu->owner_rt)
+            lock.emplace(menu->owner_rt->rt_lock);
         for (auto &child : menu->children) {
             if (auto item = child->downcast<menu_item_normal_widget>()) {
+                if (item->item.type != menu_item::type::spacer)
+                    native_items++;
                 has_icon |= item->item.icon_bitmap.has_value() ||
                             item->item.icon_svg.has_value();
                 has_submenu |= item->item.submenu.has_value();
@@ -97,6 +103,7 @@ menu_metrics menu_controller::get_metrics() {
                           theme.text_padding;
     metrics.right_reserved =
         theme.margin + theme.padding + (has_submenu ? icon_size : 0);
+    metrics.native_items = native_items;
     return metrics;
 }
 std::shared_ptr<mb_shell::js::menu_item_controller>

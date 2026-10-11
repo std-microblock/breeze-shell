@@ -1144,6 +1144,8 @@ template <> struct qjs::js_traits<mb_shell::js::menu_metrics> {
 
         obj.right_reserved = js_traits<float>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "right_reserved"));
 
+        obj.native_items = js_traits<int>::unwrap(ctx, JS_GetPropertyStr(ctx, v, "native_items"));
+
         return obj;
     }
 
@@ -1166,6 +1168,8 @@ template <> struct qjs::js_traits<mb_shell::js::menu_metrics> {
 
         JS_SetPropertyStr(ctx, obj, "right_reserved", js_traits<float>::wrap(ctx, val.right_reserved));
 
+        JS_SetPropertyStr(ctx, obj, "native_items", js_traits<int>::wrap(ctx, val.native_items));
+
         return obj;
     }
 };
@@ -1181,6 +1185,7 @@ template<> struct js_bind<mb_shell::js::menu_metrics> {
                 .fun<&mb_shell::js::menu_metrics::icon_offset>("icon_offset")
                 .fun<&mb_shell::js::menu_metrics::icon_size>("icon_size")
                 .fun<&mb_shell::js::menu_metrics::right_reserved>("right_reserved")
+                .fun<&mb_shell::js::menu_metrics::native_items>("native_items")
             ;
     }
 };

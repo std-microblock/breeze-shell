@@ -399,6 +399,10 @@ struct menu_metrics {
     // 右侧为子菜单箭头预留的宽度
     // Width reserved on the right for the submenu arrow
     float right_reserved;
+
+    // 真实原生菜单项个数 (不含分隔条)
+    // Count of real native items (spacers excluded)
+    int native_items;
 };
 
 struct menu_controller {
