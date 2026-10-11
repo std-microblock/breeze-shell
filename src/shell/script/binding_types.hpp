@@ -711,6 +711,8 @@ struct win32 {
     static std::vector<std::string> all_resids_from_string(std::string str);
     static size_t load_library(std::string path);
     static std::optional<std::string> env(std::string name);
+    // 返回的 HBITMAP 归调用方; 交给 icon 控件后由控件负责释放
+    // Caller owns the HBITMAP unless it is handed to an icon widget
     static size_t load_file_icon(std::string path);
 
     static int32_t reg_get_dword(std::string key, std::string name);

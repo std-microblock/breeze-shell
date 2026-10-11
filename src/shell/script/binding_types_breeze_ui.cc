@@ -1,6 +1,7 @@
 #include "shell/script/binding_types_breeze_ui.h"
 #include "binding_types.hpp"
 #include "breeze_ui/animator.h"
+#include "breeze_ui/hbitmap_utils.h"
 #include "breeze_ui/ui.h"
 #include "breeze_ui/widget.h"
 #include "shell/config.h"
@@ -646,6 +647,74 @@ breeze_ui::widgets_factory::create_image_widget() {
     return res;
 }
 
+namespace {
+class icon_widget : public ui::widget {
+public:
+    HBITMAP bitmap = nullptr;
+    std::optional<ui::NVGImage> image;
+    bool image_dirty = false;
+
+    ~icon_widget() override {
+        if (bitmap)
+            DeleteObject(bitmap);
+    }
+
+    bool has_measure() const override { return true; }
+    YGSize measure(float, YGMeasureMode, float, YGMeasureMode) override {
+        return YGSize{width->dest(), height->dest()};
+    }
+    void render(ui::nanovg_context ctx) override {
+        if (image_dirty) {
+            if (image && image->id != -1)
+                ctx.deleteImage(image->id);
+            image.reset();
+            if (bitmap)
+                image = ui::LoadBitmapImage(ctx, bitmap);
+            image_dirty = false;
+        }
+        if (!image || image->id < 0)
+            return;
+
+        const float w = width->dest(), h = height->dest();
+        auto paint = ctx.imagePattern(*x, *y, w, h, 0, image->id, 1.f);
+        ctx.beginPath();
+        ctx.rect(*x, *y, w, h);
+        ctx.fillPaint(paint);
+        ctx.fill();
+    }
+};
+} // namespace
+
+size_t breeze_ui::js_icon_widget::get_icon() const {
+    auto w = std::dynamic_pointer_cast<icon_widget>($widget);
+    return w && w->bitmap ? (size_t)w->bitmap : 0;
+}
+
+void breeze_ui::js_icon_widget::set_icon(size_t icon) {
+    auto w = std::dynamic_pointer_cast<icon_widget>($widget);
+    if (!w)
+        return;
+    auto lock = $rt_lock();
+    auto bitmap = (HBITMAP)icon;
+    if (w->bitmap == bitmap)
+        return;
+    if (w->bitmap)
+        DeleteObject(w->bitmap);
+    w->bitmap = bitmap;
+    w->image_dirty = true;
+    w->needs_repaint = true;
+}
+
+std::shared_ptr<breeze_ui::js_icon_widget>
+breeze_ui::widgets_factory::create_icon_widget() {
+    auto iw = std::make_shared<icon_widget>();
+    iw->snap_initial_layout = true;
+
+    auto res = std::make_shared<js_icon_widget>();
+    res->$widget = std::dynamic_pointer_cast<ui::widget>(iw);
+    return res;
+}
+
 std::shared_ptr<breeze_ui::js_spacer_widget>
 breeze_ui::widgets_factory::create_spacer_widget() {
     auto iw = std::make_shared<ui::flex_widget::spacer>();
@@ -825,6 +894,7 @@ std::variant<std::shared_ptr<breeze_ui::js_widget>,
              std::shared_ptr<breeze_ui::js_textbox_widget>,
              std::shared_ptr<breeze_ui::js_flex_layout_widget>,
              std::shared_ptr<breeze_ui::js_image_widget>,
+             std::shared_ptr<breeze_ui::js_icon_widget>,
              std::shared_ptr<breeze_ui::js_spacer_widget>>
 breeze_ui::js_widget::downcast() {
 #define TRY_DOWNCAST(type)                                                     \
@@ -836,6 +906,7 @@ breeze_ui::js_widget::downcast() {
     TRY_DOWNCAST(js_textbox_widget);
     TRY_DOWNCAST(js_flex_layout_widget);
     TRY_DOWNCAST(js_image_widget);
+    TRY_DOWNCAST(js_icon_widget);
     TRY_DOWNCAST(js_spacer_widget);
 #undef TRY_DOWNCAST
 

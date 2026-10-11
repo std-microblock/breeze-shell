@@ -1414,12 +1414,16 @@ size_t win32::load_file_icon(std::string path) {
     DWORD_PTR ret =
         SHGetFileInfoW(utf8_to_wstring(path).c_str(), 0, &sfi,
                        sizeof(SHFILEINFOW), SHGFI_ICON | SHGFI_SMALLICON);
-    if (ret == 0)
+    if (ret == 0 || !sfi.hIcon)
         return 0;
 
-    ICONINFO iconinfo;
-    GetIconInfo(sfi.hIcon, &iconinfo);
-
+    ICONINFO iconinfo{};
+    const bool ok = GetIconInfo(sfi.hIcon, &iconinfo);
+    DestroyIcon(sfi.hIcon);
+    if (!ok)
+        return 0;
+    if (iconinfo.hbmMask)
+        DeleteObject(iconinfo.hbmMask);
     return (size_t)iconinfo.hbmColor;
 }
 std::function<void()>

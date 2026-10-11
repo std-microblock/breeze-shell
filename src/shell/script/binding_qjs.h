@@ -366,6 +366,18 @@ template<> struct js_bind<mb_shell::js::breeze_ui::js_spacer_widget> {
     }
 };
 
+template<> struct js_bind<mb_shell::js::breeze_ui::js_icon_widget> {
+    static void bind(qjs::Context::Module &mod) {
+        mod.class_<mb_shell::js::breeze_ui::js_icon_widget>("breeze_ui::js_icon_widget")
+            .constructor<>()
+                .base<mb_shell::js::breeze_ui::js_widget>()
+                    .property<&mb_shell::js::breeze_ui::js_icon_widget::get_icon, &mb_shell::js::breeze_ui::js_icon_widget::set_icon>("icon")
+                .fun<&mb_shell::js::breeze_ui::js_icon_widget::get_icon>("get_icon")
+                .fun<&mb_shell::js::breeze_ui::js_icon_widget::set_icon>("set_icon")
+            ;
+    }
+};
+
 template <> struct qjs::js_traits<mb_shell::js::breeze_ui::widgets_factory> {
     static mb_shell::js::breeze_ui::widgets_factory unwrap(JSContext *ctx, JSValueConst v) {
         mb_shell::js::breeze_ui::widgets_factory obj;
@@ -387,6 +399,7 @@ template<> struct js_bind<mb_shell::js::breeze_ui::widgets_factory> {
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_textbox_widget>("create_textbox_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_flex_layout_widget>("create_flex_layout_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_image_widget>("create_image_widget")
+                .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_icon_widget>("create_icon_widget")
                 .static_fun<&mb_shell::js::breeze_ui::widgets_factory::create_spacer_widget>("create_spacer_widget")
             ;
     }
@@ -1748,6 +1761,8 @@ inline void mshell_bindAll(qjs::Context::Module &mod) {
     js_bind<mb_shell::js::breeze_ui::js_flex_layout_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_image_widget>::bind(mod);
+
+    js_bind<mb_shell::js::breeze_ui::js_icon_widget>::bind(mod);
 
     js_bind<mb_shell::js::breeze_ui::js_spacer_widget>::bind(mod);
 

@@ -286,6 +286,12 @@ export class js_image_widget extends js_widget {
 }
 }
 namespace breeze_ui {
+export class js_icon_widget extends js_widget {
+	get icon(): number;
+    set icon(value: number);
+}
+}
+namespace breeze_ui {
 export class js_spacer_widget extends js_widget {
 	get size(): number;
     set size(value: number);
@@ -297,6 +303,7 @@ export class widgets_factory {
 	static create_textbox_widget(): breeze_ui.js_textbox_widget
 	static create_flex_layout_widget(): breeze_ui.js_flex_layout_widget
 	static create_image_widget(): breeze_ui.js_image_widget
+	static create_icon_widget(): breeze_ui.js_icon_widget
 	static create_spacer_widget(): breeze_ui.js_spacer_widget
 }
 }
