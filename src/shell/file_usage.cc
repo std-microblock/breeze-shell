@@ -205,13 +205,17 @@ std::vector<usage_process> query_directory(const std::wstring &dir) {
     std::unordered_map<uint32_t, size_t> known;
 
     auto files = files_inside(dir);
-    if (files.size() <= max_detail_files) {
-        for (const auto &file : files)
-            for (const auto &hit : restart_manager_probe({file}))
-                collect_hits(result, known, hit.pid, hit.app_name, file, false);
-    } else {
-        for (const auto &hit : restart_manager_probe(files))
-            collect_hits(result, known, hit.pid, hit.app_name, {}, false);
+    // 先整批问一遍: 文件夹里一个都没被占用是最常见的情况, 这样只开一次会话就够了
+    bool complete = true;
+    if (!restart_manager_probe(files, &complete).empty() || !complete) {
+        if (files.size() <= max_detail_files) {
+            for (const auto &file : files)
+                for (const auto &hit : restart_manager_probe({file}))
+                    collect_hits(result, known, hit.pid, hit.app_name, file, false);
+        } else {
+            for (const auto &hit : restart_manager_probe(files))
+                collect_hits(result, known, hit.pid, hit.app_name, {}, false);
+        }
     }
 
     const auto prefix = as_directory_prefix(dir);
