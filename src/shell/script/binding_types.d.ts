@@ -8,16 +8,6 @@ export class breeze_ui {
 namespace breeze_ui {
 export class js_widget {
 	/**
-     *  自己处理键盘: 菜单上下导航会停在设了它的行上, 按键先交给它
-     *  (key, shift, ctrl, alt, repeat), key 是 GLFW 键值
-     */
-    get on_key_down(): ((key: number, shift: boolean, ctrl: boolean, alt: boolean, repeat: boolean) => boolean) | null;
-    set on_key_down(value: ((key: number, shift: boolean, ctrl: boolean, alt: boolean, repeat: boolean) => boolean) | null);
-	get on_focus(): (() => void) | null;
-    set on_focus(value: (() => void) | null);
-	get on_blur(): (() => void) | null;
-    set on_blur(value: (() => void) | null);
-	/**
      *  任何 widget 都能参与 flex 布局: 这几项在 ui::widget::before_layout
      *  里会写进 Yoga。
      */
@@ -35,6 +25,11 @@ export class js_widget {
     set x(value: number);
 	get y(): number;
     set y(value: number);
+	/**
+     *  窗口内的绝对坐标 (含各级滚动偏移), 局部坐标没法用来定位鼠标
+     */
+    get global_x(): number;
+	get global_y(): number;
 	get width(): number;
     set width(value: number);
 	get height(): number;
@@ -82,7 +77,7 @@ export class js_widget {
      * @returns void
      */
     set_animation_curve(variable_name: string, duration: number, easing: string): void
-	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_textbox_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_spacer_widget
+	downcast(): breeze_ui.js_widget | breeze_ui.js_text_widget | breeze_ui.js_textbox_widget | breeze_ui.js_flex_layout_widget | breeze_ui.js_image_widget | breeze_ui.js_icon_widget | breeze_ui.js_spacer_widget
 }
 }
 namespace breeze_ui {
@@ -247,16 +242,16 @@ export class js_flex_layout_widget extends js_widget {
 	get on_mouse_up(): (() => void);
     set on_mouse_up(value: (() => void));
 	/**
-     *  键盘回调: 参数同 textbox.on_key_down (key, shift, ctrl, alt, super)
-     *  Keyboard callback: same arguments as textbox.on_key_down
+     *  (key, shift, ctrl, alt, super), key 是 GLFW 键值; 异步回调, 吞不掉按键
+     *  焦点链上没人处理的键会广播给所有设了 on_key_down 的 flex
      */
-    get on_key_down(): ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean);
-    set on_key_down(value: ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => boolean));
-	/**
-     *  键盘回调: 参数同 textbox.on_key_down (key, shift, ctrl, alt, super)
-     *  Keyboard callback: same arguments as textbox.on_key_down
-     */
-    get justify_content(): string;
+    get on_key_down(): ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => void);
+    set on_key_down(value: ((arg1: number, arg2: boolean, arg3: boolean, arg4: boolean, arg5: boolean) => void));
+	get on_focus(): (() => void);
+    set on_focus(value: (() => void));
+	get on_blur(): (() => void);
+    set on_blur(value: (() => void));
+	get justify_content(): string;
     set justify_content(value: string);
 	get align_items(): string;
     set align_items(value: string);
@@ -1370,7 +1365,8 @@ export class win32 {
      */
     static env(name: string): string | undefined
 	/**
-     * 
+     *  返回的 HBITMAP 归调用方; 交给 icon 控件后由控件负责释放
+     *  Caller owns the HBITMAP unless it is handed to an icon widget
      * @param path: string
      * @returns number
      */
@@ -1690,6 +1686,13 @@ export class file_usage {
      * @returns Array<file_usage_process>
      */
     static query(path: string): Array<file_usage_process>
+	/**
+     *  这些路径里有没有被占用的 (比逐个 query 快得多)
+     *  Whether any of the paths is in use (much faster than one by one)
+     * @param paths: Array<string>
+     * @returns boolean
+     */
+    static any_in_use(paths: Array<string>): boolean
 }
 }
 

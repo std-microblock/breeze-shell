@@ -854,6 +854,9 @@ struct file_usage {
     // Processes using the path, empty when the path is not in use
     static std::vector<std::shared_ptr<file_usage_process>>
     query(std::string path);
+    // 这些路径里有没有被占用的 (比逐个 query 快得多)
+    // Whether any of the paths is in use (much faster than one by one)
+    static bool any_in_use(std::vector<std::string> paths);
 };
 
 } // namespace mb_shell::js

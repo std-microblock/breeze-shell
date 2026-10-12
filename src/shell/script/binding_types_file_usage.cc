@@ -11,6 +11,10 @@ bool file_usage::in_use(std::string path) {
     return mb_shell::file_usage::in_use(path);
 }
 
+bool file_usage::any_in_use(std::vector<std::string> paths) {
+    return mb_shell::file_usage::any_in_use(paths);
+}
+
 std::vector<std::shared_ptr<file_usage_process>>
 file_usage::query(std::string path) {
     std::vector<std::shared_ptr<file_usage_process>> result;

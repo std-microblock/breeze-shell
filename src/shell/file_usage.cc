@@ -254,6 +254,24 @@ std::vector<usage_process> query(const std::string &path) {
     return result;
 }
 
+bool any_in_use(const std::vector<std::string> &paths) {
+    // 目录还要看别人的工作目录, 批量这边覆盖不到, 保守地当作"可能有"
+    std::vector<std::wstring> files;
+    for (const auto &path : paths) {
+        const fs::path target{utf8_to_wstring(path)};
+        if (target.empty())
+            continue;
+        std::error_code ec;
+        if (fs::is_directory(target, ec))
+            return true;
+        files.push_back(fs::absolute(target, ec).wstring());
+    }
+    if (files.empty())
+        return false;
+    bool complete = true;
+    return !restart_manager_probe(files, &complete).empty() || !complete;
+}
+
 bool in_use(const std::string &path) { return !query(path).empty(); }
 
 bool terminate(uint32_t pid, const std::string &expected_path) {
