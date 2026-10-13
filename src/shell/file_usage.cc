@@ -51,16 +51,31 @@ struct restart_manager_hit {
 };
 
 std::vector<restart_manager_hit>
-restart_manager_probe(const std::vector<std::wstring> &paths) {
+restart_manager_probe(const std::vector<std::wstring> &paths,
+                      bool *complete = nullptr) {
     std::vector<restart_manager_hit> hits;
+    auto incomplete = [&] {
+        if (complete)
+            *complete = false;
+    };
 
     // 一次会话里注册太多资源会失败, 分批查
     for (size_t offset = 0; offset < paths.size(); offset += max_rm_batch) {
         const auto end = std::min(offset + max_rm_batch, paths.size());
         DWORD session = 0;
         wchar_t key[CCH_RM_SESSION_KEY + 1] = {};
-        if (RmStartSession(&session, 0, key) != ERROR_SUCCESS)
+        // 会话数有上限, 忙的时候会失败; 失败就等于这批文件全查不到, 所以重试
+        bool started = false;
+        for (int attempt = 0; attempt < 4 && !started; attempt++) {
+            if (RmStartSession(&session, 0, key) == ERROR_SUCCESS)
+                started = true;
+            else
+                Sleep(2);
+        }
+        if (!started) {
+            incomplete();
             break;
+        }
 
         std::vector<LPCWSTR> raw;
         raw.reserve(end - offset);
@@ -71,9 +86,9 @@ restart_manager_probe(const std::vector<std::wstring> &paths) {
                                 nullptr, 0, nullptr) == ERROR_SUCCESS) {
             UINT needed = 0, count = 0;
             DWORD reasons = 0;
-            if (RmGetList(session, &needed, &count, nullptr, &reasons) ==
-                    ERROR_MORE_DATA &&
-                needed > 0) {
+            const auto status =
+                RmGetList(session, &needed, &count, nullptr, &reasons);
+            if (status == ERROR_MORE_DATA && needed > 0) {
                 std::vector<RM_PROCESS_INFO> info(needed);
                 count = needed;
                 if (RmGetList(session, &needed, &count, info.data(), &reasons) ==
@@ -81,8 +96,14 @@ restart_manager_probe(const std::vector<std::wstring> &paths) {
                     for (UINT i = 0; i < count; i++)
                         hits.push_back({(uint32_t)info[i].Process.dwProcessId,
                                         info[i].strAppName});
+                } else {
+                    incomplete();
                 }
+            } else if (status != ERROR_SUCCESS) {
+                incomplete();
             }
+        } else {
+            incomplete();
         }
 
         RmEndSession(session);
