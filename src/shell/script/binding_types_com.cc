@@ -125,7 +125,10 @@ CComPtr<IShellBrowser> GetIShellBrowserRecursive(HWND hWnd) {
 
     std::unordered_set<HWND> recorded_hwnds;
 
-    static auto browsers = GetIShellBrowsers();
+    // Enumerate fresh each call: a static cache goes stale as explorer windows
+    // open/close and HWNDs are recycled, which made the first right-click in a
+    // new window resolve to the desktop or a previous location.
+    auto browsers = GetIShellBrowsers();
     auto GetIShellBrowser = [&](HWND hwnd) -> CComPtr<IShellBrowser> {
         for (auto &[h, b] : browsers) {
             CComPtr<IShellView> psv;
